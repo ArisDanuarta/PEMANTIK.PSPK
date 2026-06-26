@@ -2,11 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 
-// Import phantom-ui web component (client-side only)
-// This registers the <phantom-ui> custom element
-if (typeof window !== "undefined") {
-  import("@aejkatappaja/phantom-ui");
-}
+// Import phantom-ui web component (client-side only via useEffect)
 
 interface PhantomSkeletonProps {
   /** Whether the skeleton loader is active */
@@ -36,6 +32,11 @@ export function PhantomSkeleton({
   className,
 }: PhantomSkeletonProps) {
   const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    // Register custom element client-side only
+    import("@aejkatappaja/phantom-ui").catch(() => {});
+  }, []);
 
   useEffect(() => {
     const el = ref.current;
