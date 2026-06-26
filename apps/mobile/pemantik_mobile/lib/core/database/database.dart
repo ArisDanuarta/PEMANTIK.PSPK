@@ -33,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -69,6 +69,15 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 9) {
         await m.addColumn(localCategories, localCategories.validFrom);
+      }
+      if (from < 10) {
+        // Minggu 2: tambah access_id dan current_level_id untuk tracking sesi
+        await m.addColumn(localSessions, localSessions.accessId);
+        await m.addColumn(localSessions, localSessions.currentLevelId);
+      }
+      if (from < 11) {
+        // Minggu 2: tambah access_id ke local_categories untuk offline session creation
+        await m.addColumn(localCategories, localCategories.accessId);
       }
     },
   );

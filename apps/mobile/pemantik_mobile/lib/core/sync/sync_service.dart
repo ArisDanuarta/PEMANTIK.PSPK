@@ -70,8 +70,11 @@ class SyncService {
                   ? DateTime.parse(row['valid_until'])
                   : null,
             ),
+            // Minggu 2: simpan access_id lokal agar sesi baru bisa terikat ke akses
+            accessId: Value(row['id'] as String?),
           ),
         );
+
 
         final levelsResponse = await SupabaseConfig.client
             .from('question_levels')
@@ -192,6 +195,10 @@ class SyncService {
             'sync_status': 'synced',
             'synced_at': DateTime.now().toIso8601String(),
             'attempt_number': session.attemptNumber,
+            // ── Minggu 2: sertakan access_id dan current_level_id ─────────
+            // null jika sesi dibuat sebelum Minggu 2 (backward compat)
+            if (session.accessId != null) 'access_id': session.accessId,
+            if (session.currentLevelId != null) 'current_level_id': session.currentLevelId,
           });
           await _db.sessionDao.updateSyncStatus(session.id, 'synced');
           log('Sesi ${session.id} berhasil diupload. Skor: $correctCount/${sessionAnswers.length}');

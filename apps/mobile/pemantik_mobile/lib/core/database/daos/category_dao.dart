@@ -12,6 +12,10 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
   Future<List<LocalCategory>> getAllCategories() =>
       select(localCategories).get();
 
+  Future<LocalCategory?> getCategoryById(String id) =>
+      (select(localCategories)..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
+
   Future<void> upsertCategory(LocalCategoriesCompanion category) {
     return into(localCategories).insertOnConflictUpdate(category);
   }

@@ -50,13 +50,22 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
     log('Siswa menekan tombol Mulai Asesmen, Membuat Sesi...');
 
     final db = ref.read(databaseProvider);
-    final studentStr = await secureStorage.read(
-      key: 'student_data',
-    );
+    final studentStr = await secureStorage.read(key: 'student_data');
     final student = jsonDecode(studentStr!);
 
     // Membuat Session ID yang unik dengan standar UUIDv4
     final sessionId = const Uuid().v4();
+
+    // ── Minggu 2: ambil access_id dari cache lokal ────────────────────────
+    // CategoryDao menyimpan access_id dari assessment_access saat sync
+    final localCategory = await db.categoryDao.getCategoryById(widget.categoryId);
+    final accessId = localCategory?.accessId;
+
+    if (accessId == null) {
+      log('PERINGATAN: access_id tidak ditemukan untuk categoryId=${widget.categoryId}. '
+          'Pastikan sync sudah berjalan. Sesi tetap dibuat tanpa access_id (backward compat).');
+    }
+    // ──────────────────────────────────────────────────────────────────────
 
     await db.sessionDao.createSession(
       LocalSessionsCompanion(
@@ -67,15 +76,20 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
         levelId: drift.Value(widget.levelId),
         startedAt: drift.Value(DateTime.now()),
         createdAt: drift.Value(DateTime.now()),
+        // Minggu 2: bind sesi ke akses ujian + track level awal
+        accessId: drift.Value(accessId),
+        currentLevelId: drift.Value(widget.levelId),
       ),
     );
 
     if (mounted) {
-      Navigator.of(
-        context,
-      ).pushReplacementNamed(AppRouter.questionPage, arguments: sessionId);
+      Navigator.of(context).pushReplacementNamed(
+        AppRouter.questionPage,
+        arguments: sessionId,
+      );
     }
   }
+
 
   void _promptAccessCode() {
     showDialog(

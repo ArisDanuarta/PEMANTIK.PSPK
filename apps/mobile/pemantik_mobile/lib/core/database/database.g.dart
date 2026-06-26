@@ -70,6 +70,17 @@ class $LocalCategoriesTable extends LocalCategories
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _accessIdMeta = const VerificationMeta(
+    'accessId',
+  );
+  @override
+  late final GeneratedColumn<String> accessId = GeneratedColumn<String>(
+    'access_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -78,6 +89,7 @@ class $LocalCategoriesTable extends LocalCategories
     phase,
     validFrom,
     validUntil,
+    accessId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -133,6 +145,12 @@ class $LocalCategoriesTable extends LocalCategories
         validUntil.isAcceptableOrUnknown(data['valid_until']!, _validUntilMeta),
       );
     }
+    if (data.containsKey('access_id')) {
+      context.handle(
+        _accessIdMeta,
+        accessId.isAcceptableOrUnknown(data['access_id']!, _accessIdMeta),
+      );
+    }
     return context;
   }
 
@@ -166,6 +184,10 @@ class $LocalCategoriesTable extends LocalCategories
         DriftSqlType.dateTime,
         data['${effectivePrefix}valid_until'],
       ),
+      accessId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}access_id'],
+      ),
     );
   }
 
@@ -182,6 +204,7 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
   final String phase;
   final DateTime? validFrom;
   final DateTime? validUntil;
+  final String? accessId;
   const LocalCategory({
     required this.id,
     required this.name,
@@ -189,6 +212,7 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
     required this.phase,
     this.validFrom,
     this.validUntil,
+    this.accessId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -202,6 +226,9 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
     }
     if (!nullToAbsent || validUntil != null) {
       map['valid_until'] = Variable<DateTime>(validUntil);
+    }
+    if (!nullToAbsent || accessId != null) {
+      map['access_id'] = Variable<String>(accessId);
     }
     return map;
   }
@@ -218,6 +245,9 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
       validUntil: validUntil == null && nullToAbsent
           ? const Value.absent()
           : Value(validUntil),
+      accessId: accessId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accessId),
     );
   }
 
@@ -233,6 +263,7 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
       phase: serializer.fromJson<String>(json['phase']),
       validFrom: serializer.fromJson<DateTime?>(json['validFrom']),
       validUntil: serializer.fromJson<DateTime?>(json['validUntil']),
+      accessId: serializer.fromJson<String?>(json['accessId']),
     );
   }
   @override
@@ -245,6 +276,7 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
       'phase': serializer.toJson<String>(phase),
       'validFrom': serializer.toJson<DateTime?>(validFrom),
       'validUntil': serializer.toJson<DateTime?>(validUntil),
+      'accessId': serializer.toJson<String?>(accessId),
     };
   }
 
@@ -255,6 +287,7 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
     String? phase,
     Value<DateTime?> validFrom = const Value.absent(),
     Value<DateTime?> validUntil = const Value.absent(),
+    Value<String?> accessId = const Value.absent(),
   }) => LocalCategory(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -262,6 +295,7 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
     phase: phase ?? this.phase,
     validFrom: validFrom.present ? validFrom.value : this.validFrom,
     validUntil: validUntil.present ? validUntil.value : this.validUntil,
+    accessId: accessId.present ? accessId.value : this.accessId,
   );
   LocalCategory copyWithCompanion(LocalCategoriesCompanion data) {
     return LocalCategory(
@@ -275,6 +309,7 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
       validUntil: data.validUntil.present
           ? data.validUntil.value
           : this.validUntil,
+      accessId: data.accessId.present ? data.accessId.value : this.accessId,
     );
   }
 
@@ -286,14 +321,22 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
           ..write('subjectArea: $subjectArea, ')
           ..write('phase: $phase, ')
           ..write('validFrom: $validFrom, ')
-          ..write('validUntil: $validUntil')
+          ..write('validUntil: $validUntil, ')
+          ..write('accessId: $accessId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, subjectArea, phase, validFrom, validUntil);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    subjectArea,
+    phase,
+    validFrom,
+    validUntil,
+    accessId,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -303,7 +346,8 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
           other.subjectArea == this.subjectArea &&
           other.phase == this.phase &&
           other.validFrom == this.validFrom &&
-          other.validUntil == this.validUntil);
+          other.validUntil == this.validUntil &&
+          other.accessId == this.accessId);
 }
 
 class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
@@ -313,6 +357,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
   final Value<String> phase;
   final Value<DateTime?> validFrom;
   final Value<DateTime?> validUntil;
+  final Value<String?> accessId;
   final Value<int> rowid;
   const LocalCategoriesCompanion({
     this.id = const Value.absent(),
@@ -321,6 +366,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
     this.phase = const Value.absent(),
     this.validFrom = const Value.absent(),
     this.validUntil = const Value.absent(),
+    this.accessId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalCategoriesCompanion.insert({
@@ -330,6 +376,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
     this.phase = const Value.absent(),
     this.validFrom = const Value.absent(),
     this.validUntil = const Value.absent(),
+    this.accessId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -341,6 +388,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
     Expression<String>? phase,
     Expression<DateTime>? validFrom,
     Expression<DateTime>? validUntil,
+    Expression<String>? accessId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -350,6 +398,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
       if (phase != null) 'phase': phase,
       if (validFrom != null) 'valid_from': validFrom,
       if (validUntil != null) 'valid_until': validUntil,
+      if (accessId != null) 'access_id': accessId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -361,6 +410,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
     Value<String>? phase,
     Value<DateTime?>? validFrom,
     Value<DateTime?>? validUntil,
+    Value<String?>? accessId,
     Value<int>? rowid,
   }) {
     return LocalCategoriesCompanion(
@@ -370,6 +420,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
       phase: phase ?? this.phase,
       validFrom: validFrom ?? this.validFrom,
       validUntil: validUntil ?? this.validUntil,
+      accessId: accessId ?? this.accessId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -395,6 +446,9 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
     if (validUntil.present) {
       map['valid_until'] = Variable<DateTime>(validUntil.value);
     }
+    if (accessId.present) {
+      map['access_id'] = Variable<String>(accessId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -410,6 +464,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
           ..write('phase: $phase, ')
           ..write('validFrom: $validFrom, ')
           ..write('validUntil: $validUntil, ')
+          ..write('accessId: $accessId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1892,6 +1947,28 @@ class $LocalSessionsTable extends LocalSessions
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _accessIdMeta = const VerificationMeta(
+    'accessId',
+  );
+  @override
+  late final GeneratedColumn<String> accessId = GeneratedColumn<String>(
+    'access_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _currentLevelIdMeta = const VerificationMeta(
+    'currentLevelId',
+  );
+  @override
+  late final GeneratedColumn<String> currentLevelId = GeneratedColumn<String>(
+    'current_level_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _syncStatusMeta = const VerificationMeta(
     'syncStatus',
   );
@@ -1929,6 +2006,8 @@ class $LocalSessionsTable extends LocalSessions
     startedAt,
     completedAt,
     timeSpentSec,
+    accessId,
+    currentLevelId,
     syncStatus,
     createdAt,
   ];
@@ -2033,6 +2112,21 @@ class $LocalSessionsTable extends LocalSessions
         ),
       );
     }
+    if (data.containsKey('access_id')) {
+      context.handle(
+        _accessIdMeta,
+        accessId.isAcceptableOrUnknown(data['access_id']!, _accessIdMeta),
+      );
+    }
+    if (data.containsKey('current_level_id')) {
+      context.handle(
+        _currentLevelIdMeta,
+        currentLevelId.isAcceptableOrUnknown(
+          data['current_level_id']!,
+          _currentLevelIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('sync_status')) {
       context.handle(
         _syncStatusMeta,
@@ -2104,6 +2198,14 @@ class $LocalSessionsTable extends LocalSessions
         DriftSqlType.int,
         data['${effectivePrefix}time_spent_sec'],
       ),
+      accessId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}access_id'],
+      ),
+      currentLevelId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}current_level_id'],
+      ),
       syncStatus: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}sync_status'],
@@ -2134,6 +2236,8 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
   final DateTime? startedAt;
   final DateTime? completedAt;
   final int? timeSpentSec;
+  final String? accessId;
+  final String? currentLevelId;
   final String syncStatus;
   final DateTime createdAt;
   const LocalSession({
@@ -2149,6 +2253,8 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
     this.startedAt,
     this.completedAt,
     this.timeSpentSec,
+    this.accessId,
+    this.currentLevelId,
     required this.syncStatus,
     required this.createdAt,
   });
@@ -2174,6 +2280,12 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
     }
     if (!nullToAbsent || timeSpentSec != null) {
       map['time_spent_sec'] = Variable<int>(timeSpentSec);
+    }
+    if (!nullToAbsent || accessId != null) {
+      map['access_id'] = Variable<String>(accessId);
+    }
+    if (!nullToAbsent || currentLevelId != null) {
+      map['current_level_id'] = Variable<String>(currentLevelId);
     }
     map['sync_status'] = Variable<String>(syncStatus);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -2202,6 +2314,12 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
       timeSpentSec: timeSpentSec == null && nullToAbsent
           ? const Value.absent()
           : Value(timeSpentSec),
+      accessId: accessId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accessId),
+      currentLevelId: currentLevelId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currentLevelId),
       syncStatus: Value(syncStatus),
       createdAt: Value(createdAt),
     );
@@ -2227,6 +2345,8 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
       startedAt: serializer.fromJson<DateTime?>(json['startedAt']),
       completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
       timeSpentSec: serializer.fromJson<int?>(json['timeSpentSec']),
+      accessId: serializer.fromJson<String?>(json['accessId']),
+      currentLevelId: serializer.fromJson<String?>(json['currentLevelId']),
       syncStatus: serializer.fromJson<String>(json['syncStatus']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -2247,6 +2367,8 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
       'startedAt': serializer.toJson<DateTime?>(startedAt),
       'completedAt': serializer.toJson<DateTime?>(completedAt),
       'timeSpentSec': serializer.toJson<int?>(timeSpentSec),
+      'accessId': serializer.toJson<String?>(accessId),
+      'currentLevelId': serializer.toJson<String?>(currentLevelId),
       'syncStatus': serializer.toJson<String>(syncStatus),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -2265,6 +2387,8 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
     Value<DateTime?> startedAt = const Value.absent(),
     Value<DateTime?> completedAt = const Value.absent(),
     Value<int?> timeSpentSec = const Value.absent(),
+    Value<String?> accessId = const Value.absent(),
+    Value<String?> currentLevelId = const Value.absent(),
     String? syncStatus,
     DateTime? createdAt,
   }) => LocalSession(
@@ -2280,6 +2404,10 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
     startedAt: startedAt.present ? startedAt.value : this.startedAt,
     completedAt: completedAt.present ? completedAt.value : this.completedAt,
     timeSpentSec: timeSpentSec.present ? timeSpentSec.value : this.timeSpentSec,
+    accessId: accessId.present ? accessId.value : this.accessId,
+    currentLevelId: currentLevelId.present
+        ? currentLevelId.value
+        : this.currentLevelId,
     syncStatus: syncStatus ?? this.syncStatus,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -2307,6 +2435,10 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
       timeSpentSec: data.timeSpentSec.present
           ? data.timeSpentSec.value
           : this.timeSpentSec,
+      accessId: data.accessId.present ? data.accessId.value : this.accessId,
+      currentLevelId: data.currentLevelId.present
+          ? data.currentLevelId.value
+          : this.currentLevelId,
       syncStatus: data.syncStatus.present
           ? data.syncStatus.value
           : this.syncStatus,
@@ -2329,6 +2461,8 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
           ..write('startedAt: $startedAt, ')
           ..write('completedAt: $completedAt, ')
           ..write('timeSpentSec: $timeSpentSec, ')
+          ..write('accessId: $accessId, ')
+          ..write('currentLevelId: $currentLevelId, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -2349,6 +2483,8 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
     startedAt,
     completedAt,
     timeSpentSec,
+    accessId,
+    currentLevelId,
     syncStatus,
     createdAt,
   );
@@ -2368,6 +2504,8 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
           other.startedAt == this.startedAt &&
           other.completedAt == this.completedAt &&
           other.timeSpentSec == this.timeSpentSec &&
+          other.accessId == this.accessId &&
+          other.currentLevelId == this.currentLevelId &&
           other.syncStatus == this.syncStatus &&
           other.createdAt == this.createdAt);
 }
@@ -2385,6 +2523,8 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
   final Value<DateTime?> startedAt;
   final Value<DateTime?> completedAt;
   final Value<int?> timeSpentSec;
+  final Value<String?> accessId;
+  final Value<String?> currentLevelId;
   final Value<String> syncStatus;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -2401,6 +2541,8 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
     this.startedAt = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.timeSpentSec = const Value.absent(),
+    this.accessId = const Value.absent(),
+    this.currentLevelId = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2418,6 +2560,8 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
     this.startedAt = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.timeSpentSec = const Value.absent(),
+    this.accessId = const Value.absent(),
+    this.currentLevelId = const Value.absent(),
     this.syncStatus = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
@@ -2439,6 +2583,8 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
     Expression<DateTime>? startedAt,
     Expression<DateTime>? completedAt,
     Expression<int>? timeSpentSec,
+    Expression<String>? accessId,
+    Expression<String>? currentLevelId,
     Expression<String>? syncStatus,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -2457,6 +2603,8 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
       if (startedAt != null) 'started_at': startedAt,
       if (completedAt != null) 'completed_at': completedAt,
       if (timeSpentSec != null) 'time_spent_sec': timeSpentSec,
+      if (accessId != null) 'access_id': accessId,
+      if (currentLevelId != null) 'current_level_id': currentLevelId,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -2476,6 +2624,8 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
     Value<DateTime?>? startedAt,
     Value<DateTime?>? completedAt,
     Value<int?>? timeSpentSec,
+    Value<String?>? accessId,
+    Value<String?>? currentLevelId,
     Value<String>? syncStatus,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -2493,6 +2643,8 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
       startedAt: startedAt ?? this.startedAt,
       completedAt: completedAt ?? this.completedAt,
       timeSpentSec: timeSpentSec ?? this.timeSpentSec,
+      accessId: accessId ?? this.accessId,
+      currentLevelId: currentLevelId ?? this.currentLevelId,
       syncStatus: syncStatus ?? this.syncStatus,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -2538,6 +2690,12 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
     if (timeSpentSec.present) {
       map['time_spent_sec'] = Variable<int>(timeSpentSec.value);
     }
+    if (accessId.present) {
+      map['access_id'] = Variable<String>(accessId.value);
+    }
+    if (currentLevelId.present) {
+      map['current_level_id'] = Variable<String>(currentLevelId.value);
+    }
     if (syncStatus.present) {
       map['sync_status'] = Variable<String>(syncStatus.value);
     }
@@ -2565,6 +2723,8 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
           ..write('startedAt: $startedAt, ')
           ..write('completedAt: $completedAt, ')
           ..write('timeSpentSec: $timeSpentSec, ')
+          ..write('accessId: $accessId, ')
+          ..write('currentLevelId: $currentLevelId, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -3448,6 +3608,7 @@ typedef $$LocalCategoriesTableCreateCompanionBuilder =
       Value<String> phase,
       Value<DateTime?> validFrom,
       Value<DateTime?> validUntil,
+      Value<String?> accessId,
       Value<int> rowid,
     });
 typedef $$LocalCategoriesTableUpdateCompanionBuilder =
@@ -3458,6 +3619,7 @@ typedef $$LocalCategoriesTableUpdateCompanionBuilder =
       Value<String> phase,
       Value<DateTime?> validFrom,
       Value<DateTime?> validUntil,
+      Value<String?> accessId,
       Value<int> rowid,
     });
 
@@ -3497,6 +3659,11 @@ class $$LocalCategoriesTableFilterComposer
 
   ColumnFilters<DateTime> get validUntil => $composableBuilder(
     column: $table.validUntil,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accessId => $composableBuilder(
+    column: $table.accessId,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3539,6 +3706,11 @@ class $$LocalCategoriesTableOrderingComposer
     column: $table.validUntil,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get accessId => $composableBuilder(
+    column: $table.accessId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$LocalCategoriesTableAnnotationComposer
@@ -3571,6 +3743,9 @@ class $$LocalCategoriesTableAnnotationComposer
     column: $table.validUntil,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get accessId =>
+      $composableBuilder(column: $table.accessId, builder: (column) => column);
 }
 
 class $$LocalCategoriesTableTableManager
@@ -3612,6 +3787,7 @@ class $$LocalCategoriesTableTableManager
                 Value<String> phase = const Value.absent(),
                 Value<DateTime?> validFrom = const Value.absent(),
                 Value<DateTime?> validUntil = const Value.absent(),
+                Value<String?> accessId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalCategoriesCompanion(
                 id: id,
@@ -3620,6 +3796,7 @@ class $$LocalCategoriesTableTableManager
                 phase: phase,
                 validFrom: validFrom,
                 validUntil: validUntil,
+                accessId: accessId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3630,6 +3807,7 @@ class $$LocalCategoriesTableTableManager
                 Value<String> phase = const Value.absent(),
                 Value<DateTime?> validFrom = const Value.absent(),
                 Value<DateTime?> validUntil = const Value.absent(),
+                Value<String?> accessId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalCategoriesCompanion.insert(
                 id: id,
@@ -3638,6 +3816,7 @@ class $$LocalCategoriesTableTableManager
                 phase: phase,
                 validFrom: validFrom,
                 validUntil: validUntil,
+                accessId: accessId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -4322,6 +4501,8 @@ typedef $$LocalSessionsTableCreateCompanionBuilder =
       Value<DateTime?> startedAt,
       Value<DateTime?> completedAt,
       Value<int?> timeSpentSec,
+      Value<String?> accessId,
+      Value<String?> currentLevelId,
       Value<String> syncStatus,
       required DateTime createdAt,
       Value<int> rowid,
@@ -4340,6 +4521,8 @@ typedef $$LocalSessionsTableUpdateCompanionBuilder =
       Value<DateTime?> startedAt,
       Value<DateTime?> completedAt,
       Value<int?> timeSpentSec,
+      Value<String?> accessId,
+      Value<String?> currentLevelId,
       Value<String> syncStatus,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -4411,6 +4594,16 @@ class $$LocalSessionsTableFilterComposer
 
   ColumnFilters<int> get timeSpentSec => $composableBuilder(
     column: $table.timeSpentSec,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accessId => $composableBuilder(
+    column: $table.accessId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currentLevelId => $composableBuilder(
+    column: $table.currentLevelId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4494,6 +4687,16 @@ class $$LocalSessionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get accessId => $composableBuilder(
+    column: $table.accessId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currentLevelId => $composableBuilder(
+    column: $table.currentLevelId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get syncStatus => $composableBuilder(
     column: $table.syncStatus,
     builder: (column) => ColumnOrderings(column),
@@ -4560,6 +4763,14 @@ class $$LocalSessionsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get accessId =>
+      $composableBuilder(column: $table.accessId, builder: (column) => column);
+
+  GeneratedColumn<String> get currentLevelId => $composableBuilder(
+    column: $table.currentLevelId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get syncStatus => $composableBuilder(
     column: $table.syncStatus,
     builder: (column) => column,
@@ -4612,6 +4823,8 @@ class $$LocalSessionsTableTableManager
                 Value<DateTime?> startedAt = const Value.absent(),
                 Value<DateTime?> completedAt = const Value.absent(),
                 Value<int?> timeSpentSec = const Value.absent(),
+                Value<String?> accessId = const Value.absent(),
+                Value<String?> currentLevelId = const Value.absent(),
                 Value<String> syncStatus = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -4628,6 +4841,8 @@ class $$LocalSessionsTableTableManager
                 startedAt: startedAt,
                 completedAt: completedAt,
                 timeSpentSec: timeSpentSec,
+                accessId: accessId,
+                currentLevelId: currentLevelId,
                 syncStatus: syncStatus,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -4646,6 +4861,8 @@ class $$LocalSessionsTableTableManager
                 Value<DateTime?> startedAt = const Value.absent(),
                 Value<DateTime?> completedAt = const Value.absent(),
                 Value<int?> timeSpentSec = const Value.absent(),
+                Value<String?> accessId = const Value.absent(),
+                Value<String?> currentLevelId = const Value.absent(),
                 Value<String> syncStatus = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
@@ -4662,6 +4879,8 @@ class $$LocalSessionsTableTableManager
                 startedAt: startedAt,
                 completedAt: completedAt,
                 timeSpentSec: timeSpentSec,
+                accessId: accessId,
+                currentLevelId: currentLevelId,
                 syncStatus: syncStatus,
                 createdAt: createdAt,
                 rowid: rowid,
