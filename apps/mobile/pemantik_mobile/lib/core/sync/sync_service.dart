@@ -22,24 +22,33 @@ class SyncService {
       final studentStr = await storage.read(key: 'student_data');
       if (studentStr == null) return;
 
+      // Baca data siswa dari SecureStorage untuk dipakai di Minggu 2
+      // (binding session ke access_id, dll.)
       final student = jsonDecode(studentStr);
-      final schoolId = student['school_id'];
-      final classId = student['class_id'];
-      final studentId = student['id'];
+      // Variabel ini akan dipakai di Minggu 2 (insert session + access_id tracking)
+      // ignore: unused_local_variable
+      final String? schoolId = student['school_id'] as String?;
+      // ignore: unused_local_variable
+      final String? classId = student['class_id'] as String?;
+      // ignore: unused_local_variable
+      final String? studentId = student['id'] as String?;
 
-      List<String> conditions = [
-        'target_id.eq.$schoolId',
-        'target_id.eq.$studentId',
-      ];
-      if (classId != null) conditions.add('target_id.eq.$classId');
 
+      // Query assessment_access untuk school siswa ini.
+      // RLS policy 'student_view_own_access' sudah memfilter berdasarkan:
+      //   - school_id dari JWT claims (via jwt_school_id())
+      //   - is_active = true
+      //   - valid_from <= now() <= valid_until
+      // Sehingga kita tidak perlu filter manual di sini — cukup pakai .select().
+      // Catatan: target_id di assessment_access adalah school_id atau community_id,
+      //          BUKAN student_id, sehingga student_id tidak relevan di sini.
       final accessResponse = await SupabaseConfig.client
           .from('assessment_access')
           .select(
-            'category_id, phase, valid_from, valid_until, question_categories ( id, name, subject_area )',
+            // Tambah 'id' (access_id) untuk binding sesi ke akses ujian (Minggu 2)
+            'id, category_id, phase, valid_from, valid_until, question_categories ( id, name, subject_area )',
           )
-          .eq('is_active', true)
-          .or(conditions.join(','));
+          .eq('is_active', true);
 
       for (final row in accessResponse) {
         final pkgData = row['question_categories'];
