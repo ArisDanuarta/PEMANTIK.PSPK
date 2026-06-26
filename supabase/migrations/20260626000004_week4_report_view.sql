@@ -25,7 +25,7 @@ BEGIN;
 -- Drop dulu jika sudah ada versi lama
 DROP VIEW IF EXISTS v_assessment_report;
 
-CREATE OR REPLACE VIEW v_assessment_report AS
+CREATE OR REPLACE VIEW v_assessment_report WITH (security_invoker = true) AS
 SELECT
   -- ── Data akses ujian ─────────────────────────────────────────────────────
   aa.id           AS access_id,
