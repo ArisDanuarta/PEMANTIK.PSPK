@@ -342,15 +342,20 @@ class AssessmentController extends _$AssessmentController {
     }
 
     // 2. Tandai Sesi sebagai Selesai
-    await (db.update(
-      db.localSessions,
-    )..where((t) => t.id.equals(sessionId))).write(
+    // Hitung waktu pengerjaan nyata dari startedAt sesi → sekarang
+    final sessionData0 = await db.sessionDao.getSessionById(sessionId);
+    final timeSpent = sessionData0?.startedAt != null
+        ? DateTime.now().difference(sessionData0!.startedAt!).inSeconds
+        : 0;
+
+    await (db.update(db.localSessions)
+          ..where((t) => t.id.equals(sessionId)))
+        .write(
       LocalSessionsCompanion(
-        status: const drift.Value('completed'),
-        completedAt: drift.Value(DateTime.now()),
-        syncStatus: const drift.Value('pending'),
-        // Simpan jumlah benar sementara (karena Supabase butuh numeric score)
-        timeSpentSec: const drift.Value(0),
+        status:       const drift.Value('completed'),
+        completedAt:  drift.Value(DateTime.now()),
+        syncStatus:   const drift.Value('pending'),
+        timeSpentSec: drift.Value(timeSpent),
       ),
     );
 

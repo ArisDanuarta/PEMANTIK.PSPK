@@ -203,3 +203,118 @@ export async function resetStudentSession(sessionId: string) {
     return { success: false, error: "Terjadi kesalahan internal server." };
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// distributeAccessToSchools — Minggu 3
+// Distribusikan satu parent access (community) ke banyak sekolah sekaligus.
+// schoolIds = ['all'] → semua sekolah aktif. Tanggal DIWARISI dari parent.
+// ─────────────────────────────────────────────────────────────────────────────
+export async function distributeAccessToSchools(
+  parentAccessId: string,
+  schoolIds: string[],
+  communityId: string
+): Promise<{
+  success: boolean;
+  distributed_to?: number;
+  skipped?: number;
+  total_schools?: number;
+  error?: string;
+}> {
+  try {
+    const supabase = createServerClient();
+
+    // 1. Validasi parent access
+    const { data: parent, error: parentErr } = await supabase
+      .from("assessment_access")
+      .select("id, category_id, phase, valid_from, valid_until, max_attempts, target_type, target_id, is_active")
+      .eq("id", parentAccessId)
+      .single();
+
+    if (parentErr || !parent) {
+      return { success: false, error: "Akses ujian induk tidak ditemukan." };
+    }
+    if (parent.target_type !== "community" || parent.target_id !== communityId) {
+      return { success: false, error: "Anda tidak memiliki izin atas akses ujian ini." };
+    }
+    if (!parent.is_active) {
+      return { success: false, error: "Akses ujian induk sudah tidak aktif." };
+    }
+
+    // 2. Tentukan target sekolah
+    const { data: allSchools } = await supabase
+      .from("schools")
+      .select("id")
+      .eq("community_id", communityId)
+      .eq("is_active", true);
+
+    if (!allSchools || allSchools.length === 0) {
+      return { success: false, error: "Tidak ada sekolah aktif dalam komunitas ini." };
+    }
+
+    let targetIds: string[];
+    if (schoolIds.length === 1 && schoolIds[0] === "all") {
+      targetIds = allSchools.map((s) => s.id);
+    } else {
+      const validSet = new Set(allSchools.map((s) => s.id));
+      const invalid = schoolIds.filter((id) => !validSet.has(id));
+      if (invalid.length > 0) {
+        return { success: false, error: `${invalid.length} sekolah tidak termasuk dalam komunitas Anda.` };
+      }
+      targetIds = schoolIds;
+    }
+
+    if (targetIds.length === 0) {
+      return { success: false, error: "Tidak ada sekolah yang dipilih." };
+    }
+
+    // 3. Cek yang sudah punya akses (idempoten)
+    const { data: existing } = await supabase
+      .from("assessment_access")
+      .select("target_id")
+      .eq("category_id", parent.category_id)
+      .eq("phase", parent.phase ?? "")
+      .eq("target_type", "school")
+      .in("target_id", targetIds);
+
+    const haveAccess = new Set(existing?.map((a) => a.target_id) ?? []);
+    const toInsert = targetIds.filter((id) => !haveAccess.has(id));
+    const skipped = targetIds.length - toInsert.length;
+
+    if (toInsert.length === 0) {
+      return { success: true, distributed_to: 0, skipped, total_schools: targetIds.length };
+    }
+
+    // 4. Insert — tanggal valid DIWARISI dari parent
+    const { data: userResult } = await supabase.auth.getUser();
+    const rows = toInsert.map((schoolId) => ({
+      category_id:  parent.category_id,
+      target_type:  "school",
+      target_id:    schoolId,
+      phase:        parent.phase,
+      valid_from:   parent.valid_from,
+      valid_until:  parent.valid_until,
+      max_attempts: parent.max_attempts,
+      is_active:    true,
+      granted_by:   userResult?.user?.id ?? undefined,
+    }));
+
+    const { error: insertErr } = await supabase.from("assessment_access").insert(rows);
+
+    if (insertErr) {
+      if (insertErr.code === "23505") {
+        return { success: false, error: "Beberapa sekolah sudah memiliki akses ujian ini." };
+      }
+      console.error("[distributeAccessToSchools]", insertErr);
+      return { success: false, error: `Gagal mendistribusikan: ${insertErr.message}` };
+    }
+
+    revalidatePath("/komunitas/akses-ujian");
+    revalidatePath("/sekolah/akses-ujian");
+    revalidatePath("/super-admin/akses-ujian");
+
+    return { success: true, distributed_to: toInsert.length, skipped, total_schools: targetIds.length };
+  } catch (err: any) {
+    console.error("[distributeAccessToSchools]", err);
+    return { success: false, error: "Terjadi kesalahan internal server." };
+  }
+}

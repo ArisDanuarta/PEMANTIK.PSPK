@@ -230,21 +230,56 @@ class SyncService {
         }
       }
 
-      // 3. Panggil RPC validasi HANYA untuk sesi yang statusnya 'completed'
-      // Ini dilakukan setelah semua jawaban berhasil diupload.
+      // 3. Panggil advance_student_level HANYA untuk sesi 'completed' yang sudah terupload.
+      // Fungsi ini menggantikan validate_level_completion() (Minggu 1) — versi baru ini
+      // juga melakukan UPDATE di database (current_level_id atau status=completed).
       for (final session in pendingSessions) {
         if (session.status == 'completed' && !session.id.startsWith('ses_')) {
+          // Butuh current_level_id — ambil dari levelId yang disimpan lokal
+          final levelId = session.currentLevelId ?? session.levelId;
+          if (levelId == null) {
+            log('[Sync] Sesi ${session.id}: tidak ada current_level_id, lewati advance_student_level');
+            continue;
+          }
+
           try {
-            final validationResult = await SupabaseConfig.client.rpc(
-              'validate_level_completion',
-              params: {'p_session_id': session.id},
+            final result = await SupabaseConfig.client.rpc(
+              'advance_student_level',
+              params: {
+                'p_session_id':       session.id,
+                'p_current_level_id': levelId,
+              },
             );
-            log('Hasil validasi kelulusan level: $validationResult');
+
+            if (result is Map) {
+              final action     = result['action'] as String? ?? 'unknown';
+              final levelScore = result['level_score'];
+              final reason     = result['reason'];
+
+              if (action == 'advance') {
+                final nextLevelId     = result['next_level_id'];
+                final nextLevelNumber = result['next_level_number'];
+                log('[Sync] Sesi ${session.id}: NAIK ke Level $nextLevelNumber (score: $levelScore%)');
+
+                // Update local session currentLevelId untuk sinkronisasi di masa depan
+                await (_db.update(_db.localSessions)
+                  ..where((t) => t.id.equals(session.id)))
+                  .write(LocalSessionsCompanion(
+                    currentLevelId: Value(nextLevelId?.toString()),
+                  ));
+              } else if (action == 'complete') {
+                log('[Sync] Sesi ${session.id}: SELESAI (score: $levelScore%, reason: $reason)');
+              } else if (action == 'error') {
+                log('[Sync] Sesi ${session.id}: advance_student_level error → reason: ${result['reason']}, detail: ${result['detail']}');
+              }
+            }
           } catch (rpcError) {
-            log('Gagal validasi kelulusan level via RPC: $rpcError');
+            // Jangan crash sync karena error RPC — sesi tetap tersimpan lokal
+            log('[Sync] Gagal panggil advance_student_level untuk sesi ${session.id}: $rpcError');
           }
         }
       }
+
 
       log('Sinkronisasi Upload Selesai');
     } catch (e) {
