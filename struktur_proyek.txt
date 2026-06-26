@@ -1,0 +1,250 @@
+pemantik
+├── apps
+│   ├── mobile
+│   │   └── README.md
+│   └── web
+│       ├── src
+│       │   ├── app
+│       │   │   ├── actions
+│       │   │   │   ├── assessment.ts
+│       │   │   │   ├── auth.ts
+│       │   │   │   ├── classes.ts
+│       │   │   │   ├── communities.ts
+│       │   │   │   ├── logs.ts
+│       │   │   │   ├── notifications.ts
+│       │   │   │   ├── questionAdmins.ts
+│       │   │   │   ├── questionCategories.ts
+│       │   │   │   ├── questions.ts
+│       │   │   │   ├── schools.ts
+│       │   │   │   ├── ses.ts
+│       │   │   │   ├── settings.ts
+│       │   │   │   ├── students.ts
+│       │   │   │   └── teachers.ts
+│       │   │   ├── admin-soal
+│       │   │   │   ├── dashboard
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── pengaturan
+│       │   │   │   │   ├── PengaturanClient.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── preview
+│       │   │   │   │   ├── PreviewPageClient.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── soal
+│       │   │   │   │   ├── [id]
+│       │   │   │   │   │   ├── edit
+│       │   │   │   │   │   │   └── page.tsx
+│       │   │   │   │   │   └── page.tsx
+│       │   │   │   │   ├── new
+│       │   │   │   │   │   ├── QuestionFormClient.tsx
+│       │   │   │   │   │   └── page.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── layout.tsx
+│       │   │   │   └── loading.tsx
+│       │   │   ├── api
+│       │   │   │   ├── export
+│       │   │   │   │   ├── detailed-results
+│       │   │   │   │   │   └── route.ts
+│       │   │   │   │   └── results
+│       │   │   │   │       └── route.ts
+│       │   │   │   ├── guru
+│       │   │   │   │   └── report
+│       │   │   │   │       └── route.ts
+│       │   │   │   ├── report
+│       │   │   │   │   ├── community-data
+│       │   │   │   │   │   └── route.ts
+│       │   │   │   │   └── school-data
+│       │   │   │   │       └── route.ts
+│       │   │   │   └── sekolah
+│       │   │   │       └── ujian-ulang
+│       │   │   │           └── route.ts
+│       │   │   ├── guru
+│       │   │   │   ├── dashboard
+│       │   │   │   │   ├── GuruDashboardClient.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── kelas
+│       │   │   │   │   ├── KelasManagerGuru.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── laporan
+│       │   │   │   │   ├── GuruReportDashboard.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── siswa
+│       │   │   │   │   ├── StudentsManagerGuru.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── layout.tsx
+│       │   │   │   └── loading.tsx
+│       │   │   ├── komunitas
+│       │   │   │   ├── akses-ujian
+│       │   │   │   │   ├── AksesUjianKomunitasClient.tsx
+│       │   │   │   │   ├── loading.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── dashboard
+│       │   │   │   │   ├── loading.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── guru
+│       │   │   │   │   ├── TeachersManagerKomunitas.tsx
+│       │   │   │   │   ├── loading.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── laporan
+│       │   │   │   │   ├── CommunityReportDashboard.tsx
+│       │   │   │   │   ├── loading.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── sekolah
+│       │   │   │   │   ├── SchoolsManagerKomunitas.tsx
+│       │   │   │   │   ├── loading.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── siswa
+│       │   │   │   │   ├── StudentsManagerKomunitas.tsx
+│       │   │   │   │   ├── loading.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── layout.tsx
+│       │   │   │   └── loading.tsx
+│       │   │   ├── login
+│       │   │   │   └── page.tsx
+│       │   │   ├── sekolah
+│       │   │   │   ├── akses-ujian
+│       │   │   │   │   ├── AksesUjianSekolahClient.tsx
+│       │   │   │   │   ├── loading.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── dashboard
+│       │   │   │   │   ├── loading.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── guru
+│       │   │   │   │   ├── TeachersManagerSekolah.tsx
+│       │   │   │   │   ├── loading.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── kelas
+│       │   │   │   │   ├── KelasManager.tsx
+│       │   │   │   │   ├── loading.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── laporan
+│       │   │   │   │   ├── SchoolReportDashboard.tsx
+│       │   │   │   │   ├── loading.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── siswa
+│       │   │   │   │   ├── StudentsManagerSekolah.tsx
+│       │   │   │   │   ├── loading.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── layout.tsx
+│       │   │   │   └── loading.tsx
+│       │   │   ├── super-admin
+│       │   │   │   ├── admin-soal
+│       │   │   │   │   ├── AdminSoalList.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── akses-ujian
+│       │   │   │   │   ├── AksesUjianClient.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── dashboard
+│       │   │   │   │   ├── DashboardCharts.tsx
+│       │   │   │   │   ├── ExportDataModal.tsx
+│       │   │   │   │   ├── IntegratedDashboardManager.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── guru
+│       │   │   │   │   ├── TeachersManager.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── komunitas
+│       │   │   │   │   ├── CommunitiesManager.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── log-sistem
+│       │   │   │   │   ├── SystemLogViewer.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── pengaturan
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── pengaturan-ses
+│       │   │   │   │   ├── SesManager.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── sebaran-ses
+│       │   │   │   │   ├── SebaranMapViewer.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── sekolah
+│       │   │   │   │   ├── SchoolsManager.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── sesi-siswa
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── siswa
+│       │   │   │   │   ├── StudentsManager.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── soal
+│       │   │   │   │   ├── [id]
+│       │   │   │   │   │   ├── edit
+│       │   │   │   │   │   │   └── page.tsx
+│       │   │   │   │   │   └── page.tsx
+│       │   │   │   │   ├── new
+│       │   │   │   │   │   ├── QuestionFormClient.tsx
+│       │   │   │   │   │   └── page.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── layout.tsx
+│       │   │   │   └── loading.tsx
+│       │   │   ├── layout.tsx
+│       │   │   ├── page.tsx
+│       │   │   └── providers.tsx
+│       │   ├── components
+│       │   │   ├── layout
+│       │   │   │   ├── AppLayout.tsx
+│       │   │   │   └── Sidebar.tsx
+│       │   │   └── shared
+│       │   │       ├── AssignPackageModal.tsx
+│       │   │       ├── BulkUploadModal.tsx
+│       │   │       ├── DashboardSkeleton.tsx
+│       │   │       ├── FeedbackFAB.tsx
+│       │   │       ├── NotificationBell.tsx
+│       │   │       ├── ProgressTrackingChart.tsx
+│       │   │       ├── QuestionTableClient.tsx
+│       │   │       ├── SearchableSelect.tsx
+│       │   │       └── StudentSessionsTable.tsx
+│       │   └── proxy.ts
+│       ├── README.md
+│       ├── check.js
+│       ├── next-env.d.ts
+│       ├── next.config.ts
+│       ├── package.json
+│       ├── pnpm-lock.yaml
+│       └── tsconfig.json
+├── docs
+│   ├── RINGKASAN_TAHAP_1.md
+│   ├── RINGKASAN_TAHAP_2.md
+│   └── implementation_plan.md
+├── packages
+│   ├── shared-types
+│   │   ├── src
+│   │   │   ├── assessment.ts
+│   │   │   ├── community.ts
+│   │   │   ├── index.ts
+│   │   │   ├── question.ts
+│   │   │   ├── student.ts
+│   │   │   └── user.ts
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   ├── supabase
+│   │   ├── src
+│   │   │   ├── helpers
+│   │   │   │   └── rls.ts
+│   │   │   ├── client.ts
+│   │   │   ├── index.ts
+│   │   │   └── types.ts
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   └── ui
+│       ├── src
+│       │   ├── Badge
+│       │   │   └── Badge.tsx
+│       │   ├── Button
+│       │   │   └── Button.tsx
+│       │   ├── Modal
+│       │   │   └── Modal.tsx
+│       │   ├── Skeleton
+│       │   │   └── PhantomSkeleton.tsx
+│       │   ├── Table
+│       │   │   └── Table.tsx
+│       │   ├── confirm-dialog.tsx
+│       │   ├── index.ts
+│       │   └── toast.tsx
+│       ├── package.json
+│       └── tsconfig.json
+├── Blueprint_Sistem_Pemantik_v2.md
+├── Brand_Guidelines_PSPK.md
+├── RULES.MD
+├── check.js
+├── package.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml
+└── turbo.json

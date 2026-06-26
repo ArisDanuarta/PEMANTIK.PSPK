@@ -1,0 +1,60 @@
+name: pemantik_mobile
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  audioplayers: ^6.7.1
+  cached_network_image: ^3.4.1
+  collection: ^1.19.1
+  connectivity_plus: ^7.1.1
+  cupertino_icons: ^1.0.8
+  drift: ^2.34.0
+  flutter:
+    sdk: flutter
+  flutter_cache_manager: ^3.4.1
+  flutter_riverpod: ^3.3.2
+  flutter_secure_storage: ^10.3.1
+  google_fonts: ^8.1.0
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  record: ^7.1.0
+  riverpod_annotation: ^4.0.3
+  speech_to_text: ^7.4.0
+  sqlite3_flutter_libs: ^0.6.0+eol
+  supabase_flutter: ^2.15.0
+  uuid: ^4.5.3
+  video_player: ^2.11.1
+  youtube_player_flutter: ^10.0.1
+
+dev_dependencies:
+  build_runner: ^2.15.0
+  drift_dev: ^2.34.0
+  riverpod_generator: ^4.0.4
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/fonts/
+    # - assets/stitch_pemantik_splash_screen_design/splash_1_ignition_updated/
+    # - assets/stitch_pemantik_splash_screen_design/splash_2_dialogue_updated/
+    # - assets/stitch_pemantik_splash_screen_design/splash_3_assessment_updated/
+    # - assets/stitch_pemantik_splash_screen_design/splash_4_resolve_updated/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path_android: "assets/images/LOGO_ANDROID.png"
+  image_path_ios: "assets/images/LOGO_IPHONE.png"
+  remove_alpha_ios: true

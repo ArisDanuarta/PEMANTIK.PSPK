@@ -1,0 +1,217 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Pemantik - Mengukur Mandiri</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&amp;family=Rubik:ital,wght@0,300..900;1,300..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#456084",
+                        "on-tertiary-fixed-variant": "#8f0f07",
+                        "outline": "#74777f",
+                        "on-primary-fixed-variant": "#2d486b",
+                        "primary-container": "#102e50",
+                        "secondary-container": "#fed65b",
+                        "tertiary-fixed-dim": "#ffb4a8",
+                        "on-surface": "#191c1d",
+                        "secondary-fixed": "#ffe088",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#001c39",
+                        "surface-variant": "#e1e3e4",
+                        "secondary": "#735c00",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#7c96be",
+                        "on-secondary-fixed": "#241a00",
+                        "on-error-container": "#93000a",
+                        "background": "#f8f9fa",
+                        "on-tertiary-fixed": "#410000",
+                        "outline-variant": "#c4c6cf",
+                        "on-secondary-fixed-variant": "#574500",
+                        "surface-container-high": "#e7e8e9",
+                        "tertiary": "#3c0000",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#fd614d",
+                        "primary": "#001934",
+                        "surface-container-highest": "#e1e3e4",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#adc8f2",
+                        "on-surface-variant": "#43474e",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "surface-dim": "#d9dadb",
+                        "secondary-fixed-dim": "#e9c349",
+                        "on-secondary-container": "#745c00",
+                        "on-background": "#191c1d",
+                        "surface-bright": "#f8f9fa",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#ffdad4",
+                        "inverse-surface": "#2e3132",
+                        "inverse-on-surface": "#f0f1f2",
+                        "tertiary-container": "#630000",
+                        "surface-container": "#edeeef",
+                        "primary-fixed": "#d4e3ff",
+                        "on-primary": "#ffffff",
+                        "surface": "#f8f9fa",
+                        "primary-fixed-dim": "#adc8f2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-desktop": "40px",
+                        "margin-mobile": "16px",
+                        "base": "8px",
+                        "container-max": "1280px"
+                    },
+                    "fontFamily": {
+                        "title-md": ["Lora"],
+                        "body-lg": ["Rubik"],
+                        "caption": ["Rubik"],
+                        "display-lg": ["Lora"],
+                        "headline-lg": ["Lora"],
+                        "body-md": ["Rubik"],
+                        "headline-lg-mobile": ["Lora"],
+                        "label-md": ["Rubik"]
+                    },
+                    "fontSize": {
+                        "title-md": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "caption": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .animate-float-slow {
+            animation: float 6s ease-in-out infinite;
+        }
+        .animate-float-medium {
+            animation: float 4s ease-in-out infinite 1s;
+        }
+        .animate-float-fast {
+            animation: float 3s ease-in-out infinite 0.5s;
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.05); }
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 40px rgba(254, 214, 91, 0.5); }
+        }
+
+        .icon-merge-container {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .central-flame {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background-color: theme('colors.secondary-container');
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.5s ease;
+        }
+
+        .orbit-icon {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background-color: theme('colors.surface');
+            border-radius: 50%;
+            z-index: 5;
+            box-shadow: 0px 4px 20px rgba(16, 46, 80, 0.15);
+        }
+
+        .orbit-1 {
+            top: 10%;
+            left: 10%;
+        }
+
+        .orbit-2 {
+            bottom: 10%;
+            right: 10%;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-primary-container h-screen w-screen flex flex-col items-center justify-center overflow-hidden antialiased">
+<!-- Splash Graphic Cluster -->
+<div class="icon-merge-container mb-margin-desktop">
+<!-- Background Ambient Glow -->
+<div class="absolute inset-0 bg-secondary-fixed-dim rounded-full blur-3xl opacity-20 animate-pulse-glow"></div>
+<!-- Literacy (Book) Icon orbiting -->
+<div class="orbit-icon orbit-1 animate-float-slow text-primary">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">
+                menu_book
+            </span>
+</div>
+<!-- Numeracy (Blocks/Math) Icon orbiting -->
+<div class="orbit-icon orbit-2 animate-float-medium text-primary">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">
+                calculate
+            </span>
+</div>
+<!-- Central Spark/Flame Motif -->
+<div class="central-flame animate-pulse-glow text-on-secondary-container shadow-[0px_4px_20px_rgba(254,214,91,0.3)]">
+<span class="material-symbols-outlined text-[40px] animate-float-fast" style="font-variation-settings: 'FILL' 1;">
+                local_fire_department
+            </span>
+</div>
+</div>
+<!-- Title -->
+<h1 class="font-body-lg text-body-lg text-on-primary tracking-widest uppercase opacity-90 transition-opacity duration-1000 ease-in-out">
+        Mengukur Mandiri
+    </h1>
+<script>
+        // Simple script to handle fade out if this were to transition to another screen
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                // Example transition logic could go here
+                // console.log("Splash screen ready to transition");
+            }, 3000);
+        });
+    </script>
+</body></html>

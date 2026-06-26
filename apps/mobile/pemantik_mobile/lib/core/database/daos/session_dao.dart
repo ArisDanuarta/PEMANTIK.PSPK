@@ -1,0 +1,102 @@
+import 'package:drift/drift.dart';
+import '../database.dart';
+import '../tables/local_sessions.dart';
+import '../tables/local_answers.dart';
+
+part 'session_dao.g.dart';
+
+@DriftAccessor(tables: [LocalSessions, LocalAnswers])
+class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
+  SessionDao(super.db);
+
+  Future<List<LocalSession>> getSessionsByStatus(String syncStatus) {
+    return (select(
+      localSessions,
+    )..where((t) => t.syncStatus.equals(syncStatus))).get();
+  }
+
+  Future<void> updateSyncStatus(String id, String status) {
+    return (update(localSessions)..where((t) => t.id.equals(id))).write(
+      LocalSessionsCompanion(syncStatus: Value(status)),
+    );
+  }
+
+  Future<LocalSession?> getSessionById(String id) {
+    return (select(
+      localSessions,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<void> createSession(LocalSessionsCompanion session) {
+    return into(localSessions).insert(session);
+  }
+
+  Future<void> upsertSession(LocalSessionsCompanion session) {
+    return into(localSessions).insertOnConflictUpdate(session);
+  }
+
+  Future<void> updateQuestionIndex(String id, int index) {
+    return (update(localSessions)..where((t) => t.id.equals(id))).write(
+      LocalSessionsCompanion(currentQuestionIndex: Value(index)),
+    );
+  }
+
+  // Fungsi baru: Mendapatkan skor tertinggi dari sesi yang selesai untuk suatu level
+  Future<int> getHighestCorrectAnswersForLevel(
+    String studentId,
+    String levelId,
+  ) async {
+    // Cari semua sesi untuk studentId dan levelId yang sudah 'completed'
+    final sessions =
+        await (select(localSessions)..where(
+              (t) =>
+                  t.studentId.equals(studentId) &
+                  t.levelId.equals(levelId) &
+                  t.status.equals('completed'),
+            ))
+            .get();
+
+    if (sessions.isEmpty) return 0;
+
+    int maxCorrect = 0;
+    for (final session in sessions) {
+      // Hitung jumlah jawaban benar untuk sesi ini
+      final correctAnswers =
+          await (select(localAnswers)..where(
+                (a) =>
+                    a.sessionId.equals(session.id) & a.isCorrect.equals(true),
+              ))
+              .get();
+
+      if (correctAnswers.length > maxCorrect) {
+        maxCorrect = correctAnswers.length;
+      }
+    }
+
+    return maxCorrect;
+  }
+
+  // Fungsi baru: Mendapatkan riwayat sesi untuk level tertentu (termasuk status sinkronisasi)
+  Future<List<SessionHistoryItem>> getSessionsForLevel(String studentId, String levelId) async {
+    final sessions = await (select(localSessions)
+          ..where((t) => t.studentId.equals(studentId) & t.levelId.equals(levelId) & t.status.equals('completed'))
+          ..orderBy([(t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc)]))
+        .get();
+
+    final result = <SessionHistoryItem>[];
+    for (final session in sessions) {
+      final correctAnswers = await (select(localAnswers)
+            ..where((a) => a.sessionId.equals(session.id) & a.isCorrect.equals(true)))
+          .get();
+      result.add(SessionHistoryItem(session: session, correctAnswers: correctAnswers.length));
+    }
+    return result;
+  }
+}
+
+class SessionHistoryItem {
+  final LocalSession session;
+  final int correctAnswers;
+
+  SessionHistoryItem({required this.session, required this.correctAnswers});
+}
