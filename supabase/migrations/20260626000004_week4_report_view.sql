@@ -57,7 +57,6 @@ SELECT
   st.full_name    AS student_name,
   st.username     AS student_username,
   st.nisn,
-  st.nis,
   st.gender,
   st.birth_date,
   st.ses_class,

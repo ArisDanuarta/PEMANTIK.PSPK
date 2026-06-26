@@ -8,7 +8,6 @@ import { createBrowserClient } from "@pemantik/supabase/client";
 interface ReportData {
   id: string;
   nisn: string;
-  nis?: string;
   full_name: string;
   gender: string;
   school_name: string;
@@ -381,7 +380,7 @@ export default function SuperAdminReportDashboard({
                 <tr key={row.id}>
                   <td>
                     <div style={{ fontWeight: 600, color: "#102e50" }}>{row.full_name}</div>
-                    <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>{row.nisn || row.nis || "-"}</div>
+                    <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>{row.nisn || "-"}</div>
                   </td>
                   <td>
                     <div>{row.school_name}</div>

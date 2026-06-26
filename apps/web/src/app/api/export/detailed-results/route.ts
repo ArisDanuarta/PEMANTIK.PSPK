@@ -153,7 +153,7 @@ export async function GET(request: Request) {
       class_id, class_name, grade,
       teacher_name,
       student_id, student_name, student_username,
-      nisn, nis, gender, birth_date,
+      nisn, gender, birth_date,
       ses_class, ses_score,
       student_province, student_city, student_district, student_village,
       session_id, session_status, started_at, completed_at,
@@ -261,7 +261,7 @@ export async function GET(request: Request) {
   // ── SHEET 2: Data Siswa Lengkap ───────────────────────────────────────────
   const sheet2Headers = [
     "Komunitas", "Sekolah", "NPSN", "Kelas", "Guru",
-    "Nama Siswa", "Username", "NISN", "NIS", "Gender", "Tanggal Lahir",
+    "Nama Siswa", "Username", "NISN", "Gender", "Tanggal Lahir",
     "SES Class", "SES Score",
     "Provinsi", "Kota", "Kecamatan", "Desa",
     "Fase", "Status", "Skor Akhir", "Level Dicapai",
@@ -277,7 +277,6 @@ export async function GET(request: Request) {
     "Nama Siswa":    row.student_name      ?? "—",
     Username:        row.student_username  ?? "—",
     NISN:            row.nisn              ?? "—",
-    NIS:             row.nis               ?? "—",
     Gender:          row.gender            ?? "—",
     "Tanggal Lahir": row.birth_date        ?? "—",
     "SES Class":     row.ses_class         ?? "—",

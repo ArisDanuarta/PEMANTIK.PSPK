@@ -58,7 +58,6 @@ export async function GET(request: Request) {
       student_name,
       student_username,
       nisn,
-      nis,
       gender,
       ses_class,
       ses_score
@@ -142,7 +141,6 @@ export async function GET(request: Request) {
       final_level_number: row.final_level_number ?? null,
       // ── Siswa ──
       nisn:               row.nisn             ?? "",
-      nis:                row.nis              ?? "",
       full_name:          row.student_name     ?? "Tanpa Nama",
       gender:             row.gender           ?? "",
       ses_class:          row.ses_class        ?? "",
