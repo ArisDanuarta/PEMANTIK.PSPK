@@ -8,9 +8,11 @@ import { createBrowserClient } from "@pemantik/supabase/client";
 interface ReportData {
   id: string;
   nisn: string;
+  nis?: string;
   full_name: string;
   gender: string;
   school_name: string;
+  community_name?: string;
   school_id: string;
   status: string;
   score_total: number;
@@ -24,6 +26,10 @@ interface ReportData {
   phase: string;
   attempt_number: number;
   category_id: string;
+  // ── Minggu 4: tambahan dari v_assessment_report ──
+  final_level_number?: number | null;
+  ses_class?: string;
+  ses_score?: number | null;
 }
 
 interface Option {
@@ -365,6 +371,7 @@ export default function SuperAdminReportDashboard({
                 <th style={{ textAlign: "center" }}>Skor Total</th>
                 <th style={{ textAlign: "center" }}>Literasi</th>
                 <th style={{ textAlign: "center" }}>Numerasi</th>
+                <th style={{ textAlign: "center" }}>Level Dicapai</th>
                 <th style={{ textAlign: "center" }}>Waktu (Menit)</th>
                 <th>Status</th>
               </tr>
@@ -374,9 +381,14 @@ export default function SuperAdminReportDashboard({
                 <tr key={row.id}>
                   <td>
                     <div style={{ fontWeight: 600, color: "#102e50" }}>{row.full_name}</div>
-                    <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>{row.nisn || "-"}</div>
+                    <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>{row.nisn || row.nis || "-"}</div>
                   </td>
-                  <td>{row.school_name}</td>
+                  <td>
+                    <div>{row.school_name}</div>
+                    {row.community_name && (
+                      <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{row.community_name}</div>
+                    )}
+                  </td>
                   <td>{row.phase || "-"}</td>
                   <td style={{ textAlign: "center" }}>
                     <span style={{ padding: "0.15rem 0.5rem", backgroundColor: (row.attempt_number ?? 1) > 1 ? "#fff7ed" : "#f3f4f6", color: (row.attempt_number ?? 1) > 1 ? "#ea580c" : "#4b5563", borderRadius: "999px", fontSize: "0.8rem", fontWeight: 600 }}>
@@ -389,6 +401,23 @@ export default function SuperAdminReportDashboard({
                   <td style={{ textAlign: "center", fontWeight: 600 }}>{row.score_total}</td>
                   <td style={{ textAlign: "center" }}>{row.score_lit}</td>
                   <td style={{ textAlign: "center" }}>{row.score_num}</td>
+                  <td style={{ textAlign: "center" }}>
+                    {row.final_level_number != null ? (
+                      <span style={{
+                        padding: "0.15rem 0.6rem",
+                        borderRadius: "999px",
+                        fontSize: "0.8rem",
+                        fontWeight: 700,
+                        backgroundColor: "#eff6ff",
+                        color: "#1d4ed8",
+                        border: "1px solid #bfdbfe",
+                      }}>
+                        Level {row.final_level_number}
+                      </span>
+                    ) : (
+                      <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>—</span>
+                    )}
+                  </td>
                   <td style={{ textAlign: "center" }}>{(row.time_spent / 60).toFixed(1)}</td>
                   <td>
                     <Badge variant={row.status === "completed" ? "success" : "warning"}>

@@ -1,276 +1,347 @@
 import { createServerClient } from "@pemantik/supabase";
 import { NextResponse } from "next/server";
-import * as XLSX from 'xlsx';
+import { headers } from "next/headers";
+import * as XLSX from "xlsx";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper: group baris view per sekolah untuk Sheet 1 — Ringkasan Sekolah
+// ─────────────────────────────────────────────────────────────────────────────
+function buildRingkasanSekolah(rows: any[]) {
+  const schools = new Map<string, any>();
+
+  rows.forEach((row) => {
+    const sid = row.school_id;
+    if (!schools.has(sid)) {
+      schools.set(sid, {
+        Komunitas:       row.community_name ?? "—",
+        Sekolah:         row.school_name    ?? "—",
+        NPSN:            row.npsn           ?? "—",
+        Provinsi:        row.province       ?? "—",
+        Kota:            row.city           ?? "—",
+        _totalStudents:  new Set<string>(),
+        _completedCount: 0,
+        _scores:         [] as number[],
+        _levels:         [] as number[],
+      });
+    }
+    const s = schools.get(sid)!;
+    if (row.student_id) s._totalStudents.add(row.student_id);
+    if (row.session_status === "completed") {
+      s._completedCount++;
+      if (row.final_score != null)       s._scores.push(Number(row.final_score));
+      if (row.final_level_number != null) s._levels.push(Number(row.final_level_number));
+    }
+  });
+
+  return Array.from(schools.values()).map((s) => {
+    const avgScore  = s._scores.length > 0
+      ? (s._scores.reduce((a: number, b: number) => a + b, 0) / s._scores.length).toFixed(1)
+      : "—";
+    const maxLevel  = s._levels.length > 0 ? Math.max(...s._levels) : "—";
+    const total     = s._totalStudents.size;
+    const passRate  = total > 0 ? ((s._completedCount / total) * 100).toFixed(1) + "%" : "—";
+
+    return {
+      Komunitas:        s.Komunitas,
+      Sekolah:          s.Sekolah,
+      NPSN:             s.NPSN,
+      Provinsi:         s.Provinsi,
+      Kota:             s.Kota,
+      "Jumlah Siswa":   total,
+      "Siswa Selesai":  s._completedCount,
+      "Rata-rata Skor": avgScore,
+      "Level Tertinggi": maxLevel,
+      "% Selesai":       passRate,
+    };
+  }).sort((a, b) => a.Sekolah.localeCompare(b.Sekolah));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper: build Sheet 3 — Hasil per Level dari student_answers
+// ─────────────────────────────────────────────────────────────────────────────
+function buildHasilPerLevel(
+  viewRows: any[],
+  answers: any[]
+): any[] {
+  // index answers by session_id → grouped by level
+  const bySessionLevel = new Map<string, Map<number, { correct: number; total: number }>>();
+
+  answers.forEach((ans: any) => {
+    const sid = ans.session_id;
+    const lvl = ans.questions?.question_levels?.level_number ?? 0;
+    if (!bySessionLevel.has(sid)) bySessionLevel.set(sid, new Map());
+    const lvlMap = bySessionLevel.get(sid)!;
+    if (!lvlMap.has(lvl)) lvlMap.set(lvl, { correct: 0, total: 0 });
+    const agg = lvlMap.get(lvl)!;
+    agg.total++;
+    if (ans.is_correct === true) agg.correct++;
+  });
+
+  const result: any[] = [];
+
+  viewRows.forEach((row) => {
+    if (!row.session_id) return;
+    const lvlMap = bySessionLevel.get(row.session_id);
+    if (!lvlMap) return;
+
+    lvlMap.forEach((agg, levelNumber) => {
+      const pct = agg.total > 0 ? ((agg.correct / agg.total) * 100).toFixed(1) + "%" : "—";
+      result.push({
+        Komunitas:      row.community_name   ?? "—",
+        Sekolah:        row.school_name      ?? "—",
+        "Nama Siswa":   row.student_name     ?? "—",
+        NISN:           row.nisn             ?? "—",
+        Fase:           row.phase            ?? "—",
+        Level:          levelNumber,
+        "Soal Dijawab": agg.total,
+        "Jawaban Benar": agg.correct,
+        "% Benar":       pct,
+        "Level Dicapai": row.final_level_number ?? "—",
+      });
+    });
+  });
+
+  return result.sort((a, b) => {
+    const school = a.Sekolah.localeCompare(b.Sekolah);
+    if (school !== 0) return school;
+    return a.Level - b.Level;
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/export/detailed-results
+//
+// Export Excel 4 Sheet via v_assessment_report VIEW + student_answers detail.
+//
+// Params:
+//   - category_id (required)
+//   - target_id   — school_id, community_id, atau 'all'
+//   - target_type — 'school' | 'community' | 'all'
+//   - phase       (optional)
+// ─────────────────────────────────────────────────────────────────────────────
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const category_id = searchParams.get('category_id');
-  const target_id = searchParams.get('target_id'); // e.g. community_id or school_id
-  const target_type = searchParams.get('target_type'); // 'community' | 'school' | 'super-admin'
-  const phase = searchParams.get('phase');
+  const category_id = searchParams.get("category_id");
+  const target_id   = searchParams.get("target_id");
+  const target_type = searchParams.get("target_type");
+  const phase       = searchParams.get("phase");
 
   if (!category_id || !target_id || !target_type) {
     return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
   }
 
-  const supabase = createServerClient();
+  const supabase    = createServerClient();
+  const headersList = await headers();
+  const userRole    = headersList.get("x-user-role");
 
-  // 1. Determine school IDs to filter
-  let schoolIds: string[] = [];
-  let studentIds: string[] = [];
-
-  if (target_type === 'school') {
-    schoolIds = [target_id];
-  } else if (target_type === 'community') {
-    const { data: schools } = await supabase
-      .from('schools')
-      .select('id')
-      .eq('community_id', target_id);
-    if (schools) {
-      schoolIds = schools.map(s => s.id);
-    }
-  } else if (target_type === 'super-admin') {
-    // Super admin can see all or filter by a specific param if needed. 
-    // We'll leave it empty to signify no filter if they want all, but usually we filter by target.
-  } else if (target_type === 'teacher') {
-    const { data: classes } = await supabase
-      .from('classes')
-      .select('id')
-      .eq('teacher_id', target_id);
-      
-    if (classes && classes.length > 0) {
-      const classIds = classes.map(c => c.id);
-      const { data: students } = await supabase
-        .from('students')
-        .select('id')
-        .in('class_id', classIds);
-      if (students) {
-        studentIds = students.map(s => s.id);
-      }
-    }
+  if (!userRole) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 1.5 Fetch SES variables to map education and occupation IDs
-  const { data: sesVars } = await supabase.from('ses_variables').select('id, name');
-  const sesMap = new Map<string, string>();
-  sesVars?.forEach(v => sesMap.set(v.id, v.name));
-
-  // 2. Fetch assessment sessions WITH student_answers and questions
-  let query = supabase
-    .from('assessment_sessions')
+  // ── 1. Query v_assessment_report ─────────────────────────────────────────
+  // Supabase generated types don't include views yet — cast as any until
+  // `supabase gen types` is re-run after the migration is applied.
+  let viewQuery = (supabase as any)
+    .from("v_assessment_report")
     .select(`
-      id,
-      status,
-      score,
-      time_spent_sec,
-      completed_at,
-      phase,
-      attempt_number,
-      students (
-        nisn,
-        full_name,
-        gender,
-        ses_class,
-        province,
-        city,
-        district,
-        village,
-        father_education_id,
-        mother_education_id,
-        father_occupation_id,
-        mother_occupation_id,
-        schools ( name ),
-        classes ( name, grade )
-      ),
-      student_answers (
-        is_correct,
-        score,
-        answer_data,
-        questions (
-          id,
-          subject_area,
-          question_type,
-          question_text
-        )
-      )
+      access_id, phase, valid_from, valid_until,
+      category_id, category_name, subject_area,
+      community_id, community_name,
+      school_id, school_name, npsn, province, city,
+      class_id, class_name, grade,
+      teacher_name,
+      student_id, student_name, student_username,
+      nisn, nis, gender, birth_date,
+      ses_class, ses_score,
+      student_province, student_city, student_district, student_village,
+      session_id, session_status, started_at, completed_at,
+      final_score, time_spent_sec, attempt_number, is_void,
+      current_level_id, final_level_number, passing_threshold
     `)
-    .eq('category_id', category_id)
-    .eq('is_void', false);
+    .eq("category_id", category_id)
+    .not("session_id", "is", null); // hanya baris yang punya sesi
 
-  if (schoolIds.length > 0) {
-    query = query.in('school_id', schoolIds);
-  } else if (target_type === 'teacher' && studentIds.length > 0) {
-    query = query.in('student_id', studentIds);
+  if (target_type === "school") {
+    viewQuery = viewQuery.eq("school_id", target_id);
+  } else if (target_type === "community") {
+    viewQuery = viewQuery.eq("community_id", target_id);
   }
+  // target_type === 'all' → tidak ada filter tambahan (Super Admin)
 
   if (phase) {
-    query = query.eq('phase', phase);
+    viewQuery = viewQuery.eq("phase", phase);
   }
 
-  const { data: sessions, error } = await query;
+  const { data: viewData, error: viewErr } = await viewQuery;
 
-  if (error) {
-    console.error("Export Error:", error);
-    return NextResponse.json({ error: "Failed to fetch data" }, { status: 500 });
+  if (viewErr) {
+    console.error("[export/detailed-results] view error:", viewErr);
+    return NextResponse.json({ error: "Gagal mengambil data laporan." }, { status: 500 });
   }
 
-  // Fetch levels to get their IDs and numbers
-  const { data: levels } = await supabase
-    .from('question_levels')
-    .select('id, level_number')
-    .eq('category_id', category_id);
+  const rows: any[] = (viewData as any[]) ?? [];
 
-  const levelMap = new Map<string, number>();
-  levels?.forEach(l => levelMap.set(l.id, l.level_number));
-  const levelIds = levels ? levels.map(l => l.id) : [];
-
-  let allQuestions: any[] = [];
-  if (levelIds.length > 0) {
-    const { data: questionsData } = await supabase
-      .from('questions')
-      .select('id, level_id, order_index, created_at')
-      .in('level_id', levelIds);
-
-    // Sort in JS: first by level_number, then order_index, then created_at
-    allQuestions = (questionsData || []).sort((a, b) => {
-      const lnA = levelMap.get(a.level_id) || 0;
-      const lnB = levelMap.get(b.level_id) || 0;
-      if (lnA !== lnB) return lnA - lnB;
-      if (a.order_index !== b.order_index) return (a.order_index || 0) - (b.order_index || 0);
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-    });
-  }
-
-  const questionIndexMap = new Map<string, number>();
-  const questionHeaders: string[] = [];
-
-  if (allQuestions) {
-    // Group by level to count the sequence properly
-    const levelCounts: Record<string, number> = {};
-    allQuestions.forEach((q, index) => {
-      questionIndexMap.set(q.id, index);
-      const ln = levelMap.get(q.level_id) ?? '?';
-      if (!levelCounts[ln]) levelCounts[ln] = 1;
-      else levelCounts[ln]++;
-      const sequence = levelCounts[ln];
-      questionHeaders.push(`[Level ${ln}] Soal ${sequence}`);
-    });
-  }
-
-  const headers = [
-    "NISN", "Nama Siswa", "Gender", "Kelas", "SES", "Sekolah", "Fase",
-    "Provinsi", "Kabupaten", "Kecamatan", "Desa", 
-    "Pendidikan Ayah", "Pendidikan Ibu", "Pekerjaan Ayah", "Pekerjaan Ibu",
-    "Percobaan ke", "Status", "Jumlah Soal", "Jawaban Benar", "Jawaban Salah",
-    "Skor Total", "Skor Literasi", "Skor Numerasi", "Waktu Pengerjaan (Detik)", "Tanggal Selesai"
+  // ── 2. Fetch detail jawaban + soal + level untuk Sheet 3 & 4 ─────────────────
+  const sessionIds: string[] = [
+    ...new Set(rows.map((r: any) => r.session_id as string).filter(Boolean))
   ];
 
-  // Append master question headers
-  headers.push(...questionHeaders);
+  let answers: any[] = [];
+  let allQuestions: any[] = [];
+  let levelMap = new Map<string, number>();
 
-  // If community has no schools, or teacher has no students, return empty XLSX
-  if ((target_type === 'community' && schoolIds.length === 0) || (target_type === 'teacher' && studentIds.length === 0)) {
-    const emptyWorkbook = XLSX.utils.book_new();
-    const emptyWorksheet = XLSX.utils.json_to_sheet([], { header: headers });
-    XLSX.utils.book_append_sheet(emptyWorkbook, emptyWorksheet, "Hasil Ujian");
-    const emptyBuffer = XLSX.write(emptyWorkbook, { bookType: 'xlsx', type: 'array' });
+  if (sessionIds.length > 0) {
+    const { data: answersData } = await supabase
+      .from("student_answers")
+      .select(`
+        id, session_id, question_id,
+        is_correct, score, answer_data, time_spent_sec, answered_at,
+        recording_url,
+        questions (
+          id, question_text, question_type, subject_area, level_id,
+          order_index,
+          question_levels ( level_number )
+        )
+      `)
+      .in("session_id", sessionIds);
 
-    return new NextResponse(emptyBuffer, {
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="laporan_detail_${category_id.substring(0, 8)}.xlsx"`
-      }
-    });
+    answers = answersData ?? [];
+
+    // Fetch levels untuk build header soal
+    const { data: levelsData } = await supabase
+      .from("question_levels")
+      .select("id, level_number")
+      .eq("category_id", category_id);
+
+    (levelsData ?? []).forEach((l) => levelMap.set(l.id, l.level_number));
+
+    const levelIds = [...levelMap.keys()];
+    if (levelIds.length > 0) {
+      const { data: qData } = await supabase
+        .from("questions")
+        .select("id, level_id, order_index, created_at")
+        .in("level_id", levelIds);
+
+      allQuestions = (qData ?? []).sort((a, b) => {
+        const lnA = levelMap.get(a.level_id) ?? 0;
+        const lnB = levelMap.get(b.level_id) ?? 0;
+        if (lnA !== lnB) return lnA - lnB;
+        if ((a.order_index ?? 0) !== (b.order_index ?? 0)) return (a.order_index ?? 0) - (b.order_index ?? 0);
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
+    }
   }
 
-  // (Query was moved above)
+  // Fetch ses_variables untuk label SES
+  const { data: sesVars } = await supabase.from("ses_variables").select("id, name");
+  const sesMap = new Map<string, string>();
+  (sesVars ?? []).forEach((v) => sesMap.set(v.id, v.name));
 
-  // 3. Generate Excel using xlsx
-  const excelData = (sessions || []).map(session => {
-    const student: any = Array.isArray(session.students) ? session.students[0] : session.students;
-    const answers: any[] = session.student_answers || [];
+  // ── Build question index & headers ────────────────────────────────────────
+  const questionIndexMap = new Map<string, number>();
+  const questionHeaders: string[] = [];
+  const levelCounts: Record<number, number> = {};
 
-    // Aggregations
-    let scoreLit = 0;
-    let scoreNum = 0;
-    let totalCorrect = 0;
-
-    answers.forEach(ans => {
-      const q = ans.questions;
-      const isCorrect = ans.is_correct === true;
-      const pointValue = ans.score ?? (isCorrect ? 1 : 0);
-      if (!q) return;
-      if (isCorrect) totalCorrect++;
-
-      // Subject
-      if (q.subject_area === 'literasi') scoreLit += pointValue;
-      if (q.subject_area === 'numerasi') scoreNum += pointValue;
-    });
-
-    const cls = student?.classes;
-    const className = cls ? `Kelas ${cls.grade} - ${cls.name}` : "-";
-
-    const rowData: any = {
-      "NISN": student?.nisn || "-",
-      "Nama Siswa": student?.full_name || "-",
-      "Gender": student?.gender || "-",
-      "Kelas": className,
-      "SES": student?.ses_class || "-",
-      "Sekolah": student?.schools?.name || "-",
-      "Fase": session.phase || "-",
-      "Provinsi": student?.province || "-",
-      "Kabupaten": student?.city || "-",
-      "Kecamatan": student?.district || "-",
-      "Desa": student?.village || "-",
-      "Pendidikan Ayah": student?.father_education_id ? sesMap.get(student.father_education_id) || "-" : "-",
-      "Pendidikan Ibu": student?.mother_education_id ? sesMap.get(student.mother_education_id) || "-" : "-",
-      "Pekerjaan Ayah": student?.father_occupation_id ? sesMap.get(student.father_occupation_id) || "-" : "-",
-      "Pekerjaan Ibu": student?.mother_occupation_id ? sesMap.get(student.mother_occupation_id) || "-" : "-",
-      "Percobaan ke": session.attempt_number ?? 1,
-      "Status": session.status,
-      "Jumlah Soal": answers.length,
-      "Jawaban Benar": totalCorrect,
-      "Jawaban Salah": answers.length - totalCorrect,
-      "Skor Total": session.score ?? totalCorrect,
-      "Skor Literasi": scoreLit,
-      "Skor Numerasi": scoreNum,
-      "Waktu Pengerjaan (Detik)": session.time_spent_sec || 0,
-      "Tanggal Selesai": session.completed_at ? new Date(session.completed_at).toLocaleString('id-ID') : "-"
-    };
-
-    // Initialize all question columns to "-"
-    questionHeaders.forEach(header => {
-      rowData[header] = "-";
-    });
-
-    // Map answers to their specific master question column
-    answers.forEach(ans => {
-      if (ans.questions && ans.questions.id) {
-        const idx = questionIndexMap.get(ans.questions.id);
-        if (idx !== undefined) {
-          const headerName = questionHeaders[idx];
-          rowData[headerName] = ans.is_correct ? "Benar" : "Salah";
-        }
-      }
-    });
-
-    return rowData;
+  allQuestions.forEach((q) => {
+    const ln = levelMap.get(q.level_id) ?? 0;
+    levelCounts[ln] = (levelCounts[ln] ?? 0) + 1;
+    questionIndexMap.set(q.id, questionHeaders.length);
+    questionHeaders.push(`[Level ${ln}] Soal ${levelCounts[ln]}`);
   });
 
-  // Create worksheet and workbook
-  const worksheet = XLSX.utils.json_to_sheet(excelData, { header: headers });
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Hasil Ujian");
+  // ── 3. WORKBOOK ───────────────────────────────────────────────────────────
+  const wb = XLSX.utils.book_new();
 
-  // Generate array buffer (safest for Next.js NextResponse)
-  const excelArray = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  // ── SHEET 1: Ringkasan Sekolah ────────────────────────────────────────────
+  const sheet1 = buildRingkasanSekolah(rows);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet1), "Ringkasan Sekolah");
 
-  return new NextResponse(excelArray, {
+  // ── SHEET 2: Data Siswa Lengkap ───────────────────────────────────────────
+  const sheet2Headers = [
+    "Komunitas", "Sekolah", "NPSN", "Kelas", "Guru",
+    "Nama Siswa", "Username", "NISN", "NIS", "Gender", "Tanggal Lahir",
+    "SES Class", "SES Score",
+    "Provinsi", "Kota", "Kecamatan", "Desa",
+    "Fase", "Status", "Skor Akhir", "Level Dicapai",
+    "Waktu (Detik)", "Percobaan ke", "Mulai", "Selesai",
+  ];
+
+  const sheet2Data = rows.map((row) => ({
+    Komunitas:       row.community_name    ?? "—",
+    Sekolah:         row.school_name       ?? "—",
+    NPSN:            row.npsn              ?? "—",
+    Kelas:           row.class_name        ? `Kelas ${row.grade} - ${row.class_name}` : "—",
+    Guru:            row.teacher_name      ?? "—",
+    "Nama Siswa":    row.student_name      ?? "—",
+    Username:        row.student_username  ?? "—",
+    NISN:            row.nisn              ?? "—",
+    NIS:             row.nis               ?? "—",
+    Gender:          row.gender            ?? "—",
+    "Tanggal Lahir": row.birth_date        ?? "—",
+    "SES Class":     row.ses_class         ?? "—",
+    "SES Score":     row.ses_score         ?? "—",
+    Provinsi:        row.student_province  ?? "—",
+    Kota:            row.student_city      ?? "—",
+    Kecamatan:       row.student_district  ?? "—",
+    Desa:            row.student_village   ?? "—",
+    Fase:            row.phase             ?? "—",
+    Status:          row.session_status    ?? "—",
+    "Skor Akhir":    row.final_score       ?? "—",
+    "Level Dicapai": row.final_level_number ?? "—",
+    "Waktu (Detik)": row.time_spent_sec    ?? 0,
+    "Percobaan ke":  row.attempt_number    ?? 1,
+    Mulai:           row.started_at        ? new Date(row.started_at).toLocaleString("id-ID") : "—",
+    Selesai:         row.completed_at      ? new Date(row.completed_at).toLocaleString("id-ID") : "—",
+  }));
+
+  const ws2 = XLSX.utils.json_to_sheet(sheet2Data, { header: sheet2Headers });
+  XLSX.utils.book_append_sheet(wb, ws2, "Data Siswa");
+
+  // ── SHEET 3: Hasil per Level ──────────────────────────────────────────────
+  const sheet3Data = buildHasilPerLevel(rows, answers);
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(sheet3Data.length > 0 ? sheet3Data : [{}]),
+    "Hasil per Level"
+  );
+
+  // ── SHEET 4: Detail Jawaban ───────────────────────────────────────────────
+  const studentBySession = new Map<string, string>();
+  rows.forEach((r) => { if (r.session_id) studentBySession.set(r.session_id, r.student_name ?? "—"); });
+
+  const sheet4Data = answers.map((ans) => ({
+    "Session ID":    ans.session_id,
+    "Nama Siswa":    studentBySession.get(ans.session_id) ?? "—",
+    Level:           (ans.questions as any)?.question_levels?.level_number ?? "—",
+    Soal:            (ans.questions as any)?.question_text ?? "—",
+    "Tipe Soal":     (ans.questions as any)?.question_type ?? "—",
+    Jawaban:         ans.answer_data ? JSON.stringify(ans.answer_data) : "—",
+    Benar:           ans.is_correct ? "Ya" : "Tidak",
+    Skor:            ans.score ?? 0,
+    "Waktu (Detik)": ans.time_spent_sec ?? 0,
+    "Ada Rekaman":   ans.recording_url ? "Ya" : "Tidak",
+    "Dijawab Pada":  ans.answered_at ? new Date(ans.answered_at).toLocaleString("id-ID") : "—",
+  }));
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(sheet4Data.length > 0 ? sheet4Data : [{}]),
+    "Detail Jawaban"
+  );
+
+  // ── Generate filename ─────────────────────────────────────────────────────
+  const ts       = new Date().toISOString().slice(0, 10);
+  const phaseStr = phase ? `_${phase.replace(/\s+/g, "-")}` : "";
+  const filename = `Laporan_PEMANTIK${phaseStr}_${ts}.xlsx`;
+
+  const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+
+  return new NextResponse(buf, {
     headers: {
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': `attachment; filename="laporan_detail_${category_id.substring(0, 8)}.xlsx"`
-    }
+      "Content-Type":        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    },
   });
 }

@@ -4,123 +4,149 @@ import { headers } from "next/headers";
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * GET /api/report/superadmin-data
+ *
+ * Query laporan super admin via v_assessment_report VIEW.
+ * VIEW menyatukan semua JOIN dalam satu query ringan.
+ *
+ * Query params:
+ *   - category_id (required)
+ *   - community_id (optional) — filter ke komunitas tertentu
+ *   - school_id (optional) — filter ke sekolah tertentu
+ */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const categoryId = searchParams.get('category_id');
-  const communityId = searchParams.get('community_id'); // Optional
-  const schoolId = searchParams.get('school_id'); // Optional
+  const categoryId  = searchParams.get('category_id');
+  const communityId = searchParams.get('community_id');
+  const schoolId    = searchParams.get('school_id');
 
   if (!categoryId) {
     return NextResponse.json({ error: "category_id wajib diisi." }, { status: 400 });
   }
 
-  const supabase = createServerClient();
+  const supabase    = createServerClient();
   const headersList = await headers();
-  const userRole = headersList.get("x-user-role");
+  const userRole    = headersList.get("x-user-role");
 
   if (userRole !== "super_admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let schoolIds: string[] = [];
-
-  // Filter based on selected school or community
-  if (schoolId && schoolId !== "all") {
-    schoolIds = [schoolId];
-  } else if (communityId && communityId !== "all") {
-    const { data: schools } = await supabase
-      .from("schools")
-      .select("id")
-      .eq("community_id", communityId)
-      .eq("is_active", true);
-    schoolIds = (schools || []).map((s) => s.id);
-  }
-
-  // Fetch sessions
-  let query = supabase
-    .from("assessment_sessions")
+  // ── Query via v_assessment_report ────────────────────────────────────────
+  // Hanya ambil baris yang punya sesi (session_id IS NOT NULL)
+  // View sudah filter is_void = false
+  // Note: cast as any karena Supabase generated types belum include views.
+  // Setelah `supabase gen types` dijalankan ulang, cast ini bisa dihapus.
+  let query = (supabase as any)
+    .from("v_assessment_report")
     .select(`
-      id,
+      session_id,
       category_id,
       school_id,
-      status,
-      score,
+      school_name,
+      community_name,
+      phase,
+      session_status,
+      final_score,
       time_spent_sec,
       completed_at,
-      phase,
+      started_at,
       attempt_number,
-      students (
-        nisn,
-        full_name,
-        gender,
-        schools ( name )
-      ),
-      student_answers (
-        is_correct,
-        score,
-        answer_data,
-        questions (
-          subject_area,
-          question_type,
-          question_text
-        )
-      )
+      final_level_number,
+      student_id,
+      student_name,
+      student_username,
+      nisn,
+      nis,
+      gender,
+      ses_class,
+      ses_score
     `)
     .eq("category_id", categoryId)
-    .eq("is_void", false)
-    .order("completed_at", { ascending: false });
+    .not("session_id", "is", null);
 
-  // Apply school filters if any
-  if (schoolIds.length > 0) {
-    query = query.in("school_id", schoolIds);
-  } else if ((communityId && communityId !== "all") && schoolIds.length === 0) {
-    // If a community was selected but has no schools, return empty
-    return NextResponse.json({ data: [] });
+  // Filter komunitas
+  if (communityId && communityId !== "all") {
+    query = query.eq("community_id", communityId);
   }
 
-  const { data: sessionsData, error: sessErr } = await query;
+  // Filter sekolah
+  if (schoolId && schoolId !== "all") {
+    query = query.eq("school_id", schoolId);
+  }
 
-  if (sessErr) {
-    console.error("Error fetching sessions for super admin report:", sessErr);
+  query = query.order("completed_at", { ascending: false });
+
+  const { data: viewData, error } = await query;
+
+  if (error) {
+    console.error("[superadmin-data] Error fetching from v_assessment_report:", error);
     return NextResponse.json({ error: "Gagal mengambil data laporan." }, { status: 500 });
   }
 
-  // 3. Proses agregasi di server (ringankan client)
-  const reportData = (sessionsData || []).map((session: any) => {
-    const student = Array.isArray(session.students) ? session.students[0] : session.students;
-    const answers: any[] = session.student_answers || [];
+  // ── Fetch student_answers untuk hitung skor lit/num (tidak ada di VIEW) ───
+  const sessionIds: string[] = [
+    ...new Set(((viewData as any[]) ?? []).map((r: any) => r.session_id as string).filter(Boolean))
+  ];
 
-    let scoreLit = 0;
-    let scoreNum = 0;
-    let totalCorrect = 0;
+  let answersBySession: Record<string, { scoreLit: number; scoreNum: number; totalCorrect: number; totalWrong: number; totalQ: number }> = {};
 
-    answers.forEach((ans) => {
-      const isCorrect = ans.is_correct === true;
-      const pointValue = ans.score ?? (isCorrect ? 1 : 0);
-      if (isCorrect) totalCorrect++;
-      if (ans.questions?.subject_area === "literasi") scoreLit += pointValue;
-      if (ans.questions?.subject_area === "numerasi") scoreNum += pointValue;
+  if (sessionIds.length > 0) {
+    const { data: answers } = await supabase
+      .from("student_answers")
+      .select("session_id, is_correct, score, questions(subject_area)")
+      .in("session_id", sessionIds);
+
+    (answers || []).forEach((ans: any) => {
+      const sid = ans.session_id;
+      if (!answersBySession[sid]) {
+        answersBySession[sid] = { scoreLit: 0, scoreNum: 0, totalCorrect: 0, totalWrong: 0, totalQ: 0 };
+      }
+      const agg = answersBySession[sid];
+      agg.totalQ++;
+      const isCorrect   = ans.is_correct === true;
+      const pointValue  = ans.score ?? (isCorrect ? 1 : 0);
+      if (isCorrect) { agg.totalCorrect++; } else { agg.totalWrong++; }
+      const subjectArea = ans.questions?.subject_area;
+      if (subjectArea === "literasi")  agg.scoreLit += pointValue;
+      if (subjectArea === "numerasi")  agg.scoreNum += pointValue;
     });
+  }
+
+  // ── Map ke format yang dipakai ReportData interface di client ────────────
+  const reportData = (viewData || []).map((row: any) => {
+    const agg = answersBySession[row.session_id] ?? {
+      scoreLit: 0, scoreNum: 0, totalCorrect: 0, totalWrong: 0, totalQ: 0,
+    };
 
     return {
-      id: session.id,
-      category_id: session.category_id,
-      school_id: session.school_id,
-      status: session.status,
-      score_total: session.score ?? totalCorrect,
-      score_lit: scoreLit,
-      score_num: scoreNum,
-      total_questions: answers.length,
-      total_correct: totalCorrect,
-      total_wrong: answers.length - totalCorrect,
-      time_spent: session.time_spent_sec || 0,
-      completed_at: session.completed_at || "",
-      phase: session.phase || "",
-      attempt_number: session.attempt_number ?? 1,
-      nisn: student?.nisn || "",
-      full_name: student?.full_name || "Tanpa Nama",
-      gender: student?.gender || "",
-      school_name: student?.schools?.name || "—",
+      id:                 row.session_id,
+      category_id:        row.category_id,
+      school_id:          row.school_id,
+      school_name:        row.school_name      ?? "—",
+      community_name:     row.community_name   ?? "—",
+      status:             row.session_status   ?? "in_progress",
+      score_total:        row.final_score      ?? agg.totalCorrect,
+      score_lit:          agg.scoreLit,
+      score_num:          agg.scoreNum,
+      total_questions:    agg.totalQ,
+      total_correct:      agg.totalCorrect,
+      total_wrong:        agg.totalWrong,
+      time_spent:         row.time_spent_sec   ?? 0,
+      completed_at:       row.completed_at     ?? "",
+      started_at:         row.started_at       ?? "",
+      phase:              row.phase            ?? "",
+      attempt_number:     row.attempt_number   ?? 1,
+      // ── Baru Minggu 4 ──
+      final_level_number: row.final_level_number ?? null,
+      // ── Siswa ──
+      nisn:               row.nisn             ?? "",
+      nis:                row.nis              ?? "",
+      full_name:          row.student_name     ?? "Tanpa Nama",
+      gender:             row.gender           ?? "",
+      ses_class:          row.ses_class        ?? "",
+      ses_score:          row.ses_score        ?? null,
     };
   });
 
