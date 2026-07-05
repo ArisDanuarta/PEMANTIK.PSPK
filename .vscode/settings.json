@@ -1,5 +1,6 @@
 {
   "deno.enablePaths": [
+    "supabase/functions",
     "apps/mobile/pemantik_mobile/supabase/functions"
   ],
   "deno.unstable": true,

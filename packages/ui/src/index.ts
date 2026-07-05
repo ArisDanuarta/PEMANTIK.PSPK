@@ -1,3 +1,4 @@
+/// <reference path="./phantom-ui.d.ts" />
 // ─── Shared UI Components — Pemantik Platform ────────────────────────────────
 // All exports from the shared UI package
 

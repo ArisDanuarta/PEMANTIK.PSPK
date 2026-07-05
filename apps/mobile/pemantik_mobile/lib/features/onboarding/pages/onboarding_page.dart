@@ -143,7 +143,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with TickerProv
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: page.isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+                                color: page.isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 40,
                                 spreadRadius: 10,
                               ),
@@ -196,7 +196,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with TickerProv
                           key: ValueKey<String>(page.subtitle),
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: page.textColor.withOpacity(0.8),
+                            color: page.textColor.withValues(alpha: 0.8),
                             fontSize: 16,
                             height: 1.5,
                           ),

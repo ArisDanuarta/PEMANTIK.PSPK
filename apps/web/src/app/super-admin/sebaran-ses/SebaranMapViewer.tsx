@@ -145,15 +145,15 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
         <ZoomableGroup 
           center={mapPosition.coordinates} 
           zoom={mapPosition.zoom}
-          filterZoomEvent={(e) => {
+          filterZoomEvent={(e: any) => {
             // Mematikan semua event zoom dari mouse wheel atau trackpad
             return false;
           }}
           style={{ transition: "transform 800ms cubic-bezier(0.25, 1, 0.5, 1)" }}
         >
           <Geographies geography={INDONESIA_KABKOTA_JSON}>
-            {({ geographies }) =>
-              geographies.map((geo) => {
+            {({ geographies }: { geographies: any[] }) =>
+              geographies.map((geo: any) => {
                 // GeoJSON property untuk Kabupaten/Kota adalah NAME_2
                 const rawCityName = (geo.properties.NAME_2 || geo.properties.name || "").toUpperCase();
                 const cleanCityName = rawCityName.replace(/KABUPATEN|KAB\.|KOTA|ADMINISTRASI/ig, "").trim();

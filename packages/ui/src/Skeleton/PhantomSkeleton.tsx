@@ -1,3 +1,4 @@
+/// <reference path="../phantom-ui.d.ts" />
 "use client";
 
 import React, { useEffect, useRef } from "react";

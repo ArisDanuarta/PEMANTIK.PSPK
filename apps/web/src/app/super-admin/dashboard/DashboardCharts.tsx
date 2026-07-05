@@ -91,10 +91,10 @@ export default function DashboardCharts({
                   data={assessmentData}
                   cx="50%"
                   cy="50%"
+                  innerRadius={60}
                   outerRadius={80}
+                  paddingAngle={5}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                  labelLine={false}
                 >
                   {assessmentData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.name === "Literasi" ? "#a8281c" : "#df632f"} />
@@ -103,6 +103,7 @@ export default function DashboardCharts({
                 <Tooltip 
                   contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
                 />
+                <Legend wrapperStyle={{ paddingTop: "20px" }} />
               </PieChart>
             </ResponsiveContainer>
           ) : null}

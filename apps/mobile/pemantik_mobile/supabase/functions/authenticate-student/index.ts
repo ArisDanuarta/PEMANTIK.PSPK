@@ -68,10 +68,10 @@ serve(async (req) => {
     // GENERATE JWT VALID — ditandatangani dengan SUPABASE_JWT_SECRET
     // Token ini bisa dibaca oleh RLS via current_setting('request.jwt.claims')
     // ─────────────────────────────────────────────────────────────────────────
-    const jwtSecret = Deno.env.get("SUPABASE_JWT_SECRET") ?? "";
+    const jwtSecret = Deno.env.get("STUDENT_JWT_SECRET") ?? Deno.env.get("JWT_SECRET") ?? Deno.env.get("SUPABASE_JWT_SECRET") ?? "";
 
     if (!jwtSecret) {
-      throw new Error("SUPABASE_JWT_SECRET tidak terkonfigurasi di environment");
+      throw new Error("STUDENT_JWT_SECRET atau JWT_SECRET tidak terkonfigurasi di environment");
     }
 
     const key = await crypto.subtle.importKey(
