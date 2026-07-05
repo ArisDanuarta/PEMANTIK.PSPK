@@ -132,52 +132,62 @@ export default function GuruReportDashboard({ packages, classes, schoolId, teach
         <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#102e50", marginBottom: "1.25rem" }}>
           Pusat Data Hasil Ujian
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
-          <div>
-            <label className="form-label">Kategori Ujian <span style={{ color: "#dc2626" }}>*</span></label>
-            <SearchableSelect
-              name="category_id"
-              options={packages.map((p) => ({ value: p.id, label: p.name }))}
-              value={selectedPackageId}
-              onChange={handlePackageChange}
-              placeholder="— Pilih Kategori —"
-            />
+        {packages.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "2rem 1rem", color: "#6b7280" }}>
+            <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📋</div>
+            <div style={{ fontWeight: 600, color: "#374151", marginBottom: "0.25rem" }}>Belum Ada Data Ujian</div>
+            <div style={{ fontSize: "0.85rem" }}>Belum ada siswa di kelas Anda yang pernah mengerjakan ujian.</div>
           </div>
-          <div>
-            <label className="form-label">Kelas</label>
-            <select className="form-input" value={selectedClassId} onChange={(e) => setSelectedClassId(e.target.value)} disabled={!selectedPackageId || isLoadingData}>
-              <option value="all">Semua Kelas</option>
-              {classes.map((c) => <option key={c.id} value={c.id}>Kelas {c.grade} — {c.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="form-label">Gender</label>
-            <select className="form-input" value={selectedGender} onChange={(e) => setSelectedGender(e.target.value)} disabled={!selectedPackageId || isLoadingData}>
-              <option value="all">Semua</option>
-              <option value="L">Laki-laki (L)</option>
-              <option value="P">Perempuan (P)</option>
-            </select>
-          </div>
-          <div>
-            <label className="form-label">SES</label>
-            <select className="form-input" value={selectedSes} onChange={(e) => setSelectedSes(e.target.value)} disabled={!selectedPackageId || isLoadingData}>
-              <option value="all">Semua SES</option>
-              {["I","II","III","IV"].map((s) => <option key={s} value={s}>SES {s}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="form-label">Cari Nama / NISN</label>
-            <input type="text" className="form-input" placeholder="Ketik pencarian..." value={search} onChange={(e) => setSearch(e.target.value)} disabled={!selectedPackageId || isLoadingData} />
-          </div>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
-          <Button onClick={handleExport} disabled={!selectedPackageId || isExporting || isLoadingData} style={{ backgroundColor: "#0874aa", color: "white", gap: "0.5rem" }}>
-            {isExporting ? <><span className="btn-spinner" /> Memproses...</> : <>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download Excel
-            </>}
-          </Button>
-        </div>
+        ) : (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
+              <div>
+                <label className="form-label">Kategori Ujian <span style={{ color: "#dc2626" }}>*</span></label>
+                <SearchableSelect
+                  name="category_id"
+                  options={packages.map((p) => ({ value: p.id, label: p.name }))}
+                  value={selectedPackageId}
+                  onChange={handlePackageChange}
+                  placeholder="— Pilih Kategori —"
+                />
+              </div>
+              <div>
+                <label className="form-label">Kelas</label>
+                <select className="form-input" value={selectedClassId} onChange={(e) => setSelectedClassId(e.target.value)} disabled={!selectedPackageId || isLoadingData}>
+                  <option value="all">Semua Kelas</option>
+                  {classes.map((c) => <option key={c.id} value={c.id}>Kelas {c.grade} — {c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Gender</label>
+                <select className="form-input" value={selectedGender} onChange={(e) => setSelectedGender(e.target.value)} disabled={!selectedPackageId || isLoadingData}>
+                  <option value="all">Semua</option>
+                  <option value="L">Laki-laki (L)</option>
+                  <option value="P">Perempuan (P)</option>
+                </select>
+              </div>
+              <div>
+                <label className="form-label">SES</label>
+                <select className="form-input" value={selectedSes} onChange={(e) => setSelectedSes(e.target.value)} disabled={!selectedPackageId || isLoadingData}>
+                  <option value="all">Semua SES</option>
+                  {["I","II","III","IV"].map((s) => <option key={s} value={s}>SES {s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Cari Nama / NISN</label>
+                <input type="text" className="form-input" placeholder="Ketik pencarian..." value={search} onChange={(e) => setSearch(e.target.value)} disabled={!selectedPackageId || isLoadingData} />
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
+              <Button onClick={handleExport} disabled={!selectedPackageId || isExporting || isLoadingData} style={{ backgroundColor: "#0874aa", color: "white", gap: "0.5rem" }}>
+                {isExporting ? <><span className="btn-spinner" /> Memproses...</> : <>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Download Excel
+                </>}
+              </Button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── Stat Cards ── */}

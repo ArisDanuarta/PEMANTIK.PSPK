@@ -18,7 +18,7 @@ const guruNav: NavSection[] = [
   {
     label: "Penilaian",
     items: [
-      { label: "Laporan Hasil", href: "/guru/laporan", icon: "report" },
+      { label: "Hasil Ujian", href: "/guru/laporan", icon: "report" },
     ],
   },
 ];

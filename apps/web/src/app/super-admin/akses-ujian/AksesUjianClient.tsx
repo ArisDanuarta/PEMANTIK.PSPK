@@ -204,12 +204,14 @@ export default function AksesUjianClient({ packages, communities, schools, acces
             <form onSubmit={handleEditSubmit}>
               <div style={{ marginBottom: "1rem" }}>
                 <label className="form-label">Fase Ujian</label>
-                <select name="phase" className="form-input" defaultValue={editingLog.phase}>
-                  <option value="Tahap 1">Tahap 1</option>
-                  <option value="Tahap 2">Tahap 2</option>
-                  <option value="Remedial">Remedial</option>
-                  <option value="Pengayaan">Pengayaan</option>
-                </select>
+                <input
+                  type="text"
+                  name="phase"
+                  className="form-input"
+                  defaultValue={editingLog.phase}
+                  placeholder="Contoh: Tahap 1, Remedial, Pengayaan..."
+                  required
+                />
               </div>
               <div style={{ marginBottom: "1rem" }}>
                 <label className="form-label">Tanggal Mulai Valid</label>

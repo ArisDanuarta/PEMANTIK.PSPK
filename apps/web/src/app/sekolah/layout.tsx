@@ -20,7 +20,7 @@ const sekolahNav: NavSection[] = [
     label: "Asesmen",
     items: [
       { label: "Akses Ujian", href: "/sekolah/akses-ujian", icon: "exam" },
-      { label: "Laporan", href: "/sekolah/laporan", icon: "report" },
+      { label: "Hasil Ujian", href: "/sekolah/laporan", icon: "report" },
     ],
   },
 ];

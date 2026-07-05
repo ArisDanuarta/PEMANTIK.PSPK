@@ -29,7 +29,7 @@ const superAdminNav: NavSection[] = [
   {
     label: "Laporan & Sistem",
     items: [
-      { label: "Laporan Hasil Ujian", href: "/super-admin/laporan", icon: "activity" },
+      { label: "Hasil Ujian", href: "/super-admin/laporan", icon: "activity" },
       { label: "Sebaran SES", href: "/super-admin/sebaran-ses", icon: "activity" },
       { label: "Log Sistem & Error", href: "/super-admin/log-sistem", icon: "activity" },
       { label: "Pengaturan SES", href: "/super-admin/pengaturan-ses", icon: "settings" },

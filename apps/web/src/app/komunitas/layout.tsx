@@ -18,9 +18,9 @@ const komunitasNav: NavSection[] = [
     ],
   },
   {
-    label: "Analitik",
+    label: "Hasil Ujian",
     items: [
-      { label: "Laporan", href: "/komunitas/laporan", icon: "report" },
+      { label: "Hasil Ujian", href: "/komunitas/laporan", icon: "report" },
     ],
   },
 ];

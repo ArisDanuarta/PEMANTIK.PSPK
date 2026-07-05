@@ -6,11 +6,11 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Laporan & Analitik | Pemantik",
+  title: "Hasil Ujian | Komunitas — Pemantik",
   description: "Pusat data hasil ujian komunitas",
 };
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function KomunitasLaporanPage() {
   const supabase = createServerClient();
@@ -25,34 +25,40 @@ export default async function KomunitasLaporanPage() {
   let packages: { id: string; name: string }[] = [];
 
   try {
-    // 1. Dapatkan daftar sekolah binaan komunitas ini
+    // 1. Dapatkan semua sekolah binaan komunitas ini (tidak filter is_active)
     const { data: scData } = await supabase
       .from("schools")
       .select("id, name")
       .eq("community_id", communityId)
-      .eq("is_active", true)
       .order("name", { ascending: true });
     schools = scData ?? [];
 
-    // 2. Dapatkan HANYA kategori yang telah di-assign ke komunitas ini (isolasi akses)
-    const { data: accessData } = await supabase
-      .from("assessment_access")
-      .select("category_id, question_categories(id, name)")
-      .eq("target_type", "community")
-      .eq("target_id", communityId)
-      .eq("is_active", true);
+    const schoolIds = schools.map((s) => s.id);
 
-    if (accessData) {
-      const pkgMap = new Map<string, { id: string; name: string }>();
-      accessData.forEach((access: any) => {
-        const pkg = Array.isArray(access.question_categories)
-          ? access.question_categories[0]
-          : access.question_categories;
-        if (pkg && !pkgMap.has(pkg.id)) {
-          pkgMap.set(pkg.id, { id: pkg.id, name: pkg.name });
-        }
-      });
-      packages = Array.from(pkgMap.values());
+    // ── ARSIP PERMANEN (spec §2.2.5) ────────────────────────────────────────
+    // Sumber daftar kategori: assessment_sessions (bukan assessment_access).
+    // Data hasil ujian tetap tampil meskipun grant sudah dicabut / tidak aktif.
+    // is_void=false cukup untuk exclude sesi yang di-void karena ujian ulang.
+    if (schoolIds.length > 0) {
+      const { data: sessionCategories } = await supabase
+        .from("assessment_sessions")
+        .select("category_id, question_categories(id, name)")
+        .in("school_id", schoolIds)
+        .eq("is_void", false)
+        .not("category_id", "is", null);
+
+      if (sessionCategories) {
+        const pkgMap = new Map<string, { id: string; name: string }>();
+        sessionCategories.forEach((s: any) => {
+          const pkg = Array.isArray(s.question_categories)
+            ? s.question_categories[0]
+            : s.question_categories;
+          if (pkg && !pkgMap.has(pkg.id)) {
+            pkgMap.set(pkg.id, { id: pkg.id, name: pkg.name });
+          }
+        });
+        packages = Array.from(pkgMap.values());
+      }
     }
   } catch (err) {
     console.error("Unexpected error loading community reports:", err);
@@ -62,35 +68,21 @@ export default async function KomunitasLaporanPage() {
     <div className="animate-fade-in">
       <div className="page-header">
         <div className="page-header-left">
-          <h1 className="page-title">Pusat Laporan &amp; Analitik</h1>
+          <h1 className="page-title">Hasil Ujian</h1>
           <div className="page-breadcrumb">
             <span>Komunitas</span>
             <span className="page-breadcrumb-sep">›</span>
-            <span>Laporan</span>
+            <span>Hasil Ujian</span>
           </div>
         </div>
       </div>
 
-      {packages.length === 0 ? (
-        <div
-          className="card"
-          style={{ padding: "3rem", textAlign: "center", color: "#6c757d" }}
-        >
-          <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📦</div>
-          <p style={{ fontWeight: 600, color: "#102e50", marginBottom: "0.5rem" }}>
-            Belum Ada Kategori Ujian yang Diakses
-          </p>
-          <p style={{ fontSize: "0.9rem" }}>
-            Komunitas Anda belum memiliki kategori ujian yang aktif. Hubungi Super Admin untuk mendapatkan akses.
-          </p>
-        </div>
-      ) : (
-        <CommunityReportDashboard
-          schools={schools}
-          packages={packages}
-          communityId={communityId}
-        />
-      )}
+      {/* Dashboard selalu dirender — packages kosong hanya jika memang belum ada sesi */}
+      <CommunityReportDashboard
+        schools={schools}
+        packages={packages}
+        communityId={communityId}
+      />
     </div>
   );
 }
