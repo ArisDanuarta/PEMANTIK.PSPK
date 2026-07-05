@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, Badge } from "@pemantik/ui";
+import { Button, Badge, useConfirm, useToast } from "@pemantik/ui";
 import { resetStudentSession } from "../../app/actions/assessment";
 
 interface Session {
@@ -30,25 +30,31 @@ interface StudentSessionsTableProps {
 
 export default function StudentSessionsTable({ sessions, showResetButton = true }: StudentSessionsTableProps) {
   const [resettingId, setResettingId] = useState<string | null>(null);
-  const [message, setMessage] = useState<{ type: "success" | "error", text: string } | null>(null);
+  const { confirm } = useConfirm();
+  const { toast } = useToast();
 
   const handleReset = async (sessionId: string) => {
-    if (!window.confirm("Apakah Anda yakin ingin me-reset ujian ini karena kendala teknis? Skor saat ini akan hangus dan siswa harus mengulang dari awal.")) {
-      return;
-    }
+    const isConfirmed = await confirm({
+      title: "Reset Ujian Siswa?",
+      description: "Apakah Anda yakin ingin me-reset ujian ini karena kendala teknis? Skor saat ini akan hangus dan siswa harus mengulang dari awal.",
+      confirmLabel: "Ya, Reset",
+      cancelLabel: "Batal",
+      variant: "danger",
+    });
+
+    if (!isConfirmed) return;
 
     setResettingId(sessionId);
-    setMessage(null);
 
     try {
       const result = await resetStudentSession(sessionId);
       if (result.success) {
-        setMessage({ type: "success", text: "Sesi berhasil direset. Sesi baru telah dibuat untuk siswa." });
+        toast({ type: "success", title: "Sesi Berhasil Direset", description: "Sesi baru telah dibuat untuk siswa." });
       } else {
-        setMessage({ type: "error", text: result.error || "Gagal mereset sesi." });
+        toast({ type: "error", title: "Gagal Mereset Sesi", description: result.error || "Gagal mereset sesi." });
       }
     } catch (err) {
-      setMessage({ type: "error", text: "Terjadi kesalahan internal." });
+      toast({ type: "error", title: "Terjadi Kesalahan", description: "Terjadi kesalahan internal." });
     } finally {
       setResettingId(null);
     }
@@ -76,18 +82,6 @@ export default function StudentSessionsTable({ sessions, showResetButton = true 
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      {message && (
-        <div style={{ 
-          padding: "1rem", 
-          borderRadius: "0.5rem", 
-          backgroundColor: message.type === "success" ? "#f0fdf4" : "#fef2f2",
-          color: message.type === "success" ? "#166534" : "#b91c1c",
-          border: `1px solid ${message.type === "success" ? "#bbf7d0" : "#fca5a5"}`
-        }}>
-          {message.text}
-        </div>
-      )}
-
       <div style={{ backgroundColor: "white", borderRadius: "0.75rem", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
           <thead>

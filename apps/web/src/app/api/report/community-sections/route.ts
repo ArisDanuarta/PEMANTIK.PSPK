@@ -27,12 +27,11 @@ export async function GET(request: Request) {
 
   const supabase = createServerClient();
 
-  // ── Isolasi scope: hanya sekolah dalam komunitas ini ────────────────────────
+  // ── Isolasi scope: semua sekolah dalam komunitas ini (termasuk arsip) ────────
   const { data: schools, error: schoolsErr } = await supabase
     .from("schools")
     .select("id, name, npsn, city")
-    .eq("community_id", communityId)
-    .eq("is_active", true);
+    .eq("community_id", communityId);
 
   if (schoolsErr) {
     return NextResponse.json({ error: "Gagal mengambil data sekolah." }, { status: 500 });

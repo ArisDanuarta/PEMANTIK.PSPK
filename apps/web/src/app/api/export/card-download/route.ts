@@ -45,8 +45,7 @@ export async function GET(request: Request) {
     const { data: schools, error } = await supabase
       .from("schools")
       .select("id")
-      .eq("community_id", scopeId)
-      .eq("is_active", true);
+      .eq("community_id", scopeId);
     if (error) return NextResponse.json({ error: "Gagal mengambil sekolah komunitas." }, { status: 500 });
     schoolIds = (schools ?? []).map((s) => s.id);
   } else {

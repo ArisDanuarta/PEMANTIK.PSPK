@@ -14,12 +14,11 @@ export async function GET(request: Request) {
 
   const supabase = createServerClient();
 
-  // 1. Dapatkan school_id milik komunitas ini — ISOLASI DATA KRITIS
+  // 1. Dapatkan school_id milik komunitas ini — ISOLASI DATA KRITIS (termasuk arsip)
   const { data: schools, error: schoolsErr } = await supabase
     .from("schools")
     .select("id")
-    .eq("community_id", communityId)
-    .eq("is_active", true);
+    .eq("community_id", communityId);
 
   if (schoolsErr) {
     return NextResponse.json({ error: "Gagal mengambil data sekolah." }, { status: 500 });
