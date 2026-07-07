@@ -19,8 +19,24 @@ class LevelInfo {
   });
 }
 
+final studentCompletedSessionsStreamProvider =
+    StreamProvider<List<LocalSession>>((ref) async* {
+      final db = ref.read(databaseProvider);
+      final studentStr = await secureStorage.read(key: 'student_data');
+      if (studentStr == null) {
+        yield [];
+        return;
+      }
+      final student = jsonDecode(studentStr);
+      final studentId = student['id'] as String;
+      yield* db.sessionDao.watchCompletedSessionsForStudent(studentId);
+    });
+
 final assessmentLevelsProvider = StreamProvider.family<List<LevelInfo>, String>(
   (ref, categoryId) async* {
+    // Pantau perubahan pada sesi yang selesai agar UI otomatis merefresh status unlock/pass saat ujian selesai
+    ref.watch(studentCompletedSessionsStreamProvider);
+
     final db = ref.read(databaseProvider);
 
     // Dengarkan perubahan pada tabel localLevels

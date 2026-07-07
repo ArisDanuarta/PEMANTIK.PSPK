@@ -102,6 +102,10 @@ export default function GuruReportDashboard({ packages, classes, schoolId, teach
       url.searchParams.append("category_id", selectedPackageId);
       url.searchParams.append("target_id", teacherId);
       url.searchParams.append("target_type", "teacher");
+      if (selectedClassId !== "all") url.searchParams.append("class_id", selectedClassId);
+      if (selectedGender !== "all") url.searchParams.append("gender", selectedGender);
+      if (selectedSes !== "all") url.searchParams.append("ses_class", selectedSes);
+      if (search) url.searchParams.append("search", search);
 
       const res = await fetch(url.toString());
       if (!res.ok) throw new Error((await res.json()).error || "Server error");

@@ -293,6 +293,10 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
       url.searchParams.set("category_id", selectedPackageId);
       url.searchParams.set("target_id", schoolId);
       url.searchParams.set("target_type", "school");
+      if (selectedClassId !== "all") url.searchParams.set("class_id", selectedClassId);
+      if (selectedGender !== "all") url.searchParams.set("gender", selectedGender);
+      if (selectedSes !== "all") url.searchParams.set("ses_class", selectedSes);
+      if (search) url.searchParams.set("search", search);
       const res = await fetch(url.toString());
       if (!res.ok) throw new Error((await res.json()).error || "Server error");
       const blob = await res.blob();

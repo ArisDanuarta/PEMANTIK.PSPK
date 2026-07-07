@@ -7,6 +7,7 @@ import '../../../shared/widgets/pspk_dialog.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 import '../../../core/sync/sync_service.dart';
+import '../../../core/database/database.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -150,12 +151,31 @@ class ProfilePage extends ConsumerWidget {
                           label: 'Keluar',
                           outlined: true,
                           fullWidth: true,
-                          onPressed: () {
+                          onPressed: () async {
+                            final studentId = student?['id'] as String?;
+                            int pendingCount = 0;
+                            if (studentId != null) {
+                              try {
+                                pendingCount = await ref
+                                    .read(databaseProvider)
+                                    .sessionDao
+                                    .countPendingSessionsForStudent(studentId);
+                              } catch (_) {}
+                            }
+
+                            final title = pendingCount > 0
+                                ? 'Perhatian: Ada Data Offline!'
+                                : 'Keluar?';
+                            final message = pendingCount > 0
+                                ? 'Ada $pendingCount ujian offline kamu yang belum tersinkron ke server. Hasil tetap tersimpan aman di perangkat ini dan akan otomatis diupload saat kamu login kembali dengan koneksi internet.\n\nYakin ingin keluar?'
+                                : 'Apakah kamu yakin ingin keluar dari aplikasi?';
+
+                            if (!context.mounted) return;
                             showPspkDialog(
                               context,
-                              title: 'Keluar?',
-                              message: 'Apakah kamu yakin ingin keluar dari aplikasi?',
-                              isError: false,
+                              title: title,
+                              message: message,
+                              isError: pendingCount > 0,
                               confirmText: 'Ya, Keluar',
                               onConfirm: () async {
                                 await ref.read(authProvider.notifier).logout();

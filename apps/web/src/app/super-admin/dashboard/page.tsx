@@ -37,7 +37,7 @@ export default async function SuperAdminDashboard() {
         completed_at,
         created_at,
         school:schools(province, city, name),
-        student:students(gender, ses_class, full_name),
+        student:students(gender, birth_date, ses_class, ses_score, full_name, village, district, city, province, father_education_id, mother_education_id, father_occupation_id, mother_occupation_id),
         package:question_categories(name, subject_area)
       `).order("created_at", { ascending: false })
     ]);

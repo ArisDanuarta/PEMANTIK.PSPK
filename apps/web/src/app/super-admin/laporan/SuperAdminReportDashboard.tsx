@@ -169,6 +169,9 @@ export default function SuperAdminReportDashboard({
         url.searchParams.append("target_type", "all");
       }
 
+      if (selectedGender !== "all") url.searchParams.append("gender", selectedGender);
+      if (search) url.searchParams.append("search", search);
+
       const response = await fetch(url.toString());
       if (!response.ok) {
         const json = await response.json().catch(() => ({}));

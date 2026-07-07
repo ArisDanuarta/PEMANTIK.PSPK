@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { scaleLinear } from "d3-scale";
 
-// Menggunakan TopoJSON Kabupaten/Kota Indonesia
-const INDONESIA_KABKOTA_JSON = "https://raw.githubusercontent.com/rifani/geojson-political-indonesia/master/IDN_adm_2_kabkota.json";
+// Menggunakan GeoJSON Kabupaten/Kota Indonesia lokal agar stabil dan cepat
+const INDONESIA_KABKOTA_JSON = "/data/IDN_adm_2_kabkota.json";
 
 // Warna Heatmap: Merah (SES Rendah) ke Hijau (SES Tinggi)
 const colorScale = scaleLinear<string>()
@@ -153,7 +153,8 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
         >
           <Geographies geography={INDONESIA_KABKOTA_JSON}>
             {({ geographies }: { geographies: any[] }) =>
-              geographies.map((geo: any) => {
+              geographies && geographies.length > 0 ? (
+                geographies.map((geo: any) => {
                 // GeoJSON property untuk Kabupaten/Kota adalah NAME_2
                 const rawCityName = (geo.properties.NAME_2 || geo.properties.name || "").toUpperCase();
                 const cleanCityName = rawCityName.replace(/KABUPATEN|KAB\.|KOTA|ADMINISTRASI/ig, "").trim();
@@ -202,7 +203,7 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
                   />
                 );
               })
-            }
+            ) : null}
           </Geographies>
         </ZoomableGroup>
       </ComposableMap>

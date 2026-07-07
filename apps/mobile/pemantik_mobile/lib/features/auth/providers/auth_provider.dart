@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/supabase/supabase_client.dart';
+import '../../../core/sync/sync_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_provider.g.dart';
@@ -58,6 +59,8 @@ class Auth extends _$Auth {
         // Token sudah otomatis dipakai oleh accessToken callback di SupabaseConfig
         log('=== [Auth] Session ditemukan, siswa sudah login ===');
         state = AuthState(isAuthenticated: true);
+        // Memicu sync background untuk memastikan data offline langsung terupload saat app dibuka online
+        ref.read(syncServiceProvider).uploadCompletedSessions();
         return true;
       }
     } catch (e) {
@@ -135,6 +138,8 @@ class Auth extends _$Auth {
 
         if (!_mounted) return;
         state = AuthState(isAuthenticated: true);
+        // Memicu sinkronisasi background untuk mengupload sesi offline milik siswa yang baru login
+        ref.read(syncServiceProvider).uploadCompletedSessions();
       } else {
         final errorMsg =
             response.data?['error'] ?? 'Login gagal. Periksa username dan PIN.';

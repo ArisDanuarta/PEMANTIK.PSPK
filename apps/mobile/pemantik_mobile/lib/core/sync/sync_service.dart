@@ -155,12 +155,21 @@ class SyncService {
 
   Future<void> uploadCompletedSessions() async {
     try {
-      log('Memulai Sinkronisasi Upload...');
+      final storage = secureStorage;
+      final studentStr = await storage.read(key: 'student_data');
+      if (studentStr == null) {
+        log('Upload dibatalkan: tidak ada sesi siswa yang aktif (belum login).');
+        return;
+      }
+      final student = jsonDecode(studentStr);
+      final String? currentStudentId = student['id'] as String?;
+      if (currentStudentId == null) return;
+
+      log('Memulai Sinkronisasi Upload untuk siswa $currentStudentId...');
 
       // 1. Upload status Sesi yang berstatus pending (baik in_progress maupun completed)
-      // HARUS DILAKUKAN LEBIH DULU agar session_id sudah ada sebelum jawaban di-insert,
-      // sehingga tidak melanggar foreign key constraint "student_answers_session_id_fkey".
-      final pendingSessions = await _db.sessionDao.getSessionsByStatus('pending');
+      // HANYA MILIK SISWA YANG SEDANG LOGIN (encegah bentrok multi-user di 1 device)
+      final pendingSessions = await _db.sessionDao.getPendingSessionsForStudent(currentStudentId);
       for (final session in pendingSessions) {
         // Skip sesi lama yang ID-nya bukan UUID untuk menghindari error di DB
         if (session.id.startsWith('ses_')) {
@@ -198,7 +207,8 @@ class SyncService {
             // ── Minggu 2: sertakan access_id dan current_level_id ─────────
             // null jika sesi dibuat sebelum Minggu 2 (backward compat)
             if (session.accessId != null) 'access_id': session.accessId,
-            if (session.currentLevelId != null) 'current_level_id': session.currentLevelId,
+            if (session.currentLevelId != null || session.levelId != null) 'current_level_id': session.currentLevelId ?? session.levelId,
+            if (session.levelId != null || session.currentLevelId != null) 'level_id': session.levelId ?? session.currentLevelId,
           });
           await _db.sessionDao.updateSyncStatus(session.id, 'synced');
           log('Sesi ${session.id} berhasil diupload. Skor: $correctCount/${sessionAnswers.length}');
@@ -207,8 +217,8 @@ class SyncService {
         }
       }
 
-      // 2. Upload semua jawaban yang berstatus pending (sekarang parent session_id dijamin sudah ada)
-      final pendingAnswers = await _db.answerDao.getAnswersByStatus('pending');
+      // 2. Upload semua jawaban yang berstatus pending MILIK SISWA YANG SEDANG LOGIN
+      final pendingAnswers = await _db.sessionDao.getPendingAnswersForStudent(currentStudentId);
       for (final answer in pendingAnswers) {
         try {
           await _uploadSingleAnswer(answer);
@@ -312,7 +322,8 @@ class SyncService {
             studentId: Value(row['student_id']),
             categoryId: Value(row['category_id']),
             schoolId: Value(row['school_id'] ?? ''),
-            levelId: Value(row['level_id']),
+            levelId: Value(row['level_id'] ?? row['current_level_id']),
+            currentLevelId: Value(row['current_level_id'] ?? row['level_id']),
             status: Value(row['status']),
             attemptNumber: Value(row['attempt_number'] ?? 1),
             currentQuestionIndex: Value(row['current_question_index'] ?? 0),

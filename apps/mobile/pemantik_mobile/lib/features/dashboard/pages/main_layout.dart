@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import 'dashboard_page.dart';
 import '../../profile/pages/profile_page.dart';
+import '../../assessment/pages/assessment_history_page.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -13,7 +14,11 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [DashboardPage(), ProfilePage()];
+  final List<Widget> _pages = const [
+    DashboardPage(),
+    AssessmentHistoryPage(),
+    ProfilePage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +59,17 @@ class _MainLayoutState extends State<MainLayout> {
                 child: Icon(Icons.home),
               ),
               label: 'Beranda',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4),
+                child: Icon(Icons.history_outlined),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4),
+                child: Icon(Icons.history),
+              ),
+              label: 'Riwayat',
             ),
             BottomNavigationBarItem(
               icon: Padding(

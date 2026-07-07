@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@pemantik/ui";
+import { createBrowserClient } from "@pemantik/supabase/client";
 
 interface ExportDataModalProps {
   sessions: any[];
@@ -19,11 +20,14 @@ export default function ExportDataModal({ sessions, onClose }: ExportDataModalPr
   const uniqueYears = Array.from(new Set(sessions.map(s => new Date(s.created_at).getFullYear().toString()))).sort();
   const uniqueProvinces = Array.from(new Set(sessions.map(s => s.school?.province).filter(Boolean))).sort() as string[];
 
-  const handleExport = () => {
+  const handleExport = async () => {
     setIsExporting(true);
+    try {
+      const supabase = createBrowserClient();
+      const { data: sesVars } = await supabase.from("ses_variables").select("id, name");
+      const sesMap = new Map<string, string>();
+      (sesVars ?? []).forEach((v: any) => sesMap.set(v.id, v.name));
 
-    // Simulate slightly longer process if dataset is huge
-    setTimeout(() => {
       // 1. Filter the data based on selection
       const filtered = sessions.filter(s => {
         if (filterYear !== "all" && new Date(s.created_at).getFullYear().toString() !== filterYear) return false;
@@ -34,20 +38,37 @@ export default function ExportDataModal({ sessions, onClose }: ExportDataModalPr
       });
 
       // 2. Generate CSV Content
-      const headers = ["ID Sesi", "Tanggal", "Nama Siswa", "Gender", "SES", "Sekolah", "Provinsi", "Kategori Soal", "Bidang", "Nilai Akhir", "Status"];
-      const rows = filtered.map(s => [
-        s.id,
-        new Date(s.created_at).toLocaleDateString("id-ID"),
-        `"${s.student?.full_name || '-'}"`,
-        s.student?.gender || '-',
-        s.student?.ses_class || '-',
-        `"${s.school?.name || '-'}"`,
-        `"${s.school?.province || '-'}"`,
-        `"${s.package?.name || '-'}"`,
-        s.package?.subject_area || '-',
-        s.score !== null ? s.score : '-',
-        s.status
-      ]);
+      const headers = [
+        "ID Sesi", "Tanggal", "Nama Siswa", "Gender", "Tanggal Lahir",
+        "SES Class", "SES Score", "Provinsi", "Kota/Kabupaten", "Kecamatan", "Desa",
+        "Pendidikan Ayah", "Pendidikan Ibu", "Pekerjaan Ayah", "Pekerjaan Ibu",
+        "Sekolah", "Kategori Soal", "Bidang", "Nilai Akhir", "Status"
+      ];
+      const rows = filtered.map(s => {
+        const st = s.student || {};
+        return [
+          s.id,
+          new Date(s.created_at).toLocaleDateString("id-ID"),
+          `"${st.full_name || '-'}"`,
+          st.gender || '-',
+          st.birth_date || '-',
+          st.ses_class || '-',
+          st.ses_score || '-',
+          `"${st.province || s.school?.province || '-'}"`,
+          `"${st.city || s.school?.city || '-'}"`,
+          `"${st.district || '-'}"`,
+          `"${st.village || '-'}"`,
+          `"${sesMap.get(st.father_education_id) || '-'}"`,
+          `"${sesMap.get(st.mother_education_id) || '-'}"`,
+          `"${sesMap.get(st.father_occupation_id) || '-'}"`,
+          `"${sesMap.get(st.mother_occupation_id) || '-'}"`,
+          `"${s.school?.name || '-'}"`,
+          `"${s.package?.name || '-'}"`,
+          s.package?.subject_area || '-',
+          s.score !== null ? s.score : '-',
+          s.status
+        ];
+      });
 
       const csvContent = [
         headers.join(","),
@@ -64,10 +85,12 @@ export default function ExportDataModal({ sessions, onClose }: ExportDataModalPr
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
+    } catch (err) {
+      console.error("Gagal ekspor CSV:", err);
+    } finally {
       setIsExporting(false);
       onClose();
-    }, 800);
+    }
   };
 
   return (

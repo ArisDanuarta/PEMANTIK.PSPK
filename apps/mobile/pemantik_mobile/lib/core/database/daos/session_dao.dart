@@ -15,6 +15,41 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
     )..where((t) => t.syncStatus.equals(syncStatus))).get();
   }
 
+  Future<List<LocalSession>> getPendingSessionsForStudent(String studentId) {
+    return (select(
+      localSessions,
+    )..where((t) => t.studentId.equals(studentId) & t.syncStatus.equals('pending'))).get();
+  }
+
+  Future<List<LocalSession>> getCompletedSessionsForStudent(String studentId) {
+    return (select(
+      localSessions,
+    )..where((t) => t.studentId.equals(studentId) & t.status.equals('completed'))
+     ..orderBy([(t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc)])).get();
+  }
+
+  Future<int> countPendingSessionsForStudent(String studentId) async {
+    final sessions = await (select(
+      localSessions,
+    )..where((t) => t.studentId.equals(studentId) & t.syncStatus.equals('pending'))).get();
+    return sessions.length;
+  }
+
+  Future<List<LocalAnswer>> getPendingAnswersForStudent(String studentId) async {
+    final query = select(localAnswers).join([
+      innerJoin(
+        localSessions,
+        localSessions.id.equalsExp(localAnswers.sessionId),
+      ),
+    ]);
+    query.where(
+      localSessions.studentId.equals(studentId) &
+          localAnswers.syncStatus.equals('pending'),
+    );
+    final rows = await query.get();
+    return rows.map((row) => row.readTable(localAnswers)).toList();
+  }
+
   Future<void> updateSyncStatus(String id, String status) {
     return (update(localSessions)..where((t) => t.id.equals(id))).write(
       LocalSessionsCompanion(syncStatus: Value(status)),
@@ -47,11 +82,12 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
     String levelId,
   ) async {
     // Cari semua sesi untuk studentId dan levelId yang sudah 'completed'
+    // Cek levelId DAN currentLevelId agar tahan terhadap perubahan saat sync/advance
     final sessions =
         await (select(localSessions)..where(
               (t) =>
                   t.studentId.equals(studentId) &
-                  t.levelId.equals(levelId) &
+                  (t.levelId.equals(levelId) | t.currentLevelId.equals(levelId)) &
                   t.status.equals('completed'),
             ))
             .get();
@@ -79,7 +115,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   // Fungsi baru: Mendapatkan riwayat sesi untuk level tertentu (termasuk status sinkronisasi)
   Future<List<SessionHistoryItem>> getSessionsForLevel(String studentId, String levelId) async {
     final sessions = await (select(localSessions)
-          ..where((t) => t.studentId.equals(studentId) & t.levelId.equals(levelId) & t.status.equals('completed'))
+          ..where((t) => t.studentId.equals(studentId) & (t.levelId.equals(levelId) | t.currentLevelId.equals(levelId)) & t.status.equals('completed'))
           ..orderBy([(t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc)]))
         .get();
 
@@ -91,6 +127,13 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
       result.add(SessionHistoryItem(session: session, correctAnswers: correctAnswers.length));
     }
     return result;
+  }
+
+  Stream<List<LocalSession>> watchCompletedSessionsForStudent(String studentId) {
+    return (select(localSessions)
+          ..where((t) => t.studentId.equals(studentId) & t.status.equals('completed'))
+          ..orderBy([(t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc)]))
+        .watch();
   }
 }
 
