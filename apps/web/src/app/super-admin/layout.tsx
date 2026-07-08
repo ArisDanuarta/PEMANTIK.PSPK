@@ -9,13 +9,19 @@ const superAdminNav: NavSection[] = [
     ],
   },
   {
-    label: "Manajemen Pengguna",
+    label: "Manajemen Akun",
     items: [
       { label: "Komunitas", href: "/super-admin/komunitas", icon: "users" },
       { label: "Sekolah", href: "/super-admin/sekolah", icon: "school" },
-      { label: "Guru", href: "/super-admin/guru", icon: "teacher" },
-      { label: "Siswa", href: "/super-admin/siswa", icon: "student" },
       { label: "Admin Soal", href: "/super-admin/admin-soal", icon: "class" },
+    ],
+  },
+  {
+    // Rekap Global = baca & export saja. Tombol create dipindah ke detail sekolah.
+    label: "Rekap Global",
+    items: [
+      { label: "Semua Guru", href: "/super-admin/guru", icon: "teacher" },
+      { label: "Semua Siswa", href: "/super-admin/siswa", icon: "student" },
       { label: "Bank Soal", href: "/super-admin/soal", icon: "question" },
     ],
   },

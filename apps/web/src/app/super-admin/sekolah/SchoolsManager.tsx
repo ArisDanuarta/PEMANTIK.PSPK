@@ -3,7 +3,7 @@
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Badge, Button, useToast, useConfirm } from "@pemantik/ui";
-import { createSchoolAction, updateSchoolAction, deleteSchoolAction, bulkCreateSchoolsAction, resetSchoolPasswordAction } from "../../actions/schools";
+import { createSchoolAction, updateSchoolAction, deleteSchoolAction, bulkCreateSchoolsAction, resetSchoolPasswordAction, parseDapodikAction, importDapodikAction } from "../../actions/schools";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 import * as XLSX from "xlsx";
@@ -40,6 +40,7 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [isDapodikModalOpen, setIsDapodikModalOpen] = useState(false);
   const [editingSchool, setEditingSchool] = useState<School | null>(null);
   const [selectedCommunityId, setSelectedCommunityId] = useState("");
   const [mounted, setMounted] = useState(false);
@@ -193,6 +194,13 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
           <Button variant="outline" onClick={() => setIsBulkModalOpen(true)}>
             Import Excel
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => setIsDapodikModalOpen(true)}
+            style={{ color: "#0369a1", borderColor: "#7dd3fc", backgroundColor: "#f0f9ff" }}
+          >
+            📤 Import Dapodik
+          </Button>
           <Button onClick={handleOpenAddModal} style={{ backgroundColor: "#102e50", color: "white" }}>
             + Tambah Sekolah
           </Button>
@@ -260,6 +268,9 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <a href={`/super-admin/sekolah/${row.id}`} style={{ textDecoration: "none" }}>
+                          <Button variant="outline" size="sm">Detail →</Button>
+                        </a>
                         <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
                         <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset Sandi</Button>
                         <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
@@ -368,6 +379,32 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
           templateData={communities.slice(0, 3).map(c => ["Contoh SD 1", "20101010", "Jawa Barat", "Bandung", "Coblong", "Dago", "Budi", "08123", "Jl. ABC", c.name])}
           onClose={() => setIsBulkModalOpen(false)}
           onUpload={handleBulkUpload}
+        />
+      )}
+
+      {/* DAPODIK IMPORT MODAL */}
+      {isDapodikModalOpen && (
+        <BulkUploadModal
+          mode="dapodik"
+          title="Import Dapodik"
+          templateFileName="template_dapodik"
+          templateHeaders={[]}
+          onClose={() => setIsDapodikModalOpen(false)}
+          onUpload={async () => ({ success: false })}
+          existingSchools={initialSchools.map(s => ({ id: s.id, name: s.name, npsn: s.npsn }))}
+          onDapodikParse={async (formData) => {
+            const result = await parseDapodikAction(formData);
+            return result;
+          }}
+          onDapodikConfirm={async (payload) => {
+            const result = await importDapodikAction(payload);
+            return result;
+          }}
+          onPollStatus={async (batchId) => {
+            const res = await fetch(`/api/dapodik-import/${batchId}`);
+            if (!res.ok) throw new Error("Polling gagal");
+            return res.json();
+          }}
         />
       )}
     </div>

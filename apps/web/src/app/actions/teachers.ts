@@ -2,7 +2,8 @@
 
 import { createServerClient } from "@pemantik/supabase";
 import { revalidatePath } from "next/cache";
-
+import bcrypt from "bcryptjs";
+import { requireAuth } from "./auth";
 
 export interface ActionResponse {
   success: boolean;
@@ -14,7 +15,11 @@ export async function createTeacherAction(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
+    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
     const school_id = (formData.get("school_id") as string)?.trim();
+    if (role === "school" && authSchoolId !== school_id) {
+      return { success: false, error: "Akses ditolak. Bukan data sekolah Anda." };
+    }
     const full_name = (formData.get("full_name") as string)?.trim();
     const email = (formData.get("email") as string)?.trim();
     const nip = (formData.get("nip") as string)?.trim() || null;
@@ -96,6 +101,7 @@ export async function bulkCreateTeachersAction(
   dataArray: any[]
 ): Promise<ActionResponse> {
   try {
+    await requireAuth(["super_admin", "school"]);
     if (!dataArray || dataArray.length === 0) {
       return { success: false, error: "Data kosong." };
     }
@@ -223,7 +229,11 @@ export async function bulkCreateTeachersAction(
 
 export async function updateTeacherAction(id: string, formData: FormData) {
   try {
+    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
     const school_id = (formData.get("school_id") as string)?.trim();
+    if (role === "school" && authSchoolId !== school_id) {
+      return { success: false, error: "Akses ditolak. Bukan data sekolah Anda." };
+    }
     const full_name = (formData.get("full_name") as string)?.trim();
     const nip = (formData.get("nip") as string)?.trim() || null;
     const gender = (formData.get("gender") as string)?.trim() || null;
@@ -276,6 +286,7 @@ export async function updateTeacherAction(id: string, formData: FormData) {
 
 export async function resetTeacherPasswordAction(teacherId: string): Promise<ActionResponse> {
   try {
+    await requireAuth(["super_admin", "school"]);
     const supabase = createServerClient();
     
     // For teachers, teacherId is their auth user id
@@ -297,6 +308,7 @@ export async function resetTeacherPasswordAction(teacherId: string): Promise<Act
 
 export async function deleteTeacherAction(id: string) {
   try {
+    await requireAuth(["super_admin", "school"]);
     const supabase = createServerClient();
     
     // Auth account must be deleted, which deletes cascade user

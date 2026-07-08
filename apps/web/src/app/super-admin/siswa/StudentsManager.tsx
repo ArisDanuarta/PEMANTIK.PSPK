@@ -199,13 +199,18 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
             </svg>
             Download Template
           </Button>
-          <Button variant="outline" onClick={() => setIsBulkModalOpen(true)}>
-            Import Excel
-          </Button>
-          <Button onClick={handleOpenAddModal} style={{ backgroundColor: "#102e50", color: "white" }}>
-            + Tambah Siswa
-          </Button>
+          {/* Tombol create dipindah ke halaman Detail Sekolah via Import Dapodik (D4) */}
         </div>
+      </div>
+
+      {/* Info banner — read-only global view */}
+      <div style={{ margin: "0 1.5rem 1rem", padding: "0.75rem 1rem", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "0.5rem", fontSize: "0.85rem", color: "#0369a1", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <span>ℹ</span>
+        <span>
+          Halaman ini menampilkan rekap semua siswa lintas sekolah.
+          Untuk <strong>menambah siswa</strong>, gunakan{" "}
+          <a href="/super-admin/sekolah" style={{ color: "#0369a1", fontWeight: 600 }}>Import Dapodik di halaman Sekolah</a>.
+        </span>
       </div>
 
       <table className="pemantik-table">

@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@pemantik/supabase";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "./auth";
 
 export interface ActionResponse {
   success: boolean;
@@ -11,7 +12,11 @@ export interface ActionResponse {
 
 export async function createClassAction(formData: FormData): Promise<ActionResponse> {
   try {
+    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
     const school_id = (formData.get("school_id") as string)?.trim();
+    if (role === "school" && authSchoolId !== school_id) {
+      return { success: false, error: "Akses ditolak. Bukan data sekolah Anda." };
+    }
     const name = (formData.get("name") as string)?.trim();
     const grade = parseInt((formData.get("grade") as string) ?? "1", 10);
     const teacher_id = (formData.get("teacher_id") as string)?.trim() || null;
@@ -58,10 +63,14 @@ export async function createClassAction(formData: FormData): Promise<ActionRespo
 
 export async function updateClassAction(id: string, formData: FormData): Promise<ActionResponse> {
   try {
+    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
+    const school_id = (formData.get("school_id") as string)?.trim();
+    if (role === "school" && authSchoolId !== school_id) {
+      return { success: false, error: "Akses ditolak. Bukan data sekolah Anda." };
+    }
     const name = (formData.get("name") as string)?.trim();
     const grade = parseInt((formData.get("grade") as string) ?? "1", 10);
     const teacher_id = (formData.get("teacher_id") as string)?.trim() || null;
-    const school_id = (formData.get("school_id") as string)?.trim();
     const academic_year = (formData.get("academic_year") as string)?.trim() || "";
 
     if (!name || !grade) {
@@ -111,6 +120,7 @@ export async function updateClassAction(id: string, formData: FormData): Promise
 
 export async function deleteClassAction(id: string): Promise<ActionResponse> {
   try {
+    await requireAuth(["super_admin", "school"]);
     const supabase = createServerClient();
 
     // Cek apakah kelas masih punya siswa
@@ -145,6 +155,7 @@ export async function deleteClassAction(id: string): Promise<ActionResponse> {
 
 export async function toggleClassStatusAction(id: string, isActive: boolean): Promise<ActionResponse> {
   try {
+    await requireAuth(["super_admin", "school"]);
     const supabase = createServerClient();
 
     const { error } = await supabase

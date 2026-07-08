@@ -177,3 +177,17 @@ export async function logoutAction(): Promise<void> {
 
   redirect("/login");
 }
+
+// ─── Middleware / Auth Helper untuk Server Actions ────────────────────────────
+export async function requireAuth(allowedRoles: string[]) {
+  const cookieStore = await cookies();
+  const role = cookieStore.get("sb-user-role")?.value;
+  const schoolId = cookieStore.get("sb-school-id")?.value;
+  const communityId = cookieStore.get("sb-community-id")?.value;
+
+  if (!role || !allowedRoles.includes(role)) {
+    throw new Error("Unauthorized");
+  }
+
+  return { role, schoolId, communityId };
+}

@@ -23,12 +23,20 @@ interface Community {
   created_at: string;
 }
 
+interface School {
+  id: string;
+  name: string;
+  community_id: string | null;
+}
+
 interface CommunitiesManagerProps {
   initialCommunities: Community[];
+  initialSchools?: School[];
 }
 
 export default function CommunitiesManager({
   initialCommunities,
+  initialSchools = [],
 }: CommunitiesManagerProps) {
   const [communities, setCommunities] = useState<Community[]>(initialCommunities);
   const [search, setSearch] = useState("");
@@ -346,6 +354,32 @@ export default function CommunitiesManager({
             <label htmlFor="comm-is-active" style={{ fontSize: "0.9rem", fontWeight: 600, cursor: "pointer" }}>
               Aktifkan komunitas ini langsung
             </label>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">
+              Pilih Sekolah Binaan (Opsional)
+            </label>
+            <div style={{ padding: "0.75rem", border: "1px solid #e5e7eb", borderRadius: "0.5rem", maxHeight: "200px", overflowY: "auto" }}>
+              {initialSchools.length === 0 ? (
+                <span style={{ fontSize: "0.85rem", color: "#6b7280" }}>Tidak ada sekolah tersedia.</span>
+              ) : (
+                initialSchools
+                  .filter(s => !s.community_id || (editingComm && s.community_id === editingComm.id) || (initialCommunities.find(c => c.id === s.community_id)?.name === "SEKOLAH INDEPENDEN"))
+                  .map(s => {
+                    const isSelected = !!(editingComm && s.community_id === editingComm.id);
+                    return (
+                      <label key={s.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                        <input type="checkbox" name="school_ids" value={s.id} defaultChecked={isSelected} />
+                        <span>{s.name}</span>
+                      </label>
+                    );
+                  })
+              )}
+            </div>
+            <span style={{ fontSize: "0.75rem", color: "#6c757d", marginTop: "0.25rem", display: "block" }}>
+              Sekolah yang dipilih akan diubah statusnya menjadi di bawah naungan komunitas ini. Hanya menampilkan sekolah independen atau sekolah milik komunitas ini.
+            </span>
           </div>
 
           <div

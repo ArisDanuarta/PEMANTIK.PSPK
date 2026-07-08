@@ -20,6 +20,7 @@ export async function createCommunityAction(
   const contactPhone = (formData.get("contact_phone") as string)?.trim() || null;
   const contactEmail = (formData.get("contact_email") as string)?.trim() || null;
   const isActive = formData.get("is_active") === "true";
+  const schoolIds = formData.getAll("school_ids") as string[];
 
   if (!name || !code) {
     return { success: false, error: "Nama dan Kode Komunitas wajib diisi." };
@@ -99,6 +100,14 @@ export async function createCommunityAction(
     return { success: false, error: "Gagal menyimpan data pengguna komunitas: " + userError.message };
   }
 
+  if (schoolIds && schoolIds.length > 0) {
+    const { error: schoolErr } = await supabase
+      .from("schools")
+      .update({ community_id: newComm.id })
+      .in("id", schoolIds);
+    if (schoolErr) console.error("Failed to assign schools to community:", schoolErr);
+  }
+
     revalidatePath("/super-admin/komunitas");
     revalidatePath("/super-admin/dashboard");
     return { 
@@ -122,6 +131,7 @@ export async function updateCommunityAction(
   const contactPhone = (formData.get("contact_phone") as string)?.trim() || null;
   const contactEmail = (formData.get("contact_email") as string)?.trim() || null;
   const isActive = formData.get("is_active") === "true";
+  const schoolIds = formData.getAll("school_ids") as string[];
 
   if (!name) {
     return { success: false, error: "Nama Komunitas wajib diisi." };
@@ -145,6 +155,21 @@ export async function updateCommunityAction(
   if (error) {
     console.error("Failed to update community:", error);
     return { success: false, error: "Gagal memperbarui komunitas: " + error.message };
+  }
+
+  // Handle schools update
+  // First, remove this community from schools that are no longer selected
+  await supabase
+    .from("schools")
+    .update({ community_id: null as any }) // We don't have the independent ID here easily, but null is fine for unassigned, or ideally we'd set to SEKOLAH INDEPENDEN. Setting to null for now.
+    .eq("community_id", id);
+    
+  // Then assign the new ones
+  if (schoolIds && schoolIds.length > 0) {
+    await supabase
+      .from("schools")
+      .update({ community_id: id })
+      .in("id", schoolIds);
   }
 
     revalidatePath("/super-admin/komunitas");
