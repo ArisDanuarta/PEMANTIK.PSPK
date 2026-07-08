@@ -44,9 +44,15 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
           </div>
         </div>
 
-        <div style={{ borderTop: "1px solid #eee", paddingTop: "1.5rem" }}>
-          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-gray-500)", marginBottom: "0.5rem", textTransform: "uppercase" }}>Tipe Soal</div>
-          <div style={{ fontSize: "1rem", color: "#1a1a1a" }}>{q.question_type.replace('_', ' ')}</div>
+        <div style={{ borderTop: "1px solid #eee", paddingTop: "1.5rem", display: "flex", gap: "3rem" }}>
+          <div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-gray-500)", marginBottom: "0.5rem", textTransform: "uppercase" }}>Kode Soal</div>
+            <div style={{ fontSize: "1.1rem", color: "var(--clr-biru)", fontWeight: 700 }}>{q.question_code || "-"}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-gray-500)", marginBottom: "0.5rem", textTransform: "uppercase" }}>Tipe Soal</div>
+            <div style={{ fontSize: "1rem", color: "#1a1a1a" }}>{q.question_type.replace('_', ' ')}</div>
+          </div>
         </div>
 
         <div style={{ borderTop: "1px solid #eee", paddingTop: "1.5rem" }}>

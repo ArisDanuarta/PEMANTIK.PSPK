@@ -89,7 +89,10 @@ export async function createQuestionLevel(
   levelNumber: number,
   timeLimitSec: number,
   passingThreshold: number,
-  accessCode?: string
+  accessCode?: string,
+  learningObjective?: string,
+  successMessage?: string,
+  failureMessage?: string
 ) {
   try {
     const supabase = await createServerClient();
@@ -100,7 +103,10 @@ export async function createQuestionLevel(
         level_number: levelNumber,
         time_limit_sec: timeLimitSec,
         passing_threshold: passingThreshold,
-        access_code: accessCode || null
+        access_code: accessCode || null,
+        learning_objective: learningObjective || null,
+        success_message: successMessage || null,
+        failure_message: failureMessage || null
       })
       .select()
       .single();
@@ -118,7 +124,10 @@ export async function updateQuestionLevel(
   levelNumber: number,
   timeLimitSec: number,
   passingThreshold: number,
-  accessCode?: string
+  accessCode?: string,
+  learningObjective?: string,
+  successMessage?: string,
+  failureMessage?: string
 ) {
   try {
     const supabase = await createServerClient();
@@ -128,7 +137,10 @@ export async function updateQuestionLevel(
         level_number: levelNumber,
         time_limit_sec: timeLimitSec,
         passing_threshold: passingThreshold,
-        access_code: accessCode || null
+        access_code: accessCode || null,
+        learning_objective: learningObjective || null,
+        success_message: successMessage || null,
+        failure_message: failureMessage || null
       })
       .eq("id", id);
       

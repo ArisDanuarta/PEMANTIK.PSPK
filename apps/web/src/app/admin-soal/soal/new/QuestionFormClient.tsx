@@ -82,6 +82,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
   // ── Meta state ──────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [questionCode, setQuestionCode] = useState(initialData?.question_code || "");
   const [subjectArea, setSubjectArea] = useState(initialData?.subject_area || "literasi");
   const [questionType, setQuestionType] = useState(initialData?.question_type || "multiple_choice");
   const [categoryId, setCategoryId] = useState("");
@@ -283,10 +284,12 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
   // ─── Submit ────────────────────────────────────────────────────────────────
 
   const handleSubmit = async (isPublished: boolean) => {
+    if (!questionCode.trim()) return error("Validasi", "Kode Soal wajib diisi.");
     if (!levelId) return error("Validasi", "Silakan pilih Jenis Soal dan Level terlebih dahulu.");
     setLoading(true);
 
     const payload: any = {
+      question_code: questionCode.trim(),
       subject_area: subjectArea,
       question_type: questionType,
       level_id: levelId,
@@ -832,6 +835,10 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             1. Klasifikasi Soal
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label className="form-label" style={{ fontWeight: 600 }}>Kode Soal <span style={{ color: "var(--color-danger)" }}>*</span></label>
+              <input type="text" className="form-input" placeholder="Misal: LIT-01" value={questionCode} onChange={e => setQuestionCode(e.target.value)} required />
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
               <label className="form-label" style={{ fontWeight: 600 }}>Mata Pelajaran</label>
               <select className="form-input" value={subjectArea} onChange={e => setSubjectArea(e.target.value)}>

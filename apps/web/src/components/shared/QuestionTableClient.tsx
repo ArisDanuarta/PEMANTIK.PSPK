@@ -105,6 +105,7 @@ export default function QuestionTableClient({
           <thead>
             <tr>
               <th style={{ width: "38%" }}>Pertanyaan</th>
+              <th className="col-hide-mobile">Kode Soal</th>
               <th className="col-hide-mobile">Mata Pelajaran</th>
               <th>Tipe</th>
               <th className="col-hide-mobile">Level / Kategori</th>
@@ -137,6 +138,13 @@ export default function QuestionTableClient({
                       {new Date(q.created_at).toLocaleDateString("id-ID", {
                         day: "2-digit", month: "short", year: "numeric",
                       })}
+                    </div>
+                  </td>
+
+                  {/* Kode Soal */}
+                  <td className="col-hide-mobile">
+                    <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--clr-biru)" }}>
+                      {q.question_code || "-"}
                     </div>
                   </td>
 

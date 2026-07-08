@@ -194,11 +194,14 @@ export default function PengaturanClient() {
   const [newTimeLimit, setNewTimeLimit] = useState<number | "">("");
   const [newThreshold, setNewThreshold] = useState<number | "">("");
   const [newAccessCode, setNewAccessCode] = useState("");
+  const [newLearningObjective, setNewLearningObjective] = useState("");
+  const [newSuccessMessage, setNewSuccessMessage] = useState("");
+  const [newFailureMessage, setNewFailureMessage] = useState("");
   const [creatingLevel, setCreatingLevel] = useState(false);
 
   // Edit Level
   const [editingLevelId, setEditingLevelId] = useState<string | null>(null);
-  const [editLevel, setEditLevel] = useState({ levelNumber: 0, timeLimit: 0, threshold: 0, accessCode: "" });
+  const [editLevel, setEditLevel] = useState({ levelNumber: 0, timeLimit: 0, threshold: 0, accessCode: "", learningObjective: "", successMessage: "", failureMessage: "" });
 
   // Reorder State
   const [reorderLevel, setReorderLevel] = useState<any | null>(null);
@@ -274,11 +277,14 @@ export default function PengaturanClient() {
       Number(newLevelNumber),
       Number(newTimeLimit),
       Number(newThreshold),
-      newAccessCode.trim() || undefined
+      newAccessCode.trim() || undefined,
+      newLearningObjective.trim() || undefined,
+      newSuccessMessage.trim() || undefined,
+      newFailureMessage.trim() || undefined
     );
     setCreatingLevel(false);
     if (res.success) {
-      setNewLevelNumber(""); setNewTimeLimit(""); setNewThreshold(""); setNewAccessCode("");
+      setNewLevelNumber(""); setNewTimeLimit(""); setNewThreshold(""); setNewAccessCode(""); setNewLearningObjective(""); setNewSuccessMessage(""); setNewFailureMessage("");
       success("Level berhasil ditambahkan!");
       selectCategory(selectedCategory);
     } else error("Gagal menambah level: " + res.error);
@@ -290,7 +296,10 @@ export default function PengaturanClient() {
       editLevel.levelNumber,
       editLevel.timeLimit,
       editLevel.threshold,
-      editLevel.accessCode || undefined
+      editLevel.accessCode || undefined,
+      editLevel.learningObjective || undefined,
+      editLevel.successMessage || undefined,
+      editLevel.failureMessage || undefined
     );
     if (res.success) {
       success("Level diperbarui!");
@@ -489,6 +498,18 @@ export default function PengaturanClient() {
                     <label className="form-label">Kode Akses (Opsional)</label>
                     <input type="text" className="form-input" value={newAccessCode} onChange={(e) => setNewAccessCode(e.target.value)} placeholder="Misal: L1-A" />
                   </div>
+                  <div className="form-group" style={{ gridColumn: "1 / -1" }}>
+                    <label className="form-label">Capaian Belajar (Opsional)</label>
+                    <textarea className="form-input" value={newLearningObjective} onChange={(e) => setNewLearningObjective(e.target.value)} placeholder="Deskripsi capaian belajar level ini..." rows={2} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Respon Berhasil (Opsional)</label>
+                    <input type="text" className="form-input" value={newSuccessMessage} onChange={(e) => setNewSuccessMessage(e.target.value)} placeholder="Kerja bagus! Lanjut level berikutnya" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Respon Gagal (Opsional)</label>
+                    <input type="text" className="form-input" value={newFailureMessage} onChange={(e) => setNewFailureMessage(e.target.value)} placeholder="Jangan menyerah, coba lagi!" />
+                  </div>
                   <div style={{ gridColumn: "1 / -1" }}>
                     <button type="submit" className="btn btn-primary btn-md" style={{ width: "100%" }} disabled={creatingLevel}>
                       {creatingLevel ? "Menyimpan..." : "Tambah Level"}
@@ -535,6 +556,21 @@ export default function PengaturanClient() {
                                 <input type="text" className="form-input" value={editLevel.accessCode}
                                   onChange={(e) => setEditLevel((p) => ({ ...p, accessCode: e.target.value }))} />
                               </div>
+                              <div className="form-group" style={{ gridColumn: "1 / -1" }}>
+                                <label className="form-label">Capaian Belajar</label>
+                                <textarea className="form-input" value={editLevel.learningObjective}
+                                  onChange={(e) => setEditLevel((p) => ({ ...p, learningObjective: e.target.value }))} rows={2} />
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">Respon Berhasil</label>
+                                <input type="text" className="form-input" value={editLevel.successMessage}
+                                  onChange={(e) => setEditLevel((p) => ({ ...p, successMessage: e.target.value }))} />
+                              </div>
+                              <div className="form-group">
+                                <label className="form-label">Respon Gagal</label>
+                                <input type="text" className="form-input" value={editLevel.failureMessage}
+                                  onChange={(e) => setEditLevel((p) => ({ ...p, failureMessage: e.target.value }))} />
+                              </div>
                             </div>
                             <div style={{ display: "flex", gap: "0.5rem" }}>
                               <button className="btn btn-primary btn-sm" onClick={() => handleUpdateLevel(l)}>Simpan</button>
@@ -570,7 +606,7 @@ export default function PengaturanClient() {
                                 style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
                                 onClick={() => {
                                   setEditingLevelId(l.id);
-                                  setEditLevel({ levelNumber: l.level_number, timeLimit: l.time_limit_sec, threshold: l.passing_threshold, accessCode: l.access_code || "" });
+                                  setEditLevel({ levelNumber: l.level_number, timeLimit: l.time_limit_sec, threshold: l.passing_threshold, accessCode: l.access_code || "", learningObjective: l.learning_objective || "", successMessage: l.success_message || "", failureMessage: l.failure_message || "" });
                                 }}
                               >✏️</button>
                               <button

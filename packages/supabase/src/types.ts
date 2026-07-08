@@ -77,6 +77,10 @@ export interface Database {
           level_number: number;
           time_limit_sec: number;
           passing_threshold: number;
+          access_code: string | null;
+          learning_objective: string | null;
+          success_message: string | null;
+          failure_message: string | null;
           created_at: string;
         };
         Insert: {
@@ -85,6 +89,10 @@ export interface Database {
           level_number: number;
           time_limit_sec?: number;
           passing_threshold?: number;
+          access_code?: string | null;
+          learning_objective?: string | null;
+          success_message?: string | null;
+          failure_message?: string | null;
           created_at?: string;
         };
         Update: {
@@ -93,6 +101,10 @@ export interface Database {
           level_number?: number;
           time_limit_sec?: number;
           passing_threshold?: number;
+          access_code?: string | null;
+          learning_objective?: string | null;
+          success_message?: string | null;
+          failure_message?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -398,6 +410,7 @@ export interface Database {
         Row: {
           id: string;
           created_by: string | null;
+          question_code: string | null;
           subject_area: SubjectArea;
           question_type: QuestionType;
           difficulty: DifficultyLevel;
@@ -421,6 +434,7 @@ export interface Database {
         Insert: {
           id?: string;
           created_by?: string | null;
+          question_code?: string | null;
           subject_area: SubjectArea;
           question_type: QuestionType;
           difficulty: DifficultyLevel;
@@ -444,6 +458,7 @@ export interface Database {
         Update: {
           subject_area?: SubjectArea;
           question_type?: QuestionType;
+          question_code?: string | null;
           difficulty?: DifficultyLevel;
           grade_target?: number | null;
           question_text?: string | null;
