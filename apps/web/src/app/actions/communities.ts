@@ -20,7 +20,6 @@ export async function createCommunityAction(
   const contactPhone = (formData.get("contact_phone") as string)?.trim() || null;
   const contactEmail = (formData.get("contact_email") as string)?.trim() || null;
   const isActive = formData.get("is_active") === "true";
-  const schoolIds = formData.getAll("school_ids") as string[];
 
   if (!name || !code) {
     return { success: false, error: "Nama dan Kode Komunitas wajib diisi." };
@@ -55,7 +54,8 @@ export async function createCommunityAction(
     contact_phone: contactPhone,
     contact_email: contactEmail,
     is_active: isActive,
-  }).select().single();
+    allowed_categories: null, // Default: semua paket ujian diizinkan
+  } as any).select().single();
 
   if (error || !newComm) {
     console.error("Failed to create community:", error);
@@ -100,14 +100,6 @@ export async function createCommunityAction(
     return { success: false, error: "Gagal menyimpan data pengguna komunitas: " + userError.message };
   }
 
-  if (schoolIds && schoolIds.length > 0) {
-    const { error: schoolErr } = await supabase
-      .from("schools")
-      .update({ community_id: newComm.id })
-      .in("id", schoolIds);
-    if (schoolErr) console.error("Failed to assign schools to community:", schoolErr);
-  }
-
     revalidatePath("/super-admin/komunitas");
     revalidatePath("/super-admin/dashboard");
     return { 
@@ -126,51 +118,35 @@ export async function updateCommunityAction(
 ): Promise<ActionResponse> {
   try {
     const name = (formData.get("name") as string)?.trim();
-  const address = (formData.get("address") as string)?.trim() || null;
-  const contactName = (formData.get("contact_name") as string)?.trim() || null;
-  const contactPhone = (formData.get("contact_phone") as string)?.trim() || null;
-  const contactEmail = (formData.get("contact_email") as string)?.trim() || null;
-  const isActive = formData.get("is_active") === "true";
-  const schoolIds = formData.getAll("school_ids") as string[];
+    const address = (formData.get("address") as string)?.trim() || null;
+    const contactName = (formData.get("contact_name") as string)?.trim() || null;
+    const contactPhone = (formData.get("contact_phone") as string)?.trim() || null;
+    const contactEmail = (formData.get("contact_email") as string)?.trim() || null;
+    const isActive = formData.get("is_active") === "true";
 
-  if (!name) {
-    return { success: false, error: "Nama Komunitas wajib diisi." };
-  }
+    if (!name) {
+      return { success: false, error: "Nama Komunitas wajib diisi." };
+    }
 
-  const supabase = createServerClient();
+    const supabase = createServerClient();
 
-  const { error } = await supabase
-    .from("communities")
-    .update({
-      name,
-      address,
-      contact_name: contactName,
-      contact_phone: contactPhone,
-      contact_email: contactEmail,
-      is_active: isActive,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id);
+    const { error } = await (supabase as any)
+      .from("communities")
+      .update({
+        name,
+        address,
+        contact_name: contactName,
+        contact_phone: contactPhone,
+        contact_email: contactEmail,
+        is_active: isActive,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
 
-  if (error) {
-    console.error("Failed to update community:", error);
-    return { success: false, error: "Gagal memperbarui komunitas: " + error.message };
-  }
-
-  // Handle schools update
-  // First, remove this community from schools that are no longer selected
-  await supabase
-    .from("schools")
-    .update({ community_id: null as any }) // We don't have the independent ID here easily, but null is fine for unassigned, or ideally we'd set to SEKOLAH INDEPENDEN. Setting to null for now.
-    .eq("community_id", id);
-    
-  // Then assign the new ones
-  if (schoolIds && schoolIds.length > 0) {
-    await supabase
-      .from("schools")
-      .update({ community_id: id })
-      .in("id", schoolIds);
-  }
+    if (error) {
+      console.error("Failed to update community:", error);
+      return { success: false, error: "Gagal memperbarui komunitas: " + error.message };
+    }
 
     revalidatePath("/super-admin/komunitas");
     revalidatePath("/super-admin/dashboard");

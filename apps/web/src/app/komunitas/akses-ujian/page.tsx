@@ -99,25 +99,48 @@ export default async function KomunitasAksesUjianPage() {
     return { ...log, target_name: s?.name ?? 'Unknown' };
   });
 
+  // ── Fetch semua kategori soal & riwayat pengajuan fase ───────────────────
+  const { data: allCategories = [] } = await supabase
+    .from("question_categories")
+    .select("id, name, subject_area")
+    .order("name");
+
+  const { getPhaseRequestsForCommunity } = await import("@/app/actions/phaseRequests");
+  const phaseRequestsRes = await getPhaseRequestsForCommunity();
+  const phaseRequests = phaseRequestsRes.success ? (phaseRequestsRes.data || []) : [];
+
+  // ── Cek tahap asesmen sekolah binaan untuk menentukan apakah tombol pengajuan terbuka ──
+  const { data: stagesData } = await (supabase as any)
+    .from("school_assessment_stages")
+    .select("current_stage")
+    .eq("community_id", communityId);
+
+  const canSubmitRequest = (stagesData ?? []).some((s: any) =>
+    ["pengajuan_asesmen", "proses_asesmen", "intervensi", "selesai"].includes(s.current_stage)
+  );
+
   return (
     <div className="animate-fade-in">
       <div className="page-header">
         <div className="page-header-left">
-          <h1 className="page-title">Akses Ujian</h1>
+          <h1 className="page-title">Akses Ujian & Pengajuan Fase</h1>
           <div className="page-breadcrumb">
             <span>Komunitas</span>
             <span className="page-breadcrumb-sep">›</span>
-            <span>Distribusi Kategori ke Sekolah</span>
+            <span>Distribusi & Pengajuan Fase ke Super Admin</span>
           </div>
         </div>
       </div>
 
       <AksesUjianKomunitasClient
         packages={packages}
+        allCategories={allCategories || []}
+        phaseRequests={phaseRequests}
         communityAccesses={communityAccesses}
         targets={(schoolsData ?? []).map((s) => ({ ...s, npsn: s.npsn ?? undefined }))}
         accessLogs={accessLogs}
         communityId={communityId}
+        canSubmitRequest={canSubmitRequest}
       />
     </div>
   );

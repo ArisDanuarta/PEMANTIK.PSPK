@@ -15,7 +15,7 @@ export async function createTeacherAction(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
-    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
+    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school", "community"]);
     const school_id = (formData.get("school_id") as string)?.trim();
     if (role === "school" && authSchoolId !== school_id) {
       return { success: false, error: "Akses ditolak. Bukan data sekolah Anda." };
@@ -101,7 +101,7 @@ export async function bulkCreateTeachersAction(
   dataArray: any[]
 ): Promise<ActionResponse> {
   try {
-    await requireAuth(["super_admin", "school"]);
+    const { role, schoolId: authSchoolId, communityId: authCommunityId } = await requireAuth(["super_admin", "school", "community"]);
     if (!dataArray || dataArray.length === 0) {
       return { success: false, error: "Data kosong." };
     }
@@ -109,7 +109,11 @@ export async function bulkCreateTeachersAction(
     const supabase = createServerClient();
     
     // Fetch all schools for case-insensitive matching
-    const { data: schoolsData } = await supabase.from("schools").select("id, name");
+    let query = supabase.from("schools").select("id, name, community_id");
+    if (role === "community" && authCommunityId) {
+      query = query.eq("community_id", authCommunityId);
+    }
+    const { data: schoolsData } = await query;
     const schoolsMap = new Map((schoolsData || []).map((s: any) => [s.name.toLowerCase().trim(), s.id]));
 
     // Fetch all classes
@@ -141,7 +145,7 @@ export async function bulkCreateTeachersAction(
       const school_id = schoolsMap.get(String(schoolName).toLowerCase().trim());
       if (!school_id) {
          failCount++;
-         errors.push(`Baris ${i + 2} gagal: Sekolah "${schoolName}" tidak ditemukan di sistem.`);
+         errors.push(`Baris ${i + 2} gagal: Sekolah "${schoolName}" tidak ditemukan atau bukan binaan komunitas Anda.`);
          continue;
       }
 
@@ -229,7 +233,7 @@ export async function bulkCreateTeachersAction(
 
 export async function updateTeacherAction(id: string, formData: FormData) {
   try {
-    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
+    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school", "community"]);
     const school_id = (formData.get("school_id") as string)?.trim();
     if (role === "school" && authSchoolId !== school_id) {
       return { success: false, error: "Akses ditolak. Bukan data sekolah Anda." };
@@ -286,7 +290,7 @@ export async function updateTeacherAction(id: string, formData: FormData) {
 
 export async function resetTeacherPasswordAction(teacherId: string): Promise<ActionResponse> {
   try {
-    await requireAuth(["super_admin", "school"]);
+    await requireAuth(["super_admin", "school", "community"]);
     const supabase = createServerClient();
     
     // For teachers, teacherId is their auth user id
@@ -308,7 +312,7 @@ export async function resetTeacherPasswordAction(teacherId: string): Promise<Act
 
 export async function deleteTeacherAction(id: string) {
   try {
-    await requireAuth(["super_admin", "school"]);
+    await requireAuth(["super_admin", "school", "community"]);
     const supabase = createServerClient();
     
     // Auth account must be deleted, which deletes cascade user

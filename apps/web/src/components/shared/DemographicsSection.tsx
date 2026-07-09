@@ -1,0 +1,141 @@
+"use client";
+
+import React, { useMemo } from "react";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+
+export interface StudentDemographicRow {
+  gender?: string | null;
+  socioeconomic_status?: string | null;
+  ses_class?: string | null;
+  grade_level?: string | null;
+}
+
+export interface DemographicsSectionProps {
+  students: StudentDemographicRow[];
+  title?: string;
+  description?: string;
+}
+
+const GENDER_COLORS = ["#0874aa", "#df632f", "#9ca3af"];
+const SES_COLORS = ["#2d9e5f", "#f2af3e", "#e11d48"];
+
+export default function DemographicsSection({
+  students,
+  title = "Demografi Siswa & Latar Belakang",
+  description = "Distribusi jenis kelamin dan status sosial ekonomi (SES) siswa terdaftar"
+}: DemographicsSectionProps) {
+  
+  const genderData = useMemo(() => {
+    let laki = 0, perempuan = 0, lainnya = 0;
+    students.forEach(s => {
+      const g = (s.gender || "").toLowerCase();
+      if (g === "l" || g === "laki-laki" || g === "male") laki++;
+      else if (g === "p" || g === "perempuan" || g === "female") perempuan++;
+      else lainnya++;
+    });
+
+    const total = laki + perempuan + lainnya;
+    if (total === 0) return [];
+
+    return [
+      { name: "Laki-laki", value: laki },
+      { name: "Perempuan", value: perempuan },
+      ...(lainnya > 0 ? [{ name: "Lainnya / Tidak Diketahui", value: lainnya }] : [])
+    ];
+  }, [students]);
+
+  const sesData = useMemo(() => {
+    let rendah = 0, sedang = 0, tinggi = 0, unknown = 0;
+    students.forEach(s => {
+      const ses = (s.socioeconomic_status || s.ses_class || "").toLowerCase();
+      if (ses === "rendah" || ses === "low" || ses === "r") rendah++;
+      else if (ses === "sedang" || ses === "medium" || ses === "s") sedang++;
+      else if (ses === "tinggi" || ses === "high" || ses === "t") tinggi++;
+      else unknown++;
+    });
+
+    const total = rendah + sedang + tinggi + unknown;
+    if (total === 0) return [];
+
+    return [
+      { name: "SES Rendah", count: rendah },
+      { name: "SES Sedang", count: sedang },
+      { name: "SES Tinggi", count: tinggi },
+      ...(unknown > 0 ? [{ name: "Belum Ditentukan", count: unknown }] : [])
+    ];
+  }, [students]);
+
+  if (!students || students.length === 0) {
+    return (
+      <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #f1f3f5" }}>
+        <h3 style={{ margin: "0 0 0.25rem 0", color: "#102e50", fontSize: "1.1rem" }}>{title}</h3>
+        <p style={{ margin: "0 0 1.5rem 0", color: "#6b7280", fontSize: "0.85rem" }}>{description}</p>
+        <div style={{ padding: "2.5rem", textAlign: "center", color: "#9ca3af", backgroundColor: "#f8f9fa", borderRadius: "0.5rem", border: "1px dashed #dee2e6" }}>
+          Belum ada data demografi siswa yang tersedia.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #f1f3f5" }}>
+      <h3 style={{ margin: "0 0 0.25rem 0", color: "#102e50", fontSize: "1.1rem" }}>{title}</h3>
+      <p style={{ margin: "0 0 1.5rem 0", color: "#6b7280", fontSize: "0.85rem" }}>{description}</p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "2rem", alignItems: "center" }}>
+        {/* Gender Donut Chart */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <h4 style={{ fontSize: "0.95rem", color: "#374151", marginBottom: "1rem", fontWeight: 600 }}>Komposisi Gender</h4>
+          <div style={{ width: "100%", height: 220 }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={genderData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={80}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
+                  {genderData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={GENDER_COLORS[index % GENDER_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value: any) => [`${value} Siswa`, "Jumlah"]} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", justifyContent: "center", marginTop: "0.5rem" }}>
+            {genderData.map((g, idx) => (
+              <div key={g.name} style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", color: "#4b5563" }}>
+                <span style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: GENDER_COLORS[idx % GENDER_COLORS.length] }} />
+                <span>{g.name}: <strong>{g.value}</strong></span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* SES Bar Chart */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <h4 style={{ fontSize: "0.95rem", color: "#374151", marginBottom: "1rem", fontWeight: 600 }}>Status Sosial Ekonomi (SES)</h4>
+          <div style={{ width: "100%", height: 220 }}>
+            <ResponsiveContainer>
+              <BarChart data={sesData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#6b7280" }} interval={0} />
+                <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} allowDecimals={false} />
+                <Tooltip formatter={(value: any) => [`${value} Siswa`, "Jumlah"]} />
+                <Bar dataKey="count" fill="#2d9e5f" radius={[4, 4, 0, 0]} barSize={36}>
+                  {sesData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={SES_COLORS[index % SES_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

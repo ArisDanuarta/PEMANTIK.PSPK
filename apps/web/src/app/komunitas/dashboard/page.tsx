@@ -1,60 +1,124 @@
-import type { Metadata } from "next";
-import { createServerClient } from "@pemantik/supabase";
+import React from "react";
 import { redirect } from "next/navigation";
-import ProgressTrackingChart from "@/components/shared/ProgressTrackingChart";
-import StudentSessionsTable from "@/components/shared/StudentSessionsTable";
 import { headers } from "next/headers";
+import { createServerClient } from "@pemantik/supabase";
+import StudentSessionsTable from "@/components/shared/StudentSessionsTable";
+import { checkAndAutoTransitionStages, getActiveStagesForCommunity, type SchoolAssessmentStageRow } from "@/app/actions/stages";
+import CommunityInteractiveTimeline, { type SchoolSummaryForTimeline } from "@/components/shared/CommunityInteractiveTimeline";
+import DemographicsSection, { type StudentDemographicRow } from "@/components/shared/DemographicsSection";
+import PhaseComparisonChart from "@/components/shared/PhaseComparisonChart";
 
-export const dynamic = 'force-dynamic';
-
-export const metadata: Metadata = {
+export const metadata = {
   title: "Dashboard Komunitas | Pemantik",
 };
 
-export default async function KomunitasDashboard() {
-  const supabase = createServerClient();
+export default async function KomunitasDashboardPage() {
   const headersList = await headers();
   const communityId = headersList.get("x-community-id");
-  
+
+  if (!communityId) {
+    redirect("/login");
+  }
+
+  const supabase = createServerClient();
+
   let totalSchools = 0;
   let totalTeachers = 0;
   let totalStudents = 0;
+  let totalClasses = 0;
   let totalSessions = 0;
-  
   let avgLiterasi = 0;
   let avgNumerasi = 0;
-  
   let sessionsDataForChart: any[] = [];
   let recentSessions: any[] = [];
-  
+  let stagesData: SchoolAssessmentStageRow[] = [];
+  let studentsDemographic: StudentDemographicRow[] = [];
+  let schoolsSummary: SchoolSummaryForTimeline[] = [];
+
   if (communityId) {
+    // 0. Cek & auto-transition tahap proses_asesmen yang masa berlakunya sudah habis
+    await checkAndAutoTransitionStages(communityId);
+    
+    // 0b. Ambil data 5-tahap timeline untuk sekolah-sekolah di bawah komunitas ini
+    const stagesRes = await getActiveStagesForCommunity(true);
+    if (stagesRes.success && stagesRes.data) {
+      stagesData = stagesRes.data;
+    }
+
     // 1. Fetch schools for this community
     const { data: schools } = await supabase
       .from("schools")
-      .select("id")
+      .select("id, name, npsn")
       .eq("community_id", communityId);
       
     const schoolIds = schools?.map(s => s.id) || [];
     totalSchools = schoolIds.length;
     
     if (schoolIds.length > 0) {
-      // 2. Fetch total teachers/school admins
-      const { count: teachersCount } = await supabase
+      // 2. Fetch total teachers/school admins & data per school
+      const { data: usersData } = await supabase
         .from("users")
-        .select("id", { count: "exact", head: true })
+        .select("id, school_id")
         .in("school_id", schoolIds)
         .in("role", ["teacher", "school"]);
-      totalTeachers = teachersCount || 0;
+      totalTeachers = usersData?.length || 0;
 
-      // 3. Fetch total students
-      const { count: studentsCount } = await supabase
+      // 3. Fetch total students (anak terdaftar) & data per school
+      const { data: studentsData } = await supabase
         .from("students")
-        .select("id", { count: "exact", head: true })
+        .select("id, school_id, gender, ses_class")
         .in("school_id", schoolIds);
-      totalStudents = studentsCount || 0;
+      totalStudents = studentsData?.length || 0;
+      if (studentsData) {
+        studentsDemographic = studentsData;
+      }
 
-      // 4. Fetch lightweight sessions data for stats & chart
-      // We need phase, score, and subject_area to calculate averages and chart
+      // 3b. Fetch total classes & data per school
+      const { data: classesData } = await supabase
+        .from("classes")
+        .select("id, school_id")
+        .in("school_id", schoolIds);
+      totalClasses = classesData?.length || 0;
+
+      // 3c. Fetch interventions status per school
+      const { data: interRows } = await (supabase as any)
+        .from("interventions")
+        .select("school_id, phase")
+        .eq("community_id", communityId);
+
+      // Build schoolsSummary
+      if (schools) {
+        schoolsSummary = schools.map((sc) => {
+          const stCount = studentsData?.filter((s) => s.school_id === sc.id).length || 0;
+          const tcCount = usersData?.filter((u) => u.school_id === sc.id).length || 0;
+          const clCount = classesData?.filter((c) => c.school_id === sc.id).length || 0;
+
+          // Cari stageRow untuk sekolah ini
+          const stageRow = stagesData.find((s) => s.school_id === sc.id);
+          const currentStage = stageRow?.current_stage || "persiapan_akun";
+          const phase = stageRow?.phase || "Fase 1";
+          const stageId = stageRow?.id;
+
+          const hasFilledIntervention = Boolean(
+            interRows && (interRows as any[]).some((i) => i.school_id === sc.id && i.phase === phase)
+          );
+
+          return {
+            school_id: sc.id,
+            name: sc.name,
+            npsn: sc.npsn,
+            studentsCount: stCount,
+            teachersCount: tcCount,
+            classesCount: clCount,
+            phase,
+            current_stage: currentStage,
+            stageId,
+            hasFilledIntervention,
+          };
+        });
+      }
+
+      // 4. Fetch lightweight sessions data for stats & comparison chart
       const { data: statsData } = await supabase
         .from("assessment_sessions")
         .select(`
@@ -110,132 +174,165 @@ export default async function KomunitasDashboard() {
 
   return (
     <div className="animate-fade-in">
+      {/* Header */}
       <div className="page-header">
         <div className="page-header-left">
-          <h1 className="page-title">Dashboard</h1>
+          <h1 className="page-title">Dashboard Utama Komunitas</h1>
           <div className="page-breadcrumb">
             <span>Komunitas</span>
             <span className="page-breadcrumb-sep">›</span>
-            <span>Dashboard Utama</span>
+            <span>Progress &amp; Statistik</span>
           </div>
         </div>
       </div>
       
-      {/* 4-Col Grid for Primary Stats */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: "1.25rem",
-        marginBottom: "1.5rem"
-      }}>
-        {/* Sekolah */}
-        <div className="stat-card">
-          <div className="stat-card-accent biru" />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <div className="stat-card-label">Sekolah Binaan</div>
-              <div className="stat-card-value">{totalSchools}</div>
-            </div>
-            <div style={{ padding: "0.5rem", backgroundColor: "rgba(16,46,80,0.07)", borderRadius: "0.5rem", color: "#102e50" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Guru */}
-        <div className="stat-card">
-          <div className="stat-card-accent kuning" />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <div className="stat-card-label">Guru Terdaftar</div>
-              <div className="stat-card-value" style={{ color: "#f2af3e" }}>{totalTeachers}</div>
-            </div>
-            <div style={{ padding: "0.5rem", backgroundColor: "rgba(242,175,62,0.1)", borderRadius: "0.5rem", color: "#f2af3e" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Siswa */}
-        <div className="stat-card">
-          <div className="stat-card-accent oranye" />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <div className="stat-card-label">Siswa Terdaftar</div>
-              <div className="stat-card-value" style={{ color: "#df632f" }}>{totalStudents}</div>
-            </div>
-            <div style={{ padding: "0.5rem", backgroundColor: "rgba(223,99,47,0.08)", borderRadius: "0.5rem", color: "#df632f" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Ujian Selesai */}
-        <div className="stat-card">
-          <div className="stat-card-accent hijau" />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <div className="stat-card-label">Ujian Selesai</div>
-              <div className="stat-card-value" style={{ color: "#2d9e5f" }}>{totalSessions}</div>
-            </div>
-            <div style={{ padding: "0.5rem", backgroundColor: "rgba(45,158,95,0.08)", borderRadius: "0.5rem", color: "#2d9e5f" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Rata-Rata Nilai & Chart */}
-      <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "1.5rem", marginBottom: "1.5rem" }}>
-        
-        {/* Rata Rata Nilai Card */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #f1f3f5", flex: 1 }}>
-            <h3 style={{ margin: "0 0 1.5rem 0", fontSize: "1.1rem", color: "#102e50" }}>Rata-Rata Nilai</h3>
-            
-            <div style={{ marginBottom: "1.5rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                <span style={{ fontSize: "0.9rem", color: "#4b5563", fontWeight: 500 }}>Literasi</span>
-                <span style={{ fontSize: "1.1rem", color: "#2d9e5f", fontWeight: 700 }}>{avgLiterasi}</span>
-              </div>
-              <div style={{ width: "100%", backgroundColor: "#f3f4f6", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
-                <div style={{ height: "100%", backgroundColor: "#2d9e5f", width: `${Math.min(100, avgLiterasi)}%`, borderRadius: "4px" }} />
-              </div>
-            </div>
-
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                <span style={{ fontSize: "0.9rem", color: "#4b5563", fontWeight: 500 }}>Numerasi</span>
-                <span style={{ fontSize: "1.1rem", color: "#0874aa", fontWeight: 700 }}>{avgNumerasi}</span>
-              </div>
-              <div style={{ width: "100%", backgroundColor: "#f3f4f6", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
-                <div style={{ height: "100%", backgroundColor: "#0874aa", width: `${Math.min(100, avgNumerasi)}%`, borderRadius: "4px" }} />
-              </div>
-            </div>
-            
-            <div style={{ marginTop: "2rem", padding: "1rem", backgroundColor: "#f8f9fa", borderRadius: "0.5rem", fontSize: "0.8rem", color: "#6c757d", textAlign: "center" }}>
-              Data dihitung dari seluruh ujian yang telah diselesaikan di bawah naungan komunitas Anda.
-            </div>
-          </div>
-        </div>
-
-        {/* Progress Chart */}
-        <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #f1f3f5" }}>
-          <ProgressTrackingChart sessions={sessionsDataForChart} />
-        </div>
-      </div>
-
-      {/* Sesi Ujian Selesai Terbaru */}
-      <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #f1f3f5" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-          <h3 style={{ margin: 0, fontSize: "1.1rem", color: "#102e50" }}>10 Sesi Ujian Terbaru</h3>
-        </div>
-        <StudentSessionsTable 
-          sessions={recentSessions} 
-          showResetButton={false} 
+      {/* SECTION 1: TIMELINE & TRACK PROGRESS ASESMEN (PALING ATAS) */}
+      <div style={{ marginBottom: "2rem" }}>
+        <CommunityInteractiveTimeline
+          stages={stagesData}
+          totalSchools={totalSchools}
+          schoolsSummary={schoolsSummary}
         />
       </div>
 
+      {/* SECTION 2: 4 STATISTIK CARDS (PSPK ACCENTS: Navy, Gold, Jingga, Teal) */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+        gap: "1.25rem",
+        marginBottom: "2rem"
+      }}>
+        {/* Sekolah Binaan (#102e50 Navy) */}
+        <div className="stat-card" style={{ borderTop: "4px solid #102e50" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div className="stat-card-label" style={{ fontWeight: 600, color: "#64748b" }}>Sekolah Binaan</div>
+              <div className="stat-card-value" style={{ color: "#102e50" }}>{totalSchools}</div>
+            </div>
+            <div style={{ padding: "0.6rem", backgroundColor: "#e0f2fe", borderRadius: "0.75rem", color: "#102e50" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            </div>
+          </div>
+          <div style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "#64748b" }}>
+            Total sekolah aktif yang dibina oleh komunitas Anda
+          </div>
+        </div>
+
+        {/* Guru Terdaftar (#f2af3e Gold) */}
+        <div className="stat-card" style={{ borderTop: "4px solid #f2af3e" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div className="stat-card-label" style={{ fontWeight: 600, color: "#64748b" }}>Guru Terdaftar</div>
+              <div className="stat-card-value" style={{ color: "#b45309" }}>{totalTeachers}</div>
+            </div>
+            <div style={{ padding: "0.6rem", backgroundColor: "#fef3c7", borderRadius: "0.75rem", color: "#d97706" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+            </div>
+          </div>
+          <div style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "#64748b" }}>
+            Tenaga pendidik terverifikasi di sekolah binaan
+          </div>
+        </div>
+
+        {/* Anak Terdaftar (#df632f Jingga - mengganti kata Siswa menjadi Anak) */}
+        <div className="stat-card" style={{ borderTop: "4px solid #df632f" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div className="stat-card-label" style={{ fontWeight: 600, color: "#64748b" }}>Anak Terdaftar</div>
+              <div className="stat-card-value" style={{ color: "#df632f" }}>{totalStudents}</div>
+            </div>
+            <div style={{ padding: "0.6rem", backgroundColor: "#ffedd5", borderRadius: "0.75rem", color: "#df632f" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+          </div>
+          <div style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "#64748b" }}>
+            Total anak yang terdaftar untuk mengikuti asesmen
+          </div>
+        </div>
+
+        {/* Total Kelas Terdaftar (#0874aa Teal) */}
+        <div className="stat-card" style={{ borderTop: "4px solid #0874aa" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div className="stat-card-label" style={{ fontWeight: 600, color: "#64748b" }}>Total Kelas Terdaftar</div>
+              <div className="stat-card-value" style={{ color: "#0874aa" }}>{totalClasses}</div>
+            </div>
+            <div style={{ padding: "0.6rem", backgroundColor: "#e0f2fe", borderRadius: "0.75rem", color: "#0874aa" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            </div>
+          </div>
+          <div style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "#64748b" }}>
+            Jumlah rombongan belajar/kelas di seluruh sekolah
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 3: DEMOGRAFI ANAK & LATAR BELAKANG */}
+      <div style={{ marginBottom: "2rem" }}>
+        <DemographicsSection
+          students={studentsDemographic}
+          title="Demografi Anak &amp; Latar Belakang SES"
+          description="Distribusi jenis kelamin dan status sosial ekonomi (SES) seluruh anak yang terdaftar di bawah komunitas Anda."
+        />
+      </div>
+
+      {/* SECTION 4: CHART BAR PERBANDINGAN NILAI & PARTISIPASI ANAK ANTAR FASE */}
+      <div style={{ marginBottom: "2rem" }}>
+        <PhaseComparisonChart sessions={sessionsDataForChart} />
+      </div>
+
+      {/* SECTION 5: CAPAIAN RATA-RATA (LITERASI VS NUMERASI) & SESI TERBARU */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
+        {/* Rata Rata Capaian Card */}
+        <div style={{ backgroundColor: "white", padding: "1.75rem", borderRadius: "1.25rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <div>
+            <h3 style={{ fontFamily: "Lora, serif", margin: "0 0 0.35rem 0", fontSize: "1.2rem", color: "#102e50", fontWeight: 700 }}>
+              Capaian Rata-Rata Asesmen
+            </h3>
+            <p style={{ margin: "0 0 1.5rem 0", fontSize: "0.85rem", color: "#64748b" }}>
+              Skor rata-rata dari seluruh sesi ujian Literasi dan Numerasi yang telah diselesaikan anak.
+            </p>
+            
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", alignItems: "center" }}>
+                <span style={{ fontSize: "0.92rem", color: "#334155", fontWeight: 700 }}>📖 Literasi</span>
+                <span style={{ fontSize: "1.15rem", color: "#2d9e5f", fontWeight: 800 }}>{avgLiterasi}%</span>
+              </div>
+              <div style={{ width: "100%", backgroundColor: "#f1f5f9", height: "10px", borderRadius: "999px", overflow: "hidden" }}>
+                <div style={{ height: "100%", backgroundColor: "#2d9e5f", width: `${Math.min(100, avgLiterasi)}%`, borderRadius: "999px", transition: "width 0.5s ease" }} />
+              </div>
+            </div>
+
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", alignItems: "center" }}>
+                <span style={{ fontSize: "0.92rem", color: "#334155", fontWeight: 700 }}>🔢 Numerasi</span>
+                <span style={{ fontSize: "1.15rem", color: "#0874aa", fontWeight: 800 }}>{avgNumerasi}%</span>
+              </div>
+              <div style={{ width: "100%", backgroundColor: "#f1f5f9", height: "10px", borderRadius: "999px", overflow: "hidden" }}>
+                <div style={{ height: "100%", backgroundColor: "#0874aa", width: `${Math.min(100, avgNumerasi)}%`, borderRadius: "999px", transition: "width 0.5s ease" }} />
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ marginTop: "2rem", padding: "1rem", backgroundColor: "#f8fafc", borderRadius: "0.75rem", border: "1px solid #e2e8f0", fontSize: "0.8rem", color: "#64748b", textAlign: "center" }}>
+            💡 Total <strong>{totalSessions} sesi asesmen</strong> telah tuntas dikerjakan oleh anak-anak di sekolah binaan.
+          </div>
+        </div>
+
+        {/* 10 Sesi Asesmen Terbaru */}
+        <div style={{ backgroundColor: "white", padding: "1.75rem", borderRadius: "1.25rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+          <h3 style={{ fontFamily: "Lora, serif", margin: "0 0 0.35rem 0", fontSize: "1.2rem", color: "#102e50", fontWeight: 700 }}>
+            ⚡ 10 Sesi Asesmen Terbaru
+          </h3>
+          <p style={{ margin: "0 0 1.25rem 0", fontSize: "0.85rem", color: "#64748b" }}>
+            Aktivitas pengerjaan asesmen anak terbaru secara real-time.
+          </p>
+          <StudentSessionsTable 
+            sessions={recentSessions} 
+            showResetButton={false} 
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -26,10 +26,10 @@ export default async function SuperAdminDashboard() {
       { data: stData },
       { data: sessData }
     ] = await Promise.all([
-      supabase.from("communities").select("id"),
-      supabase.from("schools").select("id"),
-      supabase.from("users").select("id").eq("role", "teacher"),
-      supabase.from("students").select("gender, birth_date, ses_class"),
+      supabase.from("communities").select("id, name, code, is_active, created_at").order("name", { ascending: true }),
+      supabase.from("schools").select("id, name, community_id"),
+      supabase.from("users").select("id, school_id").eq("role", "teacher"),
+      supabase.from("students").select("id, school_id, gender, birth_date, ses_class"),
       supabase.from("assessment_sessions").select(`
         id,
         status,

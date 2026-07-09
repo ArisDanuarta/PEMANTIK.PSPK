@@ -28,13 +28,14 @@ const superAdminNav: NavSection[] = [
   {
     label: "Manajemen Ujian",
     items: [
-      { label: "Akses Ujian", href: "/super-admin/akses-ujian", icon: "activity" },
+      { label: "Persetujuan Fase", href: "/super-admin/persetujuan", icon: "review" },
       { label: "Sesi Ujian Siswa", href: "/super-admin/sesi-siswa", icon: "class" },
     ],
   },
   {
     label: "Laporan & Sistem",
     items: [
+      { label: "Intervensi & Graph", href: "/super-admin/intervensi", icon: "activity" },
       { label: "Hasil Ujian", href: "/super-admin/laporan", icon: "activity" },
       { label: "Sebaran SES", href: "/super-admin/sebaran-ses", icon: "activity" },
       { label: "Log Sistem & Error", href: "/super-admin/log-sistem", icon: "activity" },

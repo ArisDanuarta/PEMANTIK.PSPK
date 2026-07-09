@@ -62,19 +62,9 @@ export async function createSchoolAction(
 
     const supabase = createServerClient();
 
-    let finalCommunityId = community_id as string;
-    if (!finalCommunityId) {
-      let { data: indepComm } = await supabase.from("communities").select("id").eq("name", "SEKOLAH INDEPENDEN").maybeSingle();
-      if (!indepComm) {
-        const { data: newComm, error: commErr } = await supabase.from("communities").insert({
-          name: "SEKOLAH INDEPENDEN",
-          code: "IND",
-          is_active: true
-        }).select("id").single();
-        if (commErr) return { success: false, error: "Gagal membuat komunitas independen otomatis: " + commErr.message };
-        indepComm = newComm;
-      }
-      finalCommunityId = indepComm.id;
+    let finalCommunityId: string | null = community_id as string;
+    if (!finalCommunityId || finalCommunityId === "null" || finalCommunityId === "independent") {
+      finalCommunityId = null;
     }
 
     // Check NPSN uniqueness if provided
@@ -89,7 +79,7 @@ export async function createSchoolAction(
       }
     }
 
-    const { data: newSchool, error } = await supabase.from("schools").insert({
+    const { data: newSchool, error } = await (supabase as any).from("schools").insert({
       community_id: finalCommunityId,
       name,
       npsn,
@@ -192,19 +182,9 @@ export async function updateSchoolAction(
 
     const supabase = createServerClient();
 
-    let finalCommunityId = community_id as string;
-    if (!finalCommunityId) {
-      let { data: indepComm } = await supabase.from("communities").select("id").eq("name", "SEKOLAH INDEPENDEN").maybeSingle();
-      if (!indepComm) {
-        const { data: newComm, error: commErr } = await supabase.from("communities").insert({
-          name: "SEKOLAH INDEPENDEN",
-          code: "IND",
-          is_active: true
-        }).select("id").single();
-        if (commErr) return { success: false, error: "Gagal membuat komunitas independen otomatis: " + commErr.message };
-        indepComm = newComm;
-      }
-      finalCommunityId = indepComm.id;
+    let finalCommunityId: string | null = community_id as string;
+    if (!finalCommunityId || finalCommunityId === "null" || finalCommunityId === "independent") {
+      finalCommunityId = null;
     }
 
     // Check NPSN uniqueness if changed
@@ -220,7 +200,7 @@ export async function updateSchoolAction(
       }
     }
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("schools")
       .update({
         community_id: finalCommunityId,
@@ -301,14 +281,14 @@ export async function bulkCreateSchoolsAction(
   dataArray: any[]
 ): Promise<ActionResponse> {
   try {
-    await requireAuth(["super_admin"]);
+    const { role, communityId: authCommunityId } = await requireAuth(["super_admin", "community"]);
     if (!dataArray || dataArray.length === 0) {
       return { success: false, error: "Data kosong." };
     }
 
     const supabase = createServerClient();
 
-    // Fetch all communities for case-insensitive matching
+    // Fetch all communities for case-insensitive matching if super_admin
     const { data: commsData } = await supabase.from("communities").select("id, name");
     const commsMap = new Map((commsData || []).map((c: any) => [c.name.toLowerCase().trim(), c.id]));
 
@@ -317,7 +297,6 @@ export async function bulkCreateSchoolsAction(
 
     for (let i = 0; i < dataArray.length; i++) {
       const row = dataArray[i];
-      const commName = row.nama_komunitas || row.Nama_Komunitas || row.Community_ID || row.community_id;
       const name = row.Nama_Sekolah || row.name || row.nama_sekolah;
       const province = row.Provinsi || row.province;
       const city = row.Kota || row.city;
@@ -325,34 +304,36 @@ export async function bulkCreateSchoolsAction(
       const village = row.Desa || row.Kelurahan || row.village;
       const classesStr = row.Daftar_Kelas || row.daftar_kelas || row.classes;
 
-      if (!commName || !name || !province || !city || !district || !village || !classesStr) {
-        errors.push(`Baris ${i + 2} gagal: Kolom 'Nama_Komunitas', 'Nama_Sekolah', 'Provinsi', 'Kota', 'Kecamatan', 'Desa', dan 'Daftar_Kelas' wajib diisi.`);
+      if (!name || !province || !city || !district || !village || !classesStr) {
+        errors.push(`Baris ${i + 2} gagal: Kolom 'Nama_Sekolah', 'Provinsi', 'Kota', 'Kecamatan', 'Desa', dan 'Daftar_Kelas' wajib diisi.`);
         continue;
       }
 
-      // Resolve community_id — prioritize direct UUID if already provided
+      // Resolve community_id
       let community_id: string | undefined;
-      const directCommunityId = row.community_id;
-      const isUUID = directCommunityId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(directCommunityId));
 
-      if (isUUID) {
-        // Already have the UUID (e.g., pre-filled by Komunitas import context)
-        community_id = directCommunityId;
+      if (role === "community") {
+        community_id = authCommunityId;
       } else {
-        // Fallback: match by community name (e.g., Super Admin bulk import)
-        const commName = row.nama_komunitas || row.Nama_Komunitas || row.Community_ID || row.community_id;
-        if (commName) {
-          community_id = commsMap.get(String(commName).toLowerCase().trim());
-          // Also try raw UUID matching as last resort
-          if (!community_id && String(commName).length === 36) {
-            const exactMatch = (commsData || []).find((c: any) => c.id === commName);
-            if (exactMatch) community_id = exactMatch.id;
+        const directCommunityId = row.community_id;
+        const isUUID = directCommunityId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(directCommunityId));
+
+        if (isUUID) {
+          community_id = directCommunityId;
+        } else {
+          const commName = row.nama_komunitas || row.Nama_Komunitas || row.Community_ID || row.community_id;
+          if (commName) {
+            community_id = commsMap.get(String(commName).toLowerCase().trim());
+            if (!community_id && String(commName).length === 36) {
+              const exactMatch = (commsData || []).find((c: any) => c.id === commName);
+              if (exactMatch) community_id = exactMatch.id;
+            }
           }
         }
       }
 
       if (!community_id) {
-        const commName = row.nama_komunitas || row.Nama_Komunitas || directCommunityId || "(tidak ada)";
+        const commName = row.nama_komunitas || row.Nama_Komunitas || row.community_id || "(tidak ada)";
         errors.push(`Baris ${i + 2} gagal: Komunitas "${commName}" tidak ditemukan di database.`);
         continue;
       }
@@ -639,14 +620,14 @@ async function resolveSesIds(
  */
 export async function parseDapodikAction(formData: FormData): Promise<ParseDapodikResponse> {
   try {
-    await requireAuth(["super_admin", "school"]);
+    await requireAuth(["super_admin", "school", "community"]);
     const supabase = createServerClient();
 
-    // Verifikasi user adalah super_admin
+    // Verifikasi user adalah super_admin, school, atau community
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Tidak terautentikasi." };
     const { data: userData } = await supabase.from("users").select("id, role").eq("id", user.id).single();
-    if (!userData || (userData.role !== "super_admin" && userData.role !== "school")) {
+    if (!userData || !["super_admin", "school", "community"].includes(userData.role)) {
       return { success: false, error: "Akses ditolak." };
     }
 
@@ -725,7 +706,7 @@ export async function importDapodikAction(
   payload: ImportDapodikPayload
 ): Promise<ImportDapodikResponse> {
   try {
-    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
+    const { role, schoolId: authSchoolId, communityId: authCommunityId } = await requireAuth(["super_admin", "school", "community"]);
     const targetSchoolId = payload.existing_school_id;
     if (role === "school" && (!targetSchoolId || authSchoolId !== targetSchoolId)) {
       return { success: false, error: "Akses ditolak. Bukan data sekolah Anda." };
@@ -737,8 +718,15 @@ export async function importDapodikAction(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Tidak terautentikasi." };
     const { data: userData } = await supabase.from("users").select("id, role").eq("id", user.id).single();
-    if (!userData || userData.role !== "super_admin") {
-      return { success: false, error: "Akses ditolak. Hanya Super Admin." };
+    if (!userData || !["super_admin", "school", "community"].includes(userData.role)) {
+      return { success: false, error: "Akses ditolak. Akses terbatas." };
+    }
+
+    if (role === "community") {
+      if (payload.school_choice === "existing" && targetSchoolId) {
+        const { data: checkSchool } = await supabase.from("schools").select("id").eq("id", targetSchoolId).eq("community_id", authCommunityId || "").maybeSingle();
+        if (!checkSchool) return { success: false, error: "Akses ditolak. Sekolah bukan di bawah komunitas Anda." };
+      }
     }
 
     // Ambil dari cache
@@ -773,24 +761,28 @@ export async function importDapodikAction(
         import_source: "dapodik",
       }).eq("id", schoolId);
     } else {
-      // Buat sekolah baru — gunakan fallback SEKOLAH INDEPENDEN (logic lama dipertahankan persis)
+      // Buat sekolah baru
       let finalCommunityId = null as string | null;
-      let { data: indepComm } = await supabase
-        .from("communities")
-        .select("id")
-        .eq("name", "SEKOLAH INDEPENDEN")
-        .maybeSingle();
-
-      if (!indepComm) {
-        const { data: newComm, error: commErr } = await supabase
+      if (role === "community" && authCommunityId) {
+        finalCommunityId = authCommunityId;
+      } else {
+        let { data: indepComm } = await supabase
           .from("communities")
-          .insert({ name: "SEKOLAH INDEPENDEN", code: "IND", is_active: true })
           .select("id")
-          .single();
-        if (commErr) return { success: false, error: "Gagal membuat komunitas independen: " + commErr.message };
-        indepComm = newComm;
+          .eq("name", "SEKOLAH INDEPENDEN")
+          .maybeSingle();
+
+        if (!indepComm) {
+          const { data: newComm, error: commErr } = await supabase
+            .from("communities")
+            .insert({ name: "SEKOLAH INDEPENDEN", code: "IND", is_active: true })
+            .select("id")
+            .single();
+          if (commErr) return { success: false, error: "Gagal membuat komunitas independen: " + commErr.message };
+          indepComm = newComm;
+        }
+        finalCommunityId = indepComm!.id;
       }
-      finalCommunityId = indepComm!.id;
 
       // Check NPSN uniqueness
       const npsn = payload.confirmed_npsn?.trim() || null;

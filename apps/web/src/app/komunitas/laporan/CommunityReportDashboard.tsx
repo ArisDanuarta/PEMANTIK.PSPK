@@ -4,6 +4,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import { Button, Badge, useToast } from "@pemantik/ui";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface ReportData {
@@ -176,9 +177,6 @@ export default function CommunityReportDashboard({ schools, packages, communityI
   const [isLoadingSection, setIsLoadingSection] = useState(false);
 
   // ── Toolbar filter (Pusat Data Hasil Ujian) ─────────────────────────────
-  const [selectedSchoolId, setSelectedSchoolId] = useState("all");
-  const [selectedGender, setSelectedGender]     = useState("all");
-  const [search, setSearch]                     = useState("");
   const [isExporting, setIsExporting]           = useState(false);
   const [reportData, setReportData]             = useState<ReportData[]>([]);
   const [isLoadingData, setIsLoadingData]       = useState(false);
@@ -196,7 +194,11 @@ export default function CommunityReportDashboard({ schools, packages, communityI
       const res = await fetch(
         `/api/report/community-sections?community_id=${communityId}&category_id=${categoryId}&section=${section}`
       );
-      if (!res.ok) throw new Error((await res.json()).error || "Server error");
+      if (!res.ok) {
+        let errStr = `Gagal memuat dari server (${res.status})`;
+        try { const errJson = await res.json(); if (errJson.error) errStr = errJson.error; } catch (_) {}
+        throw new Error(errStr);
+      }
       const json = await res.json();
 
       if (section === "per_level")  setLevelCards(json.data ?? []);
@@ -212,9 +214,6 @@ export default function CommunityReportDashboard({ schools, packages, communityI
   // ── Handle Paket Change ─────────────────────────────────────────────────
   const handlePackageChange = useCallback(async (pkgId: string) => {
     setSelectedPackageId(pkgId);
-    setSelectedSchoolId("all");
-    setSelectedGender("all");
-    setSearch("");
     setReportData([]);
     setLevelCards([]);
     setPhaseCards([]);
@@ -228,7 +227,11 @@ export default function CommunityReportDashboard({ schools, packages, communityI
     setIsLoadingData(true);
     try {
       const res = await fetch(`/api/report/community-data?community_id=${communityId}&category_id=${pkgId}`);
-      if (!res.ok) throw new Error((await res.json()).error || "Server error");
+      if (!res.ok) {
+        let errStr = `Gagal memuat data dari server (${res.status})`;
+        try { const errJson = await res.json(); if (errJson.error) errStr = errJson.error; } catch (_) {}
+        throw new Error(errStr);
+      }
       const json = await res.json();
       setReportData(json.data ?? []);
     } catch (err: any) {
@@ -281,18 +284,8 @@ export default function CommunityReportDashboard({ schools, packages, communityI
     }
   }, [selectedPackageId, communityId, showError, showSuccess]);
 
-  // ── Toolbar Filter (client-side) ────────────────────────────────────────
-  const filteredData = useMemo(() => {
-    return reportData.filter((row) => {
-      if (selectedSchoolId !== "all" && row.school_id !== selectedSchoolId) return false;
-      if (selectedGender !== "all" && row.gender !== selectedGender) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        if (!row.full_name.toLowerCase().includes(q) && !(row.nisn ?? "").toLowerCase().includes(q)) return false;
-      }
-      return true;
-    });
-  }, [reportData, selectedSchoolId, selectedGender, search]);
+  // ── Data dan Statistik ──────────────────────────────────────────────────
+  const filteredData = reportData;
 
   const stats = useMemo(() => {
     const n = filteredData.length;
@@ -306,8 +299,8 @@ export default function CommunityReportDashboard({ schools, packages, communityI
     };
   }, [filteredData]);
 
-  // ── Export Rekap Detail ─────────────────────────────────────────────────
-  const handleExport = async () => {
+  // ── Export RAW Data (1 Sheet) ───────────────────────────────────────────
+  const handleExport = async (targetSchoolId: string = "all") => {
     if (!selectedPackageId) {
       showInfo("Pilih Kategori", "Pilih Kategori Ujian terlebih dahulu.");
       return;
@@ -316,20 +309,28 @@ export default function CommunityReportDashboard({ schools, packages, communityI
     try {
       const url = new URL(window.location.origin + "/api/export/detailed-results");
       url.searchParams.set("category_id", selectedPackageId);
-      url.searchParams.set("target_id", communityId);
-      url.searchParams.set("target_type", "community");
-      if (selectedSchoolId !== "all") url.searchParams.set("school_id", selectedSchoolId);
-      if (selectedGender !== "all") url.searchParams.set("gender", selectedGender);
-      if (search) url.searchParams.set("search", search);
+      url.searchParams.set("raw", "true");
+      if (targetSchoolId !== "all") {
+        url.searchParams.set("target_type", "school");
+        url.searchParams.set("target_id", targetSchoolId);
+      } else {
+        url.searchParams.set("target_type", "community");
+        url.searchParams.set("target_id", communityId);
+      }
 
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error((await res.json()).error || "Server error");
+      if (!res.ok) {
+        let errStr = `Gagal export dari server (${res.status})`;
+        try { const errJson = await res.json(); if (errJson.error) errStr = errJson.error; } catch (_) {}
+        throw new Error(errStr);
+      }
 
       const blob = await res.blob();
       const objectUrl = window.URL.createObjectURL(blob);
       const dateStr = new Date().toISOString().split("T")[0];
-      downloadFromUrl(objectUrl, `rekap-detail-komunitas_${dateStr}.xlsx`);
-      showSuccess("Berhasil", "File rekap detail berhasil diunduh.");
+      const prefix = targetSchoolId !== "all" ? `raw-data-sekolah_${targetSchoolId}` : `raw-data-komunitas_${communityId}`;
+      downloadFromUrl(objectUrl, `${prefix}_${dateStr}.xlsx`);
+      showSuccess("Berhasil", "File data berhasil diunduh.");
     } catch (err: any) {
       showError("Gagal Export", err.message || "Terjadi kesalahan.");
     } finally {
@@ -477,76 +478,7 @@ export default function CommunityReportDashboard({ schools, packages, communityI
         </div>
       </div>
 
-      {/* ── 3. Toolbar Filter Kustom "Pusat Data Hasil Ujian" ── */}
-      <div className="card" style={{ padding: "1.5rem" }}>
-        <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#102e50", marginBottom: "1.25rem" }}>
-          Pusat Data Hasil Ujian — Filter Granular
-        </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
-          {/* Sekolah */}
-          <div>
-            <label className="form-label" style={{ display: "block", marginBottom: "0.5rem" }}>Filter Sekolah</label>
-            <select
-              className="form-input"
-              value={selectedSchoolId}
-              onChange={(e) => setSelectedSchoolId(e.target.value)}
-              disabled={!selectedPackageId || isLoadingData}
-            >
-              <option value="all">Semua Sekolah Binaan</option>
-              {schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
-
-          {/* Gender */}
-          <div>
-            <label className="form-label" style={{ display: "block", marginBottom: "0.5rem" }}>Filter Gender</label>
-            <select
-              className="form-input"
-              value={selectedGender}
-              onChange={(e) => setSelectedGender(e.target.value)}
-              disabled={!selectedPackageId || isLoadingData}
-            >
-              <option value="all">Semua Gender</option>
-              <option value="L">Laki-laki (L)</option>
-              <option value="P">Perempuan (P)</option>
-            </select>
-          </div>
-
-          {/* Cari */}
-          <div>
-            <label className="form-label" style={{ display: "block", marginBottom: "0.5rem" }}>Cari Nama / NISN</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Ketik nama atau NISN..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              disabled={!selectedPackageId || isLoadingData}
-            />
-          </div>
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
-          <Button
-            onClick={handleExport}
-            disabled={!selectedPackageId || isExporting || isLoadingData}
-            style={{ backgroundColor: "#0874aa", color: "white", gap: "0.5rem" }}
-          >
-            {isExporting ? (
-              <><span className="btn-spinner" /> Memproses...</>
-            ) : (
-              <>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                </svg>
-                Download Rekap Detail (Excel)
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      {/* ── 4. Summary Stat Cards ── */}
+      {/* ── 3. Summary Stat Cards ── */}
       {selectedPackageId && !isLoadingData && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
           {[
@@ -563,80 +495,138 @@ export default function CommunityReportDashboard({ schools, packages, communityI
         </div>
       )}
 
-      {/* ── 5. Tabel Detail ── */}
-      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-        {isLoadingData ? (
-          <div style={{ padding: "1.5rem" }}>
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="skeleton" style={{ height: 48, borderRadius: 8, marginBottom: "0.5rem" }} />
-            ))}
+
+
+      {/* ── 4. Tabel Daftar Sekolah Binaan & Rekapitulasi Peserta (dengan tombol Export RAW Data) ── */}
+      <div className="card" style={{ padding: "1.5rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1.25rem",
+            flexWrap: "wrap",
+            gap: "1rem",
+          }}
+        >
+          <div>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#102e50", margin: 0 }}>
+              Daftar Sekolah Binaan & Rekapitulasi Peserta
+            </h2>
+            <p style={{ margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
+              Daftar seluruh sekolah binaan di bawah komunitas beserta jumlah siswa terdaftar dan berpartisipasi dalam asesmen.
+            </p>
           </div>
-        ) : (
-          <table className="pemantik-table" style={{ width: "100%" }}>
+          <Button
+            onClick={() => handleExport("all")}
+            disabled={!selectedPackageId || isExporting || isLoadingData}
+            style={{ backgroundColor: "#0874aa", color: "white", gap: "0.5rem", fontWeight: 600 }}
+          >
+            {isExporting ? (
+              <>
+                <span className="btn-spinner" /> Memproses Export...
+              </>
+            ) : (
+              <>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
+                Export Semua Data (Excel)
+              </>
+            )}
+          </Button>
+        </div>
+
+        <div style={{ overflowX: "auto" }}>
+          <table className="pemantik-table" style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr>
-                <th>Siswa</th>
-                <th>Sekolah</th>
-                <th>Fase</th>
-                <th>Status</th>
-                <th style={{ textAlign: "center" }}>Percobaan</th>
-                <th style={{ textAlign: "center" }}>Soal</th>
-                <th style={{ textAlign: "center" }}>Benar</th>
-                <th style={{ textAlign: "center" }}>Salah</th>
-                <th style={{ textAlign: "center" }}>Skor</th>
+              <tr
+                style={{
+                  borderBottom: "2px solid #e5e7eb",
+                  textAlign: "left",
+                  color: "#4b5563",
+                  backgroundColor: "#f8fafc",
+                }}
+              >
+                <th style={{ padding: "0.85rem 1rem" }}>No</th>
+                <th style={{ padding: "0.85rem 1rem" }}>Nama Sekolah</th>
+                <th style={{ padding: "0.85rem 1rem" }}>NPSN</th>
+                <th style={{ padding: "0.85rem 1rem" }}>Kota / Kabupaten</th>
+                <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Siswa Terdaftar</th>
+                <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Siswa Mengerjakan</th>
+                <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Rata-rata Skor</th>
+                <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {!selectedPackageId ? (
+              {schools.length === 0 ? (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: "center", padding: "3rem 1rem", color: "#adb5bd" }}>
-                    <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📊</div>
-                    Pilih Kategori Ujian di atas untuk menampilkan data.
-                  </td>
-                </tr>
-              ) : filteredData.length === 0 ? (
-                <tr>
-                  <td colSpan={9} style={{ textAlign: "center", padding: "3rem 1rem", color: "#adb5bd" }}>
-                    <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🔍</div>
-                    Tidak ada data yang cocok dengan filter.
+                  <td colSpan={8} style={{ textAlign: "center", padding: "3rem 1rem", color: "#adb5bd" }}>
+                    Belum ada sekolah binaan yang terdaftar di komunitas ini.
                   </td>
                 </tr>
               ) : (
-                filteredData.map((row) => (
-                  <tr key={row.id}>
-                    <td>
-                      <div style={{ fontWeight: 600, color: "#212529" }}>{row.full_name}</div>
-                      <div style={{ fontSize: "0.78rem", color: "#6c757d", marginTop: "0.15rem" }}>
-                        NISN: {row.nisn || "—"} &bull; {row.gender === "L" ? "Laki-laki" : row.gender === "P" ? "Perempuan" : row.gender}
-                      </div>
-                    </td>
-                    <td><div style={{ fontSize: "0.88rem" }}>{row.school_name}</div></td>
-                    <td><Badge>{row.phase || "—"}</Badge></td>
-                    <td>
-                      <Badge variant={row.status === "completed" ? "success" : "warning"}>
-                        {row.status === "completed" ? "Selesai" : "Berlangsung"}
-                      </Badge>
-                    </td>
-                    <td style={{ textAlign: "center" }}>
-                      <span style={{ padding: "0.15rem 0.5rem", backgroundColor: (row.attempt_number ?? 1) > 1 ? "#fff7ed" : "#f3f4f6", color: (row.attempt_number ?? 1) > 1 ? "#ea580c" : "#4b5563", borderRadius: "999px", fontSize: "0.8rem", fontWeight: 600 }}>
-                        ke-{row.attempt_number ?? 1}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: "center", color: "#6c757d" }}>{row.total_questions}</td>
-                    <td style={{ textAlign: "center", fontWeight: 600, color: "#2d9e5f" }}>{row.total_correct}</td>
-                    <td style={{ textAlign: "center", fontWeight: 600, color: "#dc2626" }}>{row.total_wrong}</td>
-                    <td style={{ textAlign: "center", fontWeight: 700, color: "#102e50" }}>{row.score_total}</td>
-                  </tr>
-                ))
+                schools.map((school, idx) => {
+                  const schoolRows = reportData.filter((r) => r.school_id === school.id);
+                  const uniqueAssessedStudents = new Set(schoolRows.map((r) => r.nisn || r.id)).size;
+                  const avgScore =
+                    schoolRows.length > 0
+                      ? (schoolRows.reduce((acc, r) => acc + r.score_total, 0) / schoolRows.length).toFixed(1)
+                      : "—";
+
+                  return (
+                    <tr key={school.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                      <td style={{ padding: "0.85rem 1rem", color: "#6b7280" }}>{idx + 1}</td>
+                      <td style={{ padding: "0.85rem 1rem", fontWeight: 600, color: "#102e50" }}>{school.name}</td>
+                      <td style={{ padding: "0.85rem 1rem", color: "#4b5563" }}>{(school as any).npsn || "—"}</td>
+                      <td style={{ padding: "0.85rem 1rem", color: "#4b5563" }}>{(school as any).city || "—"}</td>
+                      <td style={{ padding: "0.85rem 1rem", textAlign: "center", fontWeight: 600, color: "#1e40af" }}>
+                        {(school as any).registeredStudentsCount ?? 0}
+                      </td>
+                      <td
+                        style={{
+                          padding: "0.85rem 1rem",
+                          textAlign: "center",
+                          fontWeight: 600,
+                          color: uniqueAssessedStudents > 0 ? "#16a34a" : "#9ca3af",
+                        }}
+                      >
+                        {selectedPackageId ? uniqueAssessedStudents : "—"}
+                      </td>
+                      <td style={{ padding: "0.85rem 1rem", textAlign: "center", fontWeight: 700, color: "#102e50" }}>
+                        {selectedPackageId ? avgScore : "—"}
+                      </td>
+                      <td style={{ padding: "0.85rem 1rem", textAlign: "center" }}>
+                        <button
+                          onClick={() => handleExport(school.id)}
+                          disabled={!selectedPackageId || isExporting || isLoadingData}
+                          style={{
+                            padding: "0.35rem 0.75rem",
+                            borderRadius: "0.375rem",
+                            border: "1px solid #0874aa",
+                            backgroundColor: "transparent",
+                            color: "#0874aa",
+                            fontSize: "0.78rem",
+                            fontWeight: 600,
+                            cursor: !selectedPackageId || isExporting || isLoadingData ? "not-allowed" : "pointer",
+                            opacity: !selectedPackageId || isExporting || isLoadingData ? 0.6 : 1,
+                          }}
+                          title={
+                            !selectedPackageId
+                              ? "Pilih Kategori Ujian di atas terlebih dahulu"
+                              : `Export Data untuk ${school.name}`
+                          }
+                        >
+                          Export Data
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
-        )}
-        {selectedPackageId && !isLoadingData && filteredData.length > 0 && (
-          <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid #f1f3f5", fontSize: "0.8rem", color: "#6c757d" }}>
-            Menampilkan <strong>{filteredData.length}</strong> dari <strong>{reportData.length}</strong> data peserta
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -254,7 +254,13 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
                         <span style={{ color: "#6c757d", fontSize: "0.85rem" }}>Belum ada akun</span>
                       )}
                     </td>
-                    <td>{row.communities?.name || "—"}</td>
+                    <td>
+                      {row.communities?.name ? (
+                        <span style={{ fontWeight: 500, color: "#0f172a" }}>{row.communities.name}</span>
+                      ) : (
+                        <span style={{ color: "#64748b", fontStyle: "italic", fontSize: "0.85rem" }}>Sekolah Independen</span>
+                      )}
+                    </td>
                     <td>
                       {row.classes && row.classes.length > 0 ? (
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>

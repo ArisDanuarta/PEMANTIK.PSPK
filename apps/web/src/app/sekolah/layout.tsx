@@ -17,10 +17,11 @@ const sekolahNav: NavSection[] = [
     ],
   },
   {
-    label: "Asesmen",
+    label: "Asesmen & Hasil",
     items: [
-      { label: "Akses Ujian", href: "/sekolah/akses-ujian", icon: "exam" },
+      { label: "Status & Jadwal Ujian", href: "/sekolah/akses-ujian", icon: "exam" },
       { label: "Hasil Ujian", href: "/sekolah/laporan", icon: "report" },
+      { label: "Intervensi & Graph", href: "/sekolah/intervensi", icon: "activity" },
     ],
   },
 ];

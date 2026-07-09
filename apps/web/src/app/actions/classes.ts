@@ -12,7 +12,7 @@ export interface ActionResponse {
 
 export async function createClassAction(formData: FormData): Promise<ActionResponse> {
   try {
-    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
+    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school", "community"]);
     const school_id = (formData.get("school_id") as string)?.trim();
     if (role === "school" && authSchoolId !== school_id) {
       return { success: false, error: "Akses ditolak. Bukan data sekolah Anda." };
@@ -63,7 +63,7 @@ export async function createClassAction(formData: FormData): Promise<ActionRespo
 
 export async function updateClassAction(id: string, formData: FormData): Promise<ActionResponse> {
   try {
-    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
+    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school", "community"]);
     const school_id = (formData.get("school_id") as string)?.trim();
     if (role === "school" && authSchoolId !== school_id) {
       return { success: false, error: "Akses ditolak. Bukan data sekolah Anda." };
@@ -120,7 +120,7 @@ export async function updateClassAction(id: string, formData: FormData): Promise
 
 export async function deleteClassAction(id: string): Promise<ActionResponse> {
   try {
-    await requireAuth(["super_admin", "school"]);
+    await requireAuth(["super_admin", "school", "community"]);
     const supabase = createServerClient();
 
     // Cek apakah kelas masih punya siswa
@@ -155,7 +155,7 @@ export async function deleteClassAction(id: string): Promise<ActionResponse> {
 
 export async function toggleClassStatusAction(id: string, isActive: boolean): Promise<ActionResponse> {
   try {
-    await requireAuth(["super_admin", "school"]);
+    await requireAuth(["super_admin", "school", "community"]);
     const supabase = createServerClient();
 
     const { error } = await supabase

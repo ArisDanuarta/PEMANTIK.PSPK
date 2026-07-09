@@ -28,10 +28,16 @@ export default async function KomunitasLaporanPage() {
     // 1. Dapatkan semua sekolah binaan komunitas ini (tidak filter is_active)
     const { data: scData } = await supabase
       .from("schools")
-      .select("id, name")
+      .select("id, name, npsn, city, students(id)")
       .eq("community_id", communityId)
       .order("name", { ascending: true });
-    schools = scData ?? [];
+    schools = (scData ?? []).map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      npsn: s.npsn ?? "—",
+      city: s.city ?? "—",
+      registeredStudentsCount: Array.isArray(s.students) ? s.students.length : 0,
+    }));
 
     const schoolIds = schools.map((s) => s.id);
 

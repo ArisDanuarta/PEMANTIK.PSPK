@@ -88,3 +88,52 @@ export async function markNotificationAsRead(id: string): Promise<{ success: boo
     return { success: false, error: err.message };
   }
 }
+
+/**
+ * Helper: kirim notifikasi ke SEMUA user dengan role super_admin.
+ * Dipakai oleh submitPhaseRequestAction dan requestCommunityEngagementAction.
+ *
+ * Menggunakan service role client (bukan session user) karena action ini
+ * harus bisa menulis ke tabel notifications milik user lain (super_admin).
+ */
+export async function notifyAllSuperAdmins(
+  title: string,
+  message: string,
+  metadata?: Record<string, any>,
+): Promise<void> {
+  try {
+    const admin = getAdminClient();
+
+    // Ambil semua user ID dengan role super_admin
+    const { data: superAdmins, error: fetchErr } = await (admin as any)
+      .from("users")
+      .select("id")
+      .eq("role", "super_admin")
+      .eq("is_active", true);
+
+    if (fetchErr || !superAdmins || superAdmins.length === 0) {
+      console.warn("[notifyAllSuperAdmins] Tidak ada super_admin aktif ditemukan.");
+      return;
+    }
+
+    // Buat satu baris notifikasi per super_admin
+    const rows = superAdmins.map((sa: { id: string }) => ({
+      user_id: sa.id,
+      title,
+      message,
+      is_read: false,
+      ...(metadata ? { metadata } : {}),
+    }));
+
+    const { error: insertErr } = await (admin as any)
+      .from("notifications")
+      .insert(rows);
+
+    if (insertErr) {
+      console.error("[notifyAllSuperAdmins] Gagal insert notifikasi:", insertErr);
+    }
+  } catch (err: any) {
+    // Gagal silent — notifikasi tidak boleh gagalkan action utama
+    console.error("[notifyAllSuperAdmins]", err);
+  }
+}

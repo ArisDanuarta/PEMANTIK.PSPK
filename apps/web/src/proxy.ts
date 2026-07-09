@@ -115,12 +115,22 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(`${allowedPrefix}/dashboard`, request.url));
   }
 
-  // Forward claims as headers for Server Components
-  const response = NextResponse.next();
+  // Forward claims as headers for Server Components & API routes
   const meta = (payload.user_metadata as any) || (payload.app_metadata as any) || {};
-  
   const communityId = (payload.community_id as string) ?? meta.community_id ?? request.cookies.get("sb-community-id")?.value ?? "";
   const schoolId = (payload.school_id as string) ?? meta.school_id ?? request.cookies.get("sb-school-id")?.value ?? "";
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-user-role", role);
+  requestHeaders.set("x-user-id", (payload.sub as string) ?? "");
+  requestHeaders.set("x-community-id", communityId);
+  requestHeaders.set("x-school-id", schoolId);
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
   response.headers.set("x-user-role", role);
   response.headers.set("x-user-id", (payload.sub as string) ?? "");

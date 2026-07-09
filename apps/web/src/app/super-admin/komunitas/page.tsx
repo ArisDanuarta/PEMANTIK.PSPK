@@ -12,27 +12,17 @@ export default async function KomunitasPage() {
   const supabase = createServerClient();
 
   let communities: any[] = [];
-  let schools: any[] = [];
   try {
     const { data, error } = await supabase
       .from("communities")
       .select("*")
+      .neq("name", "SEKOLAH INDEPENDEN")
       .order("name", { ascending: true });
     
     if (error) {
       console.error("Failed to load communities:", error);
     } else {
       communities = data ?? [];
-    }
-    
-    const { data: schoolsData, error: schoolsError } = await supabase
-      .from("schools")
-      .select("id, name, community_id")
-      .eq("is_active", true)
-      .order("name", { ascending: true });
-      
-    if (!schoolsError && schoolsData) {
-      schools = schoolsData;
     }
   } catch (err) {
     console.error("Unexpected error loading communities:", err);
@@ -51,7 +41,7 @@ export default async function KomunitasPage() {
         </div>
       </div>
 
-      <CommunitiesManager initialCommunities={communities} initialSchools={schools} />
+      <CommunitiesManager initialCommunities={communities} />
     </div>
   );
 }

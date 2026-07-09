@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import ProgressTrackingChart from "@/components/shared/ProgressTrackingChart";
 import StudentSessionsTable from "@/components/shared/StudentSessionsTable";
+import StageTimeline from "@/components/shared/StageTimeline";
+import { getStagesForSchool, type SchoolAssessmentStageRow } from "@/app/actions/stages";
 
 export const dynamic = "force-dynamic";
 
@@ -27,16 +29,22 @@ export default async function SekolahDashboard() {
   let avgNumerasi = 0;
   let sessionsDataForChart: any[] = [];
   let recentSessions: any[] = [];
+  let stagesData: SchoolAssessmentStageRow[] = [];
   let schoolName = "Sekolah";
 
   try {
-    // 0. Nama sekolah
+    // 0. Nama sekolah & stages data
     const { data: school } = await supabase
       .from("schools")
       .select("name")
       .eq("id", schoolId)
       .maybeSingle();
     schoolName = school?.name ?? "Sekolah";
+
+    const stagesRes = await getStagesForSchool(schoolId);
+    if (stagesRes.success && stagesRes.data) {
+      stagesData = stagesRes.data;
+    }
 
     // 1. Total Guru
     const { count: teachersCount } = await supabase
@@ -246,6 +254,17 @@ export default async function SekolahDashboard() {
         <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #f1f3f5" }}>
           <ProgressTrackingChart sessions={sessionsDataForChart} />
         </div>
+      </div>
+
+      {/* Alur Asesmen & Intervensi Sekolah (5 Tahap) */}
+      <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #f1f3f5", marginBottom: "1.5rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.5rem" }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "1.1rem", color: "#102e50" }}>Alur Asesmen & Intervensi Sekolah Anda (5 Tahap)</h3>
+            <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.85rem", color: "#6c757d" }}>Pantau progres tahapan asesmen dan kontribusi intervensi pada sekolah Anda.</p>
+          </div>
+        </div>
+        <StageTimeline stages={stagesData} userRole="school" />
       </div>
 
       {/* ── 10 Sesi Terbaru ── */}

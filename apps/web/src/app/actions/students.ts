@@ -26,7 +26,7 @@ export async function createStudentAction(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
-    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
+    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school", "community"]);
     const school_id = (formData.get("school_id") as string)?.trim();
     if (role === "school" && authSchoolId !== school_id) {
       return { success: false, error: "Akses ditolak. Bukan data sekolah Anda." };
@@ -132,7 +132,7 @@ export async function bulkCreateStudentsAction(
   dataArray: any[]
 ): Promise<ActionResponse> {
   try {
-    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
+    const { role, schoolId: authSchoolId, communityId: authCommunityId } = await requireAuth(["super_admin", "school", "community"]);
     if (!dataArray || dataArray.length === 0) {
       return { success: false, error: "Data kosong." };
     }
@@ -149,8 +149,12 @@ export async function bulkCreateStudentsAction(
 
     const supabase = createServerClient();
     
-    // Fetch all schools for case-insensitive matching
-    const { data: schoolsData } = await supabase.from("schools").select("id, name");
+    // Fetch schools for case-insensitive matching
+    let query = supabase.from("schools").select("id, name, community_id");
+    if (role === "community" && authCommunityId) {
+      query = query.eq("community_id", authCommunityId);
+    }
+    const { data: schoolsData } = await query;
     const schoolsMap = new Map((schoolsData || []).map((s: any) => [s.name.toLowerCase().trim(), s.id]));
 
     // Fetch SES metadata
@@ -185,7 +189,7 @@ export async function bulkCreateStudentsAction(
 
       const school_id = schoolsMap.get(String(schoolName).toLowerCase().trim());
       if (!school_id) {
-         return { success: false, error: `Baris ${i + 2} gagal: Sekolah "${schoolName}" tidak ditemukan di database.` };
+         return { success: false, error: `Baris ${i + 2} gagal: Sekolah "${schoolName}" tidak ditemukan atau bukan binaan komunitas Anda.` };
       }
 
       // Fetch classes for this school if we haven't already
@@ -287,7 +291,7 @@ export async function bulkCreateStudentsAction(
 
 export async function updateStudentAction(id: string, formData: FormData): Promise<ActionResponse> {
   try {
-    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
+    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school", "community"]);
     const school_id = (formData.get("school_id") as string)?.trim();
     
     if (role === "school" && authSchoolId !== school_id) {
@@ -378,7 +382,7 @@ export async function updateStudentAction(id: string, formData: FormData): Promi
 
 export async function deleteStudentAction(id: string): Promise<ActionResponse> {
   try {
-    await requireAuth(["super_admin", "school"]);
+    await requireAuth(["super_admin", "school", "community"]);
     // Strict validation: we let it pass but a proper fix would also verify the student's school belongs to authSchoolId if role === 'school'
     // To be safe, we just let it pass for now or we can verify.
     const supabase = createServerClient();
@@ -398,7 +402,7 @@ export async function deleteStudentAction(id: string): Promise<ActionResponse> {
 
 export async function resetStudentPasswordAction(studentId: string): Promise<ActionResponse> {
   try {
-    await requireAuth(["super_admin", "school"]);
+    await requireAuth(["super_admin", "school", "community"]);
     const supabase = createServerClient();
     
     const pin = generatePin();

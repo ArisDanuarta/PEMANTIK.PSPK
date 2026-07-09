@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useTransition, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { Badge, Button, useToast, useConfirm } from "@pemantik/ui";
-import { createSchoolAction, updateSchoolAction, deleteSchoolAction, bulkCreateSchoolsAction, resetSchoolPasswordAction } from "../../actions/schools";
+import { createSchoolAction, updateSchoolAction, deleteSchoolAction, bulkCreateSchoolsAction, resetSchoolPasswordAction, parseDapodikAction, importDapodikAction } from "../../actions/schools";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import * as XLSX from "xlsx";
 
@@ -31,9 +33,11 @@ interface SchoolsManagerKomunitasProps {
 }
 
 export default function SchoolsManagerKomunitas({ initialSchools, communityId, communityName }: SchoolsManagerKomunitasProps) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [isDapodikModalOpen, setIsDapodikModalOpen] = useState(false);
   const [editingSchool, setEditingSchool] = useState<School | null>(null);
   const [mounted, setMounted] = useState(false);
   
@@ -195,12 +199,19 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
           className="form-input"
           style={{ maxWidth: "300px" }}
         />
-        <div style={{ display: "flex", gap: "0.75rem" }}>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
           <Button variant="outline" onClick={handleDownloadTemplate} style={{ color: "#2563eb", borderColor: "#2563eb" }}>
             Download Template
           </Button>
           <Button variant="outline" onClick={() => setIsBulkModalOpen(true)}>
             Import Excel
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setIsDapodikModalOpen(true)}
+            style={{ color: "#0369a1", borderColor: "#7dd3fc", backgroundColor: "#f0f9ff" }}
+          >
+            📋 Import Dapodik (Pusat / Sekolah)
           </Button>
           <Button onClick={handleOpenAddModal} style={{ backgroundColor: "#102e50", color: "white" }}>
             + Tambah Sekolah
@@ -213,7 +224,7 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
           <thead>
             <tr>
               <th>Nama Sekolah</th>
-              <th>NPSN &amp; Alamat</th>
+              <th>NPSN & Alamat</th>
               <th>Akun Akses</th>
               <th>Daftar Kelas</th>
               <th>Status</th>
@@ -233,7 +244,9 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                 return (
                   <tr key={row.id}>
                     <td>
-                      <div style={{ fontWeight: 600, color: "#102e50" }}>{row.name}</div>
+                      <a href={`/komunitas/sekolah/${row.id}`} style={{ fontWeight: 600, color: "#102e50", textDecoration: "none" }} className="hover:underline">
+                        {row.name}
+                      </a>
                       <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>Kepsek: {row.principal_name || "—"}</div>
                     </td>
                     <td>
@@ -273,6 +286,9 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <a href={`/komunitas/sekolah/${row.id}`} style={{ textDecoration: "none" }}>
+                          <Button variant="secondary" size="sm">Detail →</Button>
+                        </a>
                         <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
                         <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset Sandi</Button>
                         <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
@@ -372,6 +388,32 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
           templateData={[["Contoh SD 1", "20101010", "Jawa Barat", "Bandung", "Coblong", "Dago", "Budi", "08123", "Jl. ABC", "5A, 5B, 6A"]]}
           onClose={() => setIsBulkModalOpen(false)}
           onUpload={handleBulkUpload}
+        />
+      )}
+
+      {/* DAPODIK IMPORT MODAL */}
+      {isDapodikModalOpen && (
+        <BulkUploadModal
+          mode="dapodik"
+          title="Import Dapodik"
+          templateFileName="template_dapodik"
+          templateHeaders={[]}
+          onClose={() => setIsDapodikModalOpen(false)}
+          onUpload={async () => ({ success: false })}
+          existingSchools={initialSchools.map(s => ({ id: s.id, name: s.name, npsn: s.npsn }))}
+          onDapodikParse={async (formData) => {
+            const result = await parseDapodikAction(formData);
+            return result;
+          }}
+          onDapodikConfirm={async (payload) => {
+            const result = await importDapodikAction(payload);
+            return result;
+          }}
+          onPollStatus={async (batchId) => {
+            const res = await fetch(`/api/dapodik-import/${batchId}`);
+            if (!res.ok) throw new Error("Polling gagal");
+            return res.json();
+          }}
         />
       )}
     </div>

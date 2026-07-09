@@ -252,8 +252,8 @@ export function Sidebar({ role, roleName, userName, sections }: SidebarProps) {
               {roleName}
             </div>
           </div>
-          {/* Inject Notification Bell Here */}
-          {role !== "super_admin" && <NotificationBell />}
+          {/* Notification Bell */}
+          <NotificationBell />
         </div>
         <form action={logoutAction} style={{ width: "100%" }}>
           <button type="submit" className="sidebar-item" style={{ borderRadius: "var(--radius-md)", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>

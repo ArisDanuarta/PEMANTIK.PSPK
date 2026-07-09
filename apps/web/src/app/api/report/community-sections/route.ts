@@ -150,6 +150,28 @@ export async function GET(request: Request) {
   // Gap 7.5 Decision: Opsi B — level yang benar-benar pernah dikerjakan.
   // ═══════════════════════════════════════════════════════════════════════════
   if (section === "per_level") {
+    // Ambil session ids & student_id yang relevan di komunitas ini dulu
+    const { data: sessions, error: sidErr } = await supabase
+      .from("assessment_sessions")
+      .select("id, student_id")
+      .in("school_id", schoolIds)
+      .eq("category_id", categoryId)
+      .eq("is_void", false);
+
+    if (sidErr) {
+      return NextResponse.json({ error: "Gagal mengambil data sesi." }, { status: 500 });
+    }
+
+    if (!sessions || sessions.length === 0) {
+      return NextResponse.json({ data: [] });
+    }
+
+    const sessionIds = sessions.map((s) => s.id);
+    const sessionStudentMap = new Map<string, string>();
+    sessions.forEach((s) => {
+      if (s.student_id) sessionStudentMap.set(s.id, s.student_id);
+    });
+
     // Ambil semua student_answers yang relevan, join questions → question_levels
     const { data: answers, error: answersErr } = await supabase
       .from("student_answers")
@@ -160,35 +182,11 @@ export async function GET(request: Request) {
           question_levels ( level_number )
         )
       `)
-      .in(
-        "session_id",
-        // Subquery via JS: ambil session_ids yang relevan dulu
-        (
-          await supabase
-            .from("assessment_sessions")
-            .select("id")
-            .in("school_id", schoolIds)
-            .eq("category_id", categoryId)
-            .eq("is_void", false)
-        ).data?.map((s: any) => s.id) ?? []
-      );
+      .in("session_id", sessionIds);
 
     if (answersErr) {
       return NextResponse.json({ error: "Gagal mengambil data jawaban." }, { status: 500 });
     }
-
-    // Ambil session_id → student_id mapping untuk hitung siswa unik per level
-    const { data: sessions } = await supabase
-      .from("assessment_sessions")
-      .select("id, student_id")
-      .in("school_id", schoolIds)
-      .eq("category_id", categoryId)
-      .eq("is_void", false);
-
-    const sessionStudentMap = new Map<string, string>();
-    (sessions ?? []).forEach((s) => {
-      if (s.student_id) sessionStudentMap.set(s.id, s.student_id);
-    });
 
     // Hitung siswa unik per level_number
     const levelStudentMap = new Map<number, Set<string>>();

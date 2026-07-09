@@ -99,6 +99,27 @@ export default function IntegratedDashboardManager({
     return Object.keys(map).sort().map(k => ({ name: k, value: map[k] }));
   }, [filteredStudents]);
 
+  // --- 4. COMMUNITY STATS PREPARATION (TOP 10) ---
+  const communityStats = useMemo(() => {
+    return communities.slice(0, 10).map((comm) => {
+      const commSchools = schools.filter((s) => s.community_id === comm.id);
+      const schoolIds = new Set(commSchools.map((s) => s.id));
+      const teachersCount = teachers.filter((t) => t.school_id && schoolIds.has(t.school_id)).length;
+      const studentsCount = students.filter((st) => st.school_id && schoolIds.has(st.school_id)).length;
+
+      return {
+        id: comm.id,
+        name: comm.name || "Komunitas Tanpa Nama",
+        code: comm.code || "-",
+        is_active: comm.is_active ?? true,
+        created_at: comm.created_at,
+        schoolsCount: commSchools.length,
+        teachersCount,
+        studentsCount,
+      };
+    });
+  }, [communities, schools, teachers, students]);
+
   return (
     <div className="animate-fade-in">
       {/* FILTER BAR */}
@@ -179,53 +200,73 @@ export default function IntegratedDashboardManager({
       {/* CHARTS */}
       <DashboardCharts genderData={genderData} assessmentData={assessmentData} ageData={ageData} />
 
-      {/* TABEL SESI RECENT / TERSARING */}
+      {/* TABEL 10 DAFTAR KOMUNITAS */}
       <div className="card" style={{ padding: "1.5rem", marginTop: "2rem" }}>
-        <h3 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#102e50", marginBottom: "1.5rem", fontFamily: "var(--font-lora)" }}>
-          Riwayat Asesmen Siswa
-        </h3>
-        {filteredSessions.length === 0 ? (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+          <div>
+            <h3 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#102e50", margin: 0, fontFamily: "var(--font-lora)" }}>
+              10 Daftar Komunitas Binaan
+            </h3>
+            <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "0.25rem 0 0" }}>
+              Ringkasan persebaran jumlah sekolah, guru, dan siswa per komunitas pembina
+            </p>
+          </div>
+          <Badge variant="info">Total {communities.length} Komunitas Terdaftar</Badge>
+        </div>
+
+        {communityStats.length === 0 ? (
           <div style={{ textAlign: "center", padding: "3rem", color: "#6b7280" }}>
-            Tidak ada data asesmen yang cocok dengan filter.
+            Belum ada data komunitas terdaftar di sistem.
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table className="table" style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.9rem" }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid #e5e7eb", color: "#374151" }}>
-                  <th style={{ padding: "1rem" }}>Tanggal</th>
-                  <th style={{ padding: "1rem" }}>Nama Siswa</th>
-                  <th style={{ padding: "1rem" }}>Sekolah</th>
-                  <th style={{ padding: "1rem" }}>Provinsi</th>
-                  <th style={{ padding: "1rem" }}>Kategori Soal</th>
-                  <th style={{ padding: "1rem" }}>Nilai</th>
-                  <th style={{ padding: "1rem" }}>Status</th>
+                  <th style={{ padding: "1rem" }}>No</th>
+                  <th style={{ padding: "1rem" }}>Nama Komunitas / Mitra</th>
+                  <th style={{ padding: "1rem" }}>Kode</th>
+                  <th style={{ padding: "1rem", textAlign: "center" }}>Jumlah Sekolah</th>
+                  <th style={{ padding: "1rem", textAlign: "center" }}>Jumlah Guru</th>
+                  <th style={{ padding: "1rem", textAlign: "center" }}>Jumlah Siswa</th>
+                  <th style={{ padding: "1rem", textAlign: "center" }}>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredSessions.slice(0, 10).map((s) => (
-                  <tr key={s.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-                    <td style={{ padding: "1rem" }}>{new Date(s.created_at).toLocaleDateString("id-ID")}</td>
-                    <td style={{ padding: "1rem", fontWeight: 500, color: "#102e50" }}>{s.student?.full_name}</td>
-                    <td style={{ padding: "1rem" }}>{s.school?.name}</td>
-                    <td style={{ padding: "1rem" }}>{s.school?.province || "-"}</td>
-                    <td style={{ padding: "1rem" }}>
-                      {s.package?.name}
-                      <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.25rem" }}>{s.package?.subject_area}</div>
+                {communityStats.map((c, index) => (
+                  <tr key={c.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
+                    <td style={{ padding: "1rem", color: "#64748b" }}>{index + 1}</td>
+                    <td style={{ padding: "1rem", fontWeight: 600, color: "#102e50" }}>
+                      🏢 {c.name}
                     </td>
-                    <td style={{ padding: "1rem", fontWeight: 600 }}>{s.score !== null ? s.score : "-"}</td>
                     <td style={{ padding: "1rem" }}>
-                      <Badge variant={s.status === "completed" ? "success" : "warning"}>
-                        {s.status === "completed" ? "Selesai" : "Proses"}
-                      </Badge>
+                      <code style={{ backgroundColor: "#f1f5f9", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", color: "#0874aa", fontSize: "0.82rem" }}>
+                        {c.code}
+                      </code>
+                    </td>
+                    <td style={{ padding: "1rem", textAlign: "center", fontWeight: 600, color: "#1e293b" }}>
+                      {c.schoolsCount.toLocaleString("id-ID")}
+                    </td>
+                    <td style={{ padding: "1rem", textAlign: "center", fontWeight: 600, color: "#1e293b" }}>
+                      {c.teachersCount.toLocaleString("id-ID")}
+                    </td>
+                    <td style={{ padding: "1rem", textAlign: "center", fontWeight: 600, color: "#0874aa" }}>
+                      {c.studentsCount.toLocaleString("id-ID")}
+                    </td>
+                    <td style={{ padding: "1rem", textAlign: "center" }}>
+                      <div style={{ display: "inline-block" }}>
+                        <Badge variant={c.is_active ? "success" : "default"}>
+                          {c.is_active ? "Aktif" : "Non-Aktif"}
+                        </Badge>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {filteredSessions.length > 10 && (
+            {communities.length > 10 && (
               <div style={{ textAlign: "center", padding: "1rem", color: "#6b7280", fontSize: "0.85rem" }}>
-                Menampilkan 10 dari {filteredSessions.length} data. Gunakan fitur Export Data untuk melihat selengkapnya.
+                Menampilkan 10 dari total {communities.length} komunitas. Kunjungi menu <a href="/super-admin/komunitas" style={{ color: "#0874aa", fontWeight: 600 }}>Komunitas &amp; Mitra</a> untuk melihat seluruh daftar.
               </div>
             )}
           </div>
