@@ -19,4 +19,8 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
   Future<void> upsertCategory(LocalCategoriesCompanion category) {
     return into(localCategories).insertOnConflictUpdate(category);
   }
+
+  Future<void> deleteCategory(String id) {
+    return (delete(localCategories)..where((t) => t.id.equals(id))).go();
+  }
 }

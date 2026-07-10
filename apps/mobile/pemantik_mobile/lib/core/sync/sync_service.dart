@@ -50,13 +50,18 @@ class SyncService {
           )
           .eq('is_active', true);
 
+      final List<String> activeCategoryIds = [];
+
       for (final row in accessResponse) {
         final pkgData = row['question_categories'];
         if (pkgData == null) continue;
+        
+        final categoryId = pkgData['id'] as String;
+        activeCategoryIds.add(categoryId);
 
         await _db.categoryDao.upsertCategory(
           LocalCategoriesCompanion(
-            id: Value(pkgData['id']),
+            id: Value(categoryId),
             name: Value(pkgData['name']),
             subjectArea: Value(pkgData['subject_area']),
             phase: Value(row['phase'] ?? 'Tahap 1'),
@@ -129,6 +134,16 @@ class SyncService {
           );
         }
       }
+      
+      // Hapus kategori lokal yang sudah tidak ada di Supabase (akses dicabut atau kedaluwarsa)
+      final allLocalCategories = await _db.categoryDao.getAllCategories();
+      for (final localCat in allLocalCategories) {
+        if (!activeCategoryIds.contains(localCat.id)) {
+          await _db.categoryDao.deleteCategory(localCat.id);
+          log('Kategori ${localCat.name} dihapus dari lokal karena akses tidak valid lagi.');
+        }
+      }
+
       log('Sinkronisasi Download Selesai');
     } catch (e) {
       log('Gagal Sinkronisasi Download: $e');

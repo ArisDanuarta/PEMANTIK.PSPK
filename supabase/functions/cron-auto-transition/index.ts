@@ -117,6 +117,57 @@ serve(async (req) => {
 
     if (updateErr) throw updateErr;
 
+    // --- Best Implementation: Kirim Notifikasi ---
+    try {
+      // 1. Notifikasi ke masing-masing komunitas
+      const communityGroups: Record<string, number> = {};
+      for (const id of stageIdsToUpdate) {
+        const stage = stages.find(s => s.id === id);
+        if (stage && stage.community_id) {
+          communityGroups[stage.community_id] = (communityGroups[stage.community_id] || 0) + 1;
+        }
+      }
+
+      const notificationsToInsert = [];
+      const { data: profiles } = await supabase.from('profiles').select('id, role, community_id');
+
+      if (profiles) {
+        for (const [communityId, count] of Object.entries(communityGroups)) {
+          // Find all admins for this community
+          const communityAdmins = profiles.filter(p => p.role === 'community' && p.community_id === communityId);
+          for (const admin of communityAdmins) {
+            notificationsToInsert.push({
+              user_id: admin.id,
+              title: 'Transisi Fase Otomatis',
+              message: `${count} sekolah telah dipindahkan otomatis ke tahap Intervensi karena batas waktu asesmen berakhir.`,
+              is_read: false,
+              created_at: now
+            });
+          }
+        }
+
+        // 2. Notifikasi rekap ke SuperAdmin
+        const superAdmins = profiles.filter(p => p.role === 'super_admin');
+        for (const admin of superAdmins) {
+          notificationsToInsert.push({
+            user_id: admin.id,
+            title: 'Laporan Cron Transisi Asesmen',
+            message: `Sistem telah otomatis memindahkan ${stageIdsToUpdate.length} sekolah ke tahap Intervensi.`,
+            is_read: false,
+            created_at: now
+          });
+        }
+
+        if (notificationsToInsert.length > 0) {
+          // Abaikan error insert notifikasi agar tidak menggagalkan cron utama jika skema berbeda
+          await supabase.from('notifications').insert(notificationsToInsert);
+        }
+      }
+    } catch (notifErr) {
+      console.error("[cron-auto-transition] Gagal mengirim notifikasi:", notifErr);
+    }
+    // ---------------------------------------------
+
     console.log(`[cron-auto-transition] Berhasil memindahkan ${stageIdsToUpdate.length} stage ke intervensi.`);
 
     return new Response(

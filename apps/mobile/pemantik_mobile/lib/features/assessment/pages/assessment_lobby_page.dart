@@ -11,6 +11,8 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/pspk_button.dart';
 import '../../../shared/widgets/pspk_dialog.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/supabase/supabase_client.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AssessmentLobbyPage extends ConsumerStatefulWidget {
   final String categoryId;
@@ -65,6 +67,48 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
       log('PERINGATAN: access_id tidak ditemukan untuk categoryId=${widget.categoryId}. '
           'Pastikan sync sudah berjalan. Sesi tetap dibuat tanpa access_id (backward compat).');
     }
+    // ── Minggu 2: Online Check (Force Insert ke Supabase) ──────────────
+    // Ini adalah 'best implementation' untuk mencegah sesi tersangkut jika
+    // dikerjakan offline namun akses ditarik (dicabut) di server.
+    bool canProceed = true;
+    try {
+      // Coba INSERT langsung ke Supabase. RLS akan memvalidasi is_active
+      // secara real-time di server.
+      await SupabaseConfig.client.from('assessment_sessions').insert({
+        'id': sessionId,
+        'student_id': student['id'],
+        'category_id': widget.categoryId,
+        'school_id': student['school_id'],
+        'level_id': widget.levelId,
+        'status': 'pending',
+        'started_at': DateTime.now().toIso8601String(),
+        'created_at': DateTime.now().toIso8601String(),
+        'access_id': accessId,
+        'current_level_id': widget.levelId,
+      });
+      log('Berhasil INSERT sesi ke Supabase secara real-time.');
+    } catch (e) {
+      log('Gagal membuat sesi di server (RLS / Jaringan): $e');
+      if (e is PostgrestException && e.code == '42501') {
+        // 42501 adalah RLS Violation (Akses Dicabut atau Kedaluwarsa)
+        canProceed = false;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Akses asesmen ini telah ditutup atau dicabut oleh Admin.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        // Error jaringan (Offline).
+        // Sebagai aplikasi offline-first, kita tetap mengizinkan lanjut,
+        // namun risiko sesi ditolak saat sync later tetap ada.
+        log('Aplikasi offline, sesi akan disinkronisasikan nanti.');
+      }
+    }
+
+    if (!canProceed) return;
     // ──────────────────────────────────────────────────────────────────────
 
     await db.sessionDao.createSession(
