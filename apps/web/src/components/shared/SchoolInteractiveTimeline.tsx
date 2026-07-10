@@ -21,6 +21,7 @@ interface SchoolInteractiveTimelineProps {
   totalTeachers: number;
   totalStudents: number;
   totalClasses: number;
+  isReadOnly?: boolean;
 }
 
 const TIMELINE_STEPS = [
@@ -71,6 +72,7 @@ export default function SchoolInteractiveTimeline({
   totalTeachers,
   totalStudents,
   totalClasses,
+  isReadOnly = false,
 }: SchoolInteractiveTimelineProps) {
   const router = useRouter();
   const { success: showSuccess, error: showError } = useToast();
@@ -413,8 +415,9 @@ export default function SchoolInteractiveTimeline({
         </div>
 
         {/* Tombol-tombol Aksi sesuai Step & Kendali Independen / Intervensi */}
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", borderTop: "1px solid #e2e8f0", paddingTop: "1.25rem", alignItems: "center" }}>
-          {selectedStepIndex === 0 && (
+        {!isReadOnly && (
+          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", borderTop: "1px solid #e2e8f0", paddingTop: "1.25rem", alignItems: "center" }}>
+            {selectedStepIndex === 0 && (
             isIndependent && currentStageKey === "persiapan_akun" ? (
               <Button
                 onClick={handleMarkPersiapan}
@@ -507,6 +510,7 @@ export default function SchoolInteractiveTimeline({
             )
           )}
         </div>
+        )}
       </div>
 
       {/* ── Summary Card Sekolah (Total Guru, Siswa, Kelas) ── */}

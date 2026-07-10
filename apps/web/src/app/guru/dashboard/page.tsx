@@ -3,6 +3,8 @@ import { createServerClient } from "@pemantik/supabase";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import GuruDashboardClient from "./GuruDashboardClient";
+import SchoolInteractiveTimeline from "@/components/shared/SchoolInteractiveTimeline";
+import { getStagesForSchool, type SchoolAssessmentStageRow } from "@/app/actions/stages";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +32,11 @@ export default async function Dashboard() {
     }
   };
   let recentSessions: any[] = [];
+  let stagesData: SchoolAssessmentStageRow[] = [];
+  let schoolName = "Sekolah";
+  let npsn: string | null = null;
+  let communityId: string | null = null;
+  let communityName: string | null = null;
 
   try {
     // 1. Get classes taught by this teacher
@@ -42,6 +49,30 @@ export default async function Dashboard() {
 
     const classIds = classes?.map((c) => c.id) || [];
     stats.totalClasses = classIds.length;
+    
+    // Fetch Stages
+    const stagesRes = await getStagesForSchool(schoolId);
+    if (stagesRes.success && stagesRes.data) {
+      stagesData = stagesRes.data;
+    }
+
+    // Fetch school info for timeline
+    const { data: schoolInfo } = await supabase
+      .from("schools")
+      .select("name, npsn, community_id, communities(name)")
+      .eq("id", schoolId)
+      .maybeSingle();
+
+    if (schoolInfo) {
+      schoolName = schoolInfo.name;
+      npsn = schoolInfo.npsn;
+      communityId = schoolInfo.community_id;
+      if (schoolInfo.communities) {
+        communityName = Array.isArray(schoolInfo.communities) 
+          ? (schoolInfo.communities[0] as any)?.name 
+          : (schoolInfo.communities as any)?.name;
+      }
+    }
 
     if (classIds.length > 0) {
       // 2. Get students in these classes
@@ -137,6 +168,29 @@ export default async function Dashboard() {
           </div>
         </div>
       </div>
+      
+      {/* TIMELINE SECTION */}
+      {stagesData.length > 0 && (
+        <div style={{ marginBottom: "2rem" }}>
+          <h2 style={{ fontSize: "1.25rem", color: "#102e50", marginBottom: "1rem", fontWeight: 700 }}>
+            Timeline Asesmen (Berlangganan dari Sekolah)
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <SchoolInteractiveTimeline
+              stages={stagesData}
+              schoolId={schoolId}
+              schoolName={schoolName}
+              npsn={npsn}
+              communityId={communityId}
+              communityName={communityName}
+              totalTeachers={stats.totalClasses} // We don't have total teachers here, fallback to classes
+              totalStudents={stats.totalStudents}
+              totalClasses={stats.totalClasses}
+              isReadOnly={true}
+            />
+          </div>
+        </div>
+      )}
       
       <GuruDashboardClient stats={stats} recentSessions={recentSessions} />
     </div>

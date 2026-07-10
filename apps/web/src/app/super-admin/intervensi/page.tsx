@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import React from "react";
 import IntervensiSuperAdminClient from "./IntervensiSuperAdminClient";
 import { getAllInterventionsGlobal, getGlobalInterventionGraph } from "@/app/actions/interventions";
+import { getLatestAiKnowledgeGraph } from "@/app/actions/geminiGraph";
+import { getSystemSettings } from "@/app/actions/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +19,11 @@ export default async function SuperAdminIntervensiPage() {
   const resGraph = await getGlobalInterventionGraph();
   const nodes = resGraph.success ? (resGraph.nodes || []) : [];
   const edges = resGraph.success ? (resGraph.edges || []) : [];
+
+  const aiGraphRes = await getLatestAiKnowledgeGraph();
+  
+  const settingsRes = await getSystemSettings();
+  const hasGeminiKey = !!settingsRes.data?.gemini_api_key;
 
   return (
     <div className="animate-fade-in">
@@ -37,6 +44,8 @@ export default async function SuperAdminIntervensiPage() {
         initialInterventions={interventions}
         graphNodes={nodes}
         graphEdges={edges}
+        aiGraph={aiGraphRes.success ? aiGraphRes : null}
+        hasGeminiKey={hasGeminiKey}
       />
     </div>
   );

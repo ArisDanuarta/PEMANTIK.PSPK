@@ -45,11 +45,11 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
   ].filter(d => d.value > 0);
 
   const sesData = [
-    { name: "SES I (Bawah)", value: stats.demographics.ses.I },
-    { name: "SES II (Menengah)", value: stats.demographics.ses.II },
-    { name: "SES III (Menengah Atas)", value: stats.demographics.ses.III },
-    { name: "SES IV (Atas)", value: stats.demographics.ses.IV },
-    { name: "Belum Dikategorikan", value: stats.demographics.ses.Uncategorized }
+    { name: "SES Bawah", value: stats.demographics.ses.I },
+    { name: "SES Menengah Bawah", value: stats.demographics.ses.II },
+    { name: "SES Menengah Atas", value: stats.demographics.ses.III },
+    { name: "SES Atas", value: stats.demographics.ses.IV },
+    { name: "Belum Ditentukan", value: stats.demographics.ses.Uncategorized }
   ].filter(d => d.value > 0);
 
   return (

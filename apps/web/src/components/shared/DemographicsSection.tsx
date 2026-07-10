@@ -17,7 +17,7 @@ export interface DemographicsSectionProps {
 }
 
 const GENDER_COLORS = ["#0874aa", "#df632f", "#9ca3af"];
-const SES_COLORS = ["#2d9e5f", "#f2af3e", "#e11d48"];
+const SES_COLORS = ["#102e50", "#0874aa", "#2d9e5f", "#f2af3e", "#e11d48"];
 
 export default function DemographicsSection({
   students,
@@ -45,22 +45,24 @@ export default function DemographicsSection({
   }, [students]);
 
   const sesData = useMemo(() => {
-    let rendah = 0, sedang = 0, tinggi = 0, unknown = 0;
+    let bawah = 0, men_bawah = 0, men_atas = 0, atas = 0, unknown = 0;
     students.forEach(s => {
       const ses = (s.socioeconomic_status || s.ses_class || "").toLowerCase();
-      if (ses === "rendah" || ses === "low" || ses === "r") rendah++;
-      else if (ses === "sedang" || ses === "medium" || ses === "s") sedang++;
-      else if (ses === "tinggi" || ses === "high" || ses === "t") tinggi++;
+      if (ses === "bawah") bawah++;
+      else if (ses === "menengah_bawah") men_bawah++;
+      else if (ses === "menengah_atas") men_atas++;
+      else if (ses === "atas") atas++;
       else unknown++;
     });
 
-    const total = rendah + sedang + tinggi + unknown;
+    const total = bawah + men_bawah + men_atas + atas + unknown;
     if (total === 0) return [];
 
     return [
-      { name: "SES Rendah", count: rendah },
-      { name: "SES Sedang", count: sedang },
-      { name: "SES Tinggi", count: tinggi },
+      ...(bawah > 0 ? [{ name: "SES Bawah", count: bawah }] : []),
+      ...(men_bawah > 0 ? [{ name: "SES Menengah Bawah", count: men_bawah }] : []),
+      ...(men_atas > 0 ? [{ name: "SES Menengah Atas", count: men_atas }] : []),
+      ...(atas > 0 ? [{ name: "SES Atas", count: atas }] : []),
       ...(unknown > 0 ? [{ name: "Belum Ditentukan", count: unknown }] : [])
     ];
   }, [students]);

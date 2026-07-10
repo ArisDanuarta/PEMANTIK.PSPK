@@ -1,0 +1,220 @@
+"use client";
+
+import React, { useState } from "react";
+import { Badge, Button } from "@pemantik/ui";
+import InterventionForm from "@/components/shared/InterventionForm";
+
+interface IntervensiGuruClientProps {
+  initialInterventions: any[];
+  schoolId: string;
+  schoolName: string;
+  stageId: string;
+  phase: string;
+  canAdd: boolean;
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export default function IntervensiGuruClient({
+  initialInterventions,
+  schoolId,
+  schoolName,
+  stageId,
+  phase,
+  canAdd,
+}: IntervensiGuruClientProps) {
+  const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  if (showAddForm) {
+    return (
+      <InterventionForm
+        schoolId={schoolId}
+        schoolName={schoolName}
+        stageId={stageId}
+        phase={phase}
+        onCancel={() => setShowAddForm(false)}
+        onSuccess={() => {
+          setShowAddForm(false);
+          // Normally we might mutate or window.location.reload()
+          window.location.reload();
+        }}
+      />
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+      {/* Top Bar Info */}
+      <div style={{
+        backgroundColor: "white", padding: "1.25rem 1.5rem", borderRadius: "1rem",
+        border: "1px solid #f1f3f5", boxShadow: "0 2px 4px rgba(0,0,0,0.03)",
+        display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem"
+      }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#102e50" }}>
+            📋 Daftar Laporan Pembinaan &amp; Intervensi
+          </h3>
+          <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.85rem", color: "#64748b" }}>
+            Total {initialInterventions.length} catatan pembinaan intervensi pada sekolah Anda
+          </p>
+        </div>
+        {canAdd && (
+          <Button onClick={() => setShowAddForm(true)} style={{ backgroundColor: "#102e50", color: "white" }}>
+            ➕ Tambah Laporan Intervensi
+          </Button>
+        )}
+      </div>
+
+      {/* List Intervensi */}
+      <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5" }}>
+        {initialInterventions.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "3.5rem 2rem", color: "#6b7280", backgroundColor: "#f9fafb", borderRadius: "0.75rem" }}>
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🌱</div>
+            <div style={{ fontSize: "1.05rem", fontWeight: 700, color: "#1f2937", marginBottom: "0.35rem" }}>
+              Belum Ada Riwayat Intervensi
+            </div>
+            <p style={{ fontSize: "0.88rem", color: "#64748b", maxWidth: "480px", margin: "0 auto" }}>
+              Belum ada riwayat intervensi yang dicatat untuk sekolah Anda. Laporan akan muncul di sini setelah tahapan asesmen dan pembinaan dicatat.
+            </p>
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table className="pemantik-table">
+              <thead>
+                <tr>
+                  <th>Fase &amp; Pembina</th>
+                  <th>Diagnosa Awal</th>
+                  <th>Upaya Pembinaan</th>
+                  <th>Tag Topik</th>
+                  <th>Tanggal</th>
+                  <th style={{ textAlign: "center" }}>Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                {initialInterventions.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <div style={{ fontWeight: 700, color: "#102e50" }}>{item.phase}</div>
+                      <div style={{ fontSize: "0.78rem", color: "#6b7280", marginTop: "0.15rem" }}>
+                        Oleh: {item.communities?.name || "Admin / Guru"}
+                      </div>
+                    </td>
+                    <td style={{ maxWidth: "220px" }}>
+                      <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                        {item.kondisi_awal}
+                      </div>
+                    </td>
+                    <td style={{ maxWidth: "240px" }}>
+                      <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                        {item.upaya_dilakukan}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
+                        {(item.intervention_tag_links || []).map((lnk: any) => (
+                          <span key={lnk.intervention_tags?.id} style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 600 }}>
+                            #{lnk.intervention_tags?.name}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td style={{ fontSize: "0.82rem", color: "#64748b" }}>
+                      {formatDate(item.created_at)}
+                    </td>
+                    <td style={{ textAlign: "center" }}>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedDetail(item)}>
+                        Detail
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Modal Detail */}
+      {selectedDetail && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1100, padding: "1rem"
+        }}>
+          <div style={{
+            backgroundColor: "white", borderRadius: "1.25rem", padding: "2rem",
+            width: "100%", maxWidth: "640px", maxHeight: "90vh", overflowY: "auto",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
+            display: "flex", flexDirection: "column", gap: "1.25rem"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div>
+                <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#0874aa" }}>
+                  🏢 {selectedDetail.communities?.name || "Komunitas Pembina"}
+                </span>
+                <h3 style={{ margin: "0.2rem 0 0 0", color: "#102e50", fontSize: "1.3rem" }}>
+                  Laporan Intervensi: {selectedDetail.phase}
+                </h3>
+              </div>
+              <Badge variant="info">{selectedDetail.phase}</Badge>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+              {(selectedDetail.intervention_tag_links || []).map((lnk: any) => (
+                <span key={lnk.intervention_tags?.id} style={{ padding: "0.25rem 0.65rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.78rem", fontWeight: 600 }}>
+                  #{lnk.intervention_tags?.name}
+                </span>
+              ))}
+            </div>
+
+            <hr style={{ border: 0, borderTop: "1px solid #f1f3f5", margin: 0 }} />
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", fontSize: "0.9rem" }}>
+              <div>
+                <strong style={{ display: "block", color: "#334155", marginBottom: "0.25rem" }}>1. Kondisi Awal / Diagnosa Asesmen:</strong>
+                <div style={{ backgroundColor: "#f8fafc", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#1e293b" }}>
+                  {selectedDetail.kondisi_awal}
+                </div>
+              </div>
+
+              <div>
+                <strong style={{ display: "block", color: "#334155", marginBottom: "0.25rem" }}>2. Upaya Intervensi yang Dilakukan:</strong>
+                <div style={{ backgroundColor: "#f8fafc", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#1e293b" }}>
+                  {selectedDetail.upaya_dilakukan}
+                </div>
+              </div>
+
+              <div>
+                <strong style={{ display: "block", color: "#334155", marginBottom: "0.25rem" }}>3. Perubahan Signifikan / Dampak Nyata:</strong>
+                <div style={{ backgroundColor: "#f0fdf4", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #bbf7d0", color: "#166534" }}>
+                  {selectedDetail.perubahan_signifikan}
+                </div>
+              </div>
+
+              <div>
+                <strong style={{ display: "block", color: "#334155", marginBottom: "0.25rem" }}>4. Alasan Mengapa Praktik Ini Bermakna:</strong>
+                <div style={{ backgroundColor: "#eff6ff", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #bfdbfe", color: "#1e40af" }}>
+                  {selectedDetail.alasan_bermakna}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.5rem", borderTop: "1px solid #f1f3f5", paddingTop: "1rem", fontSize: "0.8rem", color: "#64748b" }}>
+              <span>Disubmit pada {formatDate(selectedDetail.created_at)}</span>
+              <Button onClick={() => setSelectedDetail(null)}>
+                Tutup
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

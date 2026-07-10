@@ -1,20 +1,32 @@
 "use client";
 
-import React, { useState } from "react";
-import { Badge, Button } from "@pemantik/ui";
+import React, { useState, useTransition } from "react";
+import { Badge, Button, useToast } from "@pemantik/ui";
 import InterventionGraph from "@/components/shared/InterventionGraph";
+import { 
+  saveGeminiApiKeyAction, 
+  generateAiKnowledgeGraph,
+  createEmptyAiJobAction,
+  addManualKnowledgeNodeAction,
+  addManualKnowledgeEdgeAction
+} from "@/app/actions/geminiGraph";
 
 interface IntervensiSuperAdminClientProps {
   initialInterventions: any[];
   graphNodes: any[];
   graphEdges: any[];
+  aiGraph: any | null;
+  hasGeminiKey: boolean;
 }
 
 function formatDate(iso: string) {
+  if (!iso) return "—";
   return new Date(iso).toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -22,10 +34,30 @@ export default function IntervensiSuperAdminClient({
   initialInterventions,
   graphNodes,
   graphEdges,
+  aiGraph,
+  hasGeminiKey,
 }: IntervensiSuperAdminClientProps) {
-  const [activeTab, setActiveTab] = useState<"list" | "graph">("list");
+  const [activeTab, setActiveTab] = useState<"list" | "graph" | "ai_graph">("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
+  
+  // AI Settings State
+  const [showSettings, setShowSettings] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Manual Fallback State
+  const [showManualModal, setShowManualModal] = useState(false);
+  const [manualType, setManualType] = useState<"node" | "edge">("node");
+  const [manualLabel, setManualLabel] = useState("");
+  const [manualDesc, setManualDesc] = useState("");
+  const [manualNodeType, setManualNodeType] = useState("theme");
+  const [manualSource, setManualSource] = useState("");
+  const [manualTarget, setManualTarget] = useState("");
+  const [isManualSaving, setIsManualSaving] = useState(false);
+
+  const { success: showSuccess, error: showError } = useToast();
 
   const filteredInterventions = initialInterventions.filter((item) => {
     if (!searchQuery) return true;
@@ -36,6 +68,82 @@ export default function IntervensiSuperAdminClient({
     const tags = (item.intervention_tag_links || []).map((l: any) => l.intervention_tags?.name || "").join(" ").toLowerCase();
     return commName.includes(q) || schName.includes(q) || phaseName.includes(q) || tags.includes(q);
   });
+  
+  const handleSaveApiKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!apiKeyInput.trim()) return;
+    
+    startTransition(async () => {
+      const res = await saveGeminiApiKeyAction(apiKeyInput.trim());
+      if (res.success) {
+        showSuccess("Tersimpan", "Gemini API Key berhasil disimpan.");
+        setShowSettings(false);
+        setApiKeyInput("");
+      } else {
+        showError("Gagal menyimpan", res.error);
+      }
+    });
+  };
+  
+  const handleGenerateAi = async () => {
+    if (!hasGeminiKey) {
+      showError("Konfigurasi Diperlukan", "Harap simpan Gemini API Key terlebih dahulu di Pengaturan AI.");
+      setShowSettings(true);
+      return;
+    }
+    
+    setIsGenerating(true);
+    showSuccess("Menganalisis", "Gemini AI sedang membaca ratusan laporan intervensi... Ini mungkin memakan waktu hingga 1 menit.");
+    
+    const res = await generateAiKnowledgeGraph();
+    setIsGenerating(false);
+    
+    if (res.success) {
+      showSuccess("Analisis Selesai", "Knowledge Graph berhasil dibuat ulang.");
+      setActiveTab("ai_graph");
+    } else {
+      showError("Gagal Menganalisis", res.error || "Terjadi kesalahan internal AI.");
+    }
+  };
+  
+  const handleSaveManual = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsManualSaving(true);
+    
+    let jobId = aiGraph?.job?.id;
+    if (!jobId) {
+      const jobRes = await createEmptyAiJobAction();
+      if (!jobRes.success) {
+        showError("Gagal", "Tidak dapat membuat sesi manual.");
+        setIsManualSaving(false);
+        return;
+      }
+      jobId = jobRes.id;
+    }
+    
+    if (manualType === "node") {
+      if (!manualLabel) return setIsManualSaving(false);
+      const res = await addManualKnowledgeNodeAction(jobId, manualLabel, manualNodeType, manualDesc);
+      if (res.success) {
+        showSuccess("Berhasil", "Node ditambahkan.");
+        setShowManualModal(false);
+      } else {
+        showError("Gagal", res.error);
+      }
+    } else {
+      if (!manualSource || !manualTarget) return setIsManualSaving(false);
+      const res = await addManualKnowledgeEdgeAction(jobId, manualSource, manualTarget, manualLabel);
+      if (res.success) {
+        showSuccess("Berhasil", "Edge ditambahkan.");
+        setShowManualModal(false);
+      } else {
+        showError("Gagal", res.error);
+      }
+    }
+    setIsManualSaving(false);
+    setManualLabel("");
+    setManualDesc("");
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
@@ -45,7 +153,7 @@ export default function IntervensiSuperAdminClient({
         border: "1px solid #f1f3f5", boxShadow: "0 2px 4px rgba(0,0,0,0.03)",
         display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem"
       }}>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
           <button
             onClick={() => setActiveTab("list")}
             style={{
@@ -55,7 +163,7 @@ export default function IntervensiSuperAdminClient({
               fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
             }}
           >
-            📋 Semua Laporan Intervensi ({filteredInterventions.length})
+            📋 Semua Laporan ({filteredInterventions.length})
           </button>
           <button
             onClick={() => setActiveTab("graph")}
@@ -66,19 +174,37 @@ export default function IntervensiSuperAdminClient({
               fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
             }}
           >
-            🌐 Knowledge Graph Nasional ({graphNodes.length} Nodes)
+            🌐 Raw Graph ({graphNodes.length} Nodes)
+          </button>
+          <button
+            onClick={() => setActiveTab("ai_graph")}
+            style={{
+              padding: "0.6rem 1.25rem", borderRadius: "0.5rem", border: activeTab === "ai_graph" ? "none" : "1px solid #e2e8f0",
+              backgroundColor: activeTab === "ai_graph" ? "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" : "transparent",
+              color: activeTab === "ai_graph" ? "white" : "#4f46e5",
+              fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
+              display: "flex", alignItems: "center", gap: "0.4rem",
+              background: activeTab === "ai_graph" ? "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" : "white"
+            }}
+          >
+            ✨ AI Insights Graph
           </button>
         </div>
 
-        {activeTab === "list" && (
-          <input
-            type="text"
-            placeholder="🔍 Cari komunitas, sekolah, atau tag..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ padding: "0.55rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.88rem", width: "280px" }}
-          />
-        )}
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          {activeTab === "list" && (
+            <input
+              type="text"
+              placeholder="🔍 Cari laporan..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ padding: "0.55rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.88rem", width: "240px" }}
+            />
+          )}
+          <Button variant="outline" onClick={() => setShowSettings(true)} style={{ borderColor: "#cbd5e1", color: "#475569" }}>
+            ⚙️ Pengaturan AI
+          </Button>
+        </div>
       </div>
 
       {/* Tab 1: Global List */}
@@ -148,15 +274,212 @@ export default function IntervensiSuperAdminClient({
         </div>
       )}
 
-      {/* Tab 2: Global Knowledge Graph */}
+      {/* Tab 2: Global Knowledge Graph (Raw) */}
       {activeTab === "graph" && (
         <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5", minHeight: "750px" }}>
           <InterventionGraph
             initialNodes={graphNodes}
             initialEdges={graphEdges}
-            title="Peta Knowledge Graph Nasional (Seluruh Komunitas &amp; Sekolah)"
+            title="Peta Knowledge Graph Nasional (Data Mentah)"
             description="Interkoneksi antar komunitas pembina, sekolah, laporan intervensi, serta tag kata kunci permasalahan."
           />
+        </div>
+      )}
+      
+      {/* Tab 3: AI Insights Graph */}
+      {activeTab === "ai_graph" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div style={{ 
+            backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", 
+            border: "1px solid #e2e8f0", borderLeft: "4px solid #4f46e5",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            flexWrap: "wrap", gap: "1rem"
+          }}>
+            <div>
+              <h2 style={{ margin: "0 0 0.5rem 0", color: "#1e293b", fontSize: "1.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                ✨ Analisis Makro oleh Gemini AI
+              </h2>
+              <p style={{ margin: 0, color: "#64748b", fontSize: "0.9rem" }}>
+                Status Analisis Terakhir: {aiGraph?.job?.status === "completed" ? (
+                  <strong style={{ color: "#16a34a" }}>Berhasil ({formatDate(aiGraph.job.completed_at)})</strong>
+                ) : aiGraph?.job?.status === "failed" ? (
+                  <strong style={{ color: "#dc2626" }}>Gagal ({aiGraph.job.error_message})</strong>
+                ) : (
+                  "Belum pernah dilakukan"
+                )}
+              </p>
+            </div>
+            
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <Button 
+                variant="outline"
+                onClick={() => setShowManualModal(true)} 
+                style={{ borderColor: "#cbd5e1", color: "#475569" }}
+              >
+                ➕ Pemrosesan Manual
+              </Button>
+              <Button 
+                onClick={handleGenerateAi} 
+                disabled={isGenerating || initialInterventions.length === 0}
+                style={{
+                  background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+                  border: "none", color: "white", padding: "0.85rem 1.5rem", borderRadius: "0.75rem",
+                  fontWeight: 600, boxShadow: "0 4px 6px -1px rgba(79, 70, 229, 0.3)"
+                }}
+              >
+                {isGenerating ? "⏳ Menganalisis Data..." : "✨ Generate AI Graph"}
+              </Button>
+            </div>
+          </div>
+          
+          <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5", minHeight: "700px" }}>
+            {(!aiGraph || aiGraph.nodes.length === 0) ? (
+              <div style={{ textAlign: "center", padding: "4rem 2rem", color: "#64748b", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
+                <span style={{ fontSize: "3rem" }}>🤖</span>
+                <h3>Belum Ada Knowledge Graph AI</h3>
+                <p>Gemini AI belum pernah menganalisis data intervensi Anda. Klik tombol "Generate AI Graph" di atas untuk mulai memproses ratusan data kualitatif menjadi insight terstruktur, atau gunakan Pemrosesan Manual.</p>
+              </div>
+            ) : (
+              <InterventionGraph
+                initialNodes={aiGraph.nodes.map((n: any) => ({
+                  id: n.id,
+                  position: { x: Math.random() * 600, y: Math.random() * 400 },
+                  data: {
+                    label: n.label,
+                    type: n.type,
+                    desc: n.description
+                  }
+                }))}
+                initialEdges={aiGraph.edges.map((e: any) => ({
+                  id: e.id,
+                  source: e.source_node_id,
+                  target: e.target_node_id,
+                  label: e.label
+                }))}
+                title="Sintesis Pola Intervensi Makro"
+                description="Hasil analisis NLP Gemini atau Pemrosesan Manual: menyimpulkan masalah umum, solusi terbaik, dan dampak yang terjadi secara global."
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Manual Editor */}
+      {showManualModal && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1100, padding: "1rem"
+        }}>
+          <div style={{
+            backgroundColor: "white", borderRadius: "1.25rem", padding: "2rem",
+            width: "100%", maxWidth: "500px",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
+          }}>
+            <h3 style={{ margin: "0 0 1.5rem 0", color: "#1e293b", fontSize: "1.25rem" }}>➕ Pemrosesan Manual</h3>
+            
+            <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
+              <Button variant={manualType === "node" ? "primary" : "outline"} onClick={() => setManualType("node")}>Tambah Node</Button>
+              <Button variant={manualType === "edge" ? "primary" : "outline"} onClick={() => setManualType("edge")}>Tambah Edge (Relasi)</Button>
+            </div>
+            
+            <form onSubmit={handleSaveManual} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {manualType === "node" ? (
+                <>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "#334155" }}>Label / Judul</label>
+                    <input type="text" value={manualLabel} onChange={e => setManualLabel(e.target.value)} required style={{ padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1" }} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "#334155" }}>Tipe Node</label>
+                    <select value={manualNodeType} onChange={e => setManualNodeType(e.target.value)} style={{ padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1" }}>
+                      <option value="problem">Masalah (Problem)</option>
+                      <option value="solution">Solusi (Solution)</option>
+                      <option value="outcome">Hasil (Outcome)</option>
+                      <option value="theme">Tema (Theme)</option>
+                    </select>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "#334155" }}>Deskripsi Opsional</label>
+                    <textarea value={manualDesc} onChange={e => setManualDesc(e.target.value)} rows={3} style={{ padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1" }} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "#334155" }}>Source Node ID</label>
+                    <select value={manualSource} onChange={e => setManualSource(e.target.value)} required style={{ padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1" }}>
+                      <option value="">-- Pilih Node Asal --</option>
+                      {aiGraph?.nodes?.map((n: any) => <option key={n.id} value={n.id}>{n.label}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "#334155" }}>Target Node ID</label>
+                    <select value={manualTarget} onChange={e => setManualTarget(e.target.value)} required style={{ padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1" }}>
+                      <option value="">-- Pilih Node Tujuan --</option>
+                      {aiGraph?.nodes?.map((n: any) => <option key={n.id} value={n.id}>{n.label}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "#334155" }}>Label Relasi (contoh: "mengatasi")</label>
+                    <input type="text" value={manualLabel} onChange={e => setManualLabel(e.target.value)} style={{ padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1" }} />
+                  </div>
+                </>
+              )}
+              
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1rem" }}>
+                <Button type="button" variant="outline" onClick={() => setShowManualModal(false)}>Batal</Button>
+                <Button type="submit" disabled={isManualSaving} style={{ backgroundColor: "#102e50", color: "white" }}>
+                  {isManualSaving ? "Menyimpan..." : "Simpan Manual"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Settings */}
+      {showSettings && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1100, padding: "1rem"
+        }}>
+          <div style={{
+            backgroundColor: "white", borderRadius: "1.25rem", padding: "2rem",
+            width: "100%", maxWidth: "480px",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
+          }}>
+            <h3 style={{ margin: "0 0 1.5rem 0", color: "#1e293b", fontSize: "1.25rem" }}>⚙️ Pengaturan Integrasi Gemini AI</h3>
+            
+            <form onSubmit={handleSaveApiKey} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "#334155" }}>Google Gemini API Key</label>
+                <input
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  placeholder={hasGeminiKey ? "•••••••••••••••• (Tersimpan)" : "AIzaSy..."}
+                  style={{
+                    padding: "0.75rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1",
+                    fontSize: "0.9rem", width: "100%", boxSizing: "border-box"
+                  }}
+                />
+                <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748b" }}>
+                  Kunci API disimpan secara aman di database dan hanya digunakan oleh Super Admin untuk melakukan analisis teks intervensi.
+                </p>
+              </div>
+              
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1rem" }}>
+                <Button type="button" variant="outline" onClick={() => setShowSettings(false)} disabled={isPending}>
+                  Batal
+                </Button>
+                <Button type="submit" disabled={isPending || !apiKeyInput.trim()} style={{ backgroundColor: "#102e50", color: "white" }}>
+                  {isPending ? "Menyimpan..." : "Simpan Kunci API"}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

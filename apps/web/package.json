@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@aejkatappaja/phantom-ui": "latest",
+    "@google/genai": "^2.10.0",
     "@pemantik/supabase": "workspace:*",
     "@pemantik/ui": "workspace:*",
     "@supabase/supabase-js": "^2.0.0",
