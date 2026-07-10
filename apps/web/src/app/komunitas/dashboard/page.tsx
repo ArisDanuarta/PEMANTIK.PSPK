@@ -58,10 +58,10 @@ export default async function KomunitasDashboardPage() {
       // 2. Fetch total teachers/school admins & data per school
       const { data: usersData } = await supabase
         .from("users")
-        .select("id, school_id")
+        .select("id, school_id, role")
         .in("school_id", schoolIds)
         .in("role", ["teacher", "school"]);
-      totalTeachers = usersData?.length || 0;
+      totalTeachers = usersData?.filter((u: any) => u.role === "teacher").length || 0;
 
       // 3. Fetch total students (anak terdaftar) & data per school
       const { data: studentsData } = await supabase
@@ -90,7 +90,8 @@ export default async function KomunitasDashboardPage() {
       if (schools) {
         schoolsSummary = schools.map((sc) => {
           const stCount = studentsData?.filter((s) => s.school_id === sc.id).length || 0;
-          const tcCount = usersData?.filter((u) => u.school_id === sc.id).length || 0;
+          const tcCount = usersData?.filter((u) => u.school_id === sc.id && u.role === "teacher").length || 0;
+          const admCount = usersData?.filter((u) => u.school_id === sc.id && u.role === "school").length || 0;
           const clCount = classesData?.filter((c) => c.school_id === sc.id).length || 0;
 
           // Cari stageRow untuk sekolah ini
@@ -109,6 +110,7 @@ export default async function KomunitasDashboardPage() {
             npsn: sc.npsn,
             studentsCount: stCount,
             teachersCount: tcCount,
+            adminsCount: admCount,
             classesCount: clCount,
             phase,
             current_stage: currentStage,
@@ -122,8 +124,11 @@ export default async function KomunitasDashboardPage() {
       const { data: statsData } = await supabase
         .from("assessment_sessions")
         .select(`
+          id,
           phase, 
           score,
+          student_id,
+          current_level_id,
           question_categories!inner(subject_area)
         `)
         .in("school_id", schoolIds)
@@ -131,7 +136,17 @@ export default async function KomunitasDashboardPage() {
         .eq("is_void", false);
         
       if (statsData && statsData.length > 0) {
-        sessionsDataForChart = statsData;
+        const allLvlIds = [...new Set(statsData.map((s: any) => s.current_level_id).filter(Boolean))];
+        let qlMap = new Map<string, number>();
+        if (allLvlIds.length > 0) {
+          const { data: lvlData } = await supabase.from("question_levels").select("id, level_number").in("id", allLvlIds);
+          qlMap = new Map((lvlData || []).map((l: any) => [l.id, l.level_number]));
+        }
+
+        sessionsDataForChart = statsData.map((s: any) => ({
+          ...s,
+          level_number: qlMap.get(s.current_level_id) || 0
+        }));
         totalSessions = statsData.length;
 
         // Calculate averages

@@ -442,130 +442,186 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
         </div>
       </div>
 
-      {/* ── 3. Toolbar Filter Granular ── */}
-      <div className="card" style={{ padding: "1.5rem" }}>
-        <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#102e50", marginBottom: "1.25rem" }}>
-          Pusat Data Hasil Ujian — Filter Granular
-        </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
-          <div>
-            <label className="form-label">Kelas</label>
-            <select className="form-input" value={selectedClassId} onChange={(e) => setSelectedClassId(e.target.value)} disabled={!selectedPackageId || isLoadingData}>
-              <option value="all">Semua Kelas</option>
-              {classes.map((c) => <option key={c.id} value={c.id}>Kelas {c.grade} — {c.name}</option>)}
-            </select>
+      {/* ── 3. Banner Export Semua RAW Data (1 Sheet Excel) ── */}
+      <div className="card" style={{
+        padding: "1.75rem",
+        borderRadius: "1.25rem",
+        border: "1px solid #bae6fd",
+        backgroundColor: "#f0f9ff",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: "1.25rem",
+      }}>
+        <div>
+          <div style={{ marginBottom: "0.5rem" }}>
+            <Badge variant="info">
+              📥 Pusat Unduhan RAW Data
+            </Badge>
           </div>
-          <div>
-            <label className="form-label">Gender</label>
-            <select className="form-input" value={selectedGender} onChange={(e) => setSelectedGender(e.target.value)} disabled={!selectedPackageId || isLoadingData}>
-              <option value="all">Semua</option>
-              <option value="L">Laki-laki (L)</option>
-              <option value="P">Perempuan (P)</option>
-            </select>
-          </div>
-          <div>
-            <label className="form-label">SES</label>
-            <select className="form-input" value={selectedSes} onChange={(e) => setSelectedSes(e.target.value)} disabled={!selectedPackageId || isLoadingData}>
-              <option value="all">Semua SES</option>
-              {["I","II","III","IV"].map((s) => <option key={s} value={s}>SES {s}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="form-label">Cari Nama / NISN</label>
-            <input type="text" className="form-input" placeholder="Ketik pencarian..." value={search} onChange={(e) => setSearch(e.target.value)} disabled={!selectedPackageId || isLoadingData} />
-          </div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0369a1", margin: 0 }}>
+            Ekspor Data Mentah Hasil Ujian (RAW Data)
+          </h2>
+          <p style={{ fontSize: "0.88rem", color: "#334155", margin: "0.35rem 0 0 0" }}>
+            Unduh seluruh data mentah ujian pada kategori ini dalam 1 sheet Excel (termasuk demografi lengkap, SES, durasi, dan jawaban tiap nomor).
+          </p>
         </div>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
-          <Button onClick={handleExport} disabled={!selectedPackageId || isExporting || isLoadingData} style={{ backgroundColor: "#0874aa", color: "white", gap: "0.5rem" }}>
-            {isExporting ? <><span className="btn-spinner" /> Memproses...</> : (
-              <>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Download Rekap Detail (Excel)
-              </>
-            )}
-          </Button>
-        </div>
+
+        <Button
+          onClick={async () => {
+            if (!selectedPackageId) { showInfo("Pilih Kategori", "Pilih Kategori Ujian di atas terlebih dahulu."); return; }
+            setIsExporting(true);
+            try {
+              const url = new URL(window.location.origin + "/api/export/detailed-results");
+              url.searchParams.set("category_id", selectedPackageId);
+              url.searchParams.set("target_id", schoolId);
+              url.searchParams.set("target_type", "school");
+              url.searchParams.set("raw", "true");
+              const res = await fetch(url.toString());
+              if (!res.ok) throw new Error((await res.json()).error || "Server error");
+              const blob = await res.blob();
+              const dateStr = new Date().toISOString().split("T")[0];
+              downloadFromUrl(window.URL.createObjectURL(blob), `RAW_Data_Sekolah_${dateStr}.xlsx`);
+              showSuccess("Berhasil Export", "File 1 sheet RAW Data berhasil diunduh.");
+            } catch (err: any) {
+              showError("Gagal Export", err.message || "Terjadi kesalahan sistem.");
+            } finally {
+              setIsExporting(false);
+            }
+          }}
+          disabled={!selectedPackageId || isExporting || isLoadingData}
+          style={{
+            backgroundColor: "#0284c7",
+            color: "white",
+            fontWeight: 700,
+            padding: "0.75rem 1.5rem",
+            borderRadius: "0.75rem",
+            boxShadow: "0 4px 12px rgba(2, 132, 199, 0.25)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.6rem",
+          }}
+        >
+          {isExporting ? <><span className="btn-spinner" /> Sedang Mengunduh...</> : (
+            <>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Unduh 1 Sheet RAW Data Sekolah (Excel)
+            </>
+          )}
+        </Button>
       </div>
 
-      {/* ── 4. Stat Cards ── */}
-      {isLoadingData ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
-          {[...Array(4)].map((_, i) => <div key={i} className="card" style={{ padding: "1.5rem" }}><Skeleton h={40} /><Skeleton h={14} /></div>)}
+      {/* ── 4. Daftar Kelas Sekolah & Ekspor per Kelas ── */}
+      <div className="card" style={{ padding: 0, overflow: "hidden", borderRadius: "1.25rem", border: "1px solid #e2e8f0" }}>
+        <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", backgroundColor: "#f8fafc", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+          <div>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
+              Daftar Kelas & Jumlah Siswa Terdaftar
+            </h2>
+            <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "0.25rem 0 0 0" }}>
+              Daftar seluruh rombongan belajar di sekolah Anda beserta rekapitulasi siswa yang telah mengerjakan ujian pada kategori ini.
+            </p>
+          </div>
         </div>
-      ) : selectedPackageId && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
-          {[
-            { label: "Total Peserta",        value: stats.total,    color: "#102e50" },
-            { label: "Rata-rata Skor Total", value: stats.avgTotal, color: "#0874aa" },
-            { label: "Rata-rata Literasi",   value: stats.avgLit,   color: "#2d9e5f" },
-            { label: "Rata-rata Numerasi",   value: stats.avgNum,   color: "#df632f" },
-          ].map((card) => (
-            <div key={card.label} className="stat-card" style={{ textAlign: "center", padding: "1.5rem" }}>
-              <div style={{ fontSize: "2rem", fontWeight: 700, color: card.color, lineHeight: 1 }}>{card.value}</div>
-              <div style={{ fontSize: "0.8rem", color: "#6c757d", marginTop: "0.5rem" }}>{card.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
 
-      {/* ── 5. Tabel Detail ── */}
-      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         {isLoadingData ? (
-          <div style={{ padding: "1.5rem" }}>{[...Array(6)].map((_, i) => <Skeleton key={i} />)}</div>
+          <div style={{ padding: "1.5rem" }}>{[...Array(5)].map((_, i) => <div key={i} className="skeleton" style={{ height: 45, marginBottom: 12, borderRadius: 8 }} />)}</div>
+        ) : !selectedPackageId ? (
+          <div style={{ textAlign: "center", padding: "3.5rem 1rem", color: "#94a3b8" }}>
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📊</div>
+            <strong style={{ display: "block", color: "#334155", fontSize: "1.05rem", marginBottom: "0.25rem" }}>
+              Pilih Kategori Ujian Terlebih Dahulu
+            </strong>
+            <p style={{ margin: 0, fontSize: "0.88rem", color: "#64748b" }}>
+              Gunakan dropdown di bagian atas halaman untuk memilih paket / kategori asesmen.
+            </p>
+          </div>
+        ) : classCards.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "3.5rem 1rem", color: "#94a3b8" }}>
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📭</div>
+            <strong style={{ display: "block", color: "#334155", fontSize: "1.05rem", marginBottom: "0.25rem" }}>
+              Belum Ada Siswa yang Mengerjakan
+            </strong>
+            <p style={{ margin: 0, fontSize: "0.88rem", color: "#64748b" }}>
+              Belum ada data hasil ujian yang tercatat untuk kategori terpilih pada kelas-kelas di sekolah ini.
+            </p>
+          </div>
         ) : (
-          <table className="pemantik-table" style={{ width: "100%" }}>
+          <table className="pemantik-table" style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr>
-                <th>Siswa</th><th>Kelas</th><th>SES</th><th>Status</th>
-                <th style={{ textAlign: "center" }}>Percobaan</th>
-                <th style={{ textAlign: "center" }}>Soal</th>
-                <th style={{ textAlign: "center" }}>Benar</th>
-                <th style={{ textAlign: "center" }}>Salah</th>
-                <th style={{ textAlign: "center" }}>Skor</th>
+              <tr style={{ borderBottom: "2px solid #e2e8f0", backgroundColor: "white", textAlign: "left", color: "#475569", fontSize: "0.85rem" }}>
+                <th style={{ padding: "1rem 1.5rem" }}>Rombel / Kelas</th>
+                <th style={{ padding: "1rem 1.5rem" }}>Tahun Ajaran</th>
+                <th style={{ padding: "1rem 1.5rem", textAlign: "center" }}>Siswa Mengerjakan</th>
+                <th style={{ padding: "1rem 1.5rem", textAlign: "right" }}>Ekspor Data Mentah</th>
               </tr>
             </thead>
             <tbody>
-              {!selectedPackageId ? (
-                <tr><td colSpan={9} style={{ textAlign: "center", padding: "3rem 1rem", color: "#adb5bd" }}>
-                  <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📊</div>
-                  Pilih Kategori Ujian di atas untuk menampilkan data.
-                </td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={9} style={{ textAlign: "center", padding: "3rem 1rem", color: "#adb5bd" }}>
-                  <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🔍</div>
-                  Tidak ada data yang cocok dengan filter.
-                </td></tr>
-              ) : filtered.map((row) => (
-                <tr key={row.id}>
-                  <td>
-                    <div style={{ fontWeight: 600, color: "#212529" }}>{row.full_name}</div>
-                    <div style={{ fontSize: "0.78rem", color: "#6c757d", marginTop: "0.1rem" }}>
-                      NISN: {row.nisn || "—"} · {row.gender === "L" ? "L" : row.gender === "P" ? "P" : "—"}
+              {classCards.map((card) => (
+                <tr key={card.class_id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                  <td style={{ padding: "1rem 1.5rem" }}>
+                    <div style={{ fontWeight: 700, color: "#0f172a", fontSize: "0.95rem" }}>
+                      Kelas {card.grade} — {card.class_name}
                     </div>
                   </td>
-                  <td style={{ fontSize: "0.85rem" }}>{row.class_name}</td>
-                  <td>{row.ses_class ? <span style={{ padding: "0.15rem 0.4rem", backgroundColor: "#f3f4f6", borderRadius: "0.25rem", fontSize: "0.78rem", fontWeight: 600 }}>SES {row.ses_class}</span> : "—"}</td>
-                  <td><Badge variant={row.status === "completed" ? "success" : "warning"}>{row.status === "completed" ? "Selesai" : "Berlangsung"}</Badge></td>
-                  <td style={{ textAlign: "center" }}>
-                    <span style={{ padding: "0.15rem 0.5rem", backgroundColor: row.attempt_number > 1 ? "#fff7ed" : "#f3f4f6", color: row.attempt_number > 1 ? "#ea580c" : "#4b5563", borderRadius: "999px", fontSize: "0.8rem", fontWeight: 600 }}>
-                      ke-{row.attempt_number}
-                    </span>
+                  <td style={{ padding: "1rem 1.5rem", fontSize: "0.88rem", color: "#64748b" }}>
+                    {card.academic_year || "—"}
                   </td>
-                  <td style={{ textAlign: "center", color: "#6c757d" }}>{row.total_questions}</td>
-                  <td style={{ textAlign: "center", fontWeight: 600, color: "#2d9e5f" }}>{row.total_correct}</td>
-                  <td style={{ textAlign: "center", fontWeight: 600, color: "#dc2626" }}>{row.total_wrong}</td>
-                  <td style={{ textAlign: "center", fontWeight: 700, color: "#102e50" }}>{row.score_total}</td>
+                  <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
+                    <div style={{ fontSize: "0.85rem", display: "inline-block" }}>
+                      <Badge variant={card.student_count > 0 ? "success" : "warning"}>
+                        👥 {card.student_count} Siswa
+                      </Badge>
+                    </div>
+                  </td>
+                  <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
+                    <Button
+                      onClick={async () => {
+                        if (!selectedPackageId) return;
+                        const key = `class-${card.class_id}`;
+                        setIsExporting(true);
+                        try {
+                          const url = new URL(window.location.origin + "/api/export/detailed-results");
+                          url.searchParams.set("category_id", selectedPackageId);
+                          url.searchParams.set("target_id", card.class_id);
+                          url.searchParams.set("target_type", "class");
+                          url.searchParams.set("class_id", card.class_id);
+                          url.searchParams.set("raw", "true");
+                          const res = await fetch(url.toString());
+                          if (!res.ok) throw new Error((await res.json()).error || "Server error");
+                          const blob = await res.blob();
+                          const dateStr = new Date().toISOString().split("T")[0];
+                          downloadFromUrl(window.URL.createObjectURL(blob), `RAW_Data_Kelas_${card.grade}_${card.class_name}_${dateStr}.xlsx`);
+                          showSuccess("Berhasil Export", `Data mentah Kelas ${card.class_name} berhasil diunduh.`);
+                        } catch (err: any) {
+                          showError("Gagal Export", err.message || "Terjadi kesalahan.");
+                        } finally {
+                          setIsExporting(false);
+                        }
+                      }}
+                      disabled={isExporting || card.student_count === 0}
+                      variant="outline"
+                      style={{
+                        padding: "0.45rem 1rem",
+                        fontSize: "0.82rem",
+                        fontWeight: 700,
+                        borderColor: "#cbd5e1",
+                        color: "#0f172a",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.4rem"
+                      }}
+                    >
+                      📥 Unduh RAW Excel
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        )}
-        {selectedPackageId && !isLoadingData && filtered.length > 0 && (
-          <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid #f1f3f5", fontSize: "0.8rem", color: "#6c757d" }}>
-            Menampilkan <strong>{filtered.length}</strong> dari <strong>{reportData.length}</strong> data peserta
-          </div>
         )}
       </div>
     </div>

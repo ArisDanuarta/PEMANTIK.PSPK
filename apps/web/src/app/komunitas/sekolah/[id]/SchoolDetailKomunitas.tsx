@@ -385,6 +385,26 @@ export default function SchoolDetailKomunitas({
               </div>
             )}
 
+            {/* Informasi Akun Admin Sekolah */}
+            {(() => {
+              const adminUser = Array.isArray(school.users) ? school.users.find((u: any) => u.role === "school") : null;
+              return (
+                <div style={{ padding: "0.85rem", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "0.5rem", marginBottom: "1rem", fontSize: "0.85rem" }}>
+                  <div style={{ fontWeight: 600, color: "#1e293b", marginBottom: "0.3rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    <span>🔐 Akun Admin Sekolah</span>
+                  </div>
+                  {adminUser ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                      <div><span style={{ color: "#64748b" }}>Username:</span> <strong style={{ color: "#0f172a" }}>{adminUser.username}</strong></div>
+                      <div><span style={{ color: "#64748b" }}>Password:</span> <code style={{ color: "#a8281c", backgroundColor: "#fee2e2", padding: "0.1rem 0.3rem", borderRadius: "0.25rem" }}>Password123!</code> <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>(default)</span></div>
+                    </div>
+                  ) : (
+                    <div style={{ color: "#64748b", fontStyle: "italic" }}>Akun Admin Sekolah belum dibentuk oleh sistem.</div>
+                  )}
+                </div>
+              );
+            })()}
+
             <Button
               onClick={() => setIsDapodikModalOpen(true)}
               style={{ backgroundColor: "#102e50", color: "white", width: "100%", marginBottom: "0.75rem" }}

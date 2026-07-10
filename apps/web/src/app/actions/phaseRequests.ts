@@ -161,6 +161,88 @@ export async function submitPhaseRequestAction(
 }
 
 /**
+ * Sekolah Independen mengajukan fase asesmen langsung ke Super Admin.
+ */
+export async function submitPhaseRequestForIndependentSchoolAction(
+  payload: {
+    schoolId: string;
+    categoryId: string;
+    phase: string;
+    validFrom: string;
+    validUntil: string;
+  }
+): Promise<{ success: boolean; error?: string; requestId?: string }> {
+  try {
+    const { schoolId, categoryId, phase, validFrom, validUntil } = payload;
+    if (!schoolId || !categoryId || !phase || !validFrom || !validUntil) {
+      return { success: false, error: "Semua field wajib diisi (kategori, fase, tanggal)." };
+    }
+    if (new Date(validFrom) >= new Date(validUntil)) {
+      return { success: false, error: "Tanggal mulai harus sebelum tanggal selesai." };
+    }
+
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Sesi pengguna tidak valid." };
+
+    // Cek info sekolah
+    const { data: school } = await (supabase as any)
+      .from("schools")
+      .select("name, community_id")
+      .eq("id", schoolId)
+      .maybeSingle();
+
+    if (!school) return { success: false, error: "Sekolah tidak ditemukan." };
+    if (school.community_id) {
+      return { success: false, error: "Sekolah ini berada di bawah naungan komunitas, pengajuan fase wajib melalui Admin Komunitas Induk." };
+    }
+
+    // Insert pengajuan (community_id null karena sekolah independen)
+    const { data: newRequest, error: insertErr } = await (supabase as any)
+      .from("assessment_phase_requests")
+      .insert({
+        community_id: null,
+        category_id: categoryId,
+        phase: phase.trim(),
+        target_school_ids: [schoolId],
+        valid_from: new Date(validFrom).toISOString(),
+        valid_until: new Date(validUntil).toISOString(),
+        status: "pending",
+        requested_by: user.id,
+      })
+      .select("id")
+      .single();
+
+    if (insertErr || !newRequest) throw insertErr || new Error("Gagal membuat pengajuan.");
+
+    // Update stage sekolah menjadi 'pengajuan_fase' jika belum
+    await (supabase as any).from("school_assessment_stages").upsert({
+      school_id: schoolId,
+      community_id: null,
+      phase: phase.trim(),
+      current_stage: "pengajuan_fase",
+      phase_request_id: newRequest.id,
+      stage_updated_at: new Date().toISOString(),
+    }, { onConflict: "school_id,phase,community_id" });
+
+    // Notifikasi Super Admin
+    await notifyAllSuperAdmins(
+      "Pengajuan Fase Sekolah Independen",
+      `Sekolah Independen "${school.name}" mengajukan fase asesmen: "${phase}".`,
+      { request_id: newRequest.id, school_id: schoolId },
+    );
+
+    revalidatePath("/sekolah/akses-ujian");
+    revalidatePath("/super-admin/persetujuan");
+    return { success: true, requestId: newRequest.id };
+  } catch (err: any) {
+    console.error("[submitPhaseRequestForIndependentSchoolAction]", err);
+    return { success: false, error: err.message || "Terjadi kesalahan sistem." };
+  }
+}
+
+
+/**
  * Super Admin mereview (approve/reject) pengajuan fase asesmen.
  *
  * Jika APPROVE:
@@ -227,6 +309,55 @@ export async function reviewPhaseRequestAction(
     }
 
     // === APPROVE ===
+
+    if (!request.community_id) {
+      // ── Sekolah Independen ──
+      const schoolId = request.target_school_ids[0];
+      const { data: schoolAccess, error: accessErr } = await supabase
+        .from("assessment_access")
+        .insert({
+          category_id: request.category_id,
+          target_type: "school",
+          target_id: schoolId,
+          phase: request.phase,
+          valid_from: request.valid_from,
+          valid_until: request.valid_until,
+          is_active: true,
+          granted_by: user.id,
+        })
+        .select("id")
+        .single();
+
+      if (accessErr && accessErr.code !== "23505") throw accessErr;
+
+      // Upsert stage ke proses_asesmen
+      await (supabase as any)
+        .from("school_assessment_stages")
+        .upsert({
+          school_id: schoolId,
+          community_id: null,
+          phase: request.phase,
+          current_stage: "proses_asesmen",
+          phase_request_id: requestId,
+          stage_updated_at: new Date().toISOString(),
+        }, { onConflict: "school_id,phase,community_id" });
+
+      await (supabase as any)
+        .from("assessment_phase_requests")
+        .update({
+          status: "approved",
+          reviewed_by: user.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", requestId);
+
+      await _notifyUser(request.requested_by, "Pengajuan Fase Disetujui",
+        `Pengajuan fase "${request.phase}" sekolah Anda telah disetujui! Akses ujian kini terbuka.`);
+
+      revalidatePath("/super-admin/persetujuan");
+      revalidatePath("/sekolah/akses-ujian");
+      return { success: true };
+    }
 
     // 1. Insert assessment_access untuk komunitas
     const { data: communityAccess, error: accessErr } = await supabase

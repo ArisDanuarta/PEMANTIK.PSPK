@@ -18,6 +18,7 @@ export interface SchoolSummaryForTimeline {
   npsn: string | null;
   studentsCount: number;
   teachersCount: number;
+  adminsCount?: number;
   classesCount: number;
   phase: string;
   current_stage: string;
@@ -92,8 +93,23 @@ export default function CommunityInteractiveTimeline({
   const router = useRouter();
   const { success: showSuccess, error: showError } = useToast();
   const { confirm } = useConfirm();
-  const [selectedStepIndex, setSelectedStepIndex] = useState<number>(0);
+
+  const computeInitialStepIndex = (stagesList: SchoolAssessmentStageRow[]) => {
+    if (!stagesList || stagesList.length === 0) return 0;
+    // Prioritaskan stage aktif tertinggi yang masih proses di antara sekolah binaan
+    const activeStage = stagesList[0].current_stage;
+    const foundIdx = TIMELINE_STEPS.findIndex((t) => t.key === activeStage);
+    return foundIdx !== -1 ? foundIdx : 0;
+  };
+
+  const [selectedStepIndex, setSelectedStepIndex] = useState<number>(() => computeInitialStepIndex(stages));
   const [isPending, startTransition] = useTransition();
+
+  React.useEffect(() => {
+    if (stages && stages.length > 0) {
+      setSelectedStepIndex(computeInitialStepIndex(stages));
+    }
+  }, [stages]);
 
   const currentStep = TIMELINE_STEPS[selectedStepIndex];
 
@@ -463,15 +479,19 @@ export default function CommunityInteractiveTimeline({
                         </Badge>
                       </div>
 
-                      {/* Info Dapodik Sekolah: Jumlah Anak, Guru, Kelas */}
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem", backgroundColor: "#f8fafc", padding: "0.6rem", borderRadius: "0.5rem", textAlign: "center", fontSize: "0.8rem" }}>
+                      {/* Info Dapodik Sekolah: Jumlah Anak, Guru, Admin, Kelas */}
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.4rem", backgroundColor: "#f8fafc", padding: "0.6rem", borderRadius: "0.5rem", textAlign: "center", fontSize: "0.8rem" }}>
                         <div>
                           <div style={{ fontWeight: 700, color: "#df632f" }}>{sc.studentsCount}</div>
                           <div style={{ color: "#64748b", fontSize: "0.72rem" }}>Anak (Siswa)</div>
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, color: "#f2af3e" }}>{sc.teachersCount}</div>
-                          <div style={{ color: "#64748b", fontSize: "0.72rem" }}>Guru / Admin</div>
+                          <div style={{ color: "#64748b", fontSize: "0.72rem" }}>Guru</div>
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, color: "#8b5cf6" }}>{sc.adminsCount ?? 0}</div>
+                          <div style={{ color: "#64748b", fontSize: "0.72rem" }}>Admin</div>
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, color: "#0874aa" }}>{sc.classesCount}</div>

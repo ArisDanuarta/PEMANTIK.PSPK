@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import ProgressTrackingChart from "@/components/shared/ProgressTrackingChart";
 import StudentSessionsTable from "@/components/shared/StudentSessionsTable";
 import StageTimeline from "@/components/shared/StageTimeline";
+import SchoolInteractiveTimeline from "@/components/shared/SchoolInteractiveTimeline";
+import DemographicsSection from "@/components/shared/DemographicsSection";
+import PhaseComparisonChart from "@/components/shared/PhaseComparisonChart";
 import { getStagesForSchool, type SchoolAssessmentStageRow } from "@/app/actions/stages";
 
 export const dynamic = "force-dynamic";
@@ -31,15 +34,26 @@ export default async function SekolahDashboard() {
   let recentSessions: any[] = [];
   let stagesData: SchoolAssessmentStageRow[] = [];
   let schoolName = "Sekolah";
+  let npsn: string | null = null;
+  let communityId: string | null = null;
+  let communityName: string | null = null;
+  let studentsDemographic: any[] = [];
 
   try {
-    // 0. Nama sekolah & stages data
-    const { data: school } = await supabase
+    // 0. Nama sekolah, npsn, info komunitas, & stages data
+    const { data: school } = await (supabase as any)
       .from("schools")
-      .select("name")
+      .select("name, npsn, community_id, communities(name)")
       .eq("id", schoolId)
       .maybeSingle();
     schoolName = school?.name ?? "Sekolah";
+    npsn = school?.npsn ?? null;
+    communityId = school?.community_id ?? null;
+    if (school?.communities && Array.isArray(school.communities)) {
+      communityName = (school.communities[0] as any)?.name ?? null;
+    } else if (school?.communities) {
+      communityName = (school.communities as any)?.name ?? null;
+    }
 
     const stagesRes = await getStagesForSchool(schoolId);
     if (stagesRes.success && stagesRes.data) {
@@ -54,12 +68,13 @@ export default async function SekolahDashboard() {
       .eq("role", "teacher");
     totalTeachers = teachersCount ?? 0;
 
-    // 2. Total Siswa
-    const { count: studentsCount } = await supabase
+    // 2. Total Siswa + data demografi
+    const { data: studentsData } = await supabase
       .from("students")
-      .select("id", { count: "exact", head: true })
+      .select("id, school_id, gender, ses_class")
       .eq("school_id", schoolId);
-    totalStudents = studentsCount ?? 0;
+    studentsDemographic = studentsData ?? [];
+    totalStudents = studentsDemographic.length;
 
     // 3. Total Kelas
     const { count: classesCount } = await supabase
@@ -73,8 +88,11 @@ export default async function SekolahDashboard() {
     const { data: statsData } = await supabase
       .from("assessment_sessions")
       .select(`
+        id,
         phase,
         score,
+        student_id,
+        current_level_id,
         question_categories!inner(subject_area)
       `)
       .eq("school_id", schoolId)
@@ -82,7 +100,17 @@ export default async function SekolahDashboard() {
       .eq("is_void", false);
 
     if (statsData && statsData.length > 0) {
-      sessionsDataForChart = statsData;
+      const allLvlIds = [...new Set(statsData.map((s: any) => s.current_level_id).filter(Boolean))];
+      let qlMap = new Map<string, number>();
+      if (allLvlIds.length > 0) {
+        const { data: lvlData } = await supabase.from("question_levels").select("id, level_number").in("id", allLvlIds);
+        qlMap = new Map((lvlData || []).map((l: any) => [l.id, l.level_number]));
+      }
+
+      sessionsDataForChart = statsData.map((s: any) => ({
+        ...s,
+        level_number: qlMap.get(s.current_level_id) || 0
+      }));
       totalSessions = statsData.length;
 
       let sumLit = 0, countLit = 0;
@@ -189,83 +217,28 @@ export default async function SekolahDashboard() {
         </div>
       </div>
 
-      {/* ── 4 Stat Cards ── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: "1.25rem",
-        marginBottom: "1.5rem",
-      }}>
-        {statCards.map((card) => (
-          <div key={card.label} className="stat-card">
-            <div className={`stat-card-accent ${card.accent}`} />
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <div className="stat-card-label">{card.label}</div>
-                <div className="stat-card-value" style={{ color: card.color }}>{card.value}</div>
-              </div>
-              <div style={{ padding: "0.5rem", backgroundColor: card.bg, borderRadius: "0.5rem", color: card.color }}>
-                {card.icon}
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* ── Alur Asesmen & Intervensi Sekolah (5 Tahap) + Summary Card Guru/Siswa/Kelas ── */}
+      <div style={{ marginBottom: "2rem" }}>
+        <SchoolInteractiveTimeline
+          stages={stagesData}
+          schoolId={schoolId}
+          schoolName={schoolName}
+          npsn={npsn}
+          communityId={communityId}
+          communityName={communityName}
+          totalTeachers={totalTeachers}
+          totalStudents={totalStudents}
+          totalClasses={totalClasses}
+        />
       </div>
 
-      {/* ── Rata-Rata Nilai + Chart ── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "300px 1fr",
-        gap: "1.5rem",
-        marginBottom: "1.5rem",
-      }}>
-        {/* Rata-Rata Nilai */}
-        <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #f1f3f5" }}>
-          <h3 style={{ margin: "0 0 1.5rem 0", fontSize: "1rem", fontFamily: "var(--font-heading)", color: "#102e50" }}>
-            Rata-Rata Nilai
-          </h3>
+      {/* ── Demografi Siswa & Sebaran SES ── */}
+      <DemographicsSection
+        students={studentsDemographic}
+      />
 
-          <div style={{ marginBottom: "1.5rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-              <span style={{ fontSize: "0.875rem", color: "#4b5563", fontWeight: 500 }}>Literasi</span>
-              <span style={{ fontSize: "1rem", color: "#2d9e5f", fontWeight: 700 }}>{avgLiterasi}</span>
-            </div>
-            <div style={{ width: "100%", backgroundColor: "#f3f4f6", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
-              <div style={{ height: "100%", backgroundColor: "#2d9e5f", width: `${Math.min(100, avgLiterasi)}%`, borderRadius: "4px", transition: "width 0.5s ease" }} />
-            </div>
-          </div>
-
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-              <span style={{ fontSize: "0.875rem", color: "#4b5563", fontWeight: 500 }}>Numerasi</span>
-              <span style={{ fontSize: "1rem", color: "#0874aa", fontWeight: 700 }}>{avgNumerasi}</span>
-            </div>
-            <div style={{ width: "100%", backgroundColor: "#f3f4f6", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
-              <div style={{ height: "100%", backgroundColor: "#0874aa", width: `${Math.min(100, avgNumerasi)}%`, borderRadius: "4px", transition: "width 0.5s ease" }} />
-            </div>
-          </div>
-
-          <div style={{ marginTop: "2rem", padding: "0.875rem 1rem", backgroundColor: "#f8f9fa", borderRadius: "0.5rem", fontSize: "0.78rem", color: "#6c757d", textAlign: "center", lineHeight: 1.5 }}>
-            Data dihitung dari seluruh ujian yang telah diselesaikan siswa di sekolah ini.
-          </div>
-        </div>
-
-        {/* Progress Chart */}
-        <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #f1f3f5" }}>
-          <ProgressTrackingChart sessions={sessionsDataForChart} />
-        </div>
-      </div>
-
-      {/* Alur Asesmen & Intervensi Sekolah (5 Tahap) */}
-      <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #f1f3f5", marginBottom: "1.5rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.5rem" }}>
-          <div>
-            <h3 style={{ margin: 0, fontSize: "1.1rem", color: "#102e50" }}>Alur Asesmen & Intervensi Sekolah Anda (5 Tahap)</h3>
-            <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.85rem", color: "#6c757d" }}>Pantau progres tahapan asesmen dan kontribusi intervensi pada sekolah Anda.</p>
-          </div>
-        </div>
-        <StageTimeline stages={stagesData} userRole="school" />
-      </div>
+      {/* ── Perbandingan Nilai Antar Fase & Sebaran Asesmen ── */}
+      <PhaseComparisonChart sessions={sessionsDataForChart} />
 
       {/* ── 10 Sesi Terbaru ── */}
       <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #f1f3f5" }}>

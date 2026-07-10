@@ -221,15 +221,15 @@ export default function AksesUjianKomunitasClient({
             Ajukan fase asesmen baru ke Super Admin atau distribusikan akses yang disetujui ke sekolah binaan Anda.
           </p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "0.85rem", flexWrap: "wrap", alignItems: "center" }}>
           {!canSubmitRequest && (
             <div
               style={{
-                padding: "0.4rem 0.75rem",
+                padding: "0.45rem 0.85rem",
                 backgroundColor: "#fef3c7",
                 border: "1px solid #f59e0b",
-                borderRadius: "0.5rem",
-                fontSize: "0.8rem",
+                borderRadius: "0.6rem",
+                fontSize: "0.82rem",
                 color: "#b45309",
                 fontWeight: 600,
                 display: "flex",
@@ -245,7 +245,6 @@ export default function AksesUjianKomunitasClient({
               if (!canSubmitRequest) return;
               setIsRequestModalOpen(true);
             }}
-            variant="secondary"
             disabled={!canSubmitRequest}
             title={
               !canSubmitRequest
@@ -253,21 +252,43 @@ export default function AksesUjianKomunitasClient({
                 : "Ajukan fase asesmen baru ke Super Admin"
             }
             style={{
-              borderColor: !canSubmitRequest ? "#d1d5db" : "#0874aa",
-              color: !canSubmitRequest ? "#9ca3af" : "#0874aa",
-              backgroundColor: !canSubmitRequest ? "#f3f4f6" : "transparent",
-              fontWeight: 600,
+              backgroundColor: !canSubmitRequest ? "#f1f5f9" : "#0284c7",
+              color: !canSubmitRequest ? "#94a3b8" : "white",
+              border: !canSubmitRequest ? "1px solid #cbd5e1" : "1px solid #0369a1",
+              padding: "0.75rem 1.35rem",
+              borderRadius: "0.75rem",
+              fontWeight: 700,
               cursor: !canSubmitRequest ? "not-allowed" : "pointer",
+              boxShadow: !canSubmitRequest ? "none" : "0 4px 12px rgba(2, 132, 199, 0.25)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              fontSize: "0.95rem",
             }}
           >
-            {canSubmitRequest ? "✨ Pembuatan dan Pengajuan Asesmen" : "🔒 Pengajuan Terkunci (Tahap 2)"}
+            <span>{canSubmitRequest ? "✨" : "🔒"}</span>
+            <span>{canSubmitRequest ? "Pembuatan dan Pengajuan Asesmen" : "Pengajuan Terkunci (Tahap 2)"}</span>
           </Button>
           <Button
             onClick={() => setIsAssignModalOpen(true)}
-            style={{ backgroundColor: "#102e50", color: "white" }}
+            style={{
+              backgroundColor: packages.length === 0 ? "#e2e8f0" : "#102e50",
+              color: packages.length === 0 ? "#94a3b8" : "white",
+              border: packages.length === 0 ? "1px solid #cbd5e1" : "1px solid #0b2239",
+              padding: "0.75rem 1.35rem",
+              borderRadius: "0.75rem",
+              fontWeight: 700,
+              cursor: packages.length === 0 ? "not-allowed" : "pointer",
+              boxShadow: packages.length === 0 ? "none" : "0 4px 12px rgba(16, 46, 80, 0.2)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              fontSize: "0.95rem",
+            }}
             disabled={packages.length === 0}
           >
-            + Berikan Akses ke Sekolah
+            <span>+</span>
+            <span>Berikan Akses ke Sekolah</span>
           </Button>
         </div>
       </div>

@@ -115,6 +115,11 @@ export const Icons = {
       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
     </svg>
   ),
+  Folder: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    </svg>
+  ),
 };
 
 // Icon mapping table for server components to pass serializable icon names
@@ -131,6 +136,8 @@ const IconMap: Record<string, React.ComponentType> = {
   teacher: Icons.Teacher,
   student: Icons.Student,
   activity: Icons.Activity,
+  dapodik: Icons.Folder,
+  folder: Icons.Folder,
 };
 
 export function Sidebar({ role, roleName, userName, sections }: SidebarProps) {

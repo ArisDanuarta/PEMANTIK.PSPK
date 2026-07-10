@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   const newUrl = new URL(request.url);
   newUrl.pathname = "/api/export/detailed-results";
   newUrl.searchParams.set("category_id", categoryId);
-  if (scopeType === "community" || searchParams.get("raw") === "true") {
+  if (scopeType === "community" || scopeType === "school" || searchParams.get("raw") === "true") {
     newUrl.searchParams.set("raw", "true");
   }
 

@@ -47,6 +47,7 @@ export default async function KomunitasLayout({ children }: { children: React.Re
       label: "Manajemen",
       items: [
         { label: "Sekolah", href: "/komunitas/sekolah", icon: "school" },
+        { label: "Upload Dapodik", href: "/komunitas/dapodik", icon: "dapodik" },
         { label: "Akses Ujian", href: "/komunitas/akses-ujian", icon: "exam" },
       ],
     },
@@ -63,7 +64,6 @@ export default async function KomunitasLayout({ children }: { children: React.Re
           label: hasReachedIntervention ? "Form & Laporan Intervensi" : "Intervensi",
           href: "/komunitas/intervensi",
           icon: "activity",
-          badge: hasReachedIntervention ? undefined : "🔒 Tahap 4",
         },
       ],
     },

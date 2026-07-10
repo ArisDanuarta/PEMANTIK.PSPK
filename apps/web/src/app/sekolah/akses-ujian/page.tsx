@@ -22,12 +22,16 @@ export default async function SekolahAksesUjianPage() {
   let classes: any[] = [];
   let students: any[] = [];
   let communityData: any = null;
+  let allCategories: any[] = [];
+  let phaseRequests: any[] = [];
 
   try {
     // 1. Kategori yang bisa diakses sekolah ini (dari assessment_access level school atau community)
     const [
       { data: schoolAccessData },
       { data: commData },
+      { data: catData },
+      { data: reqData },
     ] = await Promise.all([
       supabase
         .from("assessment_access")
@@ -40,8 +44,20 @@ export default async function SekolahAksesUjianPage() {
         .select("community_id")
         .eq("id", schoolId)
         .maybeSingle(),
+      supabase
+        .from("question_categories")
+        .select("id, name, subject_area")
+        .eq("is_active", true)
+        .order("name"),
+      (supabase as any)
+        .from("assessment_phase_requests")
+        .select("id, phase, valid_from, valid_until, status, rejection_reason, created_at, category_id, question_categories(name, subject_area)")
+        .contains("target_school_ids", [schoolId])
+        .order("created_at", { ascending: false }),
     ]);
     communityData = commData;
+    allCategories = catData ?? [];
+    phaseRequests = reqData ?? [];
 
     const pkgMap = new Map<string, any>();
     const now = new Date();
@@ -94,7 +110,7 @@ export default async function SekolahAksesUjianPage() {
     <div className="animate-fade-in">
       <div className="page-header">
         <div className="page-header-left">
-          <h1 className="page-title">Akses Ujian</h1>
+          <h1 className="page-title">Akses Ujian & Jadwal Asesmen</h1>
           <div className="page-breadcrumb">
             <span>Sekolah</span>
             <span className="page-breadcrumb-sep">›</span>
@@ -108,6 +124,8 @@ export default async function SekolahAksesUjianPage() {
         students={students}
         schoolId={schoolId}
         hasCommunity={!!communityData?.community_id}
+        allCategories={allCategories}
+        phaseRequests={phaseRequests}
       />
     </div>
   );

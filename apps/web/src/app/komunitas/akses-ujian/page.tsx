@@ -116,7 +116,7 @@ export default async function KomunitasAksesUjianPage() {
     .eq("community_id", communityId);
 
   const canSubmitRequest = (stagesData ?? []).some((s: any) =>
-    ["pengajuan_asesmen", "proses_asesmen", "intervensi", "selesai"].includes(s.current_stage)
+    ["pengajuan_fase", "pengajuan_asesmen", "proses_asesmen", "intervensi", "selesai"].includes(s.current_stage) || s.current_stage !== "persiapan_akun"
   );
 
   return (
