@@ -5,6 +5,7 @@ import { getSystemSettings } from "./settings";
 import { getAllInterventionsGlobal } from "./interventions";
 import { GoogleGenAI } from "@google/genai";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 export async function checkAiKnowledgeGraphStatus() {
   try {
@@ -32,14 +33,15 @@ export async function generateAiKnowledgeGraph() {
   
   try {
     const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
     
     // 1. Create Job record
     const { data: job, error: jobErr } = await (supabase as any)
       .from("ai_analysis_jobs")
       .insert({
         status: "processing",
-        requested_by: user?.id,
+        requested_by: userId,
       })
       .select("id")
       .single();
@@ -279,10 +281,11 @@ export async function addManualKnowledgeEdgeAction(jobId: string, source_node_id
 export async function createEmptyAiJobAction() {
   try {
     const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
     const { data: job, error } = await (supabase as any).from("ai_analysis_jobs").insert({
       status: "completed",
-      requested_by: user?.id,
+      requested_by: userId,
     }).select("id").single();
     if (error) throw error;
     revalidatePath("/super-admin/intervensi");

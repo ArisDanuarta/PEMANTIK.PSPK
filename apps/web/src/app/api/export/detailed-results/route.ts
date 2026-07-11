@@ -587,8 +587,8 @@ export async function GET(request: Request) {
         .in("level_id", levelIds);
 
       allQuestions = (qData ?? []).sort((a, b) => {
-        const lnA = levelMap.get(a.level_id) ?? 0;
-        const lnB = levelMap.get(b.level_id) ?? 0;
+        const lnA = a.level_id ? (levelMap.get(a.level_id) ?? 0) : 0;
+        const lnB = b.level_id ? (levelMap.get(b.level_id) ?? 0) : 0;
         if (lnA !== lnB) return lnA - lnB;
         if ((a.order_index ?? 0) !== (b.order_index ?? 0)) return (a.order_index ?? 0) - (b.order_index ?? 0);
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();

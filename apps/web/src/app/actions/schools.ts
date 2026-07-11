@@ -4,6 +4,7 @@ import { createServerClient } from "@pemantik/supabase";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { requireAuth } from "./auth";
+import { headers } from "next/headers";
 
 export interface ActionResponse {
   success: boolean;
@@ -624,9 +625,10 @@ export async function parseDapodikAction(formData: FormData): Promise<ParseDapod
     const supabase = createServerClient();
 
     // Verifikasi user adalah super_admin, school, atau community
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Tidak terautentikasi." };
-    const { data: userData } = await supabase.from("users").select("id, role").eq("id", user.id).single();
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
+    if (!userId) return { success: false, error: "Tidak terautentikasi." };
+    const { data: userData } = await supabase.from("users").select("id, role").eq("id", userId).single();
     if (!userData || !["super_admin", "school", "community"].includes(userData.role)) {
       return { success: false, error: "Akses ditolak." };
     }
@@ -715,9 +717,10 @@ export async function importDapodikAction(
     const supabase = createServerClient();
 
     // Verifikasi user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Tidak terautentikasi." };
-    const { data: userData } = await supabase.from("users").select("id, role").eq("id", user.id).single();
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
+    if (!userId) return { success: false, error: "Tidak terautentikasi." };
+    const { data: userData } = await supabase.from("users").select("id, role").eq("id", userId).single();
     if (!userData || !["super_admin", "school", "community"].includes(userData.role)) {
       return { success: false, error: "Akses ditolak. Akses terbatas." };
     }

@@ -26,7 +26,6 @@ export type {
   Student,
   Question,
   AssessmentPackage,
-  AssessmentPackageQuestion,
   AssessmentAccess,
   AssessmentSession,
   StudentAnswer,

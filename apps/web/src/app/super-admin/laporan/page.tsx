@@ -37,7 +37,6 @@ export default async function SuperAdminLaporanPage() {
     const { data: catData } = await supabase
       .from("question_categories")
       .select("id, name")
-      .eq("is_active", true)
       .order("name", { ascending: true });
     packages = catData ?? [];
 

@@ -21,7 +21,6 @@ export default async function GuruSiswaPage() {
 
   let students: any[] = [];
   let classes: any[] = [];
-  let sesVariables: any[] = [];
 
   try {
     // 1. Get classes taught by this teacher
@@ -53,9 +52,6 @@ export default async function GuruSiswaPage() {
 
       students = studentData ?? [];
     }
-    
-    const { data: sesData } = await (supabase as any).from("ses_variables").select("*").order("name");
-    sesVariables = sesData ?? [];
   } catch (err) {
     console.error("Failed to load siswa guru:", err);
   }
@@ -76,7 +72,6 @@ export default async function GuruSiswaPage() {
         initialStudents={students}
         classes={classes}
         schoolId={schoolId}
-        sesVariables={sesVariables}
       />
     </div>
   );

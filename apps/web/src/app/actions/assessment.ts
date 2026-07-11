@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@pemantik/supabase";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 export async function deleteAssessmentAccessAction(id: string) {
   try {
@@ -285,7 +286,8 @@ export async function distributeAccessToSchools(
     }
 
     // 4. Insert — tanggal valid DIWARISI dari parent
-    const { data: userResult } = await supabase.auth.getUser();
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
     const rows = toInsert.map((schoolId) => ({
       category_id:  parent.category_id,
       target_type:  "school",
@@ -295,7 +297,7 @@ export async function distributeAccessToSchools(
       valid_until:  parent.valid_until,
       max_attempts: parent.max_attempts,
       is_active:    true,
-      granted_by:   userResult?.user?.id ?? undefined,
+      granted_by:   userId ?? undefined,
     }));
 
     const { error: insertErr } = await supabase.from("assessment_access").insert(rows);

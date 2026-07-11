@@ -9,7 +9,7 @@ import { distributeAccessToSchools } from "./assessment";
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 export interface PhaseRequestPayload {
-  categoryId: string;
+  categoryIds: string[];
   phase: string;
   targetSchoolIds: string[];
   validFrom: string;  // ISO string
@@ -59,7 +59,7 @@ export async function submitPhaseRequestAction(
     }
 
     // Validasi payload
-    if (!payload.categoryId || !payload.phase || !payload.validFrom || !payload.validUntil) {
+    if (!payload.categoryIds || payload.categoryIds.length === 0 || !payload.phase || !payload.validFrom || !payload.validUntil) {
       return { success: false, error: "Semua field wajib diisi (kategori, fase, tanggal)." };
     }
     if (payload.targetSchoolIds.length === 0) {
@@ -71,6 +71,14 @@ export async function submitPhaseRequestAction(
 
     const supabase = await createServerClient();
 
+    // Ambil data user yang sedang login dari header proxy
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
+    if (!userId) {
+      console.error("[submitPhaseRequestAction] Auth error: x-user-id header missing");
+      return { success: false, error: "Sesi login tidak valid." };
+    }
+
     // Cek apakah kategori yang diajukan termasuk dalam allowed_categories komunitas (jika diatur)
     const { data: commInfo } = await (supabase as any)
       .from("communities")
@@ -79,10 +87,12 @@ export async function submitPhaseRequestAction(
       .maybeSingle();
 
     if (commInfo?.allowed_categories && Array.isArray(commInfo.allowed_categories) && commInfo.allowed_categories.length > 0) {
-      if (!commInfo.allowed_categories.includes(payload.categoryId)) {
+      const allowedSet = new Set(commInfo.allowed_categories);
+      const invalidCategories = payload.categoryIds.filter(id => !allowedSet.has(id));
+      if (invalidCategories.length > 0) {
         return {
           success: false,
-          error: "Kategori paket soal ini tidak diizinkan untuk komunitas Anda. Silakan hubungi Super Admin.",
+          error: "Satu atau lebih kategori paket soal tidak diizinkan untuk komunitas Anda. Silakan hubungi Super Admin.",
         };
       }
     }
@@ -123,37 +133,37 @@ export async function submitPhaseRequestAction(
       };
     }
 
-    // Ambil data user yang sedang login
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Sesi login tidak valid." };
 
-    // Insert pengajuan
-    const { data: newRequest, error: insertErr } = await (supabase as any)
+    // Insert pengajuan (Bulk Insert)
+    const inserts = payload.categoryIds.map(categoryId => ({
+      community_id: communityId,
+      category_id: categoryId,
+      phase: payload.phase,
+      target_school_ids: payload.targetSchoolIds,
+      valid_from: new Date(payload.validFrom).toISOString(),
+      valid_until: new Date(payload.validUntil).toISOString(),
+      status: "pending",
+      requested_by: userId,
+    }));
+
+    const { data: newRequests, error: insertErr } = await (supabase as any)
       .from("assessment_phase_requests")
-      .insert({
-        community_id: communityId,
-        category_id: payload.categoryId,
-        phase: payload.phase,
-        target_school_ids: payload.targetSchoolIds,
-        valid_from: new Date(payload.validFrom).toISOString(),
-        valid_until: new Date(payload.validUntil).toISOString(),
-        status: "pending",
-        requested_by: user.id,
-      })
-      .select("id")
-      .single();
+      .insert(inserts)
+      .select("id");
 
-    if (insertErr || !newRequest) throw insertErr || new Error("Gagal membuat pengajuan.");
+    if (insertErr || !newRequests) {
+      return { success: false, error: "Gagal menyimpan pengajuan fase: " + insertErr?.message };
+    }
 
     // Notifikasi semua Super Admin
     await notifyAllSuperAdmins(
       "Pengajuan Fase Asesmen Baru",
       `Komunitas mengajukan fase asesmen baru: "${payload.phase}" untuk ${payload.targetSchoolIds.length} sekolah.`,
-      { request_id: newRequest.id, community_id: communityId },
+      { request_ids: newRequests.map((r: any) => r.id), community_id: communityId },
     );
 
     revalidatePath("/komunitas/akses-ujian");
-    return { success: true, requestId: newRequest.id };
+    return { success: true, requestId: newRequests[0]?.id };
   } catch (err: any) {
     console.error("[submitPhaseRequestAction]", err);
     return { success: false, error: err.message || "Terjadi kesalahan sistem." };
@@ -182,8 +192,9 @@ export async function submitPhaseRequestForIndependentSchoolAction(
     }
 
     const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Sesi pengguna tidak valid." };
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
+    if (!userId) return { success: false, error: "Sesi pengguna tidak valid." };
 
     // Cek info sekolah
     const { data: school } = await (supabase as any)
@@ -208,7 +219,7 @@ export async function submitPhaseRequestForIndependentSchoolAction(
         valid_from: new Date(validFrom).toISOString(),
         valid_until: new Date(validUntil).toISOString(),
         status: "pending",
-        requested_by: user.id,
+        requested_by: userId,
       })
       .select("id")
       .single();
@@ -283,8 +294,9 @@ export async function reviewPhaseRequestAction(
       return { success: false, error: `Pengajuan ini sudah di-${request.status}.` };
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Sesi tidak valid." };
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
+    if (!userId) return { success: false, error: "Sesi tidak valid." };
 
     if (decision === "rejected") {
       const { error } = await (supabase as any)
@@ -292,7 +304,7 @@ export async function reviewPhaseRequestAction(
         .update({
           status: "rejected",
           rejection_reason: rejectionReason || "Tidak ada alasan diberikan.",
-          reviewed_by: user.id,
+          reviewed_by: userId,
           reviewed_at: new Date().toISOString(),
         })
         .eq("id", requestId);
@@ -323,7 +335,7 @@ export async function reviewPhaseRequestAction(
           valid_from: request.valid_from,
           valid_until: request.valid_until,
           is_active: true,
-          granted_by: user.id,
+          granted_by: userId,
         })
         .select("id")
         .single();
@@ -346,7 +358,7 @@ export async function reviewPhaseRequestAction(
         .from("assessment_phase_requests")
         .update({
           status: "approved",
-          reviewed_by: user.id,
+          reviewed_by: userId,
           reviewed_at: new Date().toISOString(),
         })
         .eq("id", requestId);
@@ -370,7 +382,7 @@ export async function reviewPhaseRequestAction(
         valid_from: request.valid_from,
         valid_until: request.valid_until,
         is_active: true,
-        granted_by: user.id,
+        granted_by: userId,
       })
       .select("id")
       .single();
@@ -436,7 +448,7 @@ export async function reviewPhaseRequestAction(
       .from("assessment_phase_requests")
       .update({
         status: "approved",
-        reviewed_by: user.id,
+        reviewed_by: userId,
         reviewed_at: new Date().toISOString(),
       })
       .eq("id", requestId);

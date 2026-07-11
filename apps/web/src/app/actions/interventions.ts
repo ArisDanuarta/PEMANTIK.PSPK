@@ -72,11 +72,12 @@ export async function createOrGetTagAction(
     const supabase = await createServerClient();
 
     // Coba insert dulu (optimistic)
-    const { data: { user } } = await supabase.auth.getUser();
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
 
     const { data: inserted, error: insertErr } = await (supabase as any)
       .from("intervention_tags")
-      .insert({ name: trimmed, created_by: user?.id ?? null })
+      .insert({ name: trimmed, created_by: userId ?? null })
       .select("id")
       .single();
 
@@ -152,8 +153,9 @@ export async function submitInterventionAction(
       };
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { success: false, error: "Sesi tidak valid." };
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
+    if (!userId) return { success: false, error: "Sesi tidak valid." };
 
     // Insert intervensi
     const { data: newIntervention, error: insertErr } = await (supabase as any)
@@ -167,7 +169,7 @@ export async function submitInterventionAction(
         upaya_dilakukan: upayaDilakukan.trim(),
         perubahan_signifikan: perubahanSignifikan.trim(),
         alasan_bermakna: alasanBermakna.trim(),
-        submitted_by: user.id,
+        submitted_by: userId,
       })
       .select("id")
       .single();

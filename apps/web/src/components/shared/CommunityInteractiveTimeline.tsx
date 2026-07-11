@@ -102,20 +102,30 @@ export default function CommunityInteractiveTimeline({
     return foundIdx !== -1 ? foundIdx : 0;
   };
 
-  const [selectedStepIndex, setSelectedStepIndex] = useState<number>(() => computeInitialStepIndex(stages));
+  const uniqueStages = React.useMemo(() => {
+    if (!stages) return [];
+    const seen = new Set<string>();
+    return stages.filter((s) => {
+      if (seen.has(s.school_id)) return false;
+      seen.add(s.school_id);
+      return true;
+    });
+  }, [stages]);
+
+  const [selectedStepIndex, setSelectedStepIndex] = useState<number>(() => computeInitialStepIndex(uniqueStages));
   const [isPending, startTransition] = useTransition();
 
   React.useEffect(() => {
-    if (stages && stages.length > 0) {
-      setSelectedStepIndex(computeInitialStepIndex(stages));
+    if (uniqueStages.length > 0) {
+      setSelectedStepIndex(computeInitialStepIndex(uniqueStages));
     }
-  }, [stages]);
+  }, [uniqueStages]);
 
   const currentStep = TIMELINE_STEPS[selectedStepIndex];
 
-  // Hitung jumlah sekolah yang saat ini berada di masing-masing step
+  // Hitung jumlah sekolah yang saat ini berada di masing-masing step (hanya stage terbaru per sekolah)
   const getSchoolsInStep = (stepKey: string) => {
-    return stages.filter((s) => s.current_stage === stepKey);
+    return uniqueStages.filter((s) => s.current_stage === stepKey);
   };
 
   const schoolsInCurrentStep = getSchoolsInStep(currentStep.key);
@@ -127,7 +137,7 @@ export default function CommunityInteractiveTimeline({
     if (countInStep > 0) {
       return { label: "Proses", bg: "#fef3c7", color: "#b45309", border: "#f59e0b" };
     }
-    const hasSchoolsInLaterSteps = stages.some((s) => {
+    const hasSchoolsInLaterSteps = uniqueStages.some((s) => {
       const stepIdx = TIMELINE_STEPS.findIndex((t) => t.key === s.current_stage);
       return stepIdx > index;
     });

@@ -47,7 +47,6 @@ export default async function SekolahAksesUjianPage() {
       supabase
         .from("question_categories")
         .select("id, name, subject_area")
-        .eq("is_active", true)
         .order("name"),
       (supabase as any)
         .from("assessment_phase_requests")

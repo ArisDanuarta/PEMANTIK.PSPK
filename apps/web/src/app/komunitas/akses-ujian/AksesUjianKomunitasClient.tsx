@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { Button, Badge } from "@pemantik/ui";
+import { Button, Badge, useToast } from "@pemantik/ui";
 import AssignPackageModal from "@/components/shared/AssignPackageModal";
 import {
   assignCommunityPackageToSchool,
@@ -49,8 +49,6 @@ interface Props {
   canSubmitRequest?: boolean;
 }
 
-type Toast = { type: "success" | "error"; message: string };
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("id-ID", {
     day: "numeric",
@@ -79,10 +77,10 @@ export default function AksesUjianKomunitasClient({
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [toast, setToast] = useState<Toast | null>(null);
+  const { success, error } = useToast();
 
   // Form Request State
-  const [reqCategoryId, setReqCategoryId] = useState("");
+  const [reqCategoryIds, setReqCategoryIds] = useState<string[]>([]);
   const [reqPhase, setReqPhase] = useState("Fase B");
   const [reqTargetSchools, setReqTargetSchools] = useState<string[]>([]);
   const [reqValidFrom, setReqValidFrom] = useState(new Date().toISOString().slice(0, 10));
@@ -93,40 +91,35 @@ export default function AksesUjianKomunitasClient({
   const [distributingId, setDistributingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const showToast = (type: Toast["type"], message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 5000);
-  };
-
   const handleSubmitPhaseRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reqCategoryId) {
-      showToast("error", "Pilih kategori ujian terlebih dahulu.");
+    if (reqCategoryIds.length === 0) {
+      error("Gagal", "Pilih minimal 1 kategori ujian.");
       return;
     }
     if (reqTargetSchools.length === 0) {
-      showToast("error", "Pilih minimal 1 sekolah target.");
+      error("Gagal", "Pilih minimal 1 sekolah target.");
       return;
     }
     setReqSubmitting(true);
     try {
       const res = await submitPhaseRequestAction({
-        categoryId: reqCategoryId,
+        categoryIds: reqCategoryIds,
         phase: reqPhase,
         targetSchoolIds: reqTargetSchools,
         validFrom: new Date(reqValidFrom).toISOString(),
         validUntil: new Date(reqValidUntil).toISOString(),
       });
-      if (!res.success) {
-        showToast("error", res.error || "Gagal mengajukan fase");
-      } else {
-        showToast("success", "Pengajuan fase berhasil dikirim ke Super Admin!");
+      if (res.success) {
+        success("Berhasil Diajukan", "Pengajuan fase telah dikirim ke Super Admin.");
         setIsRequestModalOpen(false);
         setReqTargetSchools([]);
         router.refresh();
+      } else {
+        error("Gagal Mengajukan", res.error ?? "Gagal mengajukan fase.");
       }
     } catch (err: any) {
-      showToast("error", err.message || "Terjadi kesalahan sistem");
+      error("Error", err.message || "Terjadi kesalahan server.");
     } finally {
       setReqSubmitting(false);
     }
@@ -145,21 +138,21 @@ export default function AksesUjianKomunitasClient({
 
       if (result.success) {
         if (result.distributed_to === 0) {
-          showToast(
-            "success",
+          success(
+            "Selesai",
             `Semua ${result.total_schools} sekolah sudah memiliki akses ujian "${access.name} — ${access.phase}".`
           );
         } else {
-          showToast(
-            "success",
-            `✅ Berhasil! ${result.distributed_to} sekolah baru mendapat akses "${access.name} — ${access.phase}".` +
+          success(
+            "Berhasil",
+            `${result.distributed_to} sekolah baru mendapat akses "${access.name} — ${access.phase}".` +
               (result.skipped && result.skipped > 0
                 ? ` (${result.skipped} sekolah dilewati karena sudah punya akses)`
                 : "")
           );
         }
       } else {
-        showToast("error", result.error ?? "Gagal mendistribusikan akses.");
+        error("Gagal", result.error ?? "Gagal mendistribusikan akses.");
       }
     });
   };
@@ -173,32 +166,15 @@ export default function AksesUjianKomunitasClient({
     });
 
     if (result.success) {
-      showToast("success", "Penugasan kategori ujian ke sekolah berhasil.");
+      success("Berhasil", "Penugasan kategori ujian ke sekolah berhasil.");
     } else {
-      showToast("error", result.error ?? "Gagal menugaskan.");
+      error("Gagal", result.error ?? "Gagal menugaskan.");
     }
     return result;
   };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-      {/* ── Toast ─────────────────────────────────────────────────────────── */}
-      {toast && (
-        <div
-          style={{
-            padding: "1rem 1.25rem",
-            borderRadius: "0.5rem",
-            fontSize: "0.9rem",
-            fontWeight: 500,
-            backgroundColor: toast.type === "success" ? "#f0fdf4" : "#fef2f2",
-            color: toast.type === "success" ? "#166534" : "#b91c1c",
-            border: `1px solid ${toast.type === "success" ? "#bbf7d0" : "#fca5a5"}`,
-          }}
-        >
-          {toast.message}
-        </div>
-      )}
-
       {/* ── Header card ───────────────────────────────────────────────────── */}
       <div
         style={{
@@ -766,19 +742,35 @@ export default function AksesUjianKomunitasClient({
                 <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#374151", marginBottom: "0.4rem" }}>
                   Kategori Ujian / Paket Soal
                 </label>
-                <select
-                  value={reqCategoryId}
-                  onChange={(e) => setReqCategoryId(e.target.value)}
-                  style={{ width: "100%", padding: "0.6rem 0.875rem", borderRadius: "0.5rem", border: "1px solid #d1d5db", fontSize: "0.9rem" }}
-                  required
-                >
-                  <option value="">-- Pilih Kategori --</option>
+                <div style={{
+                  maxHeight: "150px", overflowY: "auto", border: "1px solid #d1d5db", borderRadius: "0.5rem",
+                  padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem", backgroundColor: "#f9fafb"
+                }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", fontWeight: 600, borderBottom: "1px solid #e5e7eb", paddingBottom: "0.4rem", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={allCategories.length > 0 && reqCategoryIds.length === allCategories.length}
+                      onChange={(e) => {
+                        if (e.target.checked) setReqCategoryIds(allCategories.map((c: any) => c.id));
+                        else setReqCategoryIds([]);
+                      }}
+                    />
+                    Pilih Semua Kategori ({allCategories.length})
+                  </label>
                   {allCategories.map((cat: any) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name} {cat.subject_area ? `(${cat.subject_area.toUpperCase()})` : ""}
-                    </option>
+                    <label key={cat.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={reqCategoryIds.includes(cat.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) setReqCategoryIds([...reqCategoryIds, cat.id]);
+                          else setReqCategoryIds(reqCategoryIds.filter(id => id !== cat.id));
+                        }}
+                      />
+                      <span>{cat.name} {cat.subject_area ? `(${cat.subject_area.toUpperCase()})` : ""}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div>
@@ -855,7 +847,7 @@ export default function AksesUjianKomunitasClient({
                 <Button
                   type="submit"
                   style={{ backgroundColor: "#102e50", color: "white" }}
-                  disabled={reqSubmitting || reqTargetSchools.length === 0 || !reqCategoryId}
+                  disabled={reqSubmitting || reqTargetSchools.length === 0 || reqCategoryIds.length === 0}
                 >
                   {reqSubmitting ? "Mengirim..." : "Kirim Pengajuan ke Super Admin"}
                 </Button>
