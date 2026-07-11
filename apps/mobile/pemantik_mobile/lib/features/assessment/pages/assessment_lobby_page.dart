@@ -85,6 +85,7 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
         'created_at': DateTime.now().toIso8601String(),
         'access_id': accessId,
         'current_level_id': widget.levelId,
+        'phase': localCategory?.phase ?? 'Tahap 1',
       });
       log('Berhasil INSERT sesi ke Supabase secara real-time.');
     } catch (e) {
@@ -123,6 +124,7 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
         // Minggu 2: bind sesi ke akses ujian + track level awal
         accessId: drift.Value(accessId),
         currentLevelId: drift.Value(widget.levelId),
+        phase: drift.Value(localCategory?.phase ?? 'Tahap 1'),
       ),
     );
 

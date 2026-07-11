@@ -203,29 +203,7 @@ class _AudioQuestionWidgetState extends ConsumerState<AudioQuestionWidget> {
                       },
                     ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _formatDuration(_position),
-                        style: TextStyle(
-                          color: _isPlaying
-                              ? Colors.white70
-                              : AppColors.birNavy.withValues(alpha: 0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        _formatDuration(_duration),
-                        style: TextStyle(
-                          color: _isPlaying
-                              ? Colors.white70
-                              : AppColors.birNavy.withValues(alpha: 0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
+
                 ],
               ],
             ),
@@ -322,10 +300,5 @@ class _AudioQuestionWidgetState extends ConsumerState<AudioQuestionWidget> {
     );
   }
 
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$minutes:$seconds';
-  }
+
 }

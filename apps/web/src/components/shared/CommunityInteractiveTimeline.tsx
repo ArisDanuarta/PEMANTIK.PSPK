@@ -9,6 +9,7 @@ import {
   closeAssessmentManuallyAction,
   markIntervensiSelesaiAction,
   advanceStageToNewPhaseAction,
+  bulkCloseAssessmentAction,
   type SchoolAssessmentStageRow
 } from "@/app/actions/stages";
 
@@ -211,6 +212,31 @@ export default function CommunityInteractiveTimeline({
         router.refresh();
       } else {
         showError("Gagal", res.error || "Gagal menutup asesmen");
+      }
+    });
+  };
+
+  const handleBulkCloseAssessment = async () => {
+    const activeSchools = schoolsSummary.filter((s) => s.current_stage === "proses_asesmen");
+    if (activeSchools.length === 0) return;
+
+    const confirmed = await confirm({
+      title: "Tutup Semua Asesmen",
+      description: `Apakah Anda yakin ingin menutup proses asesmen secara serentak untuk seluruh (${activeSchools.length}) sekolah yang sedang aktif? Jika ya, semua sekolah tersebut akan langsung masuk ke tahap Intervensi.`,
+      confirmLabel: "Ya, Tutup Semua",
+      cancelLabel: "Batal",
+      variant: "warning",
+    });
+    if (!confirmed) return;
+
+    const stageIds = activeSchools.map((s) => s.stageId!).filter(Boolean);
+    startTransition(async () => {
+      const res = await bulkCloseAssessmentAction(stageIds);
+      if (res.success) {
+        showSuccess("Asesmen Ditutup!", `${activeSchools.length} sekolah berhasil dipindahkan ke tahap Intervensi.`);
+        router.refresh();
+      } else {
+        showError("Gagal", res.error || "Gagal menutup asesmen secara massal");
       }
     });
   };
@@ -554,9 +580,16 @@ export default function CommunityInteractiveTimeline({
 
         {selectedStepIndex === 2 && (
           <div>
-            <h4 style={{ fontSize: "0.95rem", color: "#102e50", margin: "0 0 0.75rem 0", fontWeight: 700 }}>
-              📖 Sekolah Binaan Sedang Menjalani Asesmen ({schoolsInCurrentStep.length} Sekolah):
-            </h4>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+              <h4 style={{ fontSize: "0.95rem", color: "#102e50", margin: 0, fontWeight: 700 }}>
+                📖 Sekolah Binaan Sedang Menjalani Asesmen ({schoolsInCurrentStep.length} Sekolah):
+              </h4>
+              {schoolsInCurrentStep.length > 0 && (
+                <Button size="sm" style={{ backgroundColor: "#0874aa", color: "white", fontSize: "0.85rem", fontWeight: 600 }} onClick={handleBulkCloseAssessment} disabled={isPending}>
+                  Tutup Semua Asesmen ⏭️
+                </Button>
+              )}
+            </div>
             {schoolsInCurrentStep.length === 0 ? (
               <div style={{ padding: "1.5rem", textAlign: "center", backgroundColor: "white", borderRadius: "0.5rem", border: "1px dashed #cbd5e1", color: "#64748b", fontSize: "0.85rem" }}>
                 Saat ini tidak ada sekolah yang sedang dalam rentang pelaksanaan asesmen aktif.

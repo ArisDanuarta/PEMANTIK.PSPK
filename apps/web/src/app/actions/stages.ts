@@ -29,6 +29,11 @@ async function getCommunityIdFromHeader(): Promise<string | null> {
   return headersList.get("x-community-id");
 }
 
+async function getSchoolIdFromHeader(): Promise<string | null> {
+  const headersList = await headers();
+  return headersList.get("x-school-id");
+}
+
 // ─── Actions ───────────────────────────────────────────────────────────────
 
 /**
@@ -282,22 +287,29 @@ export async function closeAssessmentManuallyAction(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const communityId = await getCommunityIdFromHeader();
-    if (!communityId) {
-      return { success: false, error: "Tidak dapat mengidentifikasi komunitas Anda." };
+    const schoolId = await getSchoolIdFromHeader();
+
+    if (!communityId && !schoolId) {
+      return { success: false, error: "Sesi tidak valid. Tidak dapat mengidentifikasi pengguna." };
     }
 
     const supabase = await createServerClient();
 
-    // Ambil stage dan pastikan milik komunitas ini
-    const { data: stage, error: fetchErr } = await (supabase as any)
+    let query = (supabase as any)
       .from("school_assessment_stages")
-      .select("id, current_stage, community_id")
-      .eq("id", stageId)
-      .eq("community_id", communityId)
-      .maybeSingle();
+      .select("id, current_stage, community_id, school_id")
+      .eq("id", stageId);
+
+    if (communityId) {
+      query = query.eq("community_id", communityId);
+    } else if (schoolId) {
+      query = query.eq("school_id", schoolId);
+    }
+
+    const { data: stage, error: fetchErr } = await query.maybeSingle();
 
     if (fetchErr || !stage) {
-      return { success: false, error: "Tahap tidak ditemukan atau bukan milik komunitas Anda." };
+      return { success: false, error: "Tahap tidak ditemukan atau Anda tidak memiliki akses." };
     }
 
     if (stage.current_stage !== "proses_asesmen") {
@@ -317,12 +329,116 @@ export async function closeAssessmentManuallyAction(
 
     if (updateErr) throw updateErr;
 
+    // Deactivate assessment_access to ensure students can no longer access it
+    await (supabase as any)
+      .from("assessment_access")
+      .update({ is_active: false })
+      .eq("target_type", "school")
+      .eq("target_id", stage.school_id)
+      .eq("phase", stage.phase);
+
+    if (stage.community_id && communityId) {
+      // Check if all schools in this phase for the community are now closed
+      const { data: activeStages } = await (supabase as any)
+        .from("school_assessment_stages")
+        .select("id")
+        .eq("community_id", communityId)
+        .eq("phase", stage.phase)
+        .eq("current_stage", "proses_asesmen");
+
+      if (!activeStages || activeStages.length === 0) {
+        // All schools are closed, deactivate community access too
+        await (supabase as any)
+          .from("assessment_access")
+          .update({ is_active: false })
+          .eq("target_type", "community")
+          .eq("target_id", communityId)
+          .eq("phase", stage.phase);
+      }
+    }
+
     revalidatePath("/komunitas/dashboard");
     revalidatePath("/komunitas/akses-ujian");
     return { success: true };
   } catch (err: any) {
     console.error("[closeAssessmentManuallyAction]", err);
     return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Tahap 3→4 Bulk: Komunitas menutup asesmen secara massal untuk semua sekolah yang ada di proses_asesmen.
+ */
+export async function bulkCloseAssessmentAction(
+  stageIds: string[],
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const communityId = await getCommunityIdFromHeader();
+    if (!communityId) {
+      return { success: false, error: "Tidak dapat mengidentifikasi komunitas Anda." };
+    }
+    if (!stageIds || stageIds.length === 0) {
+      return { success: false, error: "Tidak ada tahap yang dipilih." };
+    }
+
+    const supabase = await createServerClient();
+    const phasesToCheck = new Set<string>();
+
+    for (const stageId of stageIds) {
+      const { data: stage } = await (supabase as any)
+        .from("school_assessment_stages")
+        .select("id, current_stage, phase, school_id")
+        .eq("id", stageId)
+        .eq("community_id", communityId)
+        .maybeSingle();
+
+      if (stage && stage.current_stage === "proses_asesmen") {
+        await (supabase as any)
+          .from("school_assessment_stages")
+          .update({
+            current_stage: "intervensi",
+            stage_updated_at: new Date().toISOString(),
+          })
+          .eq("id", stageId);
+
+        // Deactivate school access
+        await (supabase as any)
+          .from("assessment_access")
+          .update({ is_active: false })
+          .eq("target_type", "school")
+          .eq("target_id", stage.school_id)
+          .eq("phase", stage.phase);
+
+        // Track phase to deactivate community access later
+        phasesToCheck.add(stage.phase);
+      }
+    }
+
+    // For each phase processed, check if we should deactivate community access
+    for (const phase of Array.from(phasesToCheck)) {
+      const { data: activeStages } = await (supabase as any)
+        .from("school_assessment_stages")
+        .select("id")
+        .eq("community_id", communityId)
+        .eq("phase", phase)
+        .eq("current_stage", "proses_asesmen");
+
+      if (!activeStages || activeStages.length === 0) {
+        await (supabase as any)
+          .from("assessment_access")
+          .update({ is_active: false })
+          .eq("target_type", "community")
+          .eq("target_id", communityId)
+          .eq("phase", phase);
+      }
+    }
+
+    revalidatePath("/komunitas/dashboard");
+    revalidatePath("/komunitas/akses-ujian");
+    return { success: true };
+  } catch (err: any) {
+    console.error("[bulkCloseAssessmentAction]", err);
+    return { success: false, error: err.message || "Terjadi kesalahan sistem." };
   }
 }
 
