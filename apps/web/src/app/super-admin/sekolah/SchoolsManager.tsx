@@ -38,9 +38,9 @@ interface SchoolsManagerProps {
 
 export default function SchoolsManager({ initialSchools, communities }: SchoolsManagerProps) {
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<"list" | "dapodik">("list");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
-  const [isDapodikModalOpen, setIsDapodikModalOpen] = useState(false);
   const [editingSchool, setEditingSchool] = useState<School | null>(null);
   const [selectedCommunityId, setSelectedCommunityId] = useState("");
   const [mounted, setMounted] = useState(false);
@@ -178,36 +178,57 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
 
   return (
     <div className="card" style={{ marginTop: "1rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.5rem", borderBottom: "1px solid #e5e7eb" }}>
-        <input
-          type="text"
-          placeholder="Cari nama, NPSN, atau komunitas..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="form-input"
-          style={{ maxWidth: "300px" }}
-        />
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          <Button variant="outline" onClick={handleDownloadTemplate} style={{ color: "#2563eb", borderColor: "#2563eb" }}>
-            Download Template
-          </Button>
-          <Button variant="outline" onClick={() => setIsBulkModalOpen(true)}>
-            Import Excel
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setIsDapodikModalOpen(true)}
-            style={{ color: "#0369a1", borderColor: "#7dd3fc", backgroundColor: "#f0f9ff" }}
-          >
-            📤 Import Dapodik
-          </Button>
-          <Button onClick={handleOpenAddModal} style={{ backgroundColor: "#102e50", color: "white" }}>
-            + Tambah Sekolah
-          </Button>
-        </div>
+      {/* TABS */}
+      <div style={{ display: "flex", gap: "1.5rem", borderBottom: "1px solid #e5e7eb", padding: "0 1.5rem" }}>
+        <button
+          onClick={() => setActiveTab("list")}
+          style={{
+            padding: "1.25rem 0", background: "none", border: "none", cursor: "pointer",
+            fontSize: "1rem", fontWeight: activeTab === "list" ? 600 : 400,
+            color: activeTab === "list" ? "#102e50" : "#6b7280",
+            borderBottom: activeTab === "list" ? "2px solid #102e50" : "2px solid transparent",
+          }}
+        >
+          Daftar Sekolah
+        </button>
+        <button
+          onClick={() => setActiveTab("dapodik")}
+          style={{
+            padding: "1.25rem 0", background: "none", border: "none", cursor: "pointer",
+            fontSize: "1rem", fontWeight: activeTab === "dapodik" ? 600 : 400,
+            color: activeTab === "dapodik" ? "#102e50" : "#6b7280",
+            borderBottom: activeTab === "dapodik" ? "2px solid #102e50" : "2px solid transparent",
+          }}
+        >
+          Upload Dapodik
+        </button>
       </div>
 
-      <div style={{ overflowX: "auto" }}>
+      {activeTab === "list" && (
+        <>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.5rem", borderBottom: "1px solid #e5e7eb" }}>
+            <input
+              type="text"
+              placeholder="Cari nama, NPSN, atau komunitas..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="form-input"
+              style={{ maxWidth: "300px" }}
+            />
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <Button variant="outline" onClick={handleDownloadTemplate} style={{ color: "#2563eb", borderColor: "#2563eb" }}>
+                Download Template
+              </Button>
+              <Button variant="outline" onClick={() => setIsBulkModalOpen(true)}>
+                Import Excel
+              </Button>
+              <Button onClick={handleOpenAddModal} style={{ backgroundColor: "#102e50", color: "white" }}>
+                + Tambah Sekolah
+              </Button>
+            </div>
+          </div>
+
+          <div style={{ overflowX: "auto" }}>
         <table className="pemantik-table">
           <thead>
             <tr>
@@ -289,6 +310,37 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
           </tbody>
         </table>
       </div>
+      </>
+      )}
+
+      {/* DAPODIK IMPORT TAB */}
+      {activeTab === "dapodik" && (
+        <div style={{ padding: "2rem" }}>
+          <BulkUploadModal
+            inline
+            mode="dapodik"
+            title="Import Dapodik"
+            templateFileName="template_dapodik"
+            templateHeaders={[]}
+            onClose={() => setActiveTab("list")}
+            onUpload={async () => ({ success: false })}
+            existingSchools={initialSchools.map(s => ({ id: s.id, name: s.name, npsn: s.npsn }))}
+            onDapodikParse={async (formData) => {
+              const result = await parseDapodikAction(formData);
+              return result;
+            }}
+            onDapodikConfirm={async (payload) => {
+              const result = await importDapodikAction(payload);
+              return result;
+            }}
+            onPollStatus={async (batchId) => {
+              const res = await fetch(`/api/dapodik-import/${batchId}`);
+              if (!res.ok) throw new Error("Polling gagal");
+              return res.json();
+            }}
+          />
+        </div>
+      )}
 
       {/* MANUAL MODAL (ADD & EDIT) */}
       {isModalOpen && mounted && createPortal(
@@ -385,32 +437,6 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
           templateData={communities.slice(0, 3).map(c => ["Contoh SD 1", "20101010", "Jawa Barat", "Bandung", "Coblong", "Dago", "Budi", "08123", "Jl. ABC", c.name])}
           onClose={() => setIsBulkModalOpen(false)}
           onUpload={handleBulkUpload}
-        />
-      )}
-
-      {/* DAPODIK IMPORT MODAL */}
-      {isDapodikModalOpen && (
-        <BulkUploadModal
-          mode="dapodik"
-          title="Import Dapodik"
-          templateFileName="template_dapodik"
-          templateHeaders={[]}
-          onClose={() => setIsDapodikModalOpen(false)}
-          onUpload={async () => ({ success: false })}
-          existingSchools={initialSchools.map(s => ({ id: s.id, name: s.name, npsn: s.npsn }))}
-          onDapodikParse={async (formData) => {
-            const result = await parseDapodikAction(formData);
-            return result;
-          }}
-          onDapodikConfirm={async (payload) => {
-            const result = await importDapodikAction(payload);
-            return result;
-          }}
-          onPollStatus={async (batchId) => {
-            const res = await fetch(`/api/dapodik-import/${batchId}`);
-            if (!res.ok) throw new Error("Polling gagal");
-            return res.json();
-          }}
         />
       )}
     </div>

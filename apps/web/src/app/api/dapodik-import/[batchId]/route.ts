@@ -1,12 +1,12 @@
 import { createServerClient } from "@pemantik/supabase";
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 
 /**
  * GET /api/dapodik-import/[batchId]
  *
  * Polling endpoint untuk status import Dapodik.
  * Frontend memanggil ini tiap 2 detik hingga status final.
- * Hanya bisa diakses oleh super_admin.
  */
 export async function GET(
   _request: Request,
@@ -21,19 +21,22 @@ export async function GET(
 
     const supabase = createServerClient();
 
-    // Verifikasi user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    // PERBAIKAN: Gunakan headers() untuk mengambil x-user-id hasil injeksi middleware proxy
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
+    
+    if (!userId) {
       return NextResponse.json({ error: "Tidak terautentikasi." }, { status: 401 });
     }
 
     const { data: userData } = await supabase
       .from("users")
       .select("role")
-      .eq("id", user.id)
+      .eq("id", userId)
       .single();
 
-    if (!userData || userData.role !== "super_admin") {
+    // PERBAIKAN: Izinkan super_admin, school, dan community (sesuai dengan fungsi import-nya)
+    if (!userData || !["super_admin", "school", "community"].includes(userData.role)) {
       return NextResponse.json({ error: "Akses ditolak." }, { status: 403 });
     }
 

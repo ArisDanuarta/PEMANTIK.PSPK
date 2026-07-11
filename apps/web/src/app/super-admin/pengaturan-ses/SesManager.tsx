@@ -269,7 +269,17 @@ export default function SesManager({ initialThresholds, initialVariables }: { in
             
             <div style={{ padding: "0.5rem 1.25rem 1.25rem 1.25rem", maxHeight: "500px", overflowY: "auto" }}>
               {variables.filter(v => v.type === "education").map((v) => (
-                <div key={v.id} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 0", borderBottom: "1px solid #f1f5f9" }}>
+                <div key={v.id} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 0", borderBottom: "1px solid #f1f5f9", flexWrap: "wrap" }}>
+                  {/* Badge needs_review (GAP 5) */}
+                  {v.needs_review && (
+                    <span title="Indikator dari import Dapodik, skor belum ditentukan" style={{
+                      display: "inline-flex", alignItems: "center", gap: "0.25rem",
+                      padding: "0.15rem 0.5rem", borderRadius: "99px",
+                      backgroundColor: "#fef3c7", border: "1px solid #f59e0b",
+                      color: "#92400e", fontSize: "0.7rem", fontWeight: 700,
+                      whiteSpace: "nowrap", flexShrink: 0,
+                    }}>⚠ Perlu Skor</span>
+                  )}
                   <select 
                     value={v.type} 
                     style={{ flex: "0 0 110px", padding: "0.5rem", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.85rem", background: "#fff", outline: "none" }}
@@ -286,18 +296,18 @@ export default function SesManager({ initialThresholds, initialVariables }: { in
                   <input 
                     type="text" 
                     value={v.name} 
-                    style={{ flex: "1", padding: "0.5rem 0.75rem", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none", transition: "border-color 0.2s" }}
+                    style={{ flex: "1", minWidth: "120px", padding: "0.5rem 0.75rem", borderRadius: "6px", border: `1px solid ${v.needs_review ? "#f59e0b" : "#cbd5e1"}`, fontSize: "0.9rem", outline: "none", transition: "border-color 0.2s" }}
                     onFocus={e => e.currentTarget.style.borderColor = "#00619A"}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = "#cbd5e1"; handleUpdateVariable(v.id, v.type, v.name, v.score); }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = v.needs_review ? "#f59e0b" : "#cbd5e1"; handleUpdateVariable(v.id, v.type, v.name, v.score); }}
                     onChange={(e) => setVariables(variables.map(x => x.id === v.id ? { ...x, name: e.target.value } : x))}
                   />
                   
                   <input 
                     type="number" 
                     value={v.score} 
-                    style={{ flex: "0 0 60px", padding: "0.5rem", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "0.9rem", textAlign: "center", outline: "none", transition: "border-color 0.2s" }}
+                    style={{ flex: "0 0 60px", padding: "0.5rem", borderRadius: "6px", border: `1px solid ${v.needs_review ? "#f59e0b" : "#cbd5e1"}`, fontSize: "0.9rem", textAlign: "center", outline: "none", transition: "border-color 0.2s" }}
                     onFocus={e => e.currentTarget.style.borderColor = "#00619A"}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = "#cbd5e1"; handleUpdateVariable(v.id, v.type, v.name, v.score); }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = v.needs_review ? "#f59e0b" : "#cbd5e1"; handleUpdateVariable(v.id, v.type, v.name, v.score); }}
                     onChange={(e) => setVariables(variables.map(x => x.id === v.id ? { ...x, score: parseInt(e.target.value) || 0 } : x))}
                   />
 
@@ -333,7 +343,17 @@ export default function SesManager({ initialThresholds, initialVariables }: { in
             
             <div style={{ padding: "0.5rem 1.25rem 1.25rem 1.25rem", maxHeight: "500px", overflowY: "auto" }}>
               {variables.filter(v => v.type === "occupation").map((v) => (
-                <div key={v.id} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 0", borderBottom: "1px solid #fdf3e7" }}>
+                <div key={v.id} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 0", borderBottom: "1px solid #fdf3e7", flexWrap: "wrap" }}>
+                  {/* Badge needs_review (GAP 5) */}
+                  {v.needs_review && (
+                    <span title="Indikator dari import Dapodik, skor belum ditentukan" style={{
+                      display: "inline-flex", alignItems: "center", gap: "0.25rem",
+                      padding: "0.15rem 0.5rem", borderRadius: "99px",
+                      backgroundColor: "#fef3c7", border: "1px solid #f59e0b",
+                      color: "#92400e", fontSize: "0.7rem", fontWeight: 700,
+                      whiteSpace: "nowrap", flexShrink: 0,
+                    }}>⚠ Perlu Skor</span>
+                  )}
                   <select 
                     value={v.type} 
                     style={{ flex: "0 0 110px", padding: "0.5rem", borderRadius: "6px", border: "1px solid #f6d2a8", fontSize: "0.85rem", background: "#fff", outline: "none" }}
@@ -350,18 +370,18 @@ export default function SesManager({ initialThresholds, initialVariables }: { in
                   <input 
                     type="text" 
                     value={v.name} 
-                    style={{ flex: "1", padding: "0.5rem 0.75rem", borderRadius: "6px", border: "1px solid #f6d2a8", fontSize: "0.9rem", outline: "none", transition: "border-color 0.2s" }}
+                    style={{ flex: "1", minWidth: "120px", padding: "0.5rem 0.75rem", borderRadius: "6px", border: `1px solid ${v.needs_review ? "#f59e0b" : "#f6d2a8"}`, fontSize: "0.9rem", outline: "none", transition: "border-color 0.2s" }}
                     onFocus={e => e.currentTarget.style.borderColor = "#F2AF3E"}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = "#f6d2a8"; handleUpdateVariable(v.id, v.type, v.name, v.score); }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = v.needs_review ? "#f59e0b" : "#f6d2a8"; handleUpdateVariable(v.id, v.type, v.name, v.score); }}
                     onChange={(e) => setVariables(variables.map(x => x.id === v.id ? { ...x, name: e.target.value } : x))}
                   />
                   
                   <input 
                     type="number" 
                     value={v.score} 
-                    style={{ flex: "0 0 60px", padding: "0.5rem", borderRadius: "6px", border: "1px solid #f6d2a8", fontSize: "0.9rem", textAlign: "center", outline: "none", transition: "border-color 0.2s" }}
+                    style={{ flex: "0 0 60px", padding: "0.5rem", borderRadius: "6px", border: `1px solid ${v.needs_review ? "#f59e0b" : "#f6d2a8"}`, fontSize: "0.9rem", textAlign: "center", outline: "none", transition: "border-color 0.2s" }}
                     onFocus={e => e.currentTarget.style.borderColor = "#F2AF3E"}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = "#f6d2a8"; handleUpdateVariable(v.id, v.type, v.name, v.score); }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = v.needs_review ? "#f59e0b" : "#f6d2a8"; handleUpdateVariable(v.id, v.type, v.name, v.score); }}
                     onChange={(e) => setVariables(variables.map(x => x.id === v.id ? { ...x, score: parseInt(e.target.value) || 0 } : x))}
                   />
 

@@ -16,12 +16,12 @@ interface BulkUploadModalProps {
   onClose: () => void;
   onUpload: (data: any[]) => Promise<{ success: boolean; message?: string; error?: string }>;
 
-  // Mode dapodik (opsional — tidak breaking existing usage)
   mode?: "generic" | "dapodik";
   existingSchools?: { id: string; name: string; npsn: string | null }[];
   onDapodikParse?: (formData: FormData) => Promise<DapodikParseResponse>;
   onDapodikConfirm?: (payload: DapodikImportPayload) => Promise<{ success: boolean; error?: string; batch_id?: string }>;
   onPollStatus?: (batchId: string) => Promise<DapodikBatchStatus>;
+  inline?: boolean;
 }
 
 interface DapodikParseResponse {
@@ -30,7 +30,11 @@ interface DapodikParseResponse {
   parse_token?: string;
   summary?: {
     detected_school_name: string | null;
-    detected_region_text: string | null;
+    detected_npsn: string | null;
+    detected_province: string | null;
+    detected_city: string | null;
+    detected_district: string | null;
+    detected_village: string | null;
     row_count: number;
     skipped_count: number;
     detected_classes: string[];
@@ -51,6 +55,7 @@ interface DapodikImportPayload {
   confirmed_city?: string;
   confirmed_district?: string;
   confirmed_village?: string;
+  academic_year?: string; 
 }
 
 interface DapodikBatchStatus {
@@ -75,20 +80,20 @@ export default function BulkUploadModal({
   templateData = [],
   onClose,
   onUpload,
-  // Dapodik props
   mode = "generic",
   existingSchools = [],
   onDapodikParse,
   onDapodikConfirm,
   onPollStatus,
+  inline,
 }: BulkUploadModalProps) {
+  const [isOpen, setIsOpen] = useState(true);
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [mounted, setMounted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // State khusus mode dapodik
   const [dapodikStep, setDapodikStep] = useState<"upload" | "confirm" | "progress" | "result">("upload");
   const [parseToken, setParseToken] = useState<string | null>(null);
   const [parseSummary, setParseSummary] = useState<DapodikParseResponse["summary"] | null>(null);
@@ -100,6 +105,15 @@ export default function BulkUploadModal({
   const [confirmedCity, setConfirmedCity] = useState("");
   const [confirmedDistrict, setConfirmedDistrict] = useState("");
   const [confirmedVillage, setConfirmedVillage] = useState("");
+  
+  const detectAcademicYear = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1; 
+    const startYear = month >= 7 ? year : year - 1;
+    return `${startYear}/${startYear + 1}`;
+  };
+  const [academicYear, setAcademicYear] = useState(detectAcademicYear);
   const [batchId, setBatchId] = useState<string | null>(null);
   const [batchStatus, setBatchStatus] = useState<DapodikBatchStatus | null>(null);
   const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
@@ -110,8 +124,6 @@ export default function BulkUploadModal({
       if (pollingInterval) clearInterval(pollingInterval);
     };
   }, []);
-
-  // ─── Generic Mode Handlers ────────────────────────────────────────────────
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -184,8 +196,6 @@ export default function BulkUploadModal({
     reader.readAsArrayBuffer(file);
   };
 
-  // ─── Dapodik Mode Handlers ────────────────────────────────────────────────
-
   const handleDapodikUpload = async () => {
     if (!file || !onDapodikParse) {
       setErrorMsg("Pilih file terlebih dahulu.");
@@ -203,6 +213,11 @@ export default function BulkUploadModal({
       setParseToken(result.parse_token);
       setParseSummary(result.summary);
       setConfirmedName(result.summary.detected_school_name || "");
+      setConfirmedNpsn(result.summary.detected_npsn || "");
+      setConfirmedProvince(result.summary.detected_province || "");
+      setConfirmedCity(result.summary.detected_city || "");
+      setConfirmedDistrict(result.summary.detected_district || "");
+      setConfirmedVillage(result.summary.detected_village || "");
       setDapodikStep("confirm");
     } catch (err: any) {
       setErrorMsg(err.message || "Terjadi kesalahan saat memproses file.");
@@ -214,7 +229,6 @@ export default function BulkUploadModal({
   const handleDapodikImport = async () => {
     if (!parseToken || !onDapodikConfirm) return;
 
-    // Validasi
     if (schoolChoice === "new" && !confirmedNpsn.trim()) {
       setErrorMsg("NPSN wajib diisi sebelum import.");
       return;
@@ -239,6 +253,7 @@ export default function BulkUploadModal({
         confirmed_city: confirmedCity,
         confirmed_district: confirmedDistrict,
         confirmed_village: confirmedVillage,
+        academic_year: academicYear, 
       };
 
       const result = await onDapodikConfirm(payload);
@@ -248,7 +263,6 @@ export default function BulkUploadModal({
 
       setBatchId(result.batch_id);
 
-      // Mulai polling
       if (onPollStatus) {
         const interval = setInterval(async () => {
           try {
@@ -261,12 +275,10 @@ export default function BulkUploadModal({
               setIsUploading(false);
             }
           } catch {
-            // Polling error non-critical, akan retry
           }
         }, 2000);
         setPollingInterval(interval);
       } else {
-        // Jika tidak ada onPollStatus, langsung ke result
         setDapodikStep("result");
         setIsUploading(false);
       }
@@ -277,15 +289,20 @@ export default function BulkUploadModal({
     }
   };
 
-  // ─── Render ───────────────────────────────────────────────────────────────
-
   if (!mounted) return null;
 
-  // ────── Modal content ──────
   const modalContent =
     mode === "dapodik"
       ? renderDapodikModal()
       : renderGenericModal();
+
+  if (inline) {
+    return (
+      <div style={{ width: "100%", maxWidth: mode === "dapodik" && dapodikStep === "confirm" ? "750px" : "600px", margin: "0 auto", padding: "1rem" }}>
+        {modalContent}
+      </div>
+    );
+  }
 
   return createPortal(
     <div
@@ -302,11 +319,9 @@ export default function BulkUploadModal({
     document.body
   );
 
-  // ────── Generic Modal ──────
-
   function renderGenericModal() {
     return (
-      <div style={modalBoxStyle()}>
+      <div style={modalBoxStyle("520px", inline)}>
         <ModalHeader title={title} onClose={onClose} disabled={isUploading} />
 
         {description && (
@@ -346,17 +361,14 @@ export default function BulkUploadModal({
     );
   }
 
-  // ────── Dapodik Modal (4 steps) ──────
-
   function renderDapodikModal() {
     const totalRows = parseSummary?.row_count ?? 0;
     const doneCount = batchStatus?.success_count ?? 0;
     const progressPct = totalRows > 0 ? Math.round((doneCount / totalRows) * 100) : 0;
 
     return (
-      <div style={modalBoxStyle(dapodikStep === "confirm" ? "680px" : "560px")}>
-        {/* Step indicator */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.5rem" }}>
+      <div style={modalBoxStyle(dapodikStep === "confirm" ? "680px" : "560px", inline)}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "2rem", padding: "0 1rem" }}>
           {(["upload", "confirm", "progress", "result"] as const).map((step, idx) => {
             const steps = ["upload", "confirm", "progress", "result"];
             const currentIdx = steps.indexOf(dapodikStep);
@@ -365,15 +377,15 @@ export default function BulkUploadModal({
             return (
               <React.Fragment key={step}>
                 <div style={{
-                  width: 28, height: 28, borderRadius: "50%",
-                  background: isDone ? "#22c55e" : isCurrent ? "#102e50" : "#e5e7eb",
+                  width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
+                  background: isDone || isCurrent ? "#102e50" : "#e5e7eb",
                   color: isDone || isCurrent ? "white" : "#9ca3af",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "0.75rem", fontWeight: 700,
+                  fontSize: "0.875rem", fontWeight: 700,
                 }}>
-                  {isDone ? "✓" : idx + 1}
+                  {idx + 1}
                 </div>
-                {idx < 3 && <div style={{ flex: 1, height: 2, background: isDone ? "#22c55e" : "#e5e7eb" }} />}
+                {idx < 3 && <div style={{ flex: 1, height: 2, background: isDone ? "#102e50" : "#e5e7eb" }} />}
               </React.Fragment>
             );
           })}
@@ -390,7 +402,6 @@ export default function BulkUploadModal({
           disabled={isUploading}
         />
 
-        {/* Step 1: Upload */}
         {dapodikStep === "upload" && (
           <div>
             <p style={{ fontSize: "0.9rem", color: "#4b5563", marginBottom: "1.25rem", lineHeight: 1.6 }}>
@@ -403,7 +414,7 @@ export default function BulkUploadModal({
             )}
             {errorMsg && <div style={{ marginTop: "1rem" }}><ErrorBanner message={errorMsg} /></div>}
             <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "1.5rem", borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
-              <Button variant="outline" onClick={onClose}>Batal</Button>
+              <Button variant="outline" onClick={onClose} style={{ borderColor: "#102e50", color: "#102e50" }}>Batal</Button>
               <Button onClick={handleDapodikUpload} disabled={isUploading || !file} style={{ backgroundColor: "#102e50", color: "white" }}>
                 {isUploading ? "Memproses File..." : "Analisis File →"}
               </Button>
@@ -411,10 +422,8 @@ export default function BulkUploadModal({
           </div>
         )}
 
-        {/* Step 2: Confirm */}
         {dapodikStep === "confirm" && parseSummary && (
           <div>
-            {/* Summary stats */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem", marginBottom: "1.5rem" }}>
               <StatCard label="Siswa Terdeteksi" value={parseSummary.row_count} color="#102e50" />
               <StatCard label="Kelas Terdeteksi" value={parseSummary.detected_classes.length} color="#f2af3e" />
@@ -449,7 +458,6 @@ export default function BulkUploadModal({
               </div>
             )}
 
-            {/* Pilih sekolah */}
             <div style={{ marginBottom: "1.25rem" }}>
               <label style={labelStyle}>Opsi Sekolah</label>
               <div style={{ display: "flex", gap: "1rem" }}>
@@ -511,7 +519,20 @@ export default function BulkUploadModal({
               </div>
             )}
 
-            {/* Preview tabel */}
+            <div style={{ marginBottom: "1.25rem" }}>
+              <label style={labelStyle}>Tahun Ajaran</label>
+              <input
+                type="text"
+                value={academicYear}
+                onChange={(e) => setAcademicYear(e.target.value)}
+                style={{ ...inputStyle, maxWidth: "180px" }}
+                placeholder="Contoh: 2025/2026"
+              />
+              <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.3rem" }}>
+                Terdeteksi otomatis. Ubah jika berbeda (format: YYYY/YYYY).
+              </div>
+            </div>
+
             {parseSummary.preview_rows.length > 0 && (
               <div style={{ marginBottom: "1.25rem" }}>
                 <label style={labelStyle}>Preview Data (10 baris pertama)</label>
@@ -555,7 +576,6 @@ export default function BulkUploadModal({
           </div>
         )}
 
-        {/* Step 3: Progress */}
         {dapodikStep === "progress" && (
           <div style={{ textAlign: "center", padding: "2rem 0" }}>
             <div style={{ width: 56, height: 56, border: "4px solid #e5e7eb", borderTopColor: "#102e50", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 1.5rem" }} />
@@ -586,7 +606,6 @@ export default function BulkUploadModal({
           </div>
         )}
 
-        {/* Step 4: Result */}
         {dapodikStep === "result" && batchStatus && (
           <div>
             <div style={{
@@ -647,8 +666,6 @@ export default function BulkUploadModal({
   }
 }
 
-// ─── Sub-components (shared) ─────────────────────────────────────────────────
-
 function ModalHeader({ title, onClose, disabled }: { title: string; onClose: () => void; disabled?: boolean }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
@@ -697,19 +714,21 @@ function DropZone({
 
 function FilePreview({ file, onRemove, disabled }: { file: File; onRemove: () => void; disabled?: boolean }) {
   return (
-    <div style={{ padding: "1.25rem", backgroundColor: "#f0fdf4", borderRadius: "0.5rem", border: "1px solid #bbf7d0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-        <div style={{ padding: "0.75rem", backgroundColor: "#dcfce7", borderRadius: "0.5rem", color: "#166534" }}>
+    <div style={{ padding: "1.25rem", backgroundColor: "#f0fdf4", borderRadius: "0.5rem", border: "1px solid #bbf7d0", display: "flex", alignItems: "center", justifyContent: "space-between", overflow: "hidden", gap: "1rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem", minWidth: 0, flex: 1 }}>
+        <div style={{ padding: "0.75rem", backgroundColor: "#dcfce7", borderRadius: "0.5rem", color: "#166534", flexShrink: 0 }}>
           <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </div>
-        <div>
-          <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600, color: "#166534" }}>{file.name}</h4>
+        <div style={{ minWidth: 0, overflow: "hidden" }}>
+          <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600, color: "#166534", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={file.name}>
+            {file.name}
+          </h4>
           <p style={{ margin: 0, fontSize: "0.8rem", color: "#15803d", marginTop: "0.25rem" }}>{(file.size / 1024).toFixed(1)} KB</p>
         </div>
       </div>
-      <button type="button" onClick={onRemove} disabled={disabled} style={{ padding: "0.5rem 1rem", fontSize: "0.85rem", fontWeight: 600, color: "#991b1b", backgroundColor: "#fee2e2", border: "none", borderRadius: "0.375rem", cursor: "pointer" }}>
+      <button type="button" onClick={onRemove} disabled={disabled} style={{ padding: "0.5rem 1rem", fontSize: "0.85rem", fontWeight: 600, color: "#991b1b", backgroundColor: "#fee2e2", border: "none", borderRadius: "0.375rem", cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
         Ganti File
       </button>
     </div>
@@ -733,18 +752,18 @@ function StatCard({ label, value, color }: { label: string; value: number; color
   );
 }
 
-// ─── Style helpers ────────────────────────────────────────────────────────────
-
-function modalBoxStyle(maxWidth = "520px") {
+function modalBoxStyle(maxWidth = "520px", inline = false) {
   return {
     backgroundColor: "white",
-    borderRadius: "0.875rem",
-    padding: "2rem",
+    borderRadius: "0.5rem",
     width: "100%",
-    maxWidth,
-    margin: "auto",
-    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
-  } as React.CSSProperties;
+    maxWidth: inline ? "700px" : maxWidth,
+    margin: inline ? "0 auto" : undefined,
+    padding: "2rem",
+    boxShadow: inline ? "none" : "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+    position: "relative" as const,
+    border: "1px solid #e5e7eb"
+  };
 }
 
 const labelStyle: React.CSSProperties = {

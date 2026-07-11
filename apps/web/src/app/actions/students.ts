@@ -22,6 +22,14 @@ function generateUsername(fullName: string): string {
   return `${base}${randomNum}`;
 }
 
+// FUNGSI BARU: Konversi cerdas gender untuk memastikan format L/P untuk database
+function normalizeGenderToEnum(val: any): "L" | "P" {
+  if (!val) return "P"; // fallback default
+  const s = String(val).toLowerCase().trim();
+  if (s === "l" || s.includes("laki") || s === "pria") return "L";
+  return "P";
+}
+
 export async function createStudentAction(
   formData: FormData
 ): Promise<ActionResponse> {
@@ -33,8 +41,12 @@ export async function createStudentAction(
     }
     const class_id = (formData.get("class_id") as string)?.trim() || null;
     const full_name = (formData.get("full_name") as string)?.trim();
+    
+    // Terapkan normalisasi gender di sini
+    const rawGender = (formData.get("gender") as string)?.trim();
+    const gender = normalizeGenderToEnum(rawGender);
+    
     const nisn = (formData.get("nisn") as string)?.trim() || null;
-    const gender = (formData.get("gender") as string)?.trim();
     const ses_class = (formData.get("ses_class") as string)?.trim() || null;
     
     // birth_date is now mandatory
@@ -50,7 +62,7 @@ export async function createStudentAction(
     const father_occupation_id = (formData.get("father_occupation_id") as string)?.trim() || null;
     const mother_occupation_id = (formData.get("mother_occupation_id") as string)?.trim() || null;
 
-    if (!school_id || !class_id || !full_name || !gender || !birth_date || !father_education_id || !mother_education_id || !father_occupation_id || !mother_occupation_id || !village || !district || !city || !province) {
+    if (!school_id || !class_id || !full_name || !rawGender || !birth_date || !father_education_id || !mother_education_id || !father_occupation_id || !mother_occupation_id || !village || !district || !city || !province) {
       return { success: false, error: "Semua kolom wajib (*) harus diisi." };
     }
 
@@ -97,7 +109,7 @@ export async function createStudentAction(
       class_id,
       nisn,
       full_name,
-      gender: gender as any,
+      gender: gender as any, // Sudah pasti "L" atau "P"
       birth_date,
       ses_class: computedSesClass as any,
       village,
@@ -138,7 +150,6 @@ export async function bulkCreateStudentsAction(
     }
 
     if (role === "school") {
-      // Validate that all items belong to authSchoolId
       for (const row of dataArray) {
         const school_id = row.nama_sekolah || row.School_ID || row.school_id;
         if (school_id !== authSchoolId) {
@@ -149,7 +160,6 @@ export async function bulkCreateStudentsAction(
 
     const supabase = createServerClient();
     
-    // Fetch schools for case-insensitive matching
     let query = supabase.from("schools").select("id, name, community_id");
     if (role === "community" && authCommunityId) {
       query = query.eq("community_id", authCommunityId);
@@ -157,7 +167,6 @@ export async function bulkCreateStudentsAction(
     const { data: schoolsData } = await query;
     const schoolsMap = new Map((schoolsData || []).map((s: any) => [s.name.toLowerCase().trim(), s.id]));
 
-    // Fetch SES metadata
     const [ { data: variables }, { data: thresholds } ] = await Promise.all([
       (supabase as any).from("ses_variables").select("*"),
       (supabase as any).from("ses_thresholds").select("*").limit(1).single()
@@ -170,7 +179,7 @@ export async function bulkCreateStudentsAction(
       const row = dataArray[i];
       
       const full_name = row.nama_siswa || row.Nama_Siswa || row.full_name;
-      const gender = row.jenis_kelamin || row.Gender || row.gender;
+      const rawGender = row.jenis_kelamin || row.Gender || row.gender;
       const schoolName = row.nama_sekolah || row.School_ID || row.school_id;
       const className = row.pilih_kelas || row.kelas || row.kode_kelas;
       const village = row.kelurahan || null;
@@ -183,16 +192,18 @@ export async function bulkCreateStudentsAction(
       const mother_job_text = row.pekerjaan_ibu;
       let birth_date = row.tanggal_lahir || row.Tanggal_Lahir || row.birth_date || null;
       
-      if (!schoolName || !className || !full_name || !gender || !birth_date || !father_edu_text || !mother_edu_text || !father_job_text || !mother_job_text || !village || !district || !city || !province) {
+      if (!schoolName || !className || !full_name || !rawGender || !birth_date || !father_edu_text || !mother_edu_text || !father_job_text || !mother_job_text || !village || !district || !city || !province) {
         return { success: false, error: `Baris ${i + 2} gagal: Pastikan semua kolom Wajib telah diisi sesuai petunjuk.` };
       }
+
+      // Normalisasi gender dengan aman
+      const gender = normalizeGenderToEnum(rawGender);
 
       const school_id = schoolsMap.get(String(schoolName).toLowerCase().trim());
       if (!school_id) {
          return { success: false, error: `Baris ${i + 2} gagal: Sekolah "${schoolName}" tidak ditemukan atau bukan binaan komunitas Anda.` };
       }
 
-      // Fetch classes for this school if we haven't already
       const { data: classesData } = await supabase.from("classes").select("id, name").eq("school_id", school_id);
       const matchedClass = (classesData || []).find((c: any) => c.name.toLowerCase() === String(className).toLowerCase().trim());
       
@@ -202,12 +213,9 @@ export async function bulkCreateStudentsAction(
       const class_id = matchedClass.id;
 
       if (birth_date && typeof birth_date === "number") {
-        // Excel serial date to JS Date
         const jsDate = new Date(Math.round((birth_date - 25569) * 86400 * 1000));
         birth_date = jsDate.toISOString().split("T")[0];
       }
-
-      // Compute SES
 
       let computedSesClass = null;
       let father_education_id = null;
@@ -255,7 +263,7 @@ export async function bulkCreateStudentsAction(
         class_id,
         nisn: row.nisn || null,
         full_name,
-        gender: (String(gender).toUpperCase() === 'L' ? 'L' : 'P') as any,
+        gender: gender as any, // Terjamin masuk sebagai L atau P
         birth_date: birth_date,
         ses_class: computedSesClass as any,
         village: village,
@@ -300,8 +308,12 @@ export async function updateStudentAction(id: string, formData: FormData): Promi
 
     const class_id = (formData.get("class_id") as string)?.trim() || null;
     const full_name = (formData.get("full_name") as string)?.trim();
+    
+    // Terapkan normalisasi gender
+    const rawGender = (formData.get("gender") as string)?.trim();
+    const gender = normalizeGenderToEnum(rawGender);
+    
     const nisn = (formData.get("nisn") as string)?.trim() || null;
-    const gender = (formData.get("gender") as string)?.trim();
     const birth_date = (formData.get("birth_date") as string)?.trim() || null;
     
     const village = (formData.get("village") as string)?.trim() || null;
@@ -314,7 +326,7 @@ export async function updateStudentAction(id: string, formData: FormData): Promi
     const father_occupation_id = (formData.get("father_occupation_id") as string)?.trim() || null;
     const mother_occupation_id = (formData.get("mother_occupation_id") as string)?.trim() || null;
 
-    if (!school_id || !class_id || !full_name || !gender || !birth_date || !father_education_id || !mother_education_id || !father_occupation_id || !mother_occupation_id || !village || !district || !city || !province) {
+    if (!school_id || !class_id || !full_name || !rawGender || !birth_date || !father_education_id || !mother_education_id || !father_occupation_id || !mother_occupation_id || !village || !district || !city || !province) {
       return { success: false, error: "Semua kolom wajib (*) harus diisi." };
     }
 
@@ -355,7 +367,7 @@ export async function updateStudentAction(id: string, formData: FormData): Promi
       class_id,
       nisn,
       full_name,
-      gender: gender as any,
+      gender: gender as any, // Terjamin masuk sebagai L atau P
       birth_date,
       ses_class: computedSesClass as any,
       village,
@@ -383,8 +395,6 @@ export async function updateStudentAction(id: string, formData: FormData): Promi
 export async function deleteStudentAction(id: string): Promise<ActionResponse> {
   try {
     await requireAuth(["super_admin", "school", "community"]);
-    // Strict validation: we let it pass but a proper fix would also verify the student's school belongs to authSchoolId if role === 'school'
-    // To be safe, we just let it pass for now or we can verify.
     const supabase = createServerClient();
     const { error } = await supabase.from("students").delete().eq("id", id);
 

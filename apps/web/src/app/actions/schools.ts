@@ -91,14 +91,20 @@ export async function createSchoolAction(
       village,
       principal_name,
       contact_phone,
-      is_active
+      is_active,
+      import_source: "manual",  
     }).select().single();
 
     if (error || !newSchool) {
       return { success: false, error: "Gagal membuat sekolah: " + error?.message };
     }
 
-    // Process classes if provided
+    await (supabase as any).from("school_assessment_stages").insert({
+      school_id: newSchool.id,
+      community_id: finalCommunityId || null,
+      current_stage: "persiapan_akun",
+    });
+
     if (classesStr) {
       const classesToInsert = processClassesString(classesStr, newSchool.id);
       if (classesToInsert.length > 0) {
@@ -107,7 +113,6 @@ export async function createSchoolAction(
       }
     }
 
-    // CREATE SCHOOL ADMIN ACCOUNT
     const defaultPassword = "Password123!";
     const username = `sch_${npsn || generateRandomString(5)}`;
     const adminEmail = `${username}@pemantik.local`;
@@ -188,7 +193,6 @@ export async function updateSchoolAction(
       finalCommunityId = null;
     }
 
-    // Check NPSN uniqueness if changed
     if (npsn) {
       const { data: existing } = await supabase
         .from("schools")
@@ -247,17 +251,11 @@ export async function deleteSchoolAction(id: string): Promise<ActionResponse> {
     await requireAuth(["super_admin"]);
     const supabase = createServerClient();
     
-    // Auth user will be deleted by ON DELETE CASCADE from public.users
-    // Wait, users reference schools, so deleting school sets school_id = null.
-    // Wait! In users table: `school_id UUID REFERENCES schools(id) ON DELETE SET NULL`.
-    // So we should delete the user from auth.users first if we want to delete their account.
-    
     const { data: usersData } = await supabase
       .from("users")
       .select("id")
       .eq("school_id", id);
 
-    // Delete users from auth.admin
     if (usersData && usersData.length > 0) {
       for (const u of usersData) {
         await supabase.auth.admin.deleteUser(u.id);
@@ -288,8 +286,6 @@ export async function bulkCreateSchoolsAction(
     }
 
     const supabase = createServerClient();
-
-    // Fetch all communities for case-insensitive matching if super_admin
     const { data: commsData } = await supabase.from("communities").select("id, name");
     const commsMap = new Map((commsData || []).map((c: any) => [c.name.toLowerCase().trim(), c.id]));
 
@@ -310,7 +306,6 @@ export async function bulkCreateSchoolsAction(
         continue;
       }
 
-      // Resolve community_id
       let community_id: string | undefined;
 
       if (role === "community") {
@@ -341,7 +336,6 @@ export async function bulkCreateSchoolsAction(
 
       const npsn = row.NPSN || row.npsn ? String(row.NPSN || row.npsn).trim() : null;
 
-      // 1. Insert School
       const { data: newSchool, error: schoolErr } = await supabase.from("schools").insert({
         community_id,
         name,
@@ -353,7 +347,8 @@ export async function bulkCreateSchoolsAction(
         village: row.Desa || row.Kelurahan || row.village || null,
         principal_name: row.Nama_Kepsek || row.principal_name || null,
         contact_phone: row.Telp || row.contact_phone ? String(row.Telp || row.contact_phone) : null,
-        is_active: true
+        is_active: true,
+        import_source: "manual", 
       }).select().single();
 
       if (schoolErr || !newSchool) {
@@ -361,7 +356,12 @@ export async function bulkCreateSchoolsAction(
         continue;
       }
 
-      // 2. Create User Auth
+      await (supabase as any).from("school_assessment_stages").insert({
+        school_id: newSchool.id,
+        community_id: community_id || null,
+        current_stage: "persiapan_akun",
+      });
+
       const defaultPassword = "Password123!";
       const username = `sch_${npsn || generateRandomString(5)}`;
       const adminEmail = `${username}@pemantik.local`;
@@ -382,7 +382,6 @@ export async function bulkCreateSchoolsAction(
          continue;
       }
 
-      // 3. Create Public User
       const { error: userError } = await supabase.from("users").insert({
         id: authData.user.id,
         username: username,
@@ -399,7 +398,6 @@ export async function bulkCreateSchoolsAction(
          continue;
       }
 
-      // 4. Process classes if provided
       if (classesStr) {
         const classesToInsert = processClassesString(String(classesStr), newSchool.id);
         if (classesToInsert.length > 0) {
@@ -430,7 +428,6 @@ export async function resetSchoolPasswordAction(schoolId: string): Promise<Actio
     await requireAuth(["super_admin"]);
     const supabase = createServerClient();
     
-    // Find the admin user for this school
     const { data: user, error: userError } = await supabase
       .from("users")
       .select("id")
@@ -458,14 +455,7 @@ export async function resetSchoolPasswordAction(schoolId: string): Promise<Actio
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// DAPODIK IMPORT — SERVER ACTIONS (BARU)
-// Semua fungsi di bawah ini BARU dan tidak mengubah fungsi lama sama sekali.
-// ═══════════════════════════════════════════════════════════════════════════════
-
 import { parseDapodikFile, type DapodikParseResult } from "@/lib/parseDapodik";
-
-// ─── Types untuk Dapodik Import ───────────────────────────────────────────────
 
 export interface ParseDapodikResponse {
   success: boolean;
@@ -473,7 +463,11 @@ export interface ParseDapodikResponse {
   parse_token?: string;
   summary?: {
     detected_school_name: string | null;
-    detected_region_text: string | null;
+    detected_npsn: string | null;
+    detected_province: string | null;
+    detected_city: string | null;
+    detected_district: string | null;
+    detected_village: string | null;
     raw_header_text: string;
     row_count: number;
     skipped_count: number;
@@ -495,6 +489,7 @@ export interface ImportDapodikPayload {
   confirmed_city?: string;
   confirmed_district?: string;
   confirmed_village?: string;
+  academic_year?: string;
 }
 
 export interface ImportDapodikResponse {
@@ -503,19 +498,17 @@ export interface ImportDapodikResponse {
   batch_id?: string;
 }
 
-// ─── Helpers Dapodik ─────────────────────────────────────────────────────────
-
-function generateStudentUsername(fullName: string): string {
-  const base = fullName.split(" ")[0].replace(/[^a-zA-Z]/g, "").toLowerCase() || "siswa";
-  const randomNum = Math.floor(1000 + Math.random() * 9000);
+function generateStudentUsername(fullName: string, npsn?: string | null, nisn?: string | null, nipd?: string | null): string {
+  const identifier = nisn || nipd || null;
+  if (npsn && identifier) {
+    const npsnShort = npsn.replace(/[^0-9]/g, "").slice(-4);
+    return `${npsnShort}${identifier}`.slice(0, 30); 
+  }
+  const base = fullName.split(" ")[0].replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 8) || "siswa";
+  const randomNum = Math.floor(100000 + Math.random() * 900000);
   return `${base}${randomNum}`;
 }
 
-/**
- * Resolve atau buat SES variable baru.
- * Jika nama sudah ada (case-insensitive) → return id yang ada.
- * Jika belum ada → INSERT baru dengan score=0, needs_review=true, source='dapodik_auto'.
- */
 async function resolveOrCreateSesVariable(
   supabase: any,
   name: string,
@@ -526,7 +519,6 @@ async function resolveOrCreateSesVariable(
   const key = `${type}:${name.toLowerCase().trim()}`;
   if (sesVariablesCache.has(key)) return sesVariablesCache.get(key)!;
 
-  // Cari yang sudah ada
   const { data: existing } = await supabase
     .from("ses_variables")
     .select("id")
@@ -539,7 +531,6 @@ async function resolveOrCreateSesVariable(
     return existing.id;
   }
 
-  // Buat baru
   const { data: newVar, error } = await supabase
     .from("ses_variables")
     .insert({ type, name: name.trim(), score: 0, needs_review: true, source: "dapodik_auto" })
@@ -555,10 +546,6 @@ async function resolveOrCreateSesVariable(
   return newVar.id;
 }
 
-/**
- * Hitung SES score dari 4 komponen.
- * Wali dipakai sebagai fallback slot individual yang kosong (Q3).
- */
 async function resolveSesIds(
   supabase: any,
   row: any,
@@ -568,13 +555,11 @@ async function resolveSesIds(
   mother_education_id: string | null;
   father_occupation_id: string | null;
   mother_occupation_id: string | null;
-  ses_score: number;
+  ses_score: number | null; 
   new_ses_names: string[];
 }> {
   const newSesNames: string[] = [];
 
-  // Fallback wali per slot individual (Q3):
-  // Slot kosong → isi dengan nilai wali (bukan dihitung 2x)
   const f_edu_raw = row.pendidikan_ayah || row.wali_pendidikan || null;
   const m_edu_raw = row.pendidikan_ibu || row.wali_pendidikan || null;
   const f_occ_raw = row.pekerjaan_ayah || row.wali_pekerjaan || null;
@@ -597,34 +582,31 @@ async function resolveSesIds(
       resolve(m_occ_raw, "occupation"),
     ]);
 
-  // Hitung skor dari ses_variables
-  const ids = [father_education_id, mother_education_id, father_occupation_id, mother_occupation_id].filter(Boolean);
-  let ses_score = 0;
+  const ids = [father_education_id, mother_education_id, father_occupation_id, mother_occupation_id].filter(Boolean) as string[];
+  let ses_score: number | null = null;
+
   if (ids.length > 0) {
     const { data: vars } = await supabase
       .from("ses_variables")
-      .select("id, score")
+      .select("id, score, needs_review")
       .in("id", ids);
+
     if (vars) {
-      ses_score = vars.reduce((sum: number, v: any) => sum + (v.score || 0), 0);
+      const hasUnreviewed = vars.some((v: any) => v.needs_review === true);
+      if (!hasUnreviewed) {
+        ses_score = vars.reduce((sum: number, v: any) => sum + (v.score || 0), 0);
+      }
     }
   }
 
   return { father_education_id, mother_education_id, father_occupation_id, mother_occupation_id, ses_score, new_ses_names: newSesNames };
 }
 
-// ─── Server Action 1: Parse file Dapodik ─────────────────────────────────────
-
-/**
- * Terima file Dapodik dari client, parse, simpan ke cache, return token.
- * TIDAK ada write ke schools/students.
- */
 export async function parseDapodikAction(formData: FormData): Promise<ParseDapodikResponse> {
   try {
     await requireAuth(["super_admin", "school", "community"]);
     const supabase = createServerClient();
 
-    // Verifikasi user adalah super_admin, school, atau community
     const headersList = await headers();
     const userId = headersList.get("x-user-id");
     if (!userId) return { success: false, error: "Tidak terautentikasi." };
@@ -633,13 +615,11 @@ export async function parseDapodikAction(formData: FormData): Promise<ParseDapod
       return { success: false, error: "Akses ditolak." };
     }
 
-    // Baca file
     const file = formData.get("file") as File | null;
     if (!file) return { success: false, error: "File tidak ditemukan." };
 
     const buffer = await file.arrayBuffer();
 
-    // Parse (akan throw jika format tidak valid — D3)
     let parseResult: DapodikParseResult;
     try {
       parseResult = parseDapodikFile(buffer);
@@ -647,7 +627,6 @@ export async function parseDapodikAction(formData: FormData): Promise<ParseDapod
       return { success: false, error: parseErr.message };
     }
 
-    // Cek SES values yang belum ada di ses_variables
     const { data: existingSes } = await supabase
       .from("ses_variables")
       .select("type, name");
@@ -661,7 +640,6 @@ export async function parseDapodikAction(formData: FormData): Promise<ParseDapod
       ...parseResult.detected_ses_values.pekerjaan.map((n) => `occupation:${n.toLowerCase().trim()}`),
     ].filter((k) => !existingSesSet.has(k)).length;
 
-    // Simpan ke cache (parse-token pattern)
     const { data: cacheRow, error: cacheErr } = await (supabase as any)
       .from("dapodik_parse_cache")
       .insert({
@@ -681,7 +659,11 @@ export async function parseDapodikAction(formData: FormData): Promise<ParseDapod
       parse_token: cacheRow.parse_token,
       summary: {
         detected_school_name: parseResult.detected_school_name,
-        detected_region_text: parseResult.detected_region_text,
+        detected_npsn: parseResult.detected_npsn,
+        detected_province: parseResult.detected_province,
+        detected_city: parseResult.detected_city,
+        detected_district: parseResult.detected_district,
+        detected_village: parseResult.detected_village,
         raw_header_text: parseResult.raw_header_text,
         row_count: parseResult.row_count,
         skipped_count: parseResult.skipped_count,
@@ -697,13 +679,6 @@ export async function parseDapodikAction(formData: FormData): Promise<ParseDapod
   }
 }
 
-// ─── Server Action 2: Eksekusi Import Dapodik ────────────────────────────────
-
-/**
- * Membaca rows dari cache (parse_token), lalu menjalankan import penuh secara async.
- * Return batch_id segera; proses berjalan di background.
- * Frontend polling /api/dapodik-import/[batchId] untuk status.
- */
 export async function importDapodikAction(
   payload: ImportDapodikPayload
 ): Promise<ImportDapodikResponse> {
@@ -716,7 +691,6 @@ export async function importDapodikAction(
     
     const supabase = createServerClient();
 
-    // Verifikasi user
     const headersList = await headers();
     const userId = headersList.get("x-user-id");
     if (!userId) return { success: false, error: "Tidak terautentikasi." };
@@ -732,7 +706,6 @@ export async function importDapodikAction(
       }
     }
 
-    // Ambil dari cache
     const { data: cacheRow, error: cacheErr } = await (supabase as any)
       .from("dapodik_parse_cache")
       .select("parsed_data, expires_at")
@@ -751,20 +724,17 @@ export async function importDapodikAction(
 
     const parseResult: DapodikParseResult = (cacheRow as any).parsed_data as any;
 
-    // ── Resolve school_id ──
     let schoolId: string;
 
     if (payload.school_choice === "existing" && payload.existing_school_id) {
       schoolId = payload.existing_school_id;
 
-      // Update dapodik_imported_at jika re-upload
       await (supabase as any).from("schools").update({
         dapodik_imported_at: new Date().toISOString(),
         raw_dapodik_header: { raw_header_text: parseResult.raw_header_text },
         import_source: "dapodik",
       }).eq("id", schoolId);
     } else {
-      // Buat sekolah baru
       let finalCommunityId = null as string | null;
       if (role === "community" && authCommunityId) {
         finalCommunityId = authCommunityId;
@@ -787,7 +757,6 @@ export async function importDapodikAction(
         finalCommunityId = indepComm!.id;
       }
 
-      // Check NPSN uniqueness
       const npsn = payload.confirmed_npsn?.trim() || null;
       if (npsn) {
         const { data: existingSchool } = await supabase.from("schools").select("id").eq("npsn", npsn).maybeSingle();
@@ -808,7 +777,7 @@ export async function importDapodikAction(
           district: payload.confirmed_district || null,
           village: payload.confirmed_village || null,
           is_active: true,
-          import_source: "dapodik",
+          import_source: "manual", 
           dapodik_imported_at: new Date().toISOString(),
           raw_dapodik_header: { raw_header_text: parseResult.raw_header_text },
         })
@@ -816,10 +785,16 @@ export async function importDapodikAction(
         .single();
 
       if (schoolErr || !newSchool) {
-        return { success: false, error: "Gagal membuat sekolah: " + schoolErr?.message };
+        throw new Error("Gagal membuat sekolah: " + schoolErr?.message);
       }
+      schoolId = newSchool.id;
 
-      // Buat akun admin sekolah (logic sama dengan createSchoolAction)
+      await (supabase as any).from("school_assessment_stages").insert({
+        school_id: schoolId,
+        community_id: finalCommunityId || null,
+        current_stage: "persiapan_akun",
+      });
+
       const username = `sch_${npsn || generateRandomString(5)}`;
       const adminEmail = `${username}@pemantik.local`;
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -852,10 +827,16 @@ export async function importDapodikAction(
       schoolId = newSchool.id;
     }
 
-    // ── Resolve kelas dari rombel unik ──
-    const classIdMap = new Map<string, string>(); // rombel name → class UUID
-    const currentYear = new Date().getFullYear();
-    const academic_year = `${currentYear}/${currentYear + 1}`;
+    const classIdMap = new Map<string, string>(); 
+
+    let academic_year = payload.academic_year?.trim() || "";
+    if (!academic_year) {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1; 
+      const startYear = month >= 7 ? year : year - 1;
+      academic_year = `${startYear}/${startYear + 1}`;
+    }
 
     for (const rombelName of parseResult.detected_classes) {
       const { data: existingClass } = await supabase
@@ -884,7 +865,6 @@ export async function importDapodikAction(
       }
     }
 
-    // ── Buat batch record (async pattern D2) ──
     const { data: batchRow, error: batchErr } = await (supabase as any)
       .from("dapodik_import_batches")
       .insert({
@@ -903,11 +883,6 @@ export async function importDapodikAction(
 
     const batchId = batchRow.id;
 
-    // ── Proses import (berjalan lanjut, return batch_id segera) ──
-    // Catatan: Dalam Next.js server actions, ini berjalan dalam satu request.
-    // Untuk benar-benar async di production, gunakan Supabase Edge Functions atau background job.
-    // Saat ini menggunakan pendekatan synchronous-then-return untuk kesederhanaan.
-
     void (async () => {
       const errors: any[] = [];
       const warnings: any[] = [...parseResult.skipped_rows.map(s => ({ ...s, type: "skipped" }))];
@@ -918,7 +893,6 @@ export async function importDapodikAction(
 
       const sesVariablesCache = new Map<string, string>();
 
-      // Mark existing SES as cached
       const { data: existingSes } = await supabase.from("ses_variables").select("id, type, name");
       (existingSes || []).forEach((v: any) => {
         const key = `${v.type}:${v.name.toLowerCase().trim()}`;
@@ -926,8 +900,6 @@ export async function importDapodikAction(
         sesVariablesCache.set(`existing:${v.id}`, "true");
       });
 
-      // Chunk insert: max 200 rows per call, tanpa delay artifisial (D1)
-      const CHUNK_SIZE = 200;
       const rows = parseResult.rows;
 
       for (let i = 0; i < rows.length; i++) {
@@ -935,7 +907,6 @@ export async function importDapodikAction(
         const rowNum = i + 1;
 
         try {
-          // Resolve kelas
           const classId = row.rombel
             ? (classIdMap.get(row.rombel.toLowerCase()) ?? null)
             : null;
@@ -949,25 +920,21 @@ export async function importDapodikAction(
             });
           }
 
-          // Resolve SES
           const sesData = await resolveSesIds(supabase, row, sesVariablesCache);
           if (sesData.new_ses_names.length > 0) {
             newSesVariables.push(...sesData.new_ses_names);
           }
 
-          // Hitung ses_class dari thresholds
           const { data: thresholds } = await supabase.from("ses_thresholds").select("*");
-          let ses_class = null;
-          if (thresholds && thresholds.length > 0) {
+          let ses_class: string | null = null;
+          if (sesData.ses_score !== null && thresholds && thresholds.length > 0) {
             const sorted = [...thresholds].sort((a: any, b: any) => a.min_score - b.min_score);
-            const matched = sorted.find((t: any) => sesData.ses_score >= t.min_score && sesData.ses_score <= t.max_score);
+            const matched = sorted.find((t: any) => sesData.ses_score! >= t.min_score && sesData.ses_score! <= t.max_score);
             if (matched) ses_class = matched.name;
           }
 
-          // ── UPSERT anti-duplikat (Q4 fallback chain) ──
           let existingStudentId: string | null = null;
 
-          // 1. Match by NISN + school_id
           if (row.nisn) {
             const { data: existing } = await (supabase as any)
               .from("students")
@@ -978,7 +945,6 @@ export async function importDapodikAction(
             if (existing) existingStudentId = existing.id;
           }
 
-          // 2. Jika NISN kosong → match by NIPD + school_id
           if (!existingStudentId && row.nipd) {
             const { data: existing } = await (supabase as any)
               .from("students")
@@ -988,8 +954,6 @@ export async function importDapodikAction(
               .maybeSingle();
             if (existing) existingStudentId = existing.id;
           }
-
-          // 3. Jika keduanya kosong → akan INSERT baru (sudah ada warning dari parser)
 
           const studentPayload: any = {
             school_id: schoolId,
@@ -1020,16 +984,15 @@ export async function importDapodikAction(
           };
 
           if (existingStudentId) {
-            // UPDATE
             const { error: updateErr } = await supabase
               .from("students")
               .update(studentPayload)
               .eq("id", existingStudentId);
             if (updateErr) throw new Error(updateErr.message);
           } else {
-            // INSERT baru — generate username + pin hanya untuk siswa baru
             const pin_hash = bcrypt.hashSync("123456", 10);
-            const username = generateStudentUsername(row.full_name);
+            const schoolNpsn = payload.confirmed_npsn || payload.existing_school_id?.slice(-4) || null;
+            const username = generateStudentUsername(row.full_name, schoolNpsn, row.nisn, row.nipd);
             const { error: insertErr } = await supabase.from("students").insert({
               ...studentPayload,
               username,
@@ -1048,7 +1011,6 @@ export async function importDapodikAction(
         }
       }
 
-      // Update batch jadi completed
       const finalStatus =
         errors.length === 0
           ? "completed"
@@ -1071,17 +1033,25 @@ export async function importDapodikAction(
         completed_at: new Date().toISOString(),
       }).eq("id", batchId);
 
-      // Kirim notifikasi jika ada SES baru yang perlu direview
       if (uniqueNewSes.length > 0) {
-        (supabase as any).from("notifications").insert({
-          user_id: userData.id,
-          title: "Indikator SES Baru Perlu Direview",
-          message: `Import Dapodik menambahkan ${uniqueNewSes.length} indikator SES baru dengan skor 0. Silakan atur bobotnya di halaman Pengaturan SES.`,
-          type: "warning",
-        }).then(() => {}).catch(() => {}); // Notifikasi non-critical, jangan block
+        const { data: superAdmins } = await supabase
+          .from("users")
+          .select("id")
+          .eq("role", "super_admin")
+          .eq("is_active", true);
+
+        if (superAdmins && superAdmins.length > 0) {
+          const notifications = superAdmins.map((sa: any) => ({
+            user_id: sa.id,
+            title: "Indikator SES Baru Perlu Direview",
+            message: `Import Dapodik menambahkan ${uniqueNewSes.length} indikator SES baru (skor belum ditentukan). Silakan atur bobotnya di Pengaturan SES agar skor siswa bisa dihitung.`,
+            type: "warning",
+          }));
+          (supabase as any).from("notifications").insert(notifications)
+            .then(() => {}).catch(() => {}); 
+        }
       }
 
-      // Hapus cache setelah import selesai
       await (supabase as any).from("dapodik_parse_cache").delete().eq("parse_token", payload.parse_token);
 
       revalidatePath("/super-admin/sekolah");
