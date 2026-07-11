@@ -39,7 +39,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
       .order("full_name", { ascending: true }),
     (supabase as any)
       .from("students")
-      .select("id, full_name, nisn, gender, birth_date, ses_class, ses_score, class_id, import_source, birth_date_parse_error, is_active, created_at, classes(id, name)")
+      .select("id, full_name, username, pin_hash, nisn, gender, birth_date, ses_class, ses_score, class_id, import_source, birth_date_parse_error, is_active, created_at, classes(id, name)")
       .eq("school_id", id)
       .order("full_name", { ascending: true }),
     supabase

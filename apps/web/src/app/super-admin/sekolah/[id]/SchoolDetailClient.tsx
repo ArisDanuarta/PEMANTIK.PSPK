@@ -52,6 +52,7 @@ interface Student {
   is_active: boolean;
   classes?: any;
   users?: { username: string };
+  username: string | null;
 }
 
 interface Class {
@@ -279,7 +280,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
         const studentData = students.map((s) => ({
           Peran: "Siswa",
           Nama: s.full_name,
-          Username: s.users?.username || "-",
+          Username: s.users?.username || s.username || "-",
           Password_Default: "Password123!",
           Info_Tambahan: (s.classes as any)?.name ? `Kelas: ${(s.classes as any).name}` : "-"
         }));

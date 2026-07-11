@@ -186,10 +186,10 @@ export default function SchoolDetailKomunitas({
 
       // 3. Sheet Siswa
       if (students.length > 0) {
-        const studentData = students.map((s) => ({
+        const studentData = students.map((s: any) => ({
           Peran: "Siswa",
           Nama: s.full_name,
-          Username: s.users?.username || "-",
+          Username: s.users?.username || s.username || "-",
           Password_Default: "Password123!",
           Info_Tambahan: (s.classes as any)?.name ? `Kelas: ${(s.classes as any).name}` : "-"
         }));
