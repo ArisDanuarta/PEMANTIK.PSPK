@@ -91,12 +91,13 @@ Buatlah ringkas, simpulkan ke dalam maksimal 15 node makro.
 DATA INTERVENSI:
 ${textData}`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
+    const response = await ai.interactions.create({
+      model: "gemini-3.5-flash",
+      input: prompt,
+      response_format: {
+        type: "text",
+        mime_type: "application/json",
+        schema: {
           type: Type.OBJECT,
           properties: {
             nodes: {
@@ -127,10 +128,10 @@ ${textData}`;
           },
           required: ["nodes", "edges"]
         }
-      },
+      }
     });
 
-    const responseText = response.text || "{}";
+    const responseText = response.output_text || "{}";
     
     // Parse JSON
     let parsed: any;
@@ -314,3 +315,6 @@ export async function createEmptyAiJobAction() {
     return { success: false, error: err.message };
   }
 }
+
+
+

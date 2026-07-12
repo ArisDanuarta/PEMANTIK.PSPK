@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useRef, useEffect } from "react";
 import { Badge, Button, useToast } from "@pemantik/ui";
 import InterventionGraph from "@/components/shared/InterventionGraph";
+import ReactMarkdown from "react-markdown";
 import { 
   saveGeminiApiKeyAction, 
   generateAiKnowledgeGraph,
@@ -37,7 +38,7 @@ export default function IntervensiSuperAdminClient({
   aiGraph,
   hasGeminiKey,
 }: IntervensiSuperAdminClientProps) {
-  const [activeTab, setActiveTab] = useState<"list" | "graph" | "ai_graph">("list");
+  const [activeTab, setActiveTab] = useState<"list" | "graph" | "ai_chat">("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
   
@@ -47,6 +48,32 @@ export default function IntervensiSuperAdminClient({
   const [isPending, startTransition] = useTransition();
   const [isGenerating, setIsGenerating] = useState(false);
   
+  // Modal for AI Graph
+  const [showAiGraphModal, setShowAiGraphModal] = useState(false);
+
+  // AI Chat State
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<{role: "user" | "ai", content: string}[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [hasLoadedHistory, setHasLoadedHistory] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("ai_chat_history");
+    if (saved) {
+      try {
+        setChatMessages(JSON.parse(saved));
+      } catch (e) {}
+    }
+    setHasLoadedHistory(true);
+  }, []);
+
+  useEffect(() => {
+    if (hasLoadedHistory) {
+      localStorage.setItem("ai_chat_history", JSON.stringify(chatMessages));
+    }
+  }, [chatMessages, hasLoadedHistory]);
+
   // Manual Fallback State
   const [showManualModal, setShowManualModal] = useState(false);
   const [manualType, setManualType] = useState<"node" | "edge">("node");
@@ -100,9 +127,106 @@ export default function IntervensiSuperAdminClient({
     
     if (res.success) {
       showSuccess("Analisis Selesai", "Knowledge Graph berhasil dibuat ulang.");
-      setActiveTab("ai_graph");
+      setShowAiGraphModal(true);
     } else {
       showError("Gagal Menganalisis", res.error || "Terjadi kesalahan internal AI.");
+    }
+  };
+
+  const handleExportCSV = () => {
+    const headers = ["Komunitas", "Sekolah", "Fase", "Kondisi Awal", "Upaya Dilakukan", "Perubahan Signifikan", "Alasan Bermakna", "Tags"];
+    const csvRows = [];
+    csvRows.push(headers.join(","));
+
+    for (const item of initialInterventions) {
+      const comm = item.communities?.name || "Tanpa Komunitas";
+      const sch = item.schools?.name || "Tanpa Sekolah";
+      const phase = item.phase || "";
+      const kondisi = `"${(item.kondisi_awal || "").replace(/"/g, '""')}"`;
+      const upaya = `"${(item.upaya_dilakukan || "").replace(/"/g, '""')}"`;
+      const dampak = `"${(item.perubahan_signifikan || "").replace(/"/g, '""')}"`;
+      const alasan = `"${(item.alasan_bermakna || "").replace(/"/g, '""')}"`;
+      const tags = `"${(item.intervention_tag_links || []).map((t:any) => t.intervention_tags?.name).join(", ")}"`;
+      
+      csvRows.push([comm, sch, phase, kondisi, upaya, dampak, alasan, tags].join(","));
+    }
+
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Global_Intervention_Report_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatMessages]);
+
+  const handleAskAi = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || !hasGeminiKey) {
+      if (!hasGeminiKey) {
+        showError("Konfigurasi Diperlukan", "API Key diperlukan.");
+        setShowSettings(true);
+      }
+      return;
+    }
+
+    const userMessage = chatInput.trim();
+    const currentMessages = [...chatMessages, { role: "user" as const, content: userMessage }];
+    setChatMessages([...currentMessages, { role: "ai" as const, content: "" }]);
+    setChatInput("");
+    setIsChatLoading(true);
+
+    try {
+      const response = await fetch('/api/chat-intervention', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: currentMessages, graphNodes })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Gagal menghubungi AI.");
+      }
+
+      setIsChatLoading(false);
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+
+      if (reader) {
+        while (!done) {
+          const { value, done: readerDone } = await reader.read();
+          done = readerDone;
+          if (value) {
+            const chunkText = decoder.decode(value, { stream: true });
+            setChatMessages((prev) => {
+              const newMessages = [...prev];
+              // Buat salinan baru dari objek terakhir untuk menghindari mutasi ganda di React Strict Mode
+              const lastMessage = { ...newMessages[newMessages.length - 1] };
+              lastMessage.content += chunkText;
+              newMessages[newMessages.length - 1] = lastMessage;
+              return newMessages;
+            });
+          }
+        }
+      }
+    } catch (err: any) {
+      setIsChatLoading(false);
+      showError("Gagal Menjawab", err.message);
+      setChatMessages((prev) => {
+        const newMessages = [...prev];
+        newMessages[newMessages.length - 1].content = "Maaf, terjadi kesalahan saat menghubungi AI.";
+        return newMessages;
+      });
     }
   };
   
@@ -174,20 +298,20 @@ export default function IntervensiSuperAdminClient({
               fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
             }}
           >
-            🌐 Raw Graph ({graphNodes.length} Nodes)
+            🌐 Knowledge Graph & Analysis
           </button>
           <button
-            onClick={() => setActiveTab("ai_graph")}
+            onClick={() => setActiveTab("ai_chat")}
             style={{
-              padding: "0.6rem 1.25rem", borderRadius: "0.5rem", border: activeTab === "ai_graph" ? "none" : "1px solid #e2e8f0",
-              backgroundColor: activeTab === "ai_graph" ? "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" : "transparent",
-              color: activeTab === "ai_graph" ? "white" : "#4f46e5",
+              padding: "0.6rem 1.25rem", borderRadius: "0.5rem", border: activeTab === "ai_chat" ? "none" : "1px solid #e2e8f0",
+              backgroundColor: activeTab === "ai_chat" ? "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" : "transparent",
+              color: activeTab === "ai_chat" ? "white" : "#4f46e5",
               fontWeight: 600, cursor: "pointer", transition: "all 0.2s",
               display: "flex", alignItems: "center", gap: "0.4rem",
-              background: activeTab === "ai_graph" ? "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" : "white"
+              background: activeTab === "ai_chat" ? "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" : "white"
             }}
           >
-            ✨ AI Insights Graph
+            💬 Tanya Jawab AI
           </button>
         </div>
 
@@ -274,92 +398,205 @@ export default function IntervensiSuperAdminClient({
         </div>
       )}
 
-      {/* Tab 2: Global Knowledge Graph (Raw) */}
+      {/* Tab 2: Hybrid Analysis Dashboard (Graph + Sidebar) */}
       {activeTab === "graph" && (
-        <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5", minHeight: "750px" }}>
-          <InterventionGraph
-            initialNodes={graphNodes}
-            initialEdges={graphEdges}
-            title="Peta Knowledge Graph Nasional (Data Mentah)"
-            description="Interkoneksi antar komunitas pembina, sekolah, laporan intervensi, serta tag kata kunci permasalahan."
-          />
-        </div>
-      )}
-      
-      {/* Tab 3: AI Insights Graph */}
-      {activeTab === "ai_graph" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div style={{ 
-            backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", 
-            border: "1px solid #e2e8f0", borderLeft: "4px solid #4f46e5",
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-            flexWrap: "wrap", gap: "1rem"
-          }}>
-            <div>
-              <h2 style={{ margin: "0 0 0.5rem 0", color: "#1e293b", fontSize: "1.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                ✨ Analisis Makro oleh Gemini AI
-              </h2>
-              <p style={{ margin: 0, color: "#64748b", fontSize: "0.9rem" }}>
-                Status Analisis Terakhir: {aiGraph?.job?.status === "completed" ? (
+        <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
+          {/* Kiri: Raw Knowledge Graph */}
+          <div style={{ flex: 3, minWidth: "600px", backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5", height: "780px" }}>
+            <InterventionGraph
+              initialNodes={graphNodes}
+              initialEdges={graphEdges}
+              title="Peta Knowledge Graph Nasional (Data Mentah)"
+              description="Interkoneksi antar komunitas pembina, sekolah, laporan intervensi, serta tag kata kunci permasalahan."
+            />
+          </div>
+
+          {/* Kanan: AI Insights & Analysis Sidebar */}
+          <div style={{ flex: 1, minWidth: "350px", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            
+            {/* Section A: Macro Insights & AI Generator */}
+            <div style={{ backgroundColor: "white", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #f1f3f5", display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div>
+                <h3 style={{ margin: "0 0 0.25rem 0", color: "#1e293b", fontSize: "1.1rem" }}>✨ Macro Insights AI</h3>
+                <p style={{ margin: 0, color: "#64748b", fontSize: "0.85rem", lineHeight: 1.4 }}>
+                  Gunakan fitur ini secara berkala untuk membedah ratusan narasi dan menemukan pola makro tersembunyi.
+                </p>
+              </div>
+
+              <div style={{ fontSize: "0.85rem", color: "#475569", backgroundColor: "#f8fafc", padding: "0.75rem", borderRadius: "0.5rem" }}>
+                Status Analisis: {aiGraph?.job?.status === "completed" ? (
                   <strong style={{ color: "#16a34a" }}>Berhasil ({formatDate(aiGraph.job.completed_at)})</strong>
                 ) : aiGraph?.job?.status === "failed" ? (
-                  <strong style={{ color: "#dc2626" }}>Gagal ({aiGraph.job.error_message})</strong>
+                  <strong style={{ color: "#dc2626" }}>Gagal</strong>
                 ) : (
-                  "Belum pernah dilakukan"
+                  "Belum pernah"
                 )}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <Button 
+                  onClick={handleGenerateAi} 
+                  disabled={isGenerating || initialInterventions.length === 0}
+                  style={{ width: "100%", background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)", border: "none", color: "white" }}
+                >
+                  {isGenerating ? "⏳ Menganalisis..." : "Generate AI Graph Ulang"}
+                </Button>
+                
+                {aiGraph?.nodes?.length > 0 && (
+                  <Button variant="outline" onClick={() => setShowAiGraphModal(true)} style={{ width: "100%", borderColor: "#cbd5e1" }}>
+                    Lihat Graf Makro AI
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Section B: Generate Report (Export) */}
+            <div style={{ backgroundColor: "white", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #f1f3f5", display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div>
+                <h3 style={{ margin: "0 0 0.25rem 0", color: "#1e293b", fontSize: "1.1rem" }}>📥 Export Laporan</h3>
+                <p style={{ margin: 0, color: "#64748b", fontSize: "0.85rem", lineHeight: 1.4 }}>
+                  Unduh seluruh data intervensi secara global ke format CSV untuk keperluan pelaporan eksternal.
+                </p>
+              </div>
+              <Button onClick={handleExportCSV} style={{ width: "100%", backgroundColor: "#102e50", color: "white" }}>
+                Export Comprehensive CSV
+              </Button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Tab 3: AI Q&A Chat */}
+      {activeTab === "ai_chat" && (
+        <div style={{ backgroundColor: "white", padding: "2rem", borderRadius: "1rem", border: "1px solid #f1f3f5", display: "flex", flexDirection: "column", minHeight: "750px" }}>
+          <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <h2 style={{ margin: "0 0 0.5rem 0", color: "#1e293b", fontSize: "1.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                AI Report Q&A
+              </h2>
+              <p style={{ margin: 0, color: "#64748b", fontSize: "0.95rem", lineHeight: 1.5 }}>
+                Tanyakan wawasan tersembunyi, ringkasan, atau korelasi khusus dari data intervensi secara langsung. Gemini AI hanya akan menggunakan informasi yang tertanam di dalam {graphNodes.length} node graf Anda.
               </p>
             </div>
-            
-            <div style={{ display: "flex", gap: "0.75rem" }}>
+            {chatMessages.length > 0 && (
               <Button 
-                variant="outline"
-                onClick={() => setShowManualModal(true)} 
-                style={{ borderColor: "#cbd5e1", color: "#475569" }}
-              >
-                ➕ Pemrosesan Manual
-              </Button>
-              <Button 
-                onClick={handleGenerateAi} 
-                disabled={isGenerating || initialInterventions.length === 0}
-                style={{
-                  background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-                  border: "none", color: "white", padding: "0.85rem 1.5rem", borderRadius: "0.75rem",
-                  fontWeight: 600, boxShadow: "0 4px 6px -1px rgba(79, 70, 229, 0.3)"
+                variant="outline" 
+                onClick={() => {
+                  setChatMessages([]);
+                  localStorage.removeItem("ai_chat_history");
                 }}
               >
-                {isGenerating ? "⏳ Menganalisis Data..." : "✨ Generate AI Graph"}
+                Hapus Riwayat
               </Button>
-            </div>
+            )}
           </div>
-          
-          <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5", minHeight: "700px" }}>
-            {(!aiGraph || aiGraph.nodes.length === 0) ? (
-              <div style={{ textAlign: "center", padding: "4rem 2rem", color: "#64748b", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
-                <span style={{ fontSize: "3rem" }}>🤖</span>
-                <h3>Belum Ada Knowledge Graph AI</h3>
-                <p>Gemini AI belum pernah menganalisis data intervensi Anda. Klik tombol "Generate AI Graph" di atas untuk mulai memproses ratusan data kualitatif menjadi insight terstruktur, atau gunakan Pemrosesan Manual.</p>
+
+          <div style={{ 
+            flex: 1, backgroundColor: "#f8fafc", borderRadius: "1rem", padding: "1.5rem",
+            overflowY: "auto", display: "flex", flexDirection: "column", gap: "1rem",
+            border: "1px solid #e2e8f0", marginBottom: "1.5rem"
+          }}>
+            {chatMessages.length === 0 ? (
+              <div style={{ textAlign: "center", color: "#94a3b8", fontSize: "0.95rem", marginTop: "auto", marginBottom: "auto" }}>
+                Mulai percakapan dengan AI terkait data intervensi. Contoh:<br />
+                <em>"Apa tantangan literasi yang paling sering muncul di jenjang SMP?"</em><br />
+                <em>"Bagaimana rata-rata sekolah binaan menangani masalah kurangnya fasilitas?"</em>
               </div>
             ) : (
-              <InterventionGraph
-                initialNodes={aiGraph.nodes.map((n: any) => ({
-                  id: n.id,
-                  position: { x: Math.random() * 600, y: Math.random() * 400 },
-                  data: {
-                    label: n.label,
-                    type: n.type,
-                    desc: n.description
-                  }
-                }))}
-                initialEdges={aiGraph.edges.map((e: any) => ({
-                  id: e.id,
-                  source: e.source_node_id,
-                  target: e.target_node_id,
-                  label: e.label
-                }))}
-                title="Sintesis Pola Intervensi Makro"
-                description="Hasil analisis NLP Gemini atau Pemrosesan Manual: menyimpulkan masalah umum, solusi terbaik, dan dampak yang terjadi secara global."
-              />
+              chatMessages.map((msg, i) => (
+                <div key={i} style={{ 
+                  alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
+                  backgroundColor: msg.role === "user" ? "#102e50" : "white",
+                  color: msg.role === "user" ? "white" : "#1e293b",
+                  padding: "1rem 1.25rem", borderRadius: "1rem",
+                  maxWidth: "85%", fontSize: "0.95rem", lineHeight: 1.6,
+                  border: msg.role === "ai" ? "1px solid #e2e8f0" : "none",
+                  boxShadow: msg.role === "ai" ? "0 4px 6px rgba(0,0,0,0.02)" : "0 4px 6px rgba(16, 46, 80, 0.2)"
+                }}>
+                  {msg.role === "ai" ? (
+                    <div className="prose prose-sm max-w-none text-slate-800">
+                      <ReactMarkdown>
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    msg.content
+                  )}
+                </div>
+              ))
             )}
+            {isChatLoading && (
+              <div style={{ alignSelf: "flex-start", backgroundColor: "white", padding: "1rem 1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", fontSize: "0.95rem", color: "#64748b", display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <span className="animate-spin">⏳</span> Gemini sedang membaca {graphNodes.length} node data...
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          <form onSubmit={handleAskAi} style={{ display: "flex", gap: "0.75rem", padding: "0.5rem", backgroundColor: "#f8fafc", borderRadius: "1rem", border: "1px solid #e2e8f0" }}>
+            <input 
+              type="text" 
+              value={chatInput} 
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Tanyakan sesuatu pada data intervensi Anda..." 
+              disabled={isChatLoading}
+              style={{ flex: 1, padding: "1rem 1.25rem", borderRadius: "0.75rem", border: "none", fontSize: "0.95rem", backgroundColor: "transparent", outline: "none" }}
+            />
+            <Button type="submit" disabled={isChatLoading || !chatInput.trim()} style={{ backgroundColor: "#102e50", color: "white", padding: "0 1.5rem", borderRadius: "0.75rem", fontSize: "1rem" }}>
+              Kirim
+            </Button>
+          </form>
+        </div>
+      )}
+
+      {/* Modal AI Graph */}
+      {showAiGraphModal && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1100, padding: "2rem"
+        }}>
+          <div style={{
+            backgroundColor: "white", borderRadius: "1.25rem", padding: "1.5rem",
+            width: "100%", height: "90vh", display: "flex", flexDirection: "column", gap: "1rem",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", position: "relative"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, color: "#1e293b", fontSize: "1.25rem" }}>✨ Sintesis Pola Intervensi Makro AI</h3>
+              <div style={{ display: "flex", gap: "1rem" }}>
+                <Button variant="outline" onClick={() => setShowManualModal(true)}>
+                  ➕ Pemrosesan Manual
+                </Button>
+                <Button variant="outline" onClick={() => setShowAiGraphModal(false)}>Tutup</Button>
+              </div>
+            </div>
+            
+            <div style={{ flex: 1, border: "1px solid #e2e8f0", borderRadius: "1rem", overflow: "hidden" }}>
+              {(!aiGraph || aiGraph.nodes.length === 0) ? (
+                <div style={{ textAlign: "center", padding: "4rem 2rem", color: "#64748b", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: "1rem" }}>
+                  <span style={{ fontSize: "3rem" }}>🤖</span>
+                  <h3>Belum Ada Knowledge Graph AI</h3>
+                  <p>Klik tombol Generate AI Graph di panel sebelumnya untuk membuat.</p>
+                </div>
+              ) : (
+                <InterventionGraph
+                  initialNodes={aiGraph.nodes.map((n: any) => ({
+                    id: n.id,
+                    position: { x: Math.random() * 600, y: Math.random() * 400 },
+                    data: { label: n.label, type: n.type, desc: n.description }
+                  }))}
+                  initialEdges={aiGraph.edges.map((e: any) => ({
+                    id: e.id,
+                    source: e.source_node_id,
+                    target: e.target_node_id,
+                    label: e.label
+                  }))}
+                  title=""
+                  description=""
+                />
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -369,7 +606,7 @@ export default function IntervensiSuperAdminClient({
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 1100, padding: "1rem"
+          zIndex: 1150, padding: "1rem"
         }}>
           <div style={{
             backgroundColor: "white", borderRadius: "1.25rem", padding: "2rem",
