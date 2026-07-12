@@ -499,14 +499,36 @@ export interface ImportDapodikResponse {
 }
 
 function generateStudentUsername(fullName: string, npsn?: string | null, nisn?: string | null, nipd?: string | null): string {
-  const identifier = nisn || nipd || null;
-  if (npsn && identifier) {
-    const npsnShort = npsn.replace(/[^0-9]/g, "").slice(-4);
-    return `${npsnShort}${identifier}`.slice(0, 30); 
+  const words = fullName.split(/\s+/).map(w => w.replace(/[^a-zA-Z]/g, "").toLowerCase()).filter(w => w.length > 0);
+  const balineseTitles = new Set([
+    "i", "ni", "ida", "aa", "anak", "tjokorda", "cokorda", "desak", "gusti", "ngakan", 
+    "putu", "wayan", "gede", "gde", "iluh", "luh",
+    "made", "kadek", "nengah", "kdk", "md",
+    "nyoman", "komang", "nym", "kmg",
+    "ketut", "kt"
+  ]);
+
+  let firstName = "siswa";
+  for (const word of words) {
+    if (!balineseTitles.has(word) && word.length > 1) {
+      firstName = word.slice(0, 10);
+      break;
+    }
   }
-  const base = fullName.split(" ")[0].replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 8) || "siswa";
-  const randomNum = Math.floor(100000 + Math.random() * 900000);
-  return `${base}${randomNum}`;
+  
+  if (firstName === "siswa" && words.length > 0) {
+    firstName = words[0].slice(0, 10);
+  }
+
+  const identifier = (nisn || nipd || "").replace(/[^0-9]/g, "");
+  let digits = "";
+  if (identifier.length >= 4) {
+    digits = identifier.slice(-4);
+  } else {
+    digits = Math.floor(1000 + Math.random() * 9000).toString();
+  }
+
+  return `${firstName}${digits}`;
 }
 
 async function resolveOrCreateSesVariable(
