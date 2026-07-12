@@ -7,8 +7,8 @@ import StudentSessionsTable from "@/components/shared/StudentSessionsTable";
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: "Manajemen Sesi Ujian Siswa",
-  description: "Pantau dan reset sesi ujian siswa jika terjadi kendala teknis",
+  title: "Manajemen Sesi Ujian Anak",
+  description: "Pantau dan reset sesi ujian anak jika terjadi kendala teknis",
 };
 
 export default async function SuperAdminSesiSiswaPage() {
@@ -58,7 +58,7 @@ export default async function SuperAdminSesiSiswaPage() {
     <div className="animate-fade-in">
       <div className="page-header">
         <div className="page-header-left">
-          <h1 className="page-title">Sesi Ujian Siswa</h1>
+          <h1 className="page-title">Sesi Ujian Anak</h1>
           <p className="page-description" style={{ color: "#6b7280", marginTop: "0.5rem" }}>
             Pantau sesi ujian yang sedang berjalan, selesai, atau reset sesi jika siswa mengalami kendala teknis (terputus, keluar tiba-tiba, dll).
           </p>

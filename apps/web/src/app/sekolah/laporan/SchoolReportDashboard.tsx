@@ -336,7 +336,7 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
           <div style={{ textAlign: "center", padding: "2rem 1rem", color: "#6b7280" }}>
             <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📋</div>
             <div style={{ fontWeight: 600, color: "#374151", marginBottom: "0.25rem" }}>Belum Ada Data Ujian</div>
-            <div style={{ fontSize: "0.85rem" }}>Belum ada siswa yang pernah mengerjakan ujian di sekolah ini.</div>
+            <div style={{ fontSize: "0.85rem" }}>Belum ada anak yang pernah mengerjakan ujian di sekolah ini.</div>
           </div>
         ) : (
           <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
@@ -427,7 +427,7 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
                       <DataCard
                         key={card.level_number}
                         title={`Level ${card.level_number}`}
-                        subtitle="Siswa yang mengerjakan soal di level ini"
+                        subtitle="Anak yang mengerjakan soal di level ini"
                         count={card.student_count}
                         countLabel="siswa"
                         onDownload={() => handleCardDownload("level", String(card.level_number))}
@@ -519,10 +519,10 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
         <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", backgroundColor: "#f8fafc", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
           <div>
             <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
-              Daftar Kelas & Jumlah Siswa Terdaftar
+              Daftar Kelas & Jumlah Anak Terdaftar
             </h2>
             <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "0.25rem 0 0 0" }}>
-              Daftar seluruh rombongan belajar di sekolah Anda beserta rekapitulasi siswa yang telah mengerjakan ujian pada kategori ini.
+              Daftar seluruh rombongan belajar di sekolah Anda beserta rekapitulasi anak yang telah mengerjakan ujian pada kategori ini.
             </p>
           </div>
         </div>
@@ -543,7 +543,7 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
           <div style={{ textAlign: "center", padding: "3.5rem 1rem", color: "#94a3b8" }}>
             <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📭</div>
             <strong style={{ display: "block", color: "#334155", fontSize: "1.05rem", marginBottom: "0.25rem" }}>
-              Belum Ada Siswa yang Mengerjakan
+              Belum Ada Anak yang Mengerjakan
             </strong>
             <p style={{ margin: 0, fontSize: "0.88rem", color: "#64748b" }}>
               Belum ada data hasil ujian yang tercatat untuk kategori terpilih pada kelas-kelas di sekolah ini.
@@ -555,7 +555,7 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
               <tr style={{ borderBottom: "2px solid #e2e8f0", backgroundColor: "white", textAlign: "left", color: "#475569", fontSize: "0.85rem" }}>
                 <th style={{ padding: "1rem 1.5rem" }}>Rombel / Kelas</th>
                 <th style={{ padding: "1rem 1.5rem" }}>Tahun Ajaran</th>
-                <th style={{ padding: "1rem 1.5rem", textAlign: "center" }}>Siswa Mengerjakan</th>
+                <th style={{ padding: "1rem 1.5rem", textAlign: "center" }}>Anak Mengerjakan</th>
                 <th style={{ padding: "1rem 1.5rem", textAlign: "right" }}>Ekspor Data Mentah</th>
               </tr>
             </thead>
@@ -573,7 +573,7 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
                   <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
                     <div style={{ fontSize: "0.85rem", display: "inline-block" }}>
                       <Badge variant={card.student_count > 0 ? "success" : "warning"}>
-                        👥 {card.student_count} Siswa
+                        👥 {card.student_count} Anak
                       </Badge>
                     </div>
                   </td>

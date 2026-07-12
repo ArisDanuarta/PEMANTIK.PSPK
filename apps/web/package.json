@@ -17,6 +17,7 @@
     "@supabase/supabase-js": "^2.0.0",
     "@xyflow/react": "^12.11.2",
     "bcryptjs": "^3.0.3",
+    "d3-force": "^3.0.0",
     "d3-geo": "^3.1.1",
     "d3-scale": "^4.0.2",
     "next": "16.2.9",
@@ -30,6 +31,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^3.0.0",
+    "@types/d3-force": "^3.0.10",
     "@types/d3-scale": "^4.0.9",
     "@types/node": "^20",
     "@types/react": "^19",

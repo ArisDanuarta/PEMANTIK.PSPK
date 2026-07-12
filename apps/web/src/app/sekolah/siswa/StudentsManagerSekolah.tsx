@@ -89,7 +89,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
         : await createStudentAction(fd);
 
       if (res.success) {
-        showSuccess("Berhasil", res.message ?? "Data siswa berhasil disimpan.");
+        showSuccess("Berhasil", res.message ?? "Data anak berhasil disimpan.");
         setIsManualModalOpen(false);
         window.location.reload();
       } else {
@@ -100,7 +100,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
 
   const handleDelete = async (s: StudentRow) => {
     const ok = await confirm({
-      title: "Hapus Siswa",
+      title: "Hapus Anak",
       description: `Hapus siswa "${s.full_name}"? Semua data ujian yang terkait juga akan terpengaruh.`,
       confirmLabel: "Ya, Hapus",
       variant: "danger",
@@ -109,7 +109,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
     startTransition(async () => {
       const res = await deleteStudentAction(s.id);
       if (res.success) {
-        showSuccess("Berhasil", res.message ?? "Siswa dihapus.");
+        showSuccess("Berhasil", res.message ?? "Anak dihapus.");
         setStudents((prev) => prev.filter((x) => x.id !== s.id));
       } else {
         showError("Gagal", res.error ?? "Terjadi kesalahan.");
@@ -119,7 +119,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
 
   const handleResetPassword = async (s: StudentRow) => {
     const ok = await confirm({
-      title: "Reset PIN Siswa",
+      title: "Reset PIN Anak",
       description: `PIN akses "${s.full_name}" akan direset ke default. Lanjutkan?`,
       confirmLabel: "Ya, Reset",
     });
@@ -204,7 +204,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "0.35rem" }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               Import Excel
             </Button>
-            <Button onClick={handleOpenAdd} style={{ backgroundColor: "#102e50", color: "white" }}>+ Tambah Siswa</Button>
+            <Button onClick={handleOpenAdd} style={{ backgroundColor: "#102e50", color: "white" }}>+ Tambah Anak</Button>
           </div>
         </div>
       </div>
@@ -213,13 +213,13 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <table className="pemantik-table" style={{ width: "100%" }}>
           <thead>
-            <tr><th>Nama Siswa</th><th>Akun Akses</th><th>Kelas</th><th>Gender</th><th>SES</th><th>Status</th><th>Aksi</th></tr>
+            <tr><th>Nama Anak</th><th>Akun Akses</th><th>Kelas</th><th>Gender</th><th>SES</th><th>Status</th><th>Aksi</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr><td colSpan={7} style={{ textAlign: "center", padding: "3rem 1rem", color: "#adb5bd" }}>
                 <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🧑‍🎓</div>
-                {search || classFilter !== "all" || genderFilter !== "all" ? "Tidak ada siswa yang cocok dengan filter." : "Belum ada siswa terdaftar."}
+                {search || classFilter !== "all" || genderFilter !== "all" ? "Tidak ada anak yang cocok dengan filter." : "Belum ada anak terdaftar."}
               </td></tr>
             ) : filtered.map((s) => (
               <tr key={s.id}>
@@ -256,8 +256,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
         </table>
         {filtered.length > 0 && (
           <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid #f1f3f5", fontSize: "0.8rem", color: "#6c757d" }}>
-            Menampilkan <strong>{filtered.length}</strong> dari <strong>{students.length}</strong> siswa
-          </div>
+            Menampilkan <strong>{filtered.length}</strong> dari <strong>{students.length}</strong>anak</div>
         )}
       </div>
 
@@ -267,9 +266,9 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
           onClose={() => setIsBulkModalOpen(false)}
           onUpload={handleBulkUpload}
           templateHeaders={EXCEL_COLUMNS}
-          title="Import Siswa via Excel"
+          title="Import Anak via Excel"
           templateFileName="template_siswa_sekolah.xlsx"
-          description="Download template, isi data siswa, dan upload kembali. Sistem akan men-generate username, PIN, dan nilai SES secara otomatis."
+          description="Download template, isi data anak, dan upload kembali. Sistem akan men-generate username, PIN, dan nilai SES secara otomatis."
           templateData={[
             ["Ahmad Fikri", "10203040", "L", "2015-05-12", classes[0]?.name || "5A", "Petani", "Guru", "SD", "S1", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta"]
           ]}
@@ -287,7 +286,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
             style={{ backgroundColor: "white", padding: "2rem", borderRadius: "0.75rem", width: "100%", maxWidth: "580px", margin: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}
           >
             <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "#102e50", marginBottom: "1.5rem" }}>
-              {editingStudent ? "Edit Siswa" : "Tambah Siswa Baru"}
+              {editingStudent ? "Edit Anak" : "Tambah Anak Baru"}
             </h2>
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: "1rem" }}>
@@ -384,14 +383,14 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
 
               {!editingStudent && (
                 <div style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1.5rem", backgroundColor: "#f3f4f6", padding: "0.75rem", borderRadius: "0.5rem" }}>
-                  Sistem akan secara otomatis membuat <b>Username</b> unik dan PIN default <b>123456</b> untuk siswa login ke mobile app.
+                  Sistem akan secara otomatis membuat <b>Username</b> unik dan PIN default <b>123456</b> untuk anak login ke mobile app.
                 </div>
               )}
 
               <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
                 <Button type="button" variant="outline" onClick={() => setIsManualModalOpen(false)}>Batal</Button>
                 <Button type="submit" disabled={isPending} style={{ backgroundColor: "#102e50", color: "white" }}>
-                  {isPending ? <><span className="btn-spinner" /> Menyimpan...</> : (editingStudent ? "Simpan Perubahan" : "Tambah Siswa")}
+                  {isPending ? <><span className="btn-spinner" /> Menyimpan...</> : (editingStudent ? "Simpan Perubahan" : "Tambah Anak")}
                 </Button>
               </div>
             </form>

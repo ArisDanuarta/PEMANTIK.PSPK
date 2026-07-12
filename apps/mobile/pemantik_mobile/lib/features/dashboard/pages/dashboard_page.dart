@@ -22,9 +22,9 @@ class DashboardPage extends ConsumerWidget {
         children: [
           studentAsync.when(
             data: (student) =>
-                _DashboardHeader(studentName: student?['full_name'] ?? 'Siswa'),
+                _DashboardHeader(studentName: student?['full_name'] ?? 'Anak'),
             loading: () => const _DashboardHeader(studentName: 'Memuat...'),
-            error: (_, _) => const _DashboardHeader(studentName: 'Siswa'),
+            error: (_, _) => const _DashboardHeader(studentName: 'Anak'),
           ),
 
           const ConnectionBanner(),

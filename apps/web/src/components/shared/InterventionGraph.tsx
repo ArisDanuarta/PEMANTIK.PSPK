@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   ReactFlow,
   Controls,
@@ -8,11 +8,19 @@ import {
   MiniMap,
   useNodesState,
   useEdgesState,
-  MarkerType,
   Position,
+  type Node,
+  type Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Badge, Button } from "@pemantik/ui";
+import {
+  forceSimulation,
+  forceLink,
+  forceManyBody,
+  forceCenter,
+  forceCollide,
+} from "d3-force";
 
 interface InterventionGraphProps {
   initialNodes: any[];
@@ -30,104 +38,120 @@ export default function InterventionGraph({
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [searchTag, setSearchTag] = useState("");
 
-  // Transform nodes and calculate simple radial/layered layout positions so they don't stack on (0,0)
-  const styledNodes = useMemo(() => {
-    const total = initialNodes.length;
-    if (total === 0) return [];
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-    const schools = initialNodes.filter((n) => n.type === "school");
-    const interventions = initialNodes.filter((n) => n.type === "intervention");
-    const tags = initialNodes.filter((n) => n.type === "tag");
+  // =========================================================================
+  // INTEGRASI FORCE-DIRECTED LAYOUT (OBSIDIAN STYLE) MENGGUNAKAN D3-FORCE
+  // =========================================================================
+  useEffect(() => {
+    if (initialNodes.length === 0) {
+      setNodes([]);
+      setEdges([]);
+      return;
+    }
 
-    return initialNodes.map((n) => {
-      let x = 0;
-      let y = 0;
-
-      // Layered columns layout
-      if (n.type === "school") {
-        const idx = schools.indexOf(n);
-        x = 50;
-        y = 80 + idx * 160;
-      } else if (n.type === "intervention") {
-        const idx = interventions.indexOf(n);
-        x = 380;
-        y = 60 + idx * 140;
-      } else if (n.type === "tag") {
-        const idx = tags.indexOf(n);
-        x = 720;
-        y = 50 + idx * 110;
-      }
-
-      // Check search highlight
-      const isHighlighted = searchTag
-        ? n.label.toLowerCase().includes(searchTag.toLowerCase()) ||
-          (n.type === "tag" && n.label.toLowerCase().includes(searchTag.toLowerCase()))
-        : false;
-
-      let bgColor = "#ffffff";
-      let borderColor = "#cbd5e1";
-      let color = "#1e293b";
-      let borderRadius = "0.75rem";
-      let fontWeight = 600;
-
-      if (n.type === "school") {
-        bgColor = isHighlighted ? "#fef08a" : "#eff6ff";
-        borderColor = isHighlighted ? "#ca8a04" : "#3b82f6";
-        color = "#1e40af";
-      } else if (n.type === "intervention") {
-        bgColor = isHighlighted ? "#fef08a" : "#f0fdf4";
-        borderColor = isHighlighted ? "#ca8a04" : "#22c55e";
-        color = "#166534";
-      } else if (n.type === "tag") {
-        bgColor = isHighlighted ? "#fef08a" : "#faf5ff";
-        borderColor = isHighlighted ? "#ca8a04" : "#a855f7";
-        color = "#6b21a8";
-        borderRadius = "999px";
-      }
-
-      return {
-        ...n,
-        position: { x, y },
-        sourcePosition: Position.Right,
-        targetPosition: Position.Left,
-        style: {
-          background: bgColor,
-          border: `2px solid ${borderColor}`,
-          color,
-          padding: "0.6rem 1rem",
-          borderRadius,
-          fontWeight,
-          fontSize: "0.85rem",
-          boxShadow: isHighlighted ? "0 0 12px rgba(234,179,8,0.6)" : "0 2px 4px rgba(0,0,0,0.05)",
-          cursor: "pointer",
-          maxWidth: "240px",
-          textAlign: "center" as const,
-        },
-      };
-    });
-  }, [initialNodes, searchTag]);
-
-  const styledEdges = useMemo(() => {
-    return initialEdges.map((e) => ({
-      ...e,
-      type: "smoothstep",
-      animated: true,
-      style: { stroke: "#94a3b8", strokeWidth: 1.8 },
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        color: "#94a3b8",
-      },
+    // 1. Inisialisasi posisi awal acak di sekitar titik tengah
+    const d3Nodes = initialNodes.map((n) => ({
+      ...n,
+      x: Math.random() * 800 - 400,
+      y: Math.random() * 600 - 300,
     }));
-  }, [initialEdges]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(styledNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(styledEdges);
+    // 2. Pemetaan relasi antar node
+    const d3Links = initialEdges.map((e) => ({
+      ...e,
+      source: e.source,
+      target: e.target,
+    }));
 
-  // Sync state whenever styledNodes/styledEdges change
-  React.useEffect(() => {
-    setNodes(styledNodes);
-    setEdges(styledEdges);
-  }, [styledNodes, styledEdges, setNodes, setEdges]);
+    // 3. Konfigurasi Mesin Fisika (Force Simulation)
+    const simulation = forceSimulation(d3Nodes as any)
+      // Tolak-menolak antar node yang kuat (menyebar seperti Obsidian)
+      .force("charge", forceManyBody().strength(-1200))
+      // Mencegah tumpang tindih
+      .force("collide", forceCollide().radius(70))
+      // Tarik ke pusat agar tidak melayang keluar layar
+      .force("center", forceCenter(0, 0))
+      // Tarik-menarik antar node yang memiliki edge (relasi)
+      .force(
+        "link",
+        forceLink(d3Links as any)
+          .id((d: any) => d.id)
+          .distance(150)
+      );
+
+    // 4. Update posisi React Flow pada setiap siklus frame ("tick")
+    simulation.on("tick", () => {
+      setNodes(
+        d3Nodes.map((n: any) => {
+          const isHighlighted = searchTag
+            ? n.label.toLowerCase().includes(searchTag.toLowerCase()) ||
+              (n.type === "tag" && n.label.toLowerCase().includes(searchTag.toLowerCase()))
+            : false;
+
+          let bgColor = "#ffffff";
+          let borderColor = "#cbd5e1";
+          let color = "#1e293b";
+          let borderRadius = "999px"; // Bentuk membulat (Pill/Circle) seperti node graf asli
+
+          if (n.type === "school") {
+            bgColor = isHighlighted ? "#fef08a" : "#eff6ff";
+            borderColor = isHighlighted ? "#ca8a04" : "#3b82f6";
+            color = "#1e40af";
+          } else if (n.type === "intervention") {
+            bgColor = isHighlighted ? "#fef08a" : "#f0fdf4";
+            borderColor = isHighlighted ? "#ca8a04" : "#22c55e";
+            color = "#166534";
+          } else if (n.type === "tag") {
+            bgColor = isHighlighted ? "#fef08a" : "#faf5ff";
+            borderColor = isHighlighted ? "#ca8a04" : "#a855f7";
+            color = "#6b21a8";
+          }
+
+          return {
+            id: n.id,
+            type: n.type,
+            data: { ...n.data, label: n.label },
+            position: { x: n.x, y: n.y },
+            sourcePosition: Position.Right,
+            targetPosition: Position.Left,
+            style: {
+              background: bgColor,
+              border: `2px solid ${borderColor}`,
+              color,
+              padding: "0.6rem 1rem",
+              borderRadius,
+              fontWeight: 600,
+              fontSize: "0.85rem",
+              boxShadow: isHighlighted
+                ? "0 0 15px rgba(234,179,8,0.8)"
+                : "0 4px 6px rgba(0,0,0,0.1)",
+              cursor: "pointer",
+              maxWidth: "200px",
+              textAlign: "center" as const,
+              transition: "box-shadow 0.2s",
+            },
+          };
+        })
+      );
+    });
+
+    // Garis relasi diatur menjadi lurus dan lebih tipis (khas network graph)
+    setEdges(
+      initialEdges.map((e) => ({
+        ...e,
+        type: "straight",
+        style: { stroke: "#64748b", strokeWidth: 1.5, opacity: 0.4 },
+        animated: false,
+      }))
+    );
+
+    // Pembersihan saat komponen di-unmount agar tidak memberatkan memori
+    return () => {
+      simulation.stop();
+    };
+  }, [initialNodes, initialEdges, searchTag, setNodes, setEdges]);
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: any) => {
     setSelectedNode(node);
@@ -160,13 +184,13 @@ export default function InterventionGraph({
 
       {/* Graph Area + Sidebar Detail */}
       <div style={{ display: "flex", gap: "1rem", height: "620px", position: "relative" }}>
-        <div style={{ flex: 1, border: "1px solid #e2e8f0", borderRadius: "1rem", overflow: "hidden", backgroundColor: "#f8fafc" }}>
-          {styledNodes.length === 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "#64748b" }}>
+        <div style={{ flex: 1, border: "1px solid #1e293b", borderRadius: "1rem", overflow: "hidden", backgroundColor: "#0f172a" }}>
+          {initialNodes.length === 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8" }}>
               <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>🕸️</div>
-              <h4 style={{ margin: "0 0 0.25rem 0", color: "#334155" }}>Knowledge Graph Masih Kosong</h4>
+              <h4 style={{ margin: "0 0 0.25rem 0", color: "#f8fafc" }}>Knowledge Graph Masih Kosong</h4>
               <p style={{ margin: 0, fontSize: "0.85rem", textAlign: "center", maxWidth: "400px" }}>
-                Belum ada data laporan intervensi yang disubmit. Setelah sekolah/komunitas mengisi form intervensi beserta tag, graf koneksi akan otomatis muncul di sini.
+                Belum ada data intervensi. Setelah form diisi, graf relasi fisika akan otomatis muncul di sini.
               </p>
             </div>
           ) : (
@@ -178,15 +202,19 @@ export default function InterventionGraph({
               onNodeClick={onNodeClick}
               fitView
               attributionPosition="bottom-left"
+              minZoom={0.1}
             >
-              <Background color="#cbd5e1" gap={20} size={1.5} />
-              <Controls />
+              {/* Background diubah menjadi gelap agar lebih terasa seperti Obsidian */}
+              <Background color="#334155" gap={25} size={1.5} />
+              <Controls style={{ fill: "#f8fafc", backgroundColor: "#1e293b" }} />
               <MiniMap
                 nodeColor={(n: any) => {
                   if (n.type === "school") return "#3b82f6";
                   if (n.type === "intervention") return "#22c55e";
                   return "#a855f7";
                 }}
+                maskColor="rgba(0, 0, 0, 0.4)"
+                style={{ backgroundColor: "#1e293b" }}
               />
             </ReactFlow>
           )}
@@ -211,7 +239,9 @@ export default function InterventionGraph({
                 <Badge variant={selectedNode.type === "school" ? "info" : selectedNode.type === "intervention" ? "success" : "warning"}>
                   {selectedNode.type === "school" ? "🏢 Sekolah / Komunitas" : selectedNode.type === "intervention" ? "📋 Laporan Intervensi" : "🏷️ Tag Topik"}
                 </Badge>
-                <h4 style={{ margin: "0.5rem 0 0 0", color: "#0f172a", fontSize: "1.05rem" }}>{selectedNode.label}</h4>
+                <h4 style={{ margin: "0.5rem 0 0 0", color: "#0f172a", fontSize: "1.05rem" }}>
+                  {selectedNode.data?.label || selectedNode.label}
+                </h4>
               </div>
               <button
                 onClick={() => setSelectedNode(null)}
@@ -247,6 +277,30 @@ export default function InterventionGraph({
                     <strong style={{ display: "block", color: "#475569", marginBottom: "0.2rem" }}>Kondisi Awal / Diagnosa:</strong>
                     <div style={{ backgroundColor: "#f8fafc", padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#334155" }}>
                       {selectedNode.data.kondisi_awal}
+                    </div>
+                  </div>
+                )}
+                {selectedNode.data?.upaya_dilakukan && (
+                  <div>
+                    <strong style={{ display: "block", color: "#475569", marginBottom: "0.2rem" }}>Upaya yang Dilakukan:</strong>
+                    <div style={{ backgroundColor: "#f8fafc", padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#334155" }}>
+                      {selectedNode.data.upaya_dilakukan}
+                    </div>
+                  </div>
+                )}
+                {selectedNode.data?.perubahan_signifikan && (
+                  <div>
+                    <strong style={{ display: "block", color: "#475569", marginBottom: "0.2rem" }}>Perubahan Signifikan:</strong>
+                    <div style={{ backgroundColor: "#f8fafc", padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#334155" }}>
+                      {selectedNode.data.perubahan_signifikan}
+                    </div>
+                  </div>
+                )}
+                {selectedNode.data?.alasan_bermakna && (
+                  <div>
+                    <strong style={{ display: "block", color: "#475569", marginBottom: "0.2rem" }}>Alasan Bermakna:</strong>
+                    <div style={{ backgroundColor: "#f8fafc", padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#334155" }}>
+                      {selectedNode.data.alasan_bermakna}
                     </div>
                   </div>
                 )}

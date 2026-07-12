@@ -40,7 +40,7 @@ export default function KelasManagerGuru({ classes }: Props) {
                   <th>Nama Kelas</th>
                   <th>Tingkat (Grade)</th>
                   <th>Tahun Ajaran</th>
-                  <th>Jumlah Siswa</th>
+                  <th>Jumlah Anak</th>
                 </tr>
               </thead>
               <tbody>
@@ -49,7 +49,7 @@ export default function KelasManagerGuru({ classes }: Props) {
                     <td style={{ fontWeight: 600, color: "#102e50" }}>{cls.name}</td>
                     <td>Kelas {cls.grade}</td>
                     <td>{cls.academic_year}</td>
-                    <td>{cls.student_count} Siswa</td>
+                    <td>{cls.student_count} Anak</td>
                   </tr>
                 ))}
               </tbody>

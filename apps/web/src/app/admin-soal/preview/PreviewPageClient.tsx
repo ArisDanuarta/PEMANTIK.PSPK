@@ -388,7 +388,7 @@ function MobilePreview({
                       <span style={{ fontSize: "0.75rem" }}>{s.text || `Item ${i + 1}`}</span>
                     </div>
                   ))}
-                  <div style={{ fontSize: "0.65rem", color: "#adb5bd", textAlign: "center", marginTop: "0.25rem" }}>Siswa akan mengurutkan item di atas</div>
+                  <div style={{ fontSize: "0.65rem", color: "#adb5bd", textAlign: "center", marginTop: "0.25rem" }}>Anak akan mengurutkan item di atas</div>
                 </div>
               );
             }

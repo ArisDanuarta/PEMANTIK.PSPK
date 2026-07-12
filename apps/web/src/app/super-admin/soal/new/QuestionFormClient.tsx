@@ -467,7 +467,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
                   <span style={{ fontSize: "0.75rem" }}>{s.text || `Item ${i + 1}`}</span>
                 </div>
               ))}
-              <div style={{ fontSize: "0.65rem", color: "#adb5bd", textAlign: "center", marginTop: "0.25rem" }}>Siswa akan mengurutkan item di atas</div>
+              <div style={{ fontSize: "0.65rem", color: "#adb5bd", textAlign: "center", marginTop: "0.25rem" }}>Anak akan mengurutkan item di atas</div>
             </div>
           );
           return (
@@ -635,7 +635,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
                   {isAudio ? "File audio di atas adalah soal utama" : "File video di atas adalah soal utama"}
                 </div>
                 <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>
-                  Siswa akan {isAudio ? "mendengarkan audio" : "menonton video"} tersebut, lalu memilih jawaban dari opsi di bawah.
+                  Anak akan {isAudio ? "mendengarkan audio" : "menonton video"} tersebut, lalu memilih jawaban dari opsi di bawah.
                 </div>
               </div>
             </div>
@@ -694,7 +694,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             {dragSubtype === "sorting" && (
               <div>
                 <div style={{ ...cardStyle, marginBottom: "0.75rem" }}>
-                  <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>💡 Masukkan item dalam <strong>urutan yang benar</strong>. Saat ditampilkan ke siswa, urutannya akan diacak otomatis.</div>
+                  <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>💡 Masukkan item dalam <strong>urutan yang benar</strong>. Saat ditampilkan ke anak, urutannya akan diacak otomatis.</div>
                 </div>
                 <label className="form-label" style={{ fontWeight: 600, marginBottom: "0.5rem", display: "block" }}>Item (Urutan Benar)</label>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -713,7 +713,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             {dragSubtype === "matching" && (
               <div>
                 <div style={{ ...cardStyle, marginBottom: "0.75rem" }}>
-                  <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>💡 Masukkan pasangan yang benar. Kolom kanan akan diacak saat ditampilkan ke siswa.</div>
+                  <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>💡 Masukkan pasangan yang benar. Kolom kanan akan diacak saat ditampilkan ke anak.</div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr auto", gap: "0.5rem", alignItems: "center", marginBottom: "0.375rem" }}>
                   <span className="form-label" style={{ textAlign: "center" }}>Kolom Kiri</span>
@@ -743,7 +743,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               <div>
                 <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--clr-biru)", marginBottom: "0.25rem" }}>Cara Kerja Voice Recording</div>
                 <div style={{ fontSize: "0.78rem", color: "#6c757d", lineHeight: 1.6 }}>
-                  Siswa merekam suara membaca teks target. Sistem membandingkan dengan <strong>Levenshtein Distance</strong>. Skor ≥ threshold = benar.
+                  Anak merekam suara membaca teks target. Sistem membandingkan dengan <strong>Levenshtein Distance</strong>. Skor ≥ threshold = benar.
                 </div>
               </div>
             </div>
@@ -891,8 +891,8 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               : "Media Stimulus (URL YouTube, gambar, audio, video — opsional)"
             }
             hint={
-              questionType === "audio_question" ? "Siswa akan mendengarkan audio ini sebagai soal utama."
-              : questionType === "video_question" ? "Siswa akan menonton video ini sebagai soal utama."
+              questionType === "audio_question" ? "Anak akan mendengarkan audio ini sebagai soal utama."
+              : questionType === "video_question" ? "Anak akan menonton video ini sebagai soal utama."
               : "Gunakan upload jika media belum ada di internet. Tersimpan di Supabase Storage."
             }
             value={mediaUrl}

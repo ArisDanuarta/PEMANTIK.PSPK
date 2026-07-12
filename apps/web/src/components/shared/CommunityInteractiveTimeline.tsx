@@ -519,7 +519,7 @@ export default function CommunityInteractiveTimeline({
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.4rem", backgroundColor: "#f8fafc", padding: "0.6rem", borderRadius: "0.5rem", textAlign: "center", fontSize: "0.8rem" }}>
                         <div>
                           <div style={{ fontWeight: 700, color: "#df632f" }}>{sc.studentsCount}</div>
-                          <div style={{ color: "#64748b", fontSize: "0.72rem" }}>Anak (Siswa)</div>
+                          <div style={{ color: "#64748b", fontSize: "0.72rem" }}>Anak (Anak)</div>
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, color: "#f2af3e" }}>{sc.teachersCount}</div>

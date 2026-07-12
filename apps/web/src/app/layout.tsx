@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     template: "%s | Pemantik PSPK",
   },
   description:
-    "Sistem manajemen ujian berjenjang untuk asesmen literasi dan numerasi. Mendukung Super Admin, Admin Soal, Komunitas, Sekolah, Guru, dan Siswa.",
+    "Sistem manajemen ujian berjenjang untuk asesmen literasi dan numerasi. Mendukung Super Admin, Admin Soal, Komunitas, Sekolah, Guru, dan Anak.",
   keywords: [
     "asesmen",
     "literasi",

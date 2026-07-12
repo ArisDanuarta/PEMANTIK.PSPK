@@ -21,7 +21,7 @@ const superAdminNav: NavSection[] = [
     label: "Rekap Global",
     items: [
       { label: "Semua Guru", href: "/super-admin/guru", icon: "teacher" },
-      { label: "Semua Siswa", href: "/super-admin/siswa", icon: "student" },
+      { label: "Semua Anak", href: "/super-admin/siswa", icon: "student" },
       { label: "Bank Soal", href: "/super-admin/soal", icon: "question" },
     ],
   },
@@ -29,7 +29,7 @@ const superAdminNav: NavSection[] = [
     label: "Manajemen Ujian",
     items: [
       { label: "Persetujuan Fase", href: "/super-admin/persetujuan", icon: "review" },
-      { label: "Sesi Ujian Siswa", href: "/super-admin/sesi-siswa", icon: "class" },
+      { label: "Sesi Ujian Anak", href: "/super-admin/sesi-siswa", icon: "class" },
     ],
   },
   {

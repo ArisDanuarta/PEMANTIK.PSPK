@@ -12,7 +12,7 @@ export interface ActionResponse {
 }
 
 function generatePin(): string {
-  // Gunakan PIN default 123456 agar mudah didistribusikan ke siswa SD
+  // Gunakan PIN default 123456 agar mudah didistribusikan ke anak SD
   return "123456";
 }
 
@@ -154,14 +154,14 @@ export async function createStudentAction(
     } as any);
 
     if (error) {
-      return { success: false, error: "Gagal membuat data siswa: " + error.message };
+      return { success: false, error: "Gagal membuat data anak: " + error.message };
     }
 
     revalidatePath("/super-admin/siswa");
     revalidatePath("/komunitas/siswa");
     return { 
       success: true, 
-      message: `Siswa ditambahkan. Username: ${username} | PIN: ${pin}` 
+      message: `Anak ditambahkan. Username: ${username} | PIN: ${pin}` 
     };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan: " + (err.message || String(err)) };
@@ -409,12 +409,12 @@ export async function updateStudentAction(id: string, formData: FormData): Promi
     } as any).eq("id", id);
 
     if (error) {
-      return { success: false, error: "Gagal memperbarui data siswa: " + error.message };
+      return { success: false, error: "Gagal memperbarui data anak: " + error.message };
     }
 
     revalidatePath("/super-admin/siswa");
     revalidatePath("/komunitas/siswa");
-    return { success: true, message: "Data siswa berhasil diperbarui." };
+    return { success: true, message: "Data anak berhasil diperbarui." };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan: " + (err.message || String(err)) };
   }
@@ -427,12 +427,12 @@ export async function deleteStudentAction(id: string): Promise<ActionResponse> {
     const { error } = await supabase.from("students").delete().eq("id", id);
 
     if (error) {
-      return { success: false, error: "Gagal menghapus data siswa: " + error.message };
+      return { success: false, error: "Gagal menghapus data anak: " + error.message };
     }
 
     revalidatePath("/super-admin/siswa");
     revalidatePath("/komunitas/siswa");
-    return { success: true, message: "Data siswa berhasil dihapus." };
+    return { success: true, message: "Data anak berhasil dihapus." };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan: " + err.message };
   }

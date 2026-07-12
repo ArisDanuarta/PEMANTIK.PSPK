@@ -73,7 +73,7 @@ class Auth extends _$Auth {
   ///
   /// Flow:
   /// 1. Panggil Edge Function 'authenticate-student'
-  /// 2. Edge Function return JWT valid (HS256) + data siswa
+  /// 2. Edge Function return JWT valid (HS256) + data anak
   /// 3. Simpan JWT ke SecureStorage dengan kunci 'student_jwt'
   ///    (kunci ini sudah dikonfigurasi sebagai accessToken callback di Supabase)
   /// 4. Simpan data profil siswa ke 'student_data'
@@ -138,7 +138,7 @@ class Auth extends _$Auth {
 
         if (!_mounted) return;
         state = AuthState(isAuthenticated: true);
-        // Memicu sinkronisasi background untuk mengupload sesi offline milik siswa yang baru login
+        // Memicu sinkronisasi background untuk mengupload sesi offline milik anak yang baru login
         ref.read(syncServiceProvider).uploadCompletedSessions();
       } else {
         final errorMsg =

@@ -77,7 +77,7 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
         : await createStudentAction(formData);
         
       if (result.success) {
-        success("Berhasil", result.message || `Siswa ${editingStudent ? 'diperbarui' : 'ditambahkan'}.`);
+        success("Berhasil", result.message || `Anak ${editingStudent ? 'diperbarui' : 'ditambahkan'}.`);
         setIsManualModalOpen(false);
         setEditingStudent(null);
       } else {
@@ -88,8 +88,8 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
 
   const handleDelete = async (row: any) => {
     const isConfirmed = await confirm({
-      title: "Hapus Siswa",
-      description: `Yakin ingin menghapus siswa ${row.full_name}?`,
+      title: "Hapus Anak",
+      description: `Yakin ingin menghapus anak ${row.full_name}?`,
       confirmLabel: "Hapus",
       cancelLabel: "Batal",
       variant: "danger"
@@ -98,8 +98,8 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
     
     startTransition(async () => {
       const result = await deleteStudentAction(row.id);
-      if (result.success) success("Berhasil", result.message || "Siswa dihapus.");
-      else error("Gagal", result.error || "Gagal menghapus siswa.");
+      if (result.success) success("Berhasil", result.message || "Anak dihapus.");
+      else error("Gagal", result.error || "Gagal menghapus anak.");
     });
   };
 
@@ -207,8 +207,8 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
       <div style={{ margin: "0 1.5rem 1rem", padding: "0.75rem 1rem", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "0.5rem", fontSize: "0.85rem", color: "#0369a1", display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <span>ℹ</span>
         <span>
-          Halaman ini menampilkan rekap semua siswa lintas sekolah.
-          Untuk <strong>menambah siswa</strong>, gunakan{" "}
+          Halaman ini menampilkan rekap semua anak lintas sekolah.
+          Untuk <strong>menambah anak</strong>, gunakan{" "}
           <a href="/super-admin/sekolah" style={{ color: "#0369a1", fontWeight: 600 }}>Import Dapodik di halaman Sekolah</a>.
         </span>
       </div>
@@ -216,7 +216,7 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
       <table className="pemantik-table">
         <thead>
           <tr>
-            <th>Nama Siswa</th>
+            <th>Nama Anak</th>
             <th>NISN & Gender</th>
             <th>Akun Akses</th>
             <th>Kelas & Guru</th>
@@ -230,7 +230,7 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
           {filteredStudents.length === 0 ? (
             <tr>
               <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "#6c757d" }}>
-                Tidak ada data siswa ditemukan.
+                Tidak ada data anak ditemukan.
               </td>
             </tr>
           ) : (
@@ -282,7 +282,7 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 9999, padding: "2rem 1rem", overflowY: "auto", display: "flex", alignItems: "flex-start", justifyContent: "center" }}>
           <div style={{ backgroundColor: "white", padding: "2rem", borderRadius: "0.5rem", width: "100%", maxWidth: "600px", margin: "auto", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}>
             <h2 style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: "1.5rem" }}>
-              {editingStudent ? "Edit Siswa" : "Tambah Siswa Baru"}
+              {editingStudent ? "Edit Anak" : "Tambah Anak Baru"}
             </h2>
             <form onSubmit={handleManualSubmit}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
@@ -393,7 +393,7 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
               
               {!editingStudent && (
                 <div style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1.5rem", backgroundColor: "#f3f4f6", padding: "0.75rem", borderRadius: "0.5rem" }}>
-                  Sistem akan secara otomatis membuat <b>Username</b> unik dan PIN default <b>123456</b> untuk siswa login ke mobile app.
+                  Sistem akan secara otomatis membuat <b>Username</b> unik dan PIN default <b>123456</b> untuk anak login ke mobile app.
                 </div>
               )}
               
@@ -412,8 +412,8 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
       {/* BULK UPLOAD MODAL */}
       {isBulkModalOpen && (
         <BulkUploadModal
-          title="Import Data Siswa"
-          description="Download template, isi data siswa, dan upload kembali. Sistem akan men-generate username dan PIN unik untuk tiap siswa secara otomatis."
+          title="Import Data Anak"
+          description="Download template, isi data anak, dan upload kembali. Sistem akan men-generate username dan PIN unik untuk tiap siswa secara otomatis."
           templateFileName="Template_Siswa"
           templateHeaders={["nama_siswa", "nisn", "jenis_kelamin", "tanggal_lahir", "nama_sekolah", "npsn", "pilih_kelas", "pekerjaan_ibu", "pekerjaan_ayah", "pendidikan_ibu", "pendidikan_ayah", "kelurahan", "kecamatan", "kabupaten", "provinsi"]}
           templateData={[

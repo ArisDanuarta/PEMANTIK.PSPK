@@ -178,7 +178,7 @@ export async function resetStudentSession(sessionId: string) {
       return { success: false, error: "Gagal membatalkan sesi lama." };
     }
 
-    // 3. Buat session baru untuk siswa yang sama, di kategori yang sama, attempt + 1
+    // 3. Buat session baru untuk anak yang sama, di kategori yang sama, attempt + 1
     const { error: insertErr } = await supabase
       .from("assessment_sessions")
       .insert({

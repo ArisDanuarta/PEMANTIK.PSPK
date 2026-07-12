@@ -160,7 +160,7 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
         {[
           { label: "Total Kelas", value: classes.length, color: "#102e50" },
           { label: "Kelas Aktif", value: classes.filter(c => c.is_active).length, color: "#2d9e5f" },
-          { label: "Total Siswa", value: classes.reduce((sum, c) => sum + (c.students?.[0]?.count ?? 0), 0), color: "#df632f" },
+          { label: "Total Anak", value: classes.reduce((sum, c) => sum + (c.students?.[0]?.count ?? 0), 0), color: "#df632f" },
         ].map((s) => (
           <div key={s.label} className="stat-card" style={{ textAlign: "center", padding: "1.25rem" }}>
             <div style={{ fontSize: "1.75rem", fontWeight: 700, color: s.color }}>{s.value}</div>
@@ -177,7 +177,7 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
               <th>Nama Kelas</th>
               <th>Tingkat</th>
               <th>Guru Pengampu</th>
-              <th>Jumlah Siswa</th>
+              <th>Jumlah Anak</th>
               <th>Tahun Ajaran</th>
               <th>Status</th>
               <th>Aksi</th>
@@ -211,7 +211,7 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       <span style={{ fontSize: "1rem", fontWeight: 700, color: "#102e50" }}>{studentCount}</span>
-                      <span style={{ fontSize: "0.75rem", color: "#6c757d" }}>siswa</span>
+                      <span style={{ fontSize: "0.75rem", color: "#6c757d" }}>anak</span>
                     </div>
                   </td>
                   <td><span style={{ fontSize: "0.85rem", color: "#4b5563" }}>{cls.academic_year ?? "—"}</span></td>

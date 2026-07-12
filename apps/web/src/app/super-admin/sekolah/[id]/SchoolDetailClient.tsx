@@ -185,7 +185,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
     });
   };
 
-  // ─── CRUD Siswa ───────────────────────────────────────────────────────────
+  // ─── CRUD Anak ───────────────────────────────────────────────────────────
   const handleStudentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -193,18 +193,18 @@ export default function SchoolDetailClient({ school, teachers, students, classes
     startTransition(async () => {
       const result = editingStudent ? await updateStudentAction(editingStudent.id, formData) : await createStudentAction(formData);
       if (result.success) {
-        showSuccess("Berhasil", `Siswa berhasil ${editingStudent ? "diperbarui" : "ditambahkan"}.`);
+        showSuccess("Berhasil", `Anak berhasil ${editingStudent ? "diperbarui" : "ditambahkan"}.`);
         setIsStudentModalOpen(false); setEditingStudent(null);
       } else showError("Gagal", result.error || "Terjadi kesalahan.");
     });
   };
 
   const handleDeleteStudent = async (row: any) => {
-    const isConfirmed = await confirm({ title: "Hapus Siswa", description: `Hapus siswa ${row.full_name}?`, confirmLabel: "Hapus", variant: "danger", cancelLabel: "Batal" });
+    const isConfirmed = await confirm({ title: "Hapus Anak", description: `Hapus siswa ${row.full_name}?`, confirmLabel: "Hapus", variant: "danger", cancelLabel: "Batal" });
     if (!isConfirmed) return;
     startTransition(async () => {
       const res = await deleteStudentAction(row.id);
-      if (res.success) showSuccess("Berhasil", "Siswa dihapus.");
+      if (res.success) showSuccess("Berhasil", "Anak dihapus.");
       else showError("Gagal", res.error || "Gagal menghapus.");
     });
   };
@@ -275,10 +275,10 @@ export default function SchoolDetailClient({ school, teachers, students, classes
         XLSX.utils.book_append_sheet(wb, wsTeacher, "Akun Guru");
       }
 
-      // 3. Sheet Siswa
+      // 3. Sheet Anak
       if (students.length > 0) {
         const studentData = students.map((s) => ({
-          Peran: "Siswa",
+          Peran: "Anak",
           Nama: s.full_name,
           Username: s.users?.username || s.username || "-",
           Password_Default: "Password123!",
@@ -286,7 +286,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
         }));
         const wsStudent = XLSX.utils.json_to_sheet(studentData);
         wsStudent["!cols"] = [{ wch: 10 }, { wch: 30 }, { wch: 25 }, { wch: 15 }, { wch: 20 }];
-        XLSX.utils.book_append_sheet(wb, wsStudent, "Akun Siswa");
+        XLSX.utils.book_append_sheet(wb, wsStudent, "Akun Anak");
       }
 
       if (wb.SheetNames.length === 0) {
@@ -309,7 +309,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
   const tabs = [
     { id: "ringkasan", label: "Ringkasan" },
     { id: "guru", label: `Guru (${teachers.length})` },
-    { id: "siswa", label: `Siswa (${students.length})` },
+    { id: "siswa", label: `Anak (${students.length})` },
     { id: "kelas", label: `Kelas (${classes.length})` },
     { id: "ekspor", label: "Ekspor Akun" },
   ] as const;
@@ -458,11 +458,11 @@ export default function SchoolDetailClient({ school, teachers, students, classes
           </div>
         )}
 
-        {/* ══ TAB: SISWA ══════════════════════════════════════════════════════ */}
+        {/* ══ TAB: ANAK ══════════════════════════════════════════════════════ */}
         {activeTab === "siswa" && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
-              <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#102e50", margin: 0 }}>Daftar Siswa ({filteredStudents.length})</h3>
+              <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#102e50", margin: 0 }}>Daftar Anak ({filteredStudents.length})</h3>
               <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
                 <input
                   type="text"
@@ -482,22 +482,22 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                   ))}
                 </select>
                 <Button onClick={() => { setEditingStudent(null); setIsStudentModalOpen(true); }} style={{ backgroundColor: "#102e50", color: "white" }}>
-                  + Tambah Siswa
+                  + Tambah Anak
                 </Button>
               </div>
             </div>
 
             {filteredStudents.length === 0 ? (
               <EmptyState
-                message="Belum ada siswa yang terdaftar."
-                hint={students.length === 0 ? "Import siswa melalui Import Dapodik di tab Ringkasan." : "Tidak ada siswa yang cocok dengan filter ini."}
+                message="Belum ada anak yang terdaftar."
+                hint={students.length === 0 ? "Import siswa melalui Import Dapodik di tab Ringkasan." : "Tidak ada anak yang cocok dengan filter ini."}
               />
             ) : (
               <div style={{ border: "1px solid #e5e7eb", borderRadius: "0.5rem", overflow: "hidden", overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
                   <thead>
                     <tr style={{ background: "#f9fafb" }}>
-                      {["Nama Siswa", "L/P", "NISN", "Kelas", "SES", "Sumber", "Status", "Aksi"].map((h) => (
+                      {["Nama Anak", "L/P", "NISN", "Kelas", "SES", "Sumber", "Status", "Aksi"].map((h) => (
                         <th key={h} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.8rem", fontWeight: 600, color: "#374151", borderBottom: "1px solid #e5e7eb" }}>{h}</th>
                       ))}
                     </tr>
@@ -571,7 +571,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                         <Badge variant={c.is_active ? "success" : "danger"}>{c.is_active ? "Aktif" : "Nonaktif"}</Badge>
                       </div>
                       <div style={{ fontSize: "0.85rem", color: "#374151", marginBottom: "1rem" }}>
-                        <div>👥 <strong>{studentCount}</strong> siswa</div>
+                        <div>👥 <strong>{studentCount}</strong>anak</div>
                         <div style={{ marginTop: "0.25rem" }}>👤 {teacherName || <span style={{ color: "#9ca3af" }}>Belum ada guru</span>}</div>
                       </div>
                       <div style={{ display: "flex", gap: "0.5rem", borderTop: "1px solid #f3f4f6", paddingTop: "0.75rem" }}>
@@ -599,7 +599,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
             <div style={{ padding: "1.5rem", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "0.5rem", marginBottom: "1.5rem" }}>
               <h4 style={{ margin: "0 0 0.5rem 0", color: "#166534" }}>Panduan Distribusi Akun</h4>
               <p style={{ margin: 0, fontSize: "0.85rem", color: "#15803d", lineHeight: "1.5" }}>
-                Anda dapat mengunduh daftar lengkap username dan password default (<code>Password123!</code>) untuk seluruh Guru dan Siswa di sekolah ini. 
+                Anda dapat mengunduh daftar lengkap username dan password default (<code>Password123!</code>) untuk seluruh Guru dan Anak di sekolah ini. 
                 Data Excel tersebut dapat dibagikan kepada guru wali kelas masing-masing untuk didistribusikan kepada para siswa. Pengguna akan diminta mengubah password saat login pertama kali.
               </p>
             </div>
@@ -617,7 +617,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
               </div>
               <div style={{ border: "1px solid #e5e7eb", borderRadius: "0.5rem", padding: "1.25rem", background: "white" }}>
                 <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>👨‍🎓</div>
-                <div style={{ fontWeight: 700, fontSize: "1.1rem" }}>{students.length} Akun Siswa</div>
+                <div style={{ fontWeight: 700, fontSize: "1.1rem" }}>{students.length} Akun Anak</div>
                 <div style={{ fontSize: "0.85rem", color: "#6b7280", marginTop: "0.25rem" }}>Siap untuk di-export</div>
               </div>
             </div>
@@ -708,8 +708,8 @@ export default function SchoolDetailClient({ school, teachers, students, classes
         </form>
       </Modal>
 
-      {/* MODAL TAMBAH/EDIT SISWA */}
-      <Modal open={isStudentModalOpen} onClose={() => setIsStudentModalOpen(false)} title={editingStudent ? "Edit Siswa" : "Tambah Siswa Baru"}>
+      {/* MODAL TAMBAH/EDIT ANAK */}
+      <Modal open={isStudentModalOpen} onClose={() => setIsStudentModalOpen(false)} title={editingStudent ? "Edit Anak" : "Tambah Anak Baru"}>
         <form onSubmit={handleStudentSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
             <label className="form-label">Nama Lengkap *</label>
@@ -746,7 +746,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1rem" }}>
             <Button type="button" variant="outline" onClick={() => setIsStudentModalOpen(false)}>Batal</Button>
-            <Button type="submit" disabled={isPending}>{isPending ? "Menyimpan..." : "Simpan Siswa"}</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? "Menyimpan..." : "Simpan Anak"}</Button>
           </div>
         </form>
       </Modal>

@@ -350,7 +350,7 @@ export default function SchoolInteractiveTimeline({
             <div>
               {isIndependent ? (
                 <p style={{ margin: 0 }}>
-                  Pada tahap awal ini, <strong>Sekolah Independen</strong> diharapkan membuat akun dan mengupload data Dapodik di menu <strong>Manajemen → Upload Data Dapodik</strong>. Setelah data Guru, Siswa, dan Kelas diverifikasi lengkap, Anda dapat menekan tombol <em>&ldquo;Lanjutkan ke Tahap 2&rdquo;</em> di bawah ini untuk bersiap mengajukan asesmen.
+                  Pada tahap awal ini, <strong>Sekolah Independen</strong> diharapkan membuat akun dan mengupload data Dapodik di menu <strong>Manajemen → Upload Data Dapodik</strong>. Setelah data Guru, Anak, dan Kelas diverifikasi lengkap, Anda dapat menekan tombol <em>&ldquo;Lanjutkan ke Tahap 2&rdquo;</em> di bawah ini untuk bersiap mengajukan asesmen.
                 </p>
               ) : (
                 <p style={{ margin: 0 }}>
@@ -381,7 +381,7 @@ export default function SchoolInteractiveTimeline({
           {selectedStepIndex === 2 && (
             <div>
               <p style={{ margin: 0 }}>
-                <strong>Sistem otomatis membaca tanggal mulai dan akhir asesmen yang diajukan.</strong> Siswa-siswa di kelas kini dapat masuk menggunakan akun kredensial mereka (dapat diunduh di menu Manajemen → Guru/Siswa) dan mengerjakan ujian sesuai paket yang aktif.<br /><br />
+                <strong>Sistem otomatis membaca tanggal mulai dan akhir asesmen yang diajukan.</strong> Anak-siswa di kelas kini dapat masuk menggunakan akun kredensial mereka (dapat diunduh di menu Manajemen → Guru/Anak) dan mengerjakan ujian sesuai paket yang aktif.<br /><br />
                 {isIndependent ? (
                   <span>Jika pengerjaan di seluruh kelas telah selesai lebih cepat dari jadwal, Anda memiliki kendali untuk menekan tombol <em>&ldquo;Tutup Asesmen Sekarang&rdquo;</em> di bawah ini untuk melanjutkan ke tahap Intervensi.</span>
                 ) : (
@@ -513,7 +513,7 @@ export default function SchoolInteractiveTimeline({
         )}
       </div>
 
-      {/* ── Summary Card Sekolah (Total Guru, Siswa, Kelas) ── */}
+      {/* ── Summary Card Sekolah (Total Guru, Anak, Kelas) ── */}
       <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "1.5rem" }}>
         <h4 style={{ margin: "0 0 1rem 0", fontSize: "1rem", fontWeight: 700, color: "#1e293b" }}>
           Ringkasan Data Sekolah Anda ({schoolName})
@@ -525,7 +525,7 @@ export default function SchoolInteractiveTimeline({
           </div>
           <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", padding: "1.2rem 1rem", borderRadius: "1rem", textAlign: "center" }}>
             <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#df632f" }}>{totalStudents}</div>
-            <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#64748b", marginTop: "0.2rem" }}>Total Siswa (Anak)</div>
+            <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#64748b", marginTop: "0.2rem" }}>Total Anak (Anak)</div>
           </div>
           <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", padding: "1.2rem 1rem", borderRadius: "1rem", textAlign: "center" }}>
             <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0874aa" }}>{totalClasses}</div>

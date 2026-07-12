@@ -87,7 +87,7 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
         : await createStudentAction(formData);
         
       if (result.success) {
-        success("Berhasil", result.message || `Siswa ${editingStudent ? 'diperbarui' : 'ditambahkan'}.`);
+        success("Berhasil", result.message || `Anak ${editingStudent ? 'diperbarui' : 'ditambahkan'}.`);
         setIsManualModalOpen(false);
         setEditingStudent(null);
       } else {
@@ -98,8 +98,8 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
 
   const handleDelete = async (row: any) => {
     const isConfirmed = await confirm({
-      title: "Hapus Siswa",
-      description: `Yakin ingin menghapus siswa ${row.full_name}?`,
+      title: "Hapus Anak",
+      description: `Yakin ingin menghapus anak ${row.full_name}?`,
       confirmLabel: "Hapus",
       cancelLabel: "Batal",
       variant: "danger"
@@ -108,8 +108,8 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
     
     startTransition(async () => {
       const result = await deleteStudentAction(row.id);
-      if (result.success) success("Berhasil", result.message || "Siswa dihapus.");
-      else error("Gagal", result.error || "Gagal menghapus siswa.");
+      if (result.success) success("Berhasil", result.message || "Anak dihapus.");
+      else error("Gagal", result.error || "Gagal menghapus anak.");
     });
   };
 
@@ -213,7 +213,7 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
             Import Excel
           </Button>
           <Button onClick={handleOpenAddModal} style={{ backgroundColor: "#102e50", color: "white" }}>
-            + Tambah Siswa
+            + Tambah Anak
           </Button>
         </div>
       </div>
@@ -221,7 +221,7 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
       <table className="pemantik-table">
         <thead>
           <tr>
-            <th>Nama Siswa</th>
+            <th>Nama Anak</th>
             <th>NISN & Gender</th>
             <th>Akun Akses</th>
             <th>Kelas & Guru</th>
@@ -235,7 +235,7 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
           {filteredStudents.length === 0 ? (
             <tr>
               <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "#6c757d" }}>
-                Tidak ada data siswa ditemukan.
+                Tidak ada data anak ditemukan.
               </td>
             </tr>
           ) : (
@@ -293,7 +293,7 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
             style={{ backgroundColor: "white", padding: "2rem", borderRadius: "0.75rem", width: "100%", maxWidth: "600px", margin: "auto", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
           >
             <h2 style={{ fontSize: "1.25rem", fontWeight: 600, marginBottom: "1.5rem" }}>
-              {editingStudent ? "Edit Siswa" : "Tambah Siswa Baru"}
+              {editingStudent ? "Edit Anak" : "Tambah Anak Baru"}
             </h2>
             <form onSubmit={handleManualSubmit}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
@@ -404,7 +404,7 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
               
               {!editingStudent && (
                 <div style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1.5rem", backgroundColor: "#f3f4f6", padding: "0.75rem", borderRadius: "0.5rem" }}>
-                  Sistem akan secara otomatis membuat <b>Username</b> unik dan PIN default <b>123456</b> untuk siswa login ke mobile app.
+                  Sistem akan secara otomatis membuat <b>Username</b> unik dan PIN default <b>123456</b> untuk anak login ke mobile app.
                 </div>
               )}
               
@@ -423,8 +423,8 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
       {/* BULK UPLOAD MODAL */}
       {isBulkModalOpen && (
         <BulkUploadModal
-          title="Import Data Siswa Binaan"
-          description="Download template, isi data siswa, dan upload kembali. Siswa akan otomatis terasosiasi dengan komunitas dan sekolah binaan yang Anda isikan."
+          title="Import Data Anak Binaan"
+          description="Download template, isi data anak, dan upload kembali. Anak akan otomatis terasosiasi dengan komunitas dan sekolah binaan yang Anda isikan."
           templateFileName="Template_Siswa_Komunitas"
           templateHeaders={["nama_siswa", "nisn", "jenis_kelamin", "tanggal_lahir", "nama_sekolah", "npsn", "pilih_kelas", "pekerjaan_ibu", "pekerjaan_ayah", "pendidikan_ibu", "pendidikan_ayah", "kelurahan", "kecamatan", "kabupaten", "provinsi"]}
           templateData={[

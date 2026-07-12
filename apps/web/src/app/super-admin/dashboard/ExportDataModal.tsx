@@ -39,7 +39,7 @@ export default function ExportDataModal({ sessions, onClose }: ExportDataModalPr
 
       // 2. Generate CSV Content
       const headers = [
-        "ID Sesi", "Tanggal", "Nama Siswa", "Gender", "Tanggal Lahir",
+        "ID Sesi", "Tanggal", "Nama Anak", "Gender", "Tanggal Lahir",
         "SES Class", "SES Score", "Provinsi", "Kota/Kabupaten", "Kecamatan", "Desa",
         "Pendidikan Ayah", "Pendidikan Ibu", "Pekerjaan Ayah", "Pekerjaan Ibu",
         "Sekolah", "Kategori Soal", "Bidang", "Nilai Akhir", "Status"

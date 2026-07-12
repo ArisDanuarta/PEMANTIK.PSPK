@@ -49,8 +49,8 @@ function buildRingkasanSekolah(rows: any[]) {
       NPSN:             s.NPSN,
       Provinsi:         s.Provinsi,
       Kota:             s.Kota,
-      "Jumlah Siswa":   total,
-      "Siswa Selesai":  s._completedCount,
+      "Jumlah Anak":   total,
+      "Anak Selesai":  s._completedCount,
       "Rata-rata Skor": avgScore,
       "Level Tertinggi": maxLevel,
       "% Selesai":       passRate,
@@ -91,7 +91,7 @@ function buildHasilPerLevel(
       result.push({
         Komunitas:      row.community_name   ?? "—",
         Sekolah:        row.school_name      ?? "—",
-        "Nama Siswa":   row.student_name     ?? "—",
+        "Nama Anak":   row.student_name     ?? "—",
         NISN:           row.nisn             ?? "—",
         Fase:           row.phase            ?? "—",
         Level:          levelNumber,
@@ -152,7 +152,7 @@ function buildAnalisisSoal(allQuestions: any[], answers: any[], levelMap: Map<st
       "Urutan Soal (Admin)": `Soal ${levelCounts[ln]}`,
       "Teks Soal": q.question_text ?? "—",
       "Tipe Soal": q.question_type ?? "—",
-      "Total Siswa Menjawab": stat.total,
+      "Total Anak Menjawab": stat.total,
       "Jumlah Benar": stat.correct,
       "Jumlah Salah": stat.incorrect,
       "Persentase Benar (%)": pctStr,
@@ -659,10 +659,10 @@ export async function GET(request: Request) {
     const sheet1 = buildRingkasanSekolah(rows);
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet1), "Ringkasan Sekolah");
 
-    // ── SHEET 2: Data Siswa Lengkap + Matriks Soal ────────────────────────────
+    // ── SHEET 2: Data Anak Lengkap + Matriks Soal ────────────────────────────
     const sheet2Headers = [
       "Komunitas", "Sekolah", "NPSN", "Kelas", "Guru",
-      "Nama Siswa", "Username", "NISN", "Gender", "Tanggal Lahir",
+      "Nama Anak", "Username", "NISN", "Gender", "Tanggal Lahir",
       "Pendidikan Ayah", "Pendidikan Ibu", "Pekerjaan Ayah", "Pekerjaan Ibu",
       "SES Class", "SES Score",
       "Provinsi", "Kota", "Kecamatan", "Desa",
@@ -684,7 +684,7 @@ export async function GET(request: Request) {
         NPSN:              row.npsn              ?? "—",
         Kelas:             row.class_name        ? `Kelas ${row.grade} - ${row.class_name}` : "—",
         Guru:              row.teacher_name      ?? "—",
-        "Nama Siswa":      row.student_name      ?? "—",
+        "Nama Anak":      row.student_name      ?? "—",
         Username:          row.student_username  ?? "—",
         NISN:              row.nisn              ?? "—",
         Gender:            row.gender            ?? "—",
@@ -719,7 +719,7 @@ export async function GET(request: Request) {
     });
 
     const ws2 = XLSX.utils.json_to_sheet(sheet2Data, { header: sheet2Headers });
-    XLSX.utils.book_append_sheet(wb, ws2, "Data Siswa");
+    XLSX.utils.book_append_sheet(wb, ws2, "Data Anak");
 
     // ── SHEET 3: Analisis Soal (Item Analysis) ────────────────────────────────
     const sheetAnalisisData = buildAnalisisSoal(allQuestions, answers, levelMap);
@@ -760,7 +760,7 @@ export async function GET(request: Request) {
 
       return {
         "Session ID":          ans.session_id,
-        "Nama Siswa":          studentBySession.get(ans.session_id) ?? "—",
+        "Nama Anak":          studentBySession.get(ans.session_id) ?? "—",
         Level:                 lvlNum,
         "Urutan Soal (Admin)": ordIdx,
         Soal:                  qObj?.question_text ?? "—",
@@ -776,7 +776,7 @@ export async function GET(request: Request) {
 
     XLSX.utils.book_append_sheet(
       wb,
-      XLSX.utils.json_to_sheet(sheet4Data.length > 0 ? sheet4Data : [{ "Nama Siswa": "Belum Ada Jawaban" }]),
+      XLSX.utils.json_to_sheet(sheet4Data.length > 0 ? sheet4Data : [{ "Nama Anak": "Belum Ada Jawaban" }]),
       "Detail Jawaban"
     );
   }

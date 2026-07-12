@@ -29,7 +29,7 @@ export default async function SekolahLayout({ children }: { children: React.Reac
     // Menu Upload Data Dapodik HANYA muncul jika sekolah TIDAK memiliki induk (Independen)
     ...(isIndependent ? [{ label: "Upload Data Dapodik", href: "/sekolah/dapodik", icon: "upload" }] : []),
     { label: "Guru", href: "/sekolah/guru", icon: "users" },
-    { label: "Siswa", href: "/sekolah/siswa", icon: "class" },
+    { label: "Anak", href: "/sekolah/siswa", icon: "class" },
     { label: "Kelas", href: "/sekolah/kelas", icon: "school" },
     { label: "Akses Ujian", href: "/sekolah/akses-ujian", icon: "exam" },
   ];

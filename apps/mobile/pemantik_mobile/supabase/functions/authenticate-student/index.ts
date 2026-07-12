@@ -31,7 +31,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Cari data siswa beserta community_id dari sekolah (diperlukan untuk JWT claims & RLS)
+    // Cari data anak beserta community_id dari sekolah (diperlukan untuk JWT claims & RLS)
     const { data: student, error } = await supabase
       .from("students")
       .select(`

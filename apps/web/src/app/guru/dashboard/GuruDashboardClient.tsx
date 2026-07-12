@@ -64,7 +64,7 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
           </h2>
         </div>
         <div className="card" style={{ padding: "1.5rem", borderLeft: "4px solid #f2af3e" }}>
-          <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Siswa</p>
+          <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Anak</p>
           <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#102e50", margin: "0.5rem 0", fontFamily: "var(--font-lora)" }}>
             {stats.totalStudents}
           </h2>
@@ -89,7 +89,7 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
         {/* Chart Gender */}
         <div className="card" style={{ padding: "1.5rem", borderTop: "4px solid #102e50" }}>
           <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem", color: "#102e50", fontFamily: "var(--font-lora)" }}>
-            Sebaran Gender Siswa
+            Sebaran Gender Anak
           </h3>
           <div style={{ width: "100%", height: 250 }}>
             {isMounted && genderData.length > 0 ? (
@@ -113,7 +113,7 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
         {/* Chart Usia */}
         <div className="card" style={{ padding: "1.5rem", borderTop: "4px solid #f2af3e" }}>
           <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem", color: "#102e50", fontFamily: "var(--font-lora)" }}>
-            Sebaran Usia Siswa
+            Sebaran Usia Anak
           </h3>
           <div style={{ width: "100%", height: 250 }}>
             {isMounted && ageData.length > 0 ? (
@@ -169,7 +169,7 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
               <thead>
                 <tr style={{ borderBottom: "2px solid #e5e7eb", color: "#374151" }}>
                   <th style={{ padding: "1rem" }}>Tanggal</th>
-                  <th style={{ padding: "1rem" }}>Nama Siswa</th>
+                  <th style={{ padding: "1rem" }}>Nama Anak</th>
                   <th style={{ padding: "1rem" }}>Kelas</th>
                   <th style={{ padding: "1rem" }}>Kategori Ujian</th>
                   <th style={{ padding: "1rem" }}>Skor</th>

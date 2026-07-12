@@ -49,15 +49,8 @@ export default function IntervensiKomunitasClient({
         {activeStages.length > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <span style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 600 }}>
-              {activeStages.length} Sekolah Siap Intervensi:
+              {activeStages.length} Sekolah Siap Intervensi
             </span>
-            <Button
-              size="sm"
-              style={{ backgroundColor: "#0874aa", color: "white" }}
-              onClick={() => setSelectedStageForForm(activeStages[0])}
-            >
-              ✨ Isi Form Intervensi Sekarang
-            </Button>
           </div>
         )}
       </div>
@@ -76,27 +69,49 @@ export default function IntervensiKomunitasClient({
               </span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "0.75rem" }}>
-              {activeStages.map((st) => (
-                <div
-                  key={st.id}
-                  style={{
-                    backgroundColor: "white", padding: "1rem", borderRadius: "0.75rem",
-                    border: "1px solid #fcd34d", display: "flex", justifyContent: "space-between", alignItems: "center"
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 700, color: "#1f2937", fontSize: "0.92rem" }}>{st.schools?.name}</div>
-                    <div style={{ fontSize: "0.78rem", color: "#6b7280" }}>Fase: {st.phase}</div>
-                  </div>
-                  <Button
-                    size="sm"
-                    style={{ backgroundColor: "#92400e", color: "white", fontSize: "0.78rem" }}
-                    onClick={() => setSelectedStageForForm(st)}
+              {activeStages.map((st) => {
+                const isSubmittedByUs = initialInterventions.some((i: any) => 
+                  i.stage_id === st.id && 
+                  (i.users?.role === 'community' || i.users?.role === 'super_admin')
+                );
+
+                return (
+                  <div
+                    key={st.id}
+                    style={{
+                      backgroundColor: "white", padding: "1rem", borderRadius: "0.75rem",
+                      border: "1px solid #fcd34d", display: "flex", justifyContent: "space-between", alignItems: "center"
+                    }}
                   >
-                    + Catat Intervensi
-                  </Button>
-                </div>
-              ))}
+                    <div>
+                      <div style={{ fontWeight: 700, color: "#1f2937", fontSize: "0.92rem" }}>{st.schools?.name}</div>
+                      <div style={{ fontSize: "0.78rem", color: "#6b7280" }}>Fase: {st.phase}</div>
+                      {isSubmittedByUs && (
+                        <div style={{ marginTop: "0.3rem" }}>
+                          <Badge variant="warning">⏳ Menunggu Form Sekolah</Badge>
+                        </div>
+                      )}
+                    </div>
+                    {!isSubmittedByUs ? (
+                      <Button
+                        size="sm"
+                        style={{ backgroundColor: "#92400e", color: "white", fontSize: "0.78rem" }}
+                        onClick={() => setSelectedStageForForm(st)}
+                      >
+                        + Catat Intervensi
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        style={{ backgroundColor: "#e2e8f0", color: "#64748b", fontSize: "0.78rem", cursor: "not-allowed" }}
+                        disabled
+                      >
+                        Disubmit ✓
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

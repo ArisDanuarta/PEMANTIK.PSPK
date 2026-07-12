@@ -6,8 +6,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Kelola Siswa Binaan | Pemantik",
-  description: "Manajemen data siswa untuk komunitas",
+  title: "Kelola Anak Binaan | Pemantik",
+  description: "Manajemen data anak untuk komunitas",
 };
 
 export const dynamic = 'force-dynamic';
@@ -74,11 +74,11 @@ export default async function SiswaKomunitasPage() {
     <div className="animate-fade-in">
       <div className="page-header">
         <div className="page-header-left">
-          <h1 className="page-title">Data Siswa Binaan</h1>
+          <h1 className="page-title">Data Anak Binaan</h1>
           <div className="page-breadcrumb">
             <span>Komunitas</span>
             <span className="page-breadcrumb-sep">›</span>
-            <span>Siswa</span>
+            <span>Anak</span>
           </div>
         </div>
       </div>

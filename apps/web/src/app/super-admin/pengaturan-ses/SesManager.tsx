@@ -57,7 +57,7 @@ export default function SesManager({ initialThresholds, initialVariables }: { in
   const handleDeleteVariable = async (id: string) => {
     const isConfirmed = await confirm({
       title: "Hapus Variabel SES",
-      description: "Hapus variabel SES ini? Semua siswa yang terkait mungkin kehilangan kalkulasi nilainya.",
+      description: "Hapus variabel SES ini? Semua anak yang terkait mungkin kehilangan kalkulasi nilainya.",
       confirmLabel: "Hapus",
       cancelLabel: "Batal",
       variant: "danger"

@@ -26,7 +26,7 @@ export async function updateSesVariable(id: string, type: "education" | "occupat
 
   if (error) return { success: false, error: error.message };
 
-  // Rekalkulasi ses_score untuk semua siswa yang pakai variabel ini
+  // Rekalkulasi ses_score untuk semua anak yang pakai variabel ini
   await recalculateSesScoreForVariable(supabase, id);
 
   revalidatePath("/super-admin/pengaturan-ses");
@@ -35,14 +35,14 @@ export async function updateSesVariable(id: string, type: "education" | "occupat
 }
 
 /**
- * Rekalkulasi ses_score untuk semua siswa yang punya relasi ke ses_variable tertentu.
+ * Rekalkulasi ses_score untuk semua anak yang punya relasi ke ses_variable tertentu.
  * Spec §4c.1:
  * - Jika ada komponen lain yang masih needs_review → ses_score = NULL, ses_class = NULL
  * - Jika semua komponen lengkap & tidak ada needs_review → ses_score = sum of 4 scores, ses_class dari thresholds
  */
 async function recalculateSesScoreForVariable(supabase: any, variableId: string): Promise<void> {
   try {
-    // Ambil semua siswa yang pakai variabel ini (salah satu dari 4 slot)
+    // Ambil semua anak yang pakai variabel ini (salah satu dari 4 slot)
     const { data: affectedStudents } = await supabase
       .from("students")
       .select("id, father_education_id, mother_education_id, father_occupation_id, mother_occupation_id")
@@ -55,7 +55,7 @@ async function recalculateSesScoreForVariable(supabase: any, variableId: string)
 
     if (!affectedStudents || affectedStudents.length === 0) return;
 
-    // Kumpulkan semua variable ID yang dipakai oleh siswa-siswa ini
+    // Kumpulkan semua variable ID yang dipakai oleh anak-anak ini
     const allVarIds = new Set<string>();
     for (const s of affectedStudents) {
       if (s.father_education_id) allVarIds.add(s.father_education_id);

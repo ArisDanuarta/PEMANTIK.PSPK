@@ -20,7 +20,7 @@ class ProfilePage extends ConsumerWidget {
       backgroundColor: AppColors.background,
       body: studentAsync.when(
         data: (student) {
-          final fullName = student?['full_name'] ?? 'Siswa';
+          final fullName = student?['full_name'] ?? 'Anak';
           final username = student?['username'] ?? '-';
           final nisn = student?['nisn'] ?? '-';
           final gender = student?['gender'] == 'L' ? 'Laki-laki' : (student?['gender'] == 'P' ? 'Perempuan' : '-');
@@ -100,7 +100,7 @@ class ProfilePage extends ConsumerWidget {
                     padding: const EdgeInsets.all(24.0),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        Text('Informasi Siswa', style: AppTextStyles.heading2),
+                        Text('Informasi Anak', style: AppTextStyles.heading2),
                         const SizedBox(height: 16),
                         _buildInfoCard(Icons.badge_outlined, 'NISN', nisn),
                         _buildInfoCard(Icons.school_outlined, 'Asal Sekolah', schoolName),

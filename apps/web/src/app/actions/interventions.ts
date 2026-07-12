@@ -121,9 +121,12 @@ export async function submitInterventionAction(
   payload: InterventionPayload,
 ): Promise<{ success: boolean; error?: string; interventionId?: string }> {
   try {
-    const communityId = await getCommunityIdFromHeader();
-    if (!communityId) {
-      return { success: false, error: "Tidak dapat mengidentifikasi komunitas Anda." };
+    const headersList = await headers();
+    const userId = headersList.get("x-user-id");
+    const userRole = headersList.get("x-user-role");
+
+    if (!userId) {
+      return { success: false, error: "Sesi tidak valid." };
     }
 
     // Validasi field narasi
@@ -134,17 +137,16 @@ export async function submitInterventionAction(
 
     const supabase = await createServerClient();
 
-    // Validasi stage: harus milik komunitas dan di tahap 'intervensi'
+    // Validasi stage: pastikan stage ada dan di tahap 'intervensi'
     const { data: stage, error: stageErr } = await (supabase as any)
       .from("school_assessment_stages")
       .select("id, current_stage, school_id, community_id, phase")
       .eq("id", payload.stageId)
-      .eq("community_id", communityId)
       .eq("school_id", payload.schoolId)
       .maybeSingle();
 
     if (stageErr || !stage) {
-      return { success: false, error: "Tahap tidak ditemukan atau bukan milik komunitas Anda." };
+      return { success: false, error: "Tahap tidak ditemukan." };
     }
     if (stage.current_stage !== "intervensi") {
       return {
@@ -153,16 +155,27 @@ export async function submitInterventionAction(
       };
     }
 
-    const headersList = await headers();
-    const userId = headersList.get("x-user-id");
-    if (!userId) return { success: false, error: "Sesi tidak valid." };
+    // Authorization checks
+    if (userRole === "community") {
+      const headerCommunityId = headersList.get("x-community-id");
+      if (!headerCommunityId || headerCommunityId !== stage.community_id) {
+        return { success: false, error: "Anda tidak memiliki akses ke sekolah binaan ini." };
+      }
+    } else if (userRole === "school" || userRole === "teacher") {
+      const headerSchoolId = headersList.get("x-school-id");
+      if (!headerSchoolId || headerSchoolId !== payload.schoolId) {
+        return { success: false, error: "Anda tidak memiliki akses ke data sekolah ini." };
+      }
+    } else if (userRole !== "super_admin") {
+      return { success: false, error: "Peran Anda tidak diizinkan menyimpan intervensi." };
+    }
 
     // Insert intervensi
     const { data: newIntervention, error: insertErr } = await (supabase as any)
       .from("interventions")
       .insert({
         school_id: payload.schoolId,
-        community_id: communityId,
+        community_id: stage.community_id, // Gunakan community_id dari stage agar mendukung sekolah independen (null)
         phase: payload.phase,
         stage_id: payload.stageId,
         kondisi_awal: kondisiAwal.trim(),
@@ -202,19 +215,33 @@ export async function submitInterventionAction(
       }
     }
 
-    // Update stage ke 'selesai'
-    const { error: stageUpdateErr } = await (supabase as any)
-      .from("school_assessment_stages")
-      .update({
-        current_stage: "selesai",
-        stage_updated_at: new Date().toISOString(),
-      })
-      .eq("id", payload.stageId);
+    // Cek apakah stage ini sudah bisa dipindah ke 'selesai'
+    // Ambil semua intervensi untuk stage ini
+    const { data: allInterventions, error: allIntErr } = await (supabase as any)
+      .from("interventions")
+      .select("id, submitted_by, users(id, role)")
+      .eq("stage_id", payload.stageId);
 
-    if (stageUpdateErr) {
-      console.error("[submitInterventionAction] Gagal update stage ke selesai:", stageUpdateErr);
-      // Intervensi sudah tersimpan, hanya stage yang gagal update
-      // Tidak gagalkan action — data aman, admin bisa cek manual
+    if (!allIntErr && allInterventions) {
+      const hasCommunitySubmission = allInterventions.some((i: any) => i.users?.role === 'community' || i.users?.role === 'super_admin');
+      const hasSchoolSubmission = allInterventions.some((i: any) => i.users?.role === 'school' || i.users?.role === 'teacher');
+
+      const isIndependentSchool = !stage.community_id;
+      const shouldCompleteStage = isIndependentSchool ? hasSchoolSubmission : (hasCommunitySubmission && hasSchoolSubmission);
+
+      if (shouldCompleteStage) {
+        const { error: stageUpdateErr } = await (supabase as any)
+          .from("school_assessment_stages")
+          .update({
+            current_stage: "selesai",
+            stage_updated_at: new Date().toISOString(),
+          })
+          .eq("id", payload.stageId);
+
+        if (stageUpdateErr) {
+          console.error("[submitInterventionAction] Gagal update stage ke selesai:", stageUpdateErr);
+        }
+      }
     }
 
     revalidatePath("/komunitas/intervensi");
@@ -248,6 +275,7 @@ export async function getInterventionsForCommunity(): Promise<{
         kondisi_awal, upaya_dilakukan, perubahan_signifikan, alasan_bermakna,
         submitted_by, created_at,
         schools(name, npsn),
+        users!interventions_submitted_by_fkey(id, role),
         intervention_tag_links(
           intervention_tags(id, name)
         )
@@ -386,6 +414,7 @@ export async function getAllInterventionsGlobal(): Promise<{
         submitted_by, created_at,
         schools(name, npsn),
         communities(name),
+        users!interventions_submitted_by_fkey(id, role),
         intervention_tag_links(
           intervention_tags(id, name)
         )
@@ -451,6 +480,9 @@ export async function getGlobalInterventionGraph(): Promise<{
       }
 
       // Node Intervensi
+      const submitterRole = (intervention as any).users?.role;
+      const isCommunitySubmitter = submitterRole === "community" || submitterRole === "super_admin";
+
       nodes.push({
         id: `intervention_${intervention.id}`,
         type: "intervention",
@@ -459,14 +491,28 @@ export async function getGlobalInterventionGraph(): Promise<{
           phase: intervention.phase,
           created_at: intervention.created_at,
           kondisi_awal: intervention.kondisi_awal,
+          upaya_dilakukan: intervention.upaya_dilakukan,
+          perubahan_signifikan: intervention.perubahan_signifikan,
+          alasan_bermakna: intervention.alasan_bermakna,
+          submitter_role: submitterRole,
         },
       });
 
-      edges.push({
-        id: `e_school_intervention_${intervention.id}`,
-        source: `school_${intervention.school_id}`,
-        target: `intervention_${intervention.id}`,
-      });
+      if (isCommunitySubmitter && intervention.community_id) {
+        // Jika komunitas yg mengisi, hubungkan intervensi ini ke node komunitas
+        edges.push({
+          id: `e_comm_intervention_${intervention.id}`,
+          source: `comm_${intervention.community_id}`,
+          target: `intervention_${intervention.id}`,
+        });
+      } else {
+        // Jika sekolah yg mengisi, hubungkan ke node sekolah
+        edges.push({
+          id: `e_school_intervention_${intervention.id}`,
+          source: `school_${intervention.school_id}`,
+          target: `intervention_${intervention.id}`,
+        });
+      }
 
       // Node Tag + edge
       for (const link of intervention.intervention_tag_links ?? []) {
@@ -513,6 +559,7 @@ export async function getInterventionsForSchool(schoolId: string): Promise<{
         submitted_by, created_at,
         schools(name, npsn),
         communities(name),
+        users!interventions_submitted_by_fkey(id, role),
         intervention_tag_links(
           intervention_tags(id, name)
         )
@@ -563,6 +610,9 @@ export async function getSchoolInterventionGraph(schoolId: string): Promise<{
           phase: intervention.phase,
           created_at: intervention.created_at,
           kondisi_awal: intervention.kondisi_awal,
+          upaya_dilakukan: intervention.upaya_dilakukan,
+          perubahan_signifikan: intervention.perubahan_signifikan,
+          alasan_bermakna: intervention.alasan_bermakna,
         },
       });
 

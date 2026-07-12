@@ -27,7 +27,7 @@ export default function DashboardCharts({
       {/* Chart Gender */}
       <div className="card" style={{ padding: "1.5rem", borderTop: "4px solid #102e50" }}>
         <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem", color: "#102e50", fontFamily: "var(--font-lora)" }}>
-          Sebaran Gender Siswa
+          Sebaran Gender Anak
         </h3>
         <div style={{ width: "100%", height: 250 }}>
           {isMounted ? (
@@ -59,7 +59,7 @@ export default function DashboardCharts({
       {/* Chart Usia */}
       <div className="card" style={{ padding: "1.5rem", borderTop: "4px solid #f2af3e" }}>
         <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem", color: "#102e50", fontFamily: "var(--font-lora)" }}>
-          Sebaran Usia Siswa
+          Sebaran Usia Anak
         </h3>
         <div style={{ width: "100%", height: 250 }}>
           {isMounted ? (

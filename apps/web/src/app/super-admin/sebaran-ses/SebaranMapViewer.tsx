@@ -187,7 +187,7 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
                     }}
                     onMouseEnter={() => {
                       if (stat) {
-                        setTooltipContent(`${rawCityName}: ${stat.count} Siswa | Rata-rata SES: ${stat.avgScore.toFixed(1)}`);
+                        setTooltipContent(`${rawCityName}: ${stat.count} Anak | Rata-rata SES: ${stat.avgScore.toFixed(1)}`);
                       } else {
                         setTooltipContent(`${rawCityName}: Belum ada data`);
                       }
@@ -274,9 +274,9 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
 
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem", flex: 1, overflowY: "auto", paddingRight: "0.25rem" }}>
             <div style={{ background: "#f8fafc", padding: "1rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0" }}>
-              <div style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 600, marginBottom: "0.25rem" }}>TOTAL SISWA TERDAFTAR</div>
+              <div style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 600, marginBottom: "0.25rem" }}>TOTAL ANAK TERDAFTAR</div>
               <div style={{ fontSize: "2rem", fontWeight: 700, color: "#0f172a" }}>
-                {selectedCity.stat.count} <span style={{ fontSize: "1rem", fontWeight: 500, color: "#64748b" }}>Siswa</span>
+                {selectedCity.stat.count} <span style={{ fontSize: "1rem", fontWeight: 500, color: "#64748b" }}>Anak</span>
               </div>
             </div>
 
@@ -321,7 +321,7 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#334155" }}>{dist.count}</span>
-                        <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Siswa</span>
+                        <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Anak</span>
                       </div>
                     </div>
                   ))}
@@ -332,7 +332,7 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
             
             {selectedCity.stat.count === 0 && (
               <div style={{ marginTop: "1rem", fontSize: "0.9rem", color: "#64748b", textAlign: "center", fontStyle: "italic" }}>
-                Belum ada data siswa terdaftar dari wilayah ini.
+                Belum ada data anak terdaftar dari wilayah ini.
               </div>
             )}
           </div>

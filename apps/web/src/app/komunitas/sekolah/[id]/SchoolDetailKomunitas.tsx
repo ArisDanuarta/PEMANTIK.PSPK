@@ -92,7 +92,7 @@ export default function SchoolDetailKomunitas({
     });
   };
 
-  // ─── CRUD Siswa ───────────────────────────────────────────────────────────
+  // ─── CRUD Anak ───────────────────────────────────────────────────────────
   const handleStudentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -100,18 +100,18 @@ export default function SchoolDetailKomunitas({
     startTransition(async () => {
       const result = editingStudent ? await updateStudentAction(editingStudent.id, formData) : await createStudentAction(formData);
       if (result.success) {
-        showSuccessToast("Berhasil", `Siswa berhasil ${editingStudent ? "diperbarui" : "ditambahkan"}.`);
+        showSuccessToast("Berhasil", `Anak berhasil ${editingStudent ? "diperbarui" : "ditambahkan"}.`);
         setIsStudentModalOpen(false); setEditingStudent(null);
       } else showErrorToast("Gagal", result.error || "Terjadi kesalahan.");
     });
   };
 
   const handleDeleteStudent = async (row: any) => {
-    const isConfirmed = await confirm({ title: "Hapus Siswa", description: `Hapus siswa ${row.full_name}?`, confirmLabel: "Hapus", variant: "danger", cancelLabel: "Batal" });
+    const isConfirmed = await confirm({ title: "Hapus Anak", description: `Hapus siswa ${row.full_name}?`, confirmLabel: "Hapus", variant: "danger", cancelLabel: "Batal" });
     if (!isConfirmed) return;
     startTransition(async () => {
       const res = await deleteStudentAction(row.id);
-      if (res.success) showSuccessToast("Berhasil", "Siswa dihapus.");
+      if (res.success) showSuccessToast("Berhasil", "Anak dihapus.");
       else showErrorToast("Gagal", res.error || "Gagal menghapus.");
     });
   };
@@ -184,10 +184,10 @@ export default function SchoolDetailKomunitas({
         XLSX.utils.book_append_sheet(wb, wsTeacher, "Akun Guru");
       }
 
-      // 3. Sheet Siswa
+      // 3. Sheet Anak
       if (students.length > 0) {
         const studentData = students.map((s: any) => ({
-          Peran: "Siswa",
+          Peran: "Anak",
           Nama: s.full_name,
           Username: s.users?.username || s.username || "-",
           Password_Default: "Password123!",
@@ -195,7 +195,7 @@ export default function SchoolDetailKomunitas({
         }));
         const wsStudent = XLSX.utils.json_to_sheet(studentData);
         wsStudent["!cols"] = [{ wch: 10 }, { wch: 30 }, { wch: 25 }, { wch: 15 }, { wch: 20 }];
-        XLSX.utils.book_append_sheet(wb, wsStudent, "Akun Siswa");
+        XLSX.utils.book_append_sheet(wb, wsStudent, "Akun Anak");
       }
 
       if (wb.SheetNames.length === 0) {
@@ -288,7 +288,7 @@ export default function SchoolDetailKomunitas({
               transition: "all 0.2s"
             }}
           >
-            🎓 Daftar Siswa ({students.length})
+            🎓 Daftar Anak ({students.length})
           </button>
           <button
             onClick={() => { setActiveTab("classes"); setSearchTerm(""); }}
@@ -482,11 +482,11 @@ export default function SchoolDetailKomunitas({
         </div>
       )}
 
-      {/* TAB 3: DAFTAR SISWA */}
+      {/* TAB 3: DAFTAR ANAK */}
       {activeTab === "students" && (
         <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5", boxShadow: "0 2px 4px rgba(0,0,0,0.03)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
-            <h3 style={{ margin: 0, fontSize: "1.1rem", color: "#102e50" }}>Daftar Siswa ({filteredStudents.length})</h3>
+            <h3 style={{ margin: 0, fontSize: "1.1rem", color: "#102e50" }}>Daftar Anak ({filteredStudents.length})</h3>
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
               <input
                 type="text"
@@ -506,21 +506,21 @@ export default function SchoolDetailKomunitas({
                 ))}
               </select>
               <Button onClick={() => { setEditingStudent(null); setIsStudentModalOpen(true); }} style={{ backgroundColor: "#102e50", color: "white" }}>
-                + Tambah Siswa
+                + Tambah Anak
               </Button>
             </div>
           </div>
 
           {filteredStudents.length === 0 ? (
             <div style={{ padding: "3rem", textAlign: "center", color: "#6c757d" }}>
-              Belum ada siswa terdaftar yang cocok dengan pencarian / filter ini.
+              Belum ada anak terdaftar yang cocok dengan pencarian / filter ini.
             </div>
           ) : (
             <div style={{ border: "1px solid #e5e7eb", borderRadius: "0.5rem", overflow: "hidden", overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
                 <thead>
                   <tr style={{ background: "#f9fafb" }}>
-                    {["Nama Siswa", "L/P", "NISN", "Kelas", "SES", "Sumber", "Status", "Aksi"].map((h) => (
+                    {["Nama Anak", "L/P", "NISN", "Kelas", "SES", "Sumber", "Status", "Aksi"].map((h) => (
                       <th key={h} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.8rem", fontWeight: 600, color: "#374151", borderBottom: "1px solid #e5e7eb" }}>{h}</th>
                     ))}
                   </tr>
@@ -591,7 +591,7 @@ export default function SchoolDetailKomunitas({
                       <Badge variant={c.is_active !== false ? "success" : "danger"}>{c.is_active !== false ? "Aktif" : "Nonaktif"}</Badge>
                     </div>
                     <div style={{ fontSize: "0.85rem", color: "#374151", marginTop: "0.75rem", marginBottom: "1rem" }}>
-                      <div>👥 <strong>{studentCount}</strong> siswa</div>
+                      <div>👥 <strong>{studentCount}</strong>anak</div>
                       <div style={{ marginTop: "0.25rem" }}>👤 {teacherName || <span style={{ color: "#9ca3af" }}>Belum ada guru</span>}</div>
                     </div>
                     <div style={{ display: "flex", gap: "0.5rem", borderTop: "1px solid #e5e7eb", paddingTop: "0.75rem" }}>
@@ -610,7 +610,7 @@ export default function SchoolDetailKomunitas({
       {activeTab === "ekspor" && (
         <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5", boxShadow: "0 2px 4px rgba(0,0,0,0.03)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
-            <h3 style={{ margin: 0, fontSize: "1.1rem", color: "#102e50" }}>Ekspor Data Akun Sekolah, Guru, & Siswa</h3>
+            <h3 style={{ margin: 0, fontSize: "1.1rem", color: "#102e50" }}>Ekspor Data Akun Sekolah, Guru, & Anak</h3>
             <Button onClick={handleExportAccounts} style={{ backgroundColor: "#10b981", color: "white" }}>
               📥 Unduh Excel Data Akun
             </Button>
@@ -619,8 +619,8 @@ export default function SchoolDetailKomunitas({
           <div style={{ padding: "1.5rem", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "0.5rem" }}>
             <h4 style={{ margin: "0 0 0.5rem 0", color: "#166534" }}>Panduan Distribusi Akun</h4>
             <p style={{ margin: 0, fontSize: "0.85rem", color: "#15803d", lineHeight: "1.5" }}>
-              Anda dapat mengunduh daftar lengkap username dan password default (<code>Password123!</code>) untuk Admin Sekolah, Guru, dan Siswa di sekolah ini.
-              Data Excel tersebut memiliki 3 sheet (Akun Sekolah, Akun Guru, dan Akun Siswa) yang dapat dipilah dan didistribusikan kepada pihak sekolah atau wali kelas.
+              Anda dapat mengunduh daftar lengkap username dan password default (<code>Password123!</code>) untuk Admin Sekolah, Guru, dan Anak di sekolah ini.
+              Data Excel tersebut memiliki 3 sheet (Akun Sekolah, Akun Guru, dan Akun Anak) yang dapat dipilah dan didistribusikan kepada pihak sekolah atau wali kelas.
             </p>
           </div>
         </div>
@@ -707,8 +707,8 @@ export default function SchoolDetailKomunitas({
         </form>
       </Modal>
 
-      {/* MODAL TAMBAH/EDIT SISWA */}
-      <Modal open={isStudentModalOpen} onClose={() => setIsStudentModalOpen(false)} title={editingStudent ? "Edit Siswa" : "Tambah Siswa Baru"}>
+      {/* MODAL TAMBAH/EDIT ANAK */}
+      <Modal open={isStudentModalOpen} onClose={() => setIsStudentModalOpen(false)} title={editingStudent ? "Edit Anak" : "Tambah Anak Baru"}>
         <form onSubmit={handleStudentSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
             <label className="form-label">Nama Lengkap *</label>
@@ -745,7 +745,7 @@ export default function SchoolDetailKomunitas({
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1rem" }}>
             <Button type="button" variant="outline" onClick={() => setIsStudentModalOpen(false)}>Batal</Button>
-            <Button type="submit" disabled={isPending}>{isPending ? "Menyimpan..." : "Simpan Siswa"}</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? "Menyimpan..." : "Simpan Anak"}</Button>
           </div>
         </form>
       </Modal>

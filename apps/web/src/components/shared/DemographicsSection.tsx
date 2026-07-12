@@ -21,7 +21,7 @@ const SES_COLORS = ["#102e50", "#0874aa", "#2d9e5f", "#f2af3e", "#e11d48"];
 
 export default function DemographicsSection({
   students,
-  title = "Demografi Siswa & Latar Belakang",
+  title = "Demografi Anak & Latar Belakang",
   description = "Distribusi jenis kelamin dan status sosial ekonomi (SES) siswa terdaftar"
 }: DemographicsSectionProps) {
   
@@ -73,7 +73,7 @@ export default function DemographicsSection({
         <h3 style={{ margin: "0 0 0.25rem 0", color: "#102e50", fontSize: "1.1rem" }}>{title}</h3>
         <p style={{ margin: "0 0 1.5rem 0", color: "#6b7280", fontSize: "0.85rem" }}>{description}</p>
         <div style={{ padding: "2.5rem", textAlign: "center", color: "#9ca3af", backgroundColor: "#f8f9fa", borderRadius: "0.5rem", border: "1px dashed #dee2e6" }}>
-          Belum ada data demografi siswa yang tersedia.
+          Belum ada data demografi anak yang tersedia.
         </div>
       </div>
     );
@@ -104,7 +104,7 @@ export default function DemographicsSection({
                     <Cell key={`cell-${index}`} fill={GENDER_COLORS[index % GENDER_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: any) => [`${value} Siswa`, "Jumlah"]} />
+                <Tooltip formatter={(value: any) => [`${value} Anak`, "Jumlah"]} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -127,7 +127,7 @@ export default function DemographicsSection({
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#6b7280" }} interval={0} />
                 <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} allowDecimals={false} />
-                <Tooltip formatter={(value: any) => [`${value} Siswa`, "Jumlah"]} />
+                <Tooltip formatter={(value: any) => [`${value} Anak`, "Jumlah"]} />
                 <Bar dataKey="count" fill="#2d9e5f" radius={[4, 4, 0, 0]} barSize={36}>
                   {sesData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={SES_COLORS[index % SES_COLORS.length]} />

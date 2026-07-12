@@ -3,8 +3,11 @@
 import React, { useState } from "react";
 import { Badge, Button } from "@pemantik/ui";
 
+import InterventionForm from "@/components/shared/InterventionForm";
+
 interface IntervensiSekolahClientProps {
   initialInterventions: any[];
+  activeStages?: any[];
 }
 
 function formatDate(iso: string) {
@@ -17,8 +20,10 @@ function formatDate(iso: string) {
 
 export default function IntervensiSekolahClient({
   initialInterventions,
+  activeStages = [],
 }: IntervensiSekolahClientProps) {
   const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
+  const [selectedStageForForm, setSelectedStageForForm] = useState<any | null>(null);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
@@ -36,7 +41,75 @@ export default function IntervensiSekolahClient({
             Total {initialInterventions.length} catatan pembinaan intervensi pada sekolah Anda
           </p>
         </div>
+
+        {activeStages.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <span style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 600 }}>
+              {activeStages.length} Tahap Siap Intervensi
+            </span>
+          </div>
+        )}
       </div>
+
+      {/* Daftar Tahap Intervensi Aktif */}
+      {activeStages.length > 0 && (
+        <div style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a", padding: "1.25rem 1.5rem", borderRadius: "1rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+            <h4 style={{ margin: 0, color: "#92400e", fontSize: "1.02rem" }}>
+              ⚠️ Tahap Intervensi Sedang Berlangsung ({activeStages.length} Fase)
+            </h4>
+            <span style={{ fontSize: "0.82rem", color: "#b45309" }}>
+              Selesaikan asesmen dan isi laporan intervensi untuk fase ini.
+            </span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "0.75rem" }}>
+            {activeStages.map((st) => {
+              const isSubmittedByUs = initialInterventions.some((i: any) => 
+                i.stage_id === st.id && 
+                (i.users?.role === 'school' || i.users?.role === 'teacher')
+              );
+              
+              const hasCommunity = !!st.community_id;
+
+              return (
+                <div
+                  key={st.id}
+                  style={{
+                    backgroundColor: "white", padding: "1rem", borderRadius: "0.75rem",
+                    border: "1px solid #fcd34d", display: "flex", justifyContent: "space-between", alignItems: "center"
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 700, color: "#1f2937", fontSize: "0.92rem" }}>Fase: {st.phase}</div>
+                    {isSubmittedByUs && hasCommunity && (
+                      <div style={{ marginTop: "0.3rem" }}>
+                        <Badge variant="warning">⏳ Menunggu Form Komunitas</Badge>
+                      </div>
+                    )}
+                  </div>
+                  {!isSubmittedByUs ? (
+                    <Button
+                      size="sm"
+                      style={{ backgroundColor: "#92400e", color: "white", fontSize: "0.78rem" }}
+                      onClick={() => setSelectedStageForForm(st)}
+                    >
+                      + Catat Intervensi
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      style={{ backgroundColor: "#e2e8f0", color: "#64748b", fontSize: "0.78rem", cursor: "not-allowed" }}
+                      disabled
+                    >
+                      Disubmit ✓
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* List Intervensi */}
       <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5" }}>
@@ -178,6 +251,46 @@ export default function IntervensiSekolahClient({
                 Tutup
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Form Intervensi */}
+      {selectedStageForForm && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1100, padding: "1rem"
+        }}>
+          <div style={{
+            backgroundColor: "white", borderRadius: "1.25rem", padding: "2rem",
+            width: "100%", maxWidth: "700px", maxHeight: "90vh", overflowY: "auto",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
+            position: "relative"
+          }}>
+            <button
+              onClick={() => setSelectedStageForForm(null)}
+              style={{
+                position: "absolute", top: "1.25rem", right: "1.5rem",
+                background: "none", border: "none", fontSize: "1.5rem", color: "#94a3b8", cursor: "pointer"
+              }}
+            >
+              &times;
+            </button>
+            <h3 style={{ margin: "0 0 0.2rem 0", color: "#102e50", fontSize: "1.3rem" }}>
+              Form Laporan Intervensi (Sekolah)
+            </h3>
+            <p style={{ color: "#64748b", fontSize: "0.9rem", marginBottom: "1.5rem", paddingBottom: "1rem", borderBottom: "1px solid #f1f3f5" }}>
+              Fase: <strong>{selectedStageForForm.phase}</strong>
+            </p>
+            <InterventionForm
+              schoolId={selectedStageForForm.school_id}
+              schoolName={"Sekolah"}
+              stageId={selectedStageForForm.id}
+              phase={selectedStageForForm.phase}
+              onSuccess={() => setSelectedStageForForm(null)}
+              onCancel={() => setSelectedStageForForm(null)}
+            />
           </div>
         </div>
       )}

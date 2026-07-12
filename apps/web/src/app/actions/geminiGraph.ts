@@ -3,7 +3,7 @@
 import { createServerClient } from "@pemantik/supabase";
 import { getSystemSettings } from "./settings";
 import { getAllInterventionsGlobal } from "./interventions";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
@@ -83,21 +83,10 @@ Tags: ${tags}
     const ai = new GoogleGenAI({ apiKey });
     
     const prompt = `Anda adalah ahli sistem pendidikan dan analis data kualitatif.
-Diberikan ratusan narasi kualitatif intervensi sekolah (kondisi, upaya, hasil).
+Diberikan narasi kualitatif intervensi sekolah (kondisi, upaya, hasil).
 Tugas Anda adalah membuat Knowledge Graph tingkat makro. 
 Kelompokkan/klasterisasi data tersebut ke dalam Node (masalah utama, solusi, hasil akhir) dan Edge (hubungan sebab-akibat antar Node).
-Buatlah ringkas, jangan mengulang intervensi satu per satu, tapi simpulkan ke dalam maksimal 15 node makro.
-
-Node type harus salah satu dari: 'problem', 'solution', 'outcome', 'theme'.
-Output HARUS murni JSON dengan format berikut tanpa teks lain (jangan gunakan blok markdown atau backticks):
-{
-  "nodes": [
-    { "id": "node_1", "label": "Judul Singkat", "type": "problem", "description": "Deskripsi panjang hasil sintesis" }
-  ],
-  "edges": [
-    { "source_node_id": "node_1", "target_node_id": "node_2", "label": "mengatasi" }
-  ]
-}
+Buatlah ringkas, simpulkan ke dalam maksimal 15 node makro.
 
 DATA INTERVENSI:
 ${textData}`;
@@ -107,6 +96,37 @@ ${textData}`;
       contents: prompt,
       config: {
         responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            nodes: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  label: { type: Type.STRING },
+                  type: { type: Type.STRING },
+                  description: { type: Type.STRING }
+                },
+                required: ["id", "label", "type", "description"]
+              }
+            },
+            edges: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  source_node_id: { type: Type.STRING },
+                  target_node_id: { type: Type.STRING },
+                  label: { type: Type.STRING }
+                },
+                required: ["source_node_id", "target_node_id", "label"]
+              }
+            }
+          },
+          required: ["nodes", "edges"]
+        }
       },
     });
 

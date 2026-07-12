@@ -51,7 +51,7 @@ final assessmentLevelsProvider = StreamProvider.family<List<LevelInfo>, String>(
       final studentStr = await secureStorage.read(
         key: 'student_data',
       );
-      if (studentStr == null) throw Exception('Siswa belum login');
+      if (studentStr == null) throw Exception('Anak belum login');
       final student = jsonDecode(studentStr);
       final studentId = student['id'] as String;
 

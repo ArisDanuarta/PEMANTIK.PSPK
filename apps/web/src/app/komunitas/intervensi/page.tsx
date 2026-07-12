@@ -22,12 +22,25 @@ export default async function KomunitasIntervensiPage() {
     redirect("/login");
   }
 
-  // 1. Cek apakah ada sekolah di bawah komunitas ini yang berada di tahap 'intervensi' atau 'selesai'
-  const { data: unlockedStages } = await (supabase as any)
-    .from("school_assessment_stages")
-    .select("id, school_id, phase, current_stage, valid_until, schools(id, name, npsn)")
-    .eq("community_id", communityId)
-    .in("current_stage", ["intervensi", "selesai"]);
+  // 1. Dapatkan semua sekolah milik komunitas ini
+  const { data: schools } = await (supabase as any)
+    .from("schools")
+    .select("id")
+    .eq("community_id", communityId);
+    
+  const schoolIds = schools?.map((s: any) => s.id) || [];
+
+  
+  let unlockedStages: any[] = [];
+  if (schoolIds.length > 0) {
+    const { data } = await (supabase as any)
+      .from("school_assessment_stages")
+      .select("id, school_id, phase, current_stage, schools(id, name, npsn)")
+      .in("school_id", schoolIds)
+      .in("current_stage", ["intervensi", "selesai"]);
+      
+    unlockedStages = data || [];
+  }
 
   // 2. Cek apakah sudah pernah ada riwayat intervensi
   const resList = await getInterventionsForCommunity();

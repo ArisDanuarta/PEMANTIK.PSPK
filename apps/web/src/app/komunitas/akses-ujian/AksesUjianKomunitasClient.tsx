@@ -242,7 +242,7 @@ export default function AksesUjianKomunitasClient({
               fontSize: "0.95rem",
             }}
           >
-            <span>{canSubmitRequest ? "✨" : "🔒"}</span>
+            <span>{canSubmitRequest ? "" : "🔒"}</span>
             <span>{canSubmitRequest ? "Pembuatan dan Pengajuan Asesmen" : "Pengajuan Terkunci (Tahap 2)"}</span>
           </Button>
           <Button
@@ -439,8 +439,8 @@ export default function AksesUjianKomunitasClient({
                         }}
                       >
                         {isThisDistributing
-                          ? "⏳ Memproses…"
-                          : `🏫 Ke Semua Sekolah (${targets.length})`}
+                          ? "Memproses…"
+                          : `Ke Semua Sekolah (${targets.length})`}
                       </button>
                     </td>
                   </tr>
@@ -681,10 +681,10 @@ export default function AksesUjianKomunitasClient({
                   </td>
                   <td>
                     {pr.status === "approved" ? (
-                      <Badge variant="success">✅ Disetujui</Badge>
+                      <Badge variant="success">Disetujui</Badge>
                     ) : pr.status === "rejected" ? (
                       <div>
-                        <Badge variant="danger">❌ Ditolak</Badge>
+                        <Badge variant="danger">Ditolak</Badge>
                         {pr.rejection_reason && (
                           <div style={{ fontSize: "0.75rem", color: "#ef4444", marginTop: "0.25rem", maxWidth: "200px" }}>
                             Alasan: {pr.rejection_reason}
@@ -692,7 +692,7 @@ export default function AksesUjianKomunitasClient({
                         )}
                       </div>
                     ) : (
-                      <Badge variant="warning">⏳ Menunggu Persetujuan</Badge>
+                      <Badge variant="warning">Menunggu Persetujuan</Badge>
                     )}
                   </td>
                 </tr>

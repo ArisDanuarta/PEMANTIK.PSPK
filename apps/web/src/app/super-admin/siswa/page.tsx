@@ -4,8 +4,8 @@ import React from "react";
 import StudentsManager from "./StudentsManager";
 
 export const metadata: Metadata = {
-  title: "Kelola Siswa",
-  description: "Manajemen data siswa lintas sekolah",
+  title: "Kelola Anak",
+  description: "Manajemen data anak lintas sekolah",
 };
 
 export default async function SiswaPage() {
@@ -41,11 +41,11 @@ export default async function SiswaPage() {
     <div className="animate-fade-in">
       <div className="page-header">
         <div className="page-header-left">
-          <h1 className="page-title">Data Siswa</h1>
+          <h1 className="page-title">Data Anak</h1>
           <div className="page-breadcrumb">
             <span>Super Admin</span>
             <span className="page-breadcrumb-sep">›</span>
-            <span>Siswa</span>
+            <span>Anak</span>
           </div>
         </div>
       </div>

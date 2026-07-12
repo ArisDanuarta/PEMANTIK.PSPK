@@ -50,7 +50,7 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
 
   const handleResetPassword = async (s: StudentRow) => {
     const ok = await confirm({
-      title: "Reset PIN Siswa",
+      title: "Reset PIN Anak",
       description: `PIN akses "${s.full_name}" akan direset ke PIN default "123456". Lanjutkan?`,
       confirmLabel: "Ya, Reset",
     });
@@ -108,7 +108,7 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={4} style={{ textAlign: "center", padding: "3rem", color: "#6b7280" }}>
-                    Tidak ada data siswa.
+                    Tidak ada data anak.
                   </td>
                 </tr>
               ) : (

@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Upload Data Dapodik | Sekolah — Pemantik",
-  description: "Impor dan pemutakhiran data Dapodik sekolah (Guru, Siswa, dan Kelas)",
+  description: "Impor dan pemutakhiran data Dapodik sekolah (Guru, Anak, dan Kelas)",
 };
 
 export default async function SekolahDapodikPage() {
@@ -87,7 +87,7 @@ export default async function SekolahDapodikPage() {
           </h2>
           <p style={{ color: "#4b5563", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "2rem" }}>
             Sekolah Anda terdaftar sebagai <strong>Sekolah Binaan Komunitas</strong>.<br /><br />
-            Seluruh data Dapodik (Guru, Siswa, dan Kelas) untuk sekolah binaan diunggah dan dikelola secara terpusat oleh administrator Komunitas Induk Anda agar sinkron dengan jadwal asesmen komunitas.
+            Seluruh data Dapodik (Guru, Anak, dan Kelas) untuk sekolah binaan diunggah dan dikelola secara terpusat oleh administrator Komunitas Induk Anda agar sinkron dengan jadwal asesmen komunitas.
           </p>
           <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
             <a

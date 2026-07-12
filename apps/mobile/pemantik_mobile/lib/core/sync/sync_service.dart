@@ -22,7 +22,7 @@ class SyncService {
       final studentStr = await storage.read(key: 'student_data');
       if (studentStr == null) return;
 
-      // Baca data siswa dari SecureStorage untuk dipakai di Minggu 2
+      // Baca data anak dari SecureStorage untuk dipakai di Minggu 2
       // (binding session ke access_id, dll.)
       final student = jsonDecode(studentStr);
       // Variabel ini akan dipakai di Minggu 2 (insert session + access_id tracking)
@@ -34,7 +34,7 @@ class SyncService {
       final String? studentId = student['id'] as String?;
 
 
-      // Query assessment_access untuk school siswa ini.
+      // Query assessment_access untuk school anak ini.
       // RLS policy 'student_view_own_access' sudah memfilter berdasarkan:
       //   - school_id dari JWT claims (via jwt_school_id())
       //   - is_active = true
@@ -173,17 +173,17 @@ class SyncService {
       final storage = secureStorage;
       final studentStr = await storage.read(key: 'student_data');
       if (studentStr == null) {
-        log('Upload dibatalkan: tidak ada sesi siswa yang aktif (belum login).');
+        log('Upload dibatalkan: tidak ada sesi anak yang aktif (belum login).');
         return;
       }
       final student = jsonDecode(studentStr);
       final String? currentStudentId = student['id'] as String?;
       if (currentStudentId == null) return;
 
-      log('Memulai Sinkronisasi Upload untuk siswa $currentStudentId...');
+      log('Memulai Sinkronisasi Upload untuk anak $currentStudentId...');
 
       // 1. Upload status Sesi yang berstatus pending (baik in_progress maupun completed)
-      // HANYA MILIK SISWA YANG SEDANG LOGIN (encegah bentrok multi-user di 1 device)
+      // HANYA MILIK ANAK YANG SEDANG LOGIN (encegah bentrok multi-user di 1 device)
       final pendingSessions = await _db.sessionDao.getPendingSessionsForStudent(currentStudentId);
       for (final session in pendingSessions) {
         // Skip sesi lama yang ID-nya bukan UUID untuk menghindari error di DB
@@ -232,7 +232,7 @@ class SyncService {
         }
       }
 
-      // 2. Upload semua jawaban yang berstatus pending MILIK SISWA YANG SEDANG LOGIN
+      // 2. Upload semua jawaban yang berstatus pending MILIK ANAK YANG SEDANG LOGIN
       final pendingAnswers = await _db.sessionDao.getPendingAnswersForStudent(currentStudentId);
       for (final answer in pendingAnswers) {
         try {

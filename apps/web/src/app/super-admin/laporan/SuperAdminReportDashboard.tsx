@@ -330,7 +330,7 @@ export default function SuperAdminReportDashboard({
           }}
         >
           <div className="card" style={{ padding: "1.25rem", borderLeft: "4px solid #0874aa" }}>
-            <p style={{ fontSize: "0.85rem", color: "#6c757d", fontWeight: 600 }}>Total Siswa</p>
+            <p style={{ fontSize: "0.85rem", color: "#6c757d", fontWeight: 600 }}>Total Anak</p>
             <h3 style={{ fontSize: "1.8rem", color: "#102e50", margin: "0.25rem 0" }}>{totalSiswa}</h3>
           </div>
           <div className="card" style={{ padding: "1.25rem", borderLeft: "4px solid #10b981" }}>
@@ -353,7 +353,7 @@ export default function SuperAdminReportDashboard({
         <div className="card" style={{ padding: "3rem", textAlign: "center", color: "#6c757d" }}>
           <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📭</div>
           <p style={{ fontWeight: 600, color: "#102e50", marginBottom: "0.5rem" }}>Data Tidak Ditemukan</p>
-          <p style={{ fontSize: "0.9rem" }}>Belum ada siswa yang menyelesaikan ujian dengan filter yang dipilih.</p>
+          <p style={{ fontSize: "0.9rem" }}>Belum ada anak yang menyelesaikan ujian dengan filter yang dipilih.</p>
         </div>
       )}
 
@@ -363,7 +363,7 @@ export default function SuperAdminReportDashboard({
           <table className="data-table">
             <thead>
               <tr>
-                <th>Nama Siswa / NISN</th>
+                <th>Nama Anak / NISN</th>
                 <th>Sekolah</th>
                 <th>Fase</th>
                 <th style={{ textAlign: "center" }}>Percobaan</th>

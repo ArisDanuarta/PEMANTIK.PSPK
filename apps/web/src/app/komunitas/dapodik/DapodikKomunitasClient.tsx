@@ -57,7 +57,6 @@ export default function DapodikKomunitasClient({ schools, communityId, community
       }}>
         <div style={{ flex: "1 1 420px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
-            <span style={{ fontSize: "1.75rem" }}>📂</span>
             <h2 style={{ fontFamily: "Lora, serif", fontSize: "1.35rem", fontWeight: 700, color: "#102e50", margin: 0 }}>
               Pusat Sinkronisasi Dapodik Sekolah Binaan
             </h2>
@@ -69,7 +68,7 @@ export default function DapodikKomunitasClient({ schools, communityId, community
             <li><strong>Mendaftarkan Sekolah Baru</strong> (atau memutakhirkan sekolah yang sudah ada)</li>
             <li><strong>Membuat Akun Admin Sekolah</strong> dengan format <code style={{ backgroundColor: "#f1f5f9", padding: "0.15rem 0.4rem", borderRadius: "4px" }}>sch_[NPSN]</code> & sandi default <code style={{ backgroundColor: "#f1f5f9", padding: "0.15rem 0.4rem", borderRadius: "4px" }}>Password123!</code></li>
             <li><strong>Membentuk Daftar Rombel / Kelas</strong> secara otomatis</li>
-            <li><strong>Menghasilkan Akun Siswa</strong> siap pakai untuk mengikuti asesmen Literasi & Numerasi</li>
+            <li><strong>Menghasilkan Akun Anak</strong> siap pakai untuk mengikuti asesmen Literasi & Numerasi</li>
           </ul>
         </div>
 
@@ -101,7 +100,7 @@ export default function DapodikKomunitasClient({ schools, communityId, community
               fontSize: "0.95rem"
             }}
           >
-            <span>📋</span> Upload Data Dapodik Baru
+            Upload Data Dapodik Baru
           </Button>
           <div style={{ fontSize: "0.75rem", color: "#64748b", textAlign: "center" }}>
             Dapat memilih pembuatan sekolah baru atau re-sinkronisasi sekolah eksisting.
@@ -128,8 +127,8 @@ export default function DapodikKomunitasClient({ schools, communityId, community
           <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "#d97706", marginTop: "0.35rem" }}>{totalClassesAll} Kelas</div>
         </div>
         <div style={{ backgroundColor: "white", padding: "1.25rem 1.5rem", borderRadius: "1rem", border: "1px solid #e2e8f0" }}>
-          <div style={{ fontSize: "0.82rem", color: "#64748b", fontWeight: 600 }}>TOTAL SISWA TERGENERATE</div>
-          <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "#2563eb", marginTop: "0.35rem" }}>{totalStudentsAll} Siswa</div>
+          <div style={{ fontSize: "0.82rem", color: "#64748b", fontWeight: 600 }}>TOTAL ANAK TERGENERATE</div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 700, color: "#2563eb", marginTop: "0.35rem" }}>{totalStudentsAll} Anak</div>
         </div>
       </div>
 
@@ -138,10 +137,10 @@ export default function DapodikKomunitasClient({ schools, communityId, community
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.5rem", borderBottom: "1px solid #e5e7eb", flexWrap: "wrap", gap: "1rem" }}>
           <div>
             <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#102e50", margin: 0 }}>
-              Status Dapodik & Akun Siswa per Sekolah
+              Status Dapodik & Akun Anak per Sekolah
             </h3>
             <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "0.2rem 0 0 0" }}>
-              Pantau jumlah kelas dan akun siswa yang terbentuk dari pemindai Dapodik
+              Pantau jumlah kelas dan akun anak yang terbentuk dari pemindai Dapodik
             </p>
           </div>
           <input
@@ -161,7 +160,7 @@ export default function DapodikKomunitasClient({ schools, communityId, community
                 <th>Nama Sekolah & NPSN</th>
                 <th>Wilayah</th>
                 <th>Jumlah Kelas</th>
-                <th>Akun Siswa</th>
+                <th>Akun Anak</th>
                 <th>Akun Guru</th>
                 <th>Status Dapodik</th>
                 <th>Aksi</th>
@@ -190,7 +189,7 @@ export default function DapodikKomunitasClient({ schools, communityId, community
                         <div style={{ fontWeight: 600, color: "#d97706" }}>{s.classes_count} Kelas</div>
                       </td>
                       <td>
-                        <div style={{ fontWeight: 600, color: "#2563eb" }}>{s.students_count} Siswa</div>
+                        <div style={{ fontWeight: 600, color: "#2563eb" }}>{s.students_count} Anak</div>
                       </td>
                       <td>
                         <div style={{ fontWeight: 600, color: "#059669" }}>{s.teachers_count} Guru</div>
@@ -217,7 +216,7 @@ export default function DapodikKomunitasClient({ schools, communityId, community
                           onClick={() => setIsDapodikModalOpen(true)}
                           style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem", color: "#0369a1", borderColor: "#7dd3fc" }}
                         >
-                          🔄 Sync Dapodik
+                          Sync Dapodik
                         </Button>
                       </td>
                     </tr>

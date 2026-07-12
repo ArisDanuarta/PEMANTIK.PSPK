@@ -127,7 +127,7 @@ export default function AksesUjianSekolahClient({
         if (!res.ok) throw new Error(data.error || "Server error");
         showSuccess(
           "Ujian Ulang Diaktifkan",
-          `${data.voidedCount ?? 0} sesi lama di-void. ${std ? `Siswa "${std.name}"` : `Kelas "${cls?.name}"`} kini bisa mengulang ujian.`
+          `${data.voidedCount ?? 0} sesi lama di-void. ${std ? `Anak "${std.name}"` : `Kelas "${cls?.name}"`} kini bisa mengulang ujian.`
         );
         setSelectedPackageId("");
         setSelectedClassId("");
@@ -372,7 +372,7 @@ export default function AksesUjianSekolahClient({
                 <th style={{ padding: "1rem 1.5rem" }}>Nama Fase</th>
                 <th style={{ padding: "1rem 1.5rem" }}>Kategori & Mata Ujian</th>
                 <th style={{ padding: "1rem 1.5rem" }}>Rentang Waktu</th>
-                <th style={{ padding: "1rem 1.5rem" }}>Status & Akses Siswa</th>
+                <th style={{ padding: "1rem 1.5rem" }}>Status & Akses Anak</th>
               </tr>
             </thead>
             <tbody>
@@ -490,7 +490,7 @@ export default function AksesUjianSekolahClient({
                 <option value="">— Pilih Kelas —</option>
                 {classes.map((cls) => (
                   <option key={cls.id} value={cls.id}>
-                    Kelas {cls.grade} - {cls.name} ({cls.students?.[0]?.count ?? 0} Siswa)
+                    Kelas {cls.grade} - {cls.name} ({cls.students?.[0]?.count ?? 0} Anak)
                   </option>
                 ))}
               </select>
@@ -517,7 +517,7 @@ export default function AksesUjianSekolahClient({
                 onChange={(e) => setSelectedStudentId(e.target.value)}
                 style={{ maxWidth: "400px" }}
               >
-                <option value="">— Seluruh Siswa di Kelas Ini —</option>
+                <option value="">— Seluruh Anak di Kelas Ini —</option>
                 {students
                   .filter((s) => s.class_id === selectedClassId)
                   .map((std) => (

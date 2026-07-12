@@ -228,7 +228,7 @@ export default function IntegratedDashboardManager({
                   <th style={{ padding: "1rem" }}>Kode</th>
                   <th style={{ padding: "1rem", textAlign: "center" }}>Jumlah Sekolah</th>
                   <th style={{ padding: "1rem", textAlign: "center" }}>Jumlah Guru</th>
-                  <th style={{ padding: "1rem", textAlign: "center" }}>Jumlah Siswa</th>
+                  <th style={{ padding: "1rem", textAlign: "center" }}>Jumlah Anak</th>
                   <th style={{ padding: "1rem", textAlign: "center" }}>Status</th>
                 </tr>
               </thead>

@@ -55,7 +55,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <div style={{ marginBottom: "0.65rem" }}>
           <div style={{ color: "#94a3b8", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: 600 }}>Partisipasi</div>
           <div style={{ fontWeight: 700, color: "#fff", marginTop: "0.15rem" }}>
-            👥 {data.peserta} Siswa <span style={{ fontSize: "0.75rem", color: "#cbd5e1", fontWeight: 500 }}>({data.totalSesi} sesi selesai)</span>
+            👥 {data.peserta} Anak <span style={{ fontSize: "0.75rem", color: "#cbd5e1", fontWeight: 500 }}>({data.totalSesi} sesi selesai)</span>
           </div>
         </div>
 
@@ -82,7 +82,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function PhaseComparisonChart({
   sessions,
-  title = "📊 Perbandingan Capaian & Partisipasi Anak Antar Fase",
+  title = "Perbandingan Capaian & Partisipasi Anak Antar Fase",
   description = "Grafik batang menunjukkan perbandingan partisipasi anak (siswa) serta rata-rata skor capaian (%) dan level tertinggi di Literasi & Numerasi tiap fase."
 }: PhaseComparisonChartProps) {
   const chartData = useMemo(() => {
@@ -204,7 +204,7 @@ export default function PhaseComparisonChart({
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ paddingTop: "1rem", fontSize: "0.88rem", fontWeight: 600 }} />
             <Bar
-              name="Partisipasi Siswa (Anak Ikut Asesmen)"
+              name="Partisipasi Anak (Anak Ikut Asesmen)"
               dataKey="peserta"
               fill="#0874aa"
               radius={[6, 6, 0, 0]}
@@ -246,18 +246,18 @@ export default function PhaseComparisonChart({
             gap: "0.5rem"
           }}>
             <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#102e50", borderBottom: "1px dashed #cbd5e1", paddingBottom: "0.4rem" }}>
-              📌 {d.phase}
+              {d.phase}
             </div>
             <div style={{ fontSize: "0.8rem", color: "#334155", display: "flex", justifyContent: "space-between" }}>
-              <span>👥 Partisipasi:</span>
-              <strong>{d.peserta} Siswa ({d.totalSesi} sesi)</strong>
+              <span>Partisipasi:</span>
+              <strong>{d.peserta} Anak ({d.totalSesi} sesi)</strong>
             </div>
             <div style={{ fontSize: "0.8rem", color: "#059669", display: "flex", justifyContent: "space-between" }}>
-              <span>📖 Literasi (Avg / Max):</span>
+              <span>Literasi (Avg / Max):</span>
               <strong>{d.avgLiterasi}% ({d.maxLevelLit > 0 ? `Lvl ${d.maxLevelLit}` : "—"})</strong>
             </div>
             <div style={{ fontSize: "0.8rem", color: "#d97706", display: "flex", justifyContent: "space-between" }}>
-              <span>🔢 Numerasi (Avg / Max):</span>
+              <span>Numerasi (Avg / Max):</span>
               <strong>{d.avgNumerasi}% ({d.maxLevelNum > 0 ? `Lvl ${d.maxLevelNum}` : "—"})</strong>
             </div>
           </div>
@@ -280,7 +280,7 @@ export default function PhaseComparisonChart({
         <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
           <div style={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: "#0874aa" }} />
           <span style={{ fontSize: "0.8rem", color: "#334155" }}>
-            <strong>Partisipasi Siswa:</strong> Jumlah anak unik yang mengikuti sesi asesmen pada fase tersebut.
+            <strong>Partisipasi Anak:</strong> Jumlah anak unik yang mengikuti sesi asesmen pada fase tersebut.
           </span>
         </div>
         <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>

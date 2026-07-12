@@ -92,7 +92,7 @@ export default async function SekolahAksesUjianPage() {
       .order("name");
     classes = classData ?? [];
 
-    // 3. Siswa aktif di sekolah ini
+    // 3. Anak aktif di sekolah ini
     const { data: studentsData } = await supabase
       .from("students")
       .select("id, name:full_name, class_id")

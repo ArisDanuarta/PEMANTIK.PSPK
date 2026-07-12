@@ -12,7 +12,7 @@ const guruNav: NavSection[] = [
     label: "Manajemen Data",
     items: [
       { label: "Manajemen Kelas", href: "/guru/kelas", icon: "school" },
-      { label: "Manajemen Siswa", href: "/guru/siswa", icon: "users" },
+      { label: "Manajemen Anak", href: "/guru/siswa", icon: "users" },
     ],
   },
   {

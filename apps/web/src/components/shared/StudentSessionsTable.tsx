@@ -35,7 +35,7 @@ export default function StudentSessionsTable({ sessions, showResetButton = true 
 
   const handleReset = async (sessionId: string) => {
     const isConfirmed = await confirm({
-      title: "Reset Ujian Siswa?",
+      title: "Reset Ujian Anak?",
       description: "Apakah Anda yakin ingin me-reset ujian ini karena kendala teknis? Skor saat ini akan hangus dan siswa harus mengulang dari awal.",
       confirmLabel: "Ya, Reset",
       cancelLabel: "Batal",
@@ -49,7 +49,7 @@ export default function StudentSessionsTable({ sessions, showResetButton = true 
     try {
       const result = await resetStudentSession(sessionId);
       if (result.success) {
-        toast({ type: "success", title: "Sesi Berhasil Direset", description: "Sesi baru telah dibuat untuk siswa." });
+        toast({ type: "success", title: "Sesi Berhasil Direset", description: "Sesi baru telah dibuat untuk anak." });
       } else {
         toast({ type: "error", title: "Gagal Mereset Sesi", description: result.error || "Gagal mereset sesi." });
       }
@@ -86,7 +86,7 @@ export default function StudentSessionsTable({ sessions, showResetButton = true 
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
           <thead>
             <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left", color: "#4b5563", backgroundColor: "#f9fafb" }}>
-              <th style={{ padding: "1rem" }}>Siswa</th>
+              <th style={{ padding: "1rem" }}>Anak</th>
               <th style={{ padding: "1rem" }}>Paket Ujian</th>
               <th style={{ padding: "1rem" }}>Fase (Attempt)</th>
               <th style={{ padding: "1rem" }}>Status</th>

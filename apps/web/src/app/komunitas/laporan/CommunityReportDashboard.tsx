@@ -351,7 +351,7 @@ export default function CommunityReportDashboard({ schools, packages, communityI
     <div style={{ textAlign: "center", padding: "3rem 1rem", color: "#9ca3af" }}>
       <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🔍</div>
       <div style={{ fontWeight: 600, color: "#374151" }}>Belum ada data</div>
-      <div style={{ fontSize: "0.85rem" }}>Belum ada siswa yang mengerjakan ujian untuk kategori ini.</div>
+      <div style={{ fontSize: "0.85rem" }}>Belum ada anak yang mengerjakan ujian untuk kategori ini.</div>
     </div>
   );
 
@@ -367,7 +367,7 @@ export default function CommunityReportDashboard({ schools, packages, communityI
           <div style={{ textAlign: "center", padding: "2rem 1rem", color: "#6b7280" }}>
             <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📋</div>
             <div style={{ fontWeight: 600, color: "#374151", marginBottom: "0.25rem" }}>Belum Ada Data Ujian</div>
-            <div style={{ fontSize: "0.85rem" }}>Belum ada siswa yang pernah mengerjakan ujian dalam komunitas ini.</div>
+            <div style={{ fontSize: "0.85rem" }}>Belum ada anak yang pernah mengerjakan ujian dalam komunitas ini.</div>
           </div>
         ) : (
           <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
@@ -425,7 +425,7 @@ export default function CommunityReportDashboard({ schools, packages, communityI
                       <DataCard
                         key={card.level_number}
                         title={`Level ${card.level_number}`}
-                        subtitle="Siswa yang mengerjakan soal di level ini"
+                        subtitle="Anak yang mengerjakan soal di level ini"
                         count={card.student_count}
                         countLabel="siswa"
                         onDownload={() => handleCardDownload("level", String(card.level_number))}
@@ -514,7 +514,7 @@ export default function CommunityReportDashboard({ schools, packages, communityI
               Daftar Sekolah Binaan & Rekapitulasi Peserta
             </h2>
             <p style={{ margin: "0.25rem 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
-              Daftar seluruh sekolah binaan di bawah komunitas beserta jumlah siswa terdaftar dan berpartisipasi dalam asesmen.
+              Daftar seluruh sekolah binaan di bawah komunitas beserta jumlah anak terdaftar dan berpartisipasi dalam asesmen.
             </p>
           </div>
           <Button
@@ -552,8 +552,8 @@ export default function CommunityReportDashboard({ schools, packages, communityI
                 <th style={{ padding: "0.85rem 1rem" }}>Nama Sekolah</th>
                 <th style={{ padding: "0.85rem 1rem" }}>NPSN</th>
                 <th style={{ padding: "0.85rem 1rem" }}>Kota / Kabupaten</th>
-                <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Siswa Terdaftar</th>
-                <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Siswa Mengerjakan</th>
+                <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Anak Terdaftar</th>
+                <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Anak Mengerjakan</th>
                 <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Rata-rata Skor</th>
                 <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Aksi</th>
               </tr>

@@ -15,7 +15,7 @@ export interface StageTimelineProps {
 const STAGE_ORDER = [
   { key: "persiapan_akun", label: "Persiapan Akun", desc: "Verifikasi data & akun guru/siswa" },
   { key: "pengajuan_fase", label: "Pengajuan Fase", desc: "Menunggu persetujuan Super Admin" },
-  { key: "proses_asesmen", label: "Proses Asesmen", desc: "Siswa mengerjakan ujian di kelas" },
+  { key: "proses_asesmen", label: "Proses Asesmen", desc: "Anak mengerjakan ujian di kelas" },
   { key: "intervensi", label: "Intervensi", desc: "Analisis & pendampingan sasaran" },
   { key: "selesai", label: "Selesai", desc: "Siklus asesmen selesai" },
 ];

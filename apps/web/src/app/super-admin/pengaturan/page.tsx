@@ -245,7 +245,7 @@ export default function SuperAdminPengaturan() {
                       { role: "Question Admin", q: "Semua", m: "Tidak", r: "Tidak", u: "Tidak", mob: "Tidak" },
                       { role: "Komunitas/Mitra", q: "Tidak", m: "Sekolah Sendiri", r: "Sekolah Sendiri", u: "Sekolah Sendiri", mob: "Tidak" },
                       { role: "Sekolah/Guru", q: "Tidak", m: "Tidak", r: "Kelas Sendiri", u: "Kelas Sendiri", mob: "Tidak" },
-                      { role: "Siswa", q: "Jawab Saja", m: "Tidak", r: "Tidak", u: "Tidak", mob: "Ya (Akses PIN)" },
+                      { role: "Anak", q: "Jawab Saja", m: "Tidak", r: "Tidak", u: "Tidak", mob: "Ya (Akses PIN)" },
                     ].map((row) => (
                       <tr key={row.role} style={{ borderBottom: "1px solid #f3f4f6" }}>
                         <td style={{ padding: "0.75rem", fontWeight: 600, color: "#102e50" }}>{row.role}</td>

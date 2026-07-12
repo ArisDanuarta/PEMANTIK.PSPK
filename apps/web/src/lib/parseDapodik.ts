@@ -248,7 +248,7 @@ function extractGlobalMetadata(workbook: XLSX.WorkBook) {
     for (let r = 0; r < limit; r++) {
       const row = rows[r];
       
-      // PROTEKSI: Jika baris ini terdeteksi kuat sebagai Judul Tabel Siswa, LEWATI!
+      // PROTEKSI: Jika baris ini terdeteksi kuat sebagai Judul Tabel Anak, LEWATI!
       if (scoreHeaderRow(row) >= 2) continue;
 
       if (!metadata.detected_school_name) metadata.detected_school_name = findValueInRow(row, /^(nama sekolah|sekolah)$/i);
@@ -313,7 +313,7 @@ export function parseDapodikFile(buffer: ArrayBuffer): DapodikParseResult {
   // 1. Ekstrak Metadata Sekolah dari seluruh workbook secara global
   const globalMetadata = extractGlobalMetadata(workbook);
 
-  // 2. Cari sheet yang berisi data siswa
+  // 2. Cari sheet yang berisi data anak
   let bestSheet: { name: string; allRows: any[][]; detection: HeaderDetection } | null = null;
 
   for (const name of workbook.SheetNames) {

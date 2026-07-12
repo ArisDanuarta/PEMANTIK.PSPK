@@ -17,7 +17,7 @@ interface ProgressTrackingChartProps {
 export default function ProgressTrackingChart({ 
   sessions, 
   title = "Perbandingan Nilai Antar Fase",
-  description = "Melacak perkembangan rata-rata nilai siswa dari waktu ke waktu"
+  description = "Melacak perkembangan rata-rata nilai anak dari waktu ke waktu"
 }: ProgressTrackingChartProps) {
   
   // Agregasi data: Hitung rata-rata skor per fase

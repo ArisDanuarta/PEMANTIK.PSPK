@@ -49,7 +49,7 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
   }
 
   void _startSession() async {
-    log('Siswa menekan tombol Mulai Asesmen, Membuat Sesi...');
+    log('Anak menekan tombol Mulai Asesmen, Membuat Sesi...');
 
     final db = ref.read(databaseProvider);
     final studentStr = await secureStorage.read(key: 'student_data');

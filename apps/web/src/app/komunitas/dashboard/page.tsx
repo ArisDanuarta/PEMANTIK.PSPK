@@ -249,7 +249,7 @@ export default async function KomunitasDashboardPage() {
           </div>
         </div>
 
-        {/* Anak Terdaftar (#df632f Jingga - mengganti kata Siswa menjadi Anak) */}
+        {/* Anak Terdaftar (#df632f Jingga - mengganti kata Anak menjadi Anak) */}
         <div className="stat-card" style={{ borderTop: "4px solid #df632f" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
@@ -310,7 +310,7 @@ export default async function KomunitasDashboardPage() {
             
             <div style={{ marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", alignItems: "center" }}>
-                <span style={{ fontSize: "0.92rem", color: "#334155", fontWeight: 700 }}>📖 Literasi</span>
+                <span style={{ fontSize: "0.92rem", color: "#334155", fontWeight: 700 }}>Literasi</span>
                 <span style={{ fontSize: "1.15rem", color: "#2d9e5f", fontWeight: 800 }}>{avgLiterasi}%</span>
               </div>
               <div style={{ width: "100%", backgroundColor: "#f1f5f9", height: "10px", borderRadius: "999px", overflow: "hidden" }}>
@@ -320,7 +320,7 @@ export default async function KomunitasDashboardPage() {
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", alignItems: "center" }}>
-                <span style={{ fontSize: "0.92rem", color: "#334155", fontWeight: 700 }}>🔢 Numerasi</span>
+                <span style={{ fontSize: "0.92rem", color: "#334155", fontWeight: 700 }}>Numerasi</span>
                 <span style={{ fontSize: "1.15rem", color: "#0874aa", fontWeight: 800 }}>{avgNumerasi}%</span>
               </div>
               <div style={{ width: "100%", backgroundColor: "#f1f5f9", height: "10px", borderRadius: "999px", overflow: "hidden" }}>
@@ -337,7 +337,7 @@ export default async function KomunitasDashboardPage() {
         {/* 10 Sesi Asesmen Terbaru */}
         <div style={{ backgroundColor: "white", padding: "1.75rem", borderRadius: "1.25rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
           <h3 style={{ fontFamily: "Lora, serif", margin: "0 0 0.35rem 0", fontSize: "1.2rem", color: "#102e50", fontWeight: 700 }}>
-            ⚡ 10 Sesi Asesmen Terbaru
+            10 Sesi Asesmen Terbaru
           </h3>
           <p style={{ margin: "0 0 1.25rem 0", fontSize: "0.85rem", color: "#64748b" }}>
             Aktivitas pengerjaan asesmen anak terbaru secara real-time.

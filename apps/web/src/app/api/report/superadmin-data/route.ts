@@ -139,7 +139,7 @@ export async function GET(request: Request) {
       attempt_number:     row.attempt_number   ?? 1,
       // ── Baru Minggu 4 ──
       final_level_number: row.final_level_number ?? null,
-      // ── Siswa ──
+      // ── Anak ──
       nisn:               row.nisn             ?? "",
       full_name:          row.student_name     ?? "Tanpa Nama",
       gender:             row.gender           ?? "",

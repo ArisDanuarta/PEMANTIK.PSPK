@@ -405,7 +405,7 @@ export default function BulkUploadModal({
         {dapodikStep === "upload" && (
           <div>
             <p style={{ fontSize: "0.9rem", color: "#4b5563", marginBottom: "1.25rem", lineHeight: 1.6 }}>
-              Upload file Excel Dapodik <strong>"Daftar Peserta Didik"</strong>. Sistem akan otomatis membuat Sekolah, Kelas (dari Rombel), dan Siswa.
+              Upload file Excel Dapodik <strong>"Daftar Peserta Didik"</strong>. Sistem akan otomatis membuat Sekolah, Kelas (dari Rombel), dan Anak.
             </p>
             {!file ? (
               <DropZone onFileSelect={(f) => { setFile(f); setErrorMsg(""); }} onDrop={handleDrop} onDragOver={handleDragOver} fileInputRef={fileInputRef} disabled={isUploading} />
@@ -425,7 +425,7 @@ export default function BulkUploadModal({
         {dapodikStep === "confirm" && parseSummary && (
           <div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem", marginBottom: "1.5rem" }}>
-              <StatCard label="Siswa Terdeteksi" value={parseSummary.row_count} color="#102e50" />
+              <StatCard label="Anak Terdeteksi" value={parseSummary.row_count} color="#102e50" />
               <StatCard label="Kelas Terdeteksi" value={parseSummary.detected_classes.length} color="#f2af3e" />
               <StatCard label="SES Baru" value={parseSummary.missing_ses_count} color={parseSummary.missing_ses_count > 0 ? "#dc2626" : "#22c55e"} />
             </div>

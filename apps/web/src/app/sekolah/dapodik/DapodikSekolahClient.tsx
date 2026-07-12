@@ -67,7 +67,7 @@ export default function DapodikSekolahClient({ school }: DapodikSekolahClientPro
     if (!parsePreview) return;
     const ok = await confirm({
       title: "Mulai Impor Data Dapodik?",
-      description: `Sistem akan menambahkan/memutakhirkan ${parsePreview.row_count} data siswa/guru dan ${parsePreview.detected_classes?.length || 0} kelas ke dalam sekolah ${school.name}. Data yang sudah ada tidak akan terduplikasi.`,
+      description: `Sistem akan menambahkan/memutakhirkan ${parsePreview.row_count} data anak/guru dan ${parsePreview.detected_classes?.length || 0} kelas ke dalam sekolah ${school.name}. Data yang sudah ada tidak akan terduplikasi.`,
       confirmLabel: "Ya, Impor Sekarang",
       cancelLabel: "Batal",
       variant: "info",
@@ -105,7 +105,7 @@ export default function DapodikSekolahClient({ school }: DapodikSekolahClientPro
             setImportProgress({ message: "Impor selesai 100%!", progress: 100 });
             setIsImporting(false);
             setParsePreview(null);
-            showSuccess("Impor Dapodik Berhasil!", pollData.message || "Seluruh data Guru, Siswa, dan Kelas berhasil diimpor.");
+            showSuccess("Impor Dapodik Berhasil!", pollData.message || "Seluruh data Guru, Anak, dan Kelas berhasil diimpor.");
             router.refresh();
           } else if (pollData.status === "error") {
             clearInterval(pollInterval);
@@ -237,7 +237,7 @@ export default function DapodikSekolahClient({ school }: DapodikSekolahClientPro
 
         {/* Info Bantuan Format */}
         <div style={{ backgroundColor: "#f8fafc", padding: "1.2rem", borderRadius: "0.85rem", border: "1px solid #e2e8f0", fontSize: "0.85rem", color: "#475569", lineHeight: 1.6 }}>
-          💡 <strong>Tips Unggah Dapodik:</strong> Pastikan file memuat kolom nama guru, NUPTK/NIP, nama siswa, NISN, gender (L/P), dan nama rombel/kelas agar sistem dapat memisahkan akun secara otomatis.
+          💡 <strong>Tips Unggah Dapodik:</strong> Pastikan file memuat kolom nama guru, NUPTK/NIP, nama anak, NISN, gender (L/P), dan nama rombel/kelas agar sistem dapat memisahkan akun secara otomatis.
         </div>
       </div>
 

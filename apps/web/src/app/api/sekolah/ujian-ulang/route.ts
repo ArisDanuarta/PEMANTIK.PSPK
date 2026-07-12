@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
  * Mekanisme Ujian Ulang:
  * 1. Verifikasi kelas milik sekolah ini
  * 2. Void semua sesi ongoing/completed yang tidak void untuk kombinasi kelas + kategori
- * 3. Siswa yang bersangkutan kini bisa memulai sesi baru
+ * 3. Anak yang bersangkutan kini bisa memulai sesi baru
  */
 export async function POST(request: Request) {
   try {
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (!singleStudent) {
-        return NextResponse.json({ error: "Siswa tidak ditemukan." }, { status: 404 });
+        return NextResponse.json({ error: "Anak tidak ditemukan." }, { status: 404 });
       }
       studentIds = [singleStudent.id];
     } else {

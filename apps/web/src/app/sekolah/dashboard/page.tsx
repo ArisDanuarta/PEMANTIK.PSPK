@@ -68,7 +68,7 @@ export default async function SekolahDashboard() {
       .eq("role", "teacher");
     totalTeachers = teachersCount ?? 0;
 
-    // 2. Total Siswa + data demografi
+    // 2. Total Anak + data demografi
     const { data: studentsData } = await supabase
       .from("students")
       .select("id, school_id, gender, ses_class")
@@ -161,7 +161,7 @@ export default async function SekolahDashboard() {
       ),
     },
     {
-      label: "Siswa",
+      label: "Anak",
       value: totalStudents,
       accent: "oranye",
       color: "#df632f",
@@ -217,7 +217,7 @@ export default async function SekolahDashboard() {
         </div>
       </div>
 
-      {/* ── Alur Asesmen & Intervensi Sekolah (5 Tahap) + Summary Card Guru/Siswa/Kelas ── */}
+      {/* ── Alur Asesmen & Intervensi Sekolah (5 Tahap) + Summary Card Guru/Anak/Kelas ── */}
       <div style={{ marginBottom: "2rem" }}>
         <SchoolInteractiveTimeline
           stages={stagesData}
@@ -232,7 +232,7 @@ export default async function SekolahDashboard() {
         />
       </div>
 
-      {/* ── Demografi Siswa & Sebaran SES ── */}
+      {/* ── Demografi Anak & Sebaran SES ── */}
       <DemographicsSection
         students={studentsDemographic}
       />

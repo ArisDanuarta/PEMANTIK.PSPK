@@ -7,8 +7,8 @@ import StudentsManagerGuru from "./StudentsManagerGuru";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Manajemen Siswa | Guru",
-  description: "Kelola data siswa di kelas yang Anda ajar",
+  title: "Manajemen Anak | Guru",
+  description: "Kelola data anak di kelas yang Anda ajar",
 };
 
 export default async function GuruSiswaPage() {
@@ -60,11 +60,11 @@ export default async function GuruSiswaPage() {
     <div className="animate-fade-in">
       <div className="page-header">
         <div className="page-header-left">
-          <h1 className="page-title">Manajemen Siswa</h1>
+          <h1 className="page-title">Manajemen Anak</h1>
           <div className="page-breadcrumb">
             <span>Guru</span>
             <span className="page-breadcrumb-sep">›</span>
-            <span>Data Siswa</span>
+            <span>Data Anak</span>
           </div>
         </div>
       </div>
