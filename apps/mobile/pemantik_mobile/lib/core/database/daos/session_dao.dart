@@ -16,26 +16,40 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   }
 
   Future<List<LocalSession>> getPendingSessionsForStudent(String studentId) {
-    return (select(
-      localSessions,
-    )..where((t) => t.studentId.equals(studentId) & t.syncStatus.equals('pending'))).get();
+    return (select(localSessions)..where(
+          (t) => t.studentId.equals(studentId) & t.syncStatus.equals('pending'),
+        ))
+        .get();
   }
 
   Future<List<LocalSession>> getCompletedSessionsForStudent(String studentId) {
-    return (select(
-      localSessions,
-    )..where((t) => t.studentId.equals(studentId) & t.status.equals('completed'))
-     ..orderBy([(t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc)])).get();
+    return (select(localSessions)
+          ..where(
+            (t) => t.studentId.equals(studentId) & t.status.equals('completed'),
+          )
+          ..orderBy([
+            (t) => OrderingTerm(
+              expression: t.completedAt,
+              mode: OrderingMode.desc,
+            ),
+          ]))
+        .get();
   }
 
   Future<int> countPendingSessionsForStudent(String studentId) async {
-    final sessions = await (select(
-      localSessions,
-    )..where((t) => t.studentId.equals(studentId) & t.syncStatus.equals('pending'))).get();
+    final sessions =
+        await (select(localSessions)..where(
+              (t) =>
+                  t.studentId.equals(studentId) &
+                  t.syncStatus.equals('pending'),
+            ))
+            .get();
     return sessions.length;
   }
 
-  Future<List<LocalAnswer>> getPendingAnswersForStudent(String studentId) async {
+  Future<List<LocalAnswer>> getPendingAnswersForStudent(
+    String studentId,
+  ) async {
     final query = select(localAnswers).join([
       innerJoin(
         localSessions,
@@ -87,7 +101,8 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
         await (select(localSessions)..where(
               (t) =>
                   t.studentId.equals(studentId) &
-                  (t.levelId.equals(levelId) | t.currentLevelId.equals(levelId)) &
+                  (t.levelId.equals(levelId) |
+                      t.currentLevelId.equals(levelId)) &
                   t.status.equals('completed'),
             ))
             .get();
@@ -113,27 +128,75 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   }
 
   // Fungsi baru: Mendapatkan riwayat sesi untuk level tertentu (termasuk status sinkronisasi)
-  Future<List<SessionHistoryItem>> getSessionsForLevel(String studentId, String levelId) async {
-    final sessions = await (select(localSessions)
-          ..where((t) => t.studentId.equals(studentId) & (t.levelId.equals(levelId) | t.currentLevelId.equals(levelId)) & t.status.equals('completed'))
-          ..orderBy([(t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc)]))
-        .get();
+  Future<List<SessionHistoryItem>> getSessionsForLevel(
+    String studentId,
+    String levelId,
+  ) async {
+    final sessions =
+        await (select(localSessions)
+              ..where(
+                (t) =>
+                    t.studentId.equals(studentId) &
+                    (t.levelId.equals(levelId) |
+                        t.currentLevelId.equals(levelId)) &
+                    t.status.equals('completed'),
+              )
+              ..orderBy([
+                (t) => OrderingTerm(
+                  expression: t.completedAt,
+                  mode: OrderingMode.desc,
+                ),
+              ]))
+            .get();
 
     final result = <SessionHistoryItem>[];
     for (final session in sessions) {
-      final correctAnswers = await (select(localAnswers)
-            ..where((a) => a.sessionId.equals(session.id) & a.isCorrect.equals(true)))
-          .get();
-      result.add(SessionHistoryItem(session: session, correctAnswers: correctAnswers.length));
+      final correctAnswers =
+          await (select(localAnswers)..where(
+                (a) =>
+                    a.sessionId.equals(session.id) & a.isCorrect.equals(true),
+              ))
+              .get();
+      result.add(
+        SessionHistoryItem(
+          session: session,
+          correctAnswers: correctAnswers.length,
+        ),
+      );
     }
     return result;
   }
 
-  Stream<List<LocalSession>> watchCompletedSessionsForStudent(String studentId) {
+  Stream<List<LocalSession>> watchCompletedSessionsForStudent(
+    String studentId,
+  ) {
     return (select(localSessions)
-          ..where((t) => t.studentId.equals(studentId) & t.status.equals('completed'))
-          ..orderBy([(t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc)]))
+          ..where(
+            (t) => t.studentId.equals(studentId) & t.status.equals('completed'),
+          )
+          ..orderBy([
+            (t) => OrderingTerm(
+              expression: t.completedAt,
+              mode: OrderingMode.desc,
+            ),
+          ]))
         .watch();
+  }
+
+  Future<int> getCompletedSessionsCountForLevel(
+    String studentId,
+    String levelId,
+  ) async {
+    final sessions =
+        await (select(localSessions)..where(
+              (t) =>
+                  t.studentId.equals(studentId) &
+                  (t.levelId.equals(levelId) |
+                      t.currentLevelId.equals(levelId)) &
+                  t.status.equals('completed'),
+            ))
+            .get();
+    return sessions.length;
   }
 }
 

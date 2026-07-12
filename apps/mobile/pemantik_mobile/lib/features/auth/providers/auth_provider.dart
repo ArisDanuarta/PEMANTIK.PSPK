@@ -4,6 +4,8 @@ import 'dart:developer';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/supabase/supabase_client.dart';
 import '../../../core/sync/sync_service.dart';
+import '../../../core/database/database.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_provider.g.dart';
@@ -13,11 +15,7 @@ class AuthState {
   final String? error;
   final bool isAuthenticated;
 
-  AuthState({
-    this.isLoading = false,
-    this.error,
-    this.isAuthenticated = false,
-  });
+  AuthState({this.isLoading = false, this.error, this.isAuthenticated = false});
 }
 
 @riverpod
@@ -123,20 +121,26 @@ class Auth extends _$Auth {
         );
 
         // Simpan data profil siswa untuk kebutuhan UI & offline
-        await _storage.write(
-          key: 'student_data',
-          value: jsonEncode(student),
-        );
+        await _storage.write(key: 'student_data', value: jsonEncode(student));
 
         // Log untuk debugging — cek format JWT (harus 3 bagian dipisah titik)
         final parts = token.toString().split('.');
         if (parts.length == 3) {
-          log('=== [Auth] Login berhasil. Token format JWT valid (3 parts) ===');
+          log(
+            '=== [Auth] Login berhasil. Token format JWT valid (3 parts) ===',
+          );
         } else {
-          log('=== [Auth] PERINGATAN: Token bukan format JWT valid! Parts: ${parts.length} ===');
+          log(
+            '=== [Auth] PERINGATAN: Token bukan format JWT valid! Parts: ${parts.length} ===',
+          );
         }
 
         if (!_mounted) return;
+
+        // Invalidate provider yang mungkin masih menyimpan cache sebelumnya
+        ref.invalidate(currentStudentProvider);
+        ref.invalidate(availableAssessmentsProvider);
+
         state = AuthState(isAuthenticated: true);
         // Memicu sinkronisasi background untuk mengupload sesi offline milik anak yang baru login
         ref.read(syncServiceProvider).uploadCompletedSessions();
@@ -156,7 +160,8 @@ class Auth extends _$Auth {
       if (!_mounted) return;
       log('=== [Auth] ERROR LOGIN: $e ===');
       state = AuthState(
-        error: 'Terjadi kesalahan jaringan. Pastikan perangkat terhubung internet.',
+        error:
+            'Terjadi kesalahan jaringan. Pastikan perangkat terhubung internet.',
       );
     }
   }
@@ -168,7 +173,18 @@ class Auth extends _$Auth {
   Future<void> logout() async {
     try {
       await _storage.deleteAll();
-      log('=== [Auth] Logout berhasil. Semua data sesi dihapus. ===');
+
+      // Bersihkan juga seluruh database SQLite lokal untuk mencegah kebocoran data antar akun
+      final db = ref.read(databaseProvider);
+      await db.clearAllData();
+
+      // Invalidate provider yang menyimpan state/cache dari user sebelumnya
+      ref.invalidate(currentStudentProvider);
+      ref.invalidate(availableAssessmentsProvider);
+
+      log(
+        '=== [Auth] Logout berhasil. Semua data sesi & database dihapus. ===',
+      );
     } catch (e) {
       log('=== [Auth] ERROR LOGOUT: $e ===');
     } finally {

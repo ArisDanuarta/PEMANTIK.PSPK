@@ -33,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -79,8 +79,24 @@ class AppDatabase extends _$AppDatabase {
         // Minggu 2: tambah access_id ke local_categories untuk offline session creation
         await m.addColumn(localCategories, localCategories.accessId);
       }
+      if (from < 12) {
+        // Tambah field capaian belajar dan pesan kelulusan ke level
+        await m.addColumn(localLevels, localLevels.learningObjective);
+        await m.addColumn(localLevels, localLevels.successMessage);
+        await m.addColumn(localLevels, localLevels.failureMessage);
+      }
     },
   );
+
+  /// Menghapus seluruh data dari semua tabel lokal.
+  /// Sangat berguna untuk memastikan tidak ada kebocoran data saat pindah akun.
+  Future<void> clearAllData() async {
+    await transaction(() async {
+      for (final table in allTables) {
+        await delete(table).go();
+      }
+    });
+  }
 }
 
 LazyDatabase _openConnection() {

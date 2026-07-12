@@ -4,6 +4,8 @@ import React from "react";
 import { redirect } from "next/navigation";
 import StudentSessionsTable from "@/components/shared/StudentSessionsTable";
 
+import RetakeRequestsTable from "./RetakeRequestsClient";
+
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
@@ -14,29 +16,37 @@ export const metadata: Metadata = {
 export default async function SuperAdminSesiSiswaPage() {
   const supabase = createServerClient();
 
-  // Middleware handles authentication, so we can just proceed
+  // Fetch pending retake requests
+  let pendingRequests: any[] = [];
+  try {
+    const { data: requests, error: reqErr } = await (supabase as any)
+      .from("assessment_retake_requests")
+      .select(`
+        id, session_id, reason, status, created_at,
+        students ( full_name, nisn ),
+        schools ( name )
+      `)
+      .eq("status", "pending")
+      .order("created_at", { ascending: true });
+      
+    if (!reqErr && requests) {
+      pendingRequests = requests.map((r: any) => ({
+        ...r,
+        students: Array.isArray(r.students) ? r.students[0] : r.students,
+        schools: Array.isArray(r.schools) ? r.schools[0] : r.schools
+      }));
+    }
+  } catch (e) {
+    console.error("Retake requests table might not exist yet:", e);
+  }
 
   // Fetch all sessions for super admin
-  // Limiting to last 100 for now to prevent massive load, or we could add pagination
   const { data: sessions, error } = await supabase
     .from("assessment_sessions")
     .select(`
-      id,
-      status,
-      phase,
-      attempt_number,
-      is_void,
-      score,
-      started_at,
-      completed_at,
-      students (
-        full_name,
-        nisn
-      ),
-      question_categories (
-        name,
-        subject_area
-      )
+      id, status, phase, attempt_number, is_void, score, started_at, completed_at,
+      students ( full_name, nisn ),
+      question_categories ( name, subject_area )
     `)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -45,9 +55,6 @@ export default async function SuperAdminSesiSiswaPage() {
     console.error("Error fetching sessions:", error);
   }
 
-  // Supabase returns related items as array or object depending on relation type.
-  // Foreign keys point to a single item usually, so it returns an object or array of one.
-  // We need to cast it to match our component props.
   const formattedSessions = (sessions || []).map(session => ({
     ...session,
     students: Array.isArray(session.students) ? session.students[0] : session.students,
@@ -60,12 +67,16 @@ export default async function SuperAdminSesiSiswaPage() {
         <div className="page-header-left">
           <h1 className="page-title">Sesi Ujian Anak</h1>
           <p className="page-description" style={{ color: "#6b7280", marginTop: "0.5rem" }}>
-            Pantau sesi ujian yang sedang berjalan, selesai, atau reset sesi jika siswa mengalami kendala teknis (terputus, keluar tiba-tiba, dll).
+            Pantau sesi ujian yang sedang berjalan, terima request ujian ulang dari sekolah, atau reset sesi.
           </p>
         </div>
       </div>
 
-      <div style={{ marginTop: "2rem" }}>
+      <div style={{ marginTop: "2rem", display: "flex", flexDirection: "column", gap: "2rem" }}>
+        {/* Tabel Request Ujian Ulang */}
+        <RetakeRequestsTable requests={pendingRequests} />
+
+        {/* Tabel Seluruh Sesi */}
         <StudentSessionsTable sessions={formattedSessions as any} showResetButton={true} />
       </div>
     </div>

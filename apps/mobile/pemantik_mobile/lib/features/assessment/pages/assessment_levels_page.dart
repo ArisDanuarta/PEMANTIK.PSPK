@@ -68,13 +68,20 @@ class _LevelCard extends ConsumerWidget {
 
   const _LevelCard({required this.categoryId, required this.info});
 
-  void _showHistoryModal(BuildContext context, WidgetRef ref, String levelId) async {
+  void _showHistoryModal(
+    BuildContext context,
+    WidgetRef ref,
+    String levelId,
+  ) async {
     final student = await ref.read(currentStudentProvider.future);
     if (student == null) return;
 
     final studentId = student['id'] as String;
     final db = ref.read(databaseProvider);
-    final sessions = await db.sessionDao.getSessionsForLevel(studentId, levelId);
+    final sessions = await db.sessionDao.getSessionsForLevel(
+      studentId,
+      levelId,
+    );
 
     if (!context.mounted) return;
 
@@ -95,7 +102,10 @@ class _LevelCard extends ConsumerWidget {
               Text('Riwayat & Sinkronisasi', style: AppTextStyles.heading2),
               const SizedBox(height: 16),
               if (sessions.isEmpty)
-                Text('Belum ada riwayat pengerjaan.', style: AppTextStyles.bodyMedium)
+                Text(
+                  'Belum ada riwayat pengerjaan.',
+                  style: AppTextStyles.bodyMedium,
+                )
               else
                 Flexible(
                   child: ListView.builder(
@@ -137,7 +147,10 @@ class _LevelCard extends ConsumerWidget {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Skor: ${item.correctAnswers}', style: AppTextStyles.heading2),
+                                Text(
+                                  'Skor: ${item.correctAnswers}',
+                                  style: AppTextStyles.heading2,
+                                ),
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
@@ -171,17 +184,22 @@ class _LevelCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final level = info.level;
-    final isLocked = !info.isUnlocked;
-    final isPassed = info.isPassed;
+    bool isLocked = !info.isUnlocked;
+    bool isPassed = info.isPassed;
+    bool isFailed = info.isFailed;
 
     Color cardColor = AppColors.surface;
     Color borderColor = AppColors.border;
 
-    if (isLocked) {
+    if (isLocked && !isFailed) {
       cardColor = Colors.grey.shade100;
     } else if (isPassed) {
       cardColor = AppColors.birNavyMuda;
       borderColor = AppColors.birTeal.withValues(alpha: 0.3);
+    } else if (isFailed) {
+      cardColor = AppColors.merahMarun.withValues(alpha: 0.05);
+      borderColor = AppColors.merahMarun.withValues(alpha: 0.3);
+      isLocked = true;
     }
 
     return Container(
@@ -201,29 +219,73 @@ class _LevelCard extends ConsumerWidget {
               Text(
                 'Level ${level.levelNumber}',
                 style: AppTextStyles.heading2.copyWith(
-                  color: isLocked ? AppColors.textMuted : AppColors.birNavyGelap,
+                  color: (isLocked && !isFailed)
+                      ? AppColors.textMuted
+                      : (isFailed
+                            ? AppColors.merahMarun
+                            : AppColors.birNavyGelap),
                 ),
               ),
               if (isPassed)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.sukses.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.check_circle, size: 14, color: AppColors.sukses),
+                      const Icon(
+                        Icons.check_circle,
+                        size: 14,
+                        color: AppColors.sukses,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'Selesai',
-                        style: AppTextStyles.label.copyWith(color: AppColors.sukses),
+                        style: AppTextStyles.label.copyWith(
+                          color: AppColors.sukses,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (isFailed)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.merahMarun.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.cancel,
+                        size: 14,
+                        color: AppColors.merahMarun,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Gagal',
+                        style: AppTextStyles.label.copyWith(
+                          color: AppColors.merahMarun,
+                        ),
                       ),
                     ],
                   ),
                 )
               else if (isLocked)
-                const Icon(Icons.lock_outline, size: 20, color: AppColors.textMuted),
+                const Icon(
+                  Icons.lock_outline,
+                  size: 20,
+                  color: AppColors.textMuted,
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -237,19 +299,23 @@ class _LevelCard extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             'Target: ${level.passingThreshold} Jawaban Benar',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textMuted,
+            ),
           ),
-          if (info.highestScore > 0 || isPassed) ...[
+          if (info.highestScore > 0 || isPassed || isFailed) ...[
             const SizedBox(height: 4),
             Text(
               'Skor Tertinggi: ${info.highestScore}',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: isPassed ? AppColors.sukses : AppColors.jingga,
+                color: isPassed
+                    ? AppColors.sukses
+                    : (isFailed ? AppColors.merahMarun : AppColors.jingga),
                 fontWeight: FontWeight.w600,
               ),
             ),
           ],
-          if (!isLocked && !isPassed) ...[
+          if (!isLocked && !isPassed && !isFailed) ...[
             const SizedBox(height: 16),
             Row(
               children: [
@@ -269,6 +335,9 @@ class _LevelCard extends ConsumerWidget {
                           'totalQuestions': info.totalQuestions,
                           'passingThreshold': level.passingThreshold,
                           'timeLimitSec': level.timeLimitSec ?? 60,
+                          'learningObjective': level.learningObjective,
+                          'successMessage': level.successMessage,
+                          'failureMessage': level.failureMessage,
                         },
                       );
                     },
@@ -282,13 +351,14 @@ class _LevelCard extends ConsumerWidget {
                       size: ButtonSize.small,
                       outlined: true,
                       fullWidth: true,
-                      onPressed: () => _showHistoryModal(context, ref, level.id),
+                      onPressed: () =>
+                          _showHistoryModal(context, ref, level.id),
                     ),
                   ),
                 ],
               ],
             ),
-          ] else if (isPassed) ...[
+          ] else if (isPassed || isFailed) ...[
             const SizedBox(height: 16),
             Row(
               children: [
@@ -301,30 +371,8 @@ class _LevelCard extends ConsumerWidget {
                     onPressed: () => _showHistoryModal(context, ref, level.id),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: PspkButton(
-                    label: 'Ulang',
-                    size: ButtonSize.small,
-                    fullWidth: true,
-                    onPressed: () {
-                      Navigator.of(context).pushNamed(
-                        AppRouter.assessmentLobby,
-                        arguments: {
-                          'categoryId': categoryId,
-                          'levelId': level.id,
-                          'levelNumber': level.levelNumber,
-                          'accessCode': level.accessCode,
-                          'totalQuestions': info.totalQuestions,
-                          'passingThreshold': level.passingThreshold,
-                          'timeLimitSec': level.timeLimitSec ?? 60,
-                        },
-                      );
-                    },
-                  ),
-                ),
               ],
-            )
+            ),
           ] else if (isLocked) ...[
             const SizedBox(height: 16),
             SizedBox(
@@ -333,12 +381,16 @@ class _LevelCard extends ConsumerWidget {
                 onPressed: null,
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   side: const BorderSide(color: AppColors.border),
                 ),
                 child: Text(
                   'Terkunci',
-                  style: AppTextStyles.buttonText.copyWith(color: AppColors.textMuted),
+                  style: AppTextStyles.buttonText.copyWith(
+                    color: AppColors.textMuted,
+                  ),
                 ),
               ),
             ),

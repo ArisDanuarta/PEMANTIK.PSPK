@@ -95,6 +95,9 @@ class SyncService {
               timeLimitSec: Value(lvlRow['time_limit_sec']),
               passingThreshold: Value(lvlRow['passing_threshold'] ?? 0),
               accessCode: Value(lvlRow['access_code'] as String?),
+              learningObjective: Value(lvlRow['learning_objective'] as String?),
+              successMessage: Value(lvlRow['success_message'] as String?),
+              failureMessage: Value(lvlRow['failure_message'] as String?),
             ),
           );
         }

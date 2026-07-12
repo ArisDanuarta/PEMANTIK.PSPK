@@ -13,6 +13,7 @@ import '../question_types/audio_question_widget.dart';
 import '../question_types/video_question_widget.dart';
 import '../question_types/drag_drop_widget.dart';
 import '../question_types/voice_recording_widget.dart';
+import '../../../core/database/database.dart';
 
 import '../../../core/theme/app_text_styles.dart';
 
@@ -53,13 +54,26 @@ class _QuestionPageState extends ConsumerState<QuestionPage> {
       assessmentControllerProvider(
         widget.sessionId,
       ).select((s) => s.value?.isTimeUp),
-      (prev, next) {
+      (prev, next) async {
         if (next == true) {
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            AppRouter.resultPage,
-            (_) => false,
-            arguments: false, // Default isPassed to false on timeout
-          );
+          final db = ref.read(databaseProvider);
+          final session = await db.sessionDao.getSessionById(widget.sessionId);
+          String? customMessage;
+          if (session != null && session.levelId != null) {
+            final level = await db.levelDao.getLevelById(session.levelId!);
+            customMessage = level?.failureMessage;
+          }
+          
+          if (context.mounted) {
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              AppRouter.resultPage,
+              (_) => false,
+              arguments: {
+                'isPassed': false, // Default isPassed to false on timeout
+                'customMessage': customMessage,
+              },
+            );
+          }
         }
       },
     );
@@ -158,13 +172,24 @@ class _QuestionPageState extends ConsumerState<QuestionPage> {
                                       )
                                       .submitAssessment(widget.sessionId);
 
+                                  final db = ref.read(databaseProvider);
+                                  final session = await db.sessionDao.getSessionById(widget.sessionId);
+                                  String? customMessage;
+                                  if (session != null && session.levelId != null) {
+                                    final level = await db.levelDao.getLevelById(session.levelId!);
+                                    customMessage = isPassed ? level?.successMessage : level?.failureMessage;
+                                  }
+
                                   if (context.mounted) {
                                     Navigator.of(
                                       context,
                                     ).pushNamedAndRemoveUntil(
                                       AppRouter.resultPage,
                                       (_) => false,
-                                      arguments: isPassed,
+                                      arguments: {
+                                        'isPassed': isPassed,
+                                        'customMessage': customMessage,
+                                      },
                                     );
                                   }
                                 },

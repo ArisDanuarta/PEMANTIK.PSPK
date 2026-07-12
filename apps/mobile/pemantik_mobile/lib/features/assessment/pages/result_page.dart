@@ -6,8 +6,9 @@ import '../../../core/router/app_router.dart';
 
 class ResultPage extends StatelessWidget {
   final bool isPassed;
+  final String? customMessage;
 
-  const ResultPage({super.key, required this.isPassed});
+  const ResultPage({super.key, required this.isPassed, this.customMessage});
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +66,40 @@ class ResultPage extends StatelessWidget {
                           ),
                           textAlign: TextAlign.center,
                         ),
+                        if (customMessage != null && customMessage!.isNotEmpty) ...[
+                          const SizedBox(height: 24),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isPassed 
+                                  ? AppColors.sukses.withValues(alpha: 0.1)
+                                  : AppColors.merahMarun.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isPassed 
+                                    ? AppColors.sukses.withValues(alpha: 0.3)
+                                    : AppColors.merahMarun.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  isPassed ? 'Pesan dari Sistem:' : 'Catatan Tambahan:',
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: isPassed ? AppColors.sukses : AppColors.merahMarun,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  customMessage!,
+                                  style: AppTextStyles.bodyMedium,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
 

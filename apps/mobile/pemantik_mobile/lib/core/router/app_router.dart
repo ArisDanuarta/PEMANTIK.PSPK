@@ -38,6 +38,9 @@ class AppRouter {
         final totalQuestions = args['totalQuestions'] as int? ?? 0;
         final passingThreshold = args['passingThreshold'] as int? ?? 0;
         final timeLimitSec = args['timeLimitSec'] as int? ?? 60;
+        final learningObjective = args['learningObjective'] as String?;
+        final successMessage = args['successMessage'] as String?;
+        final failureMessage = args['failureMessage'] as String?;
 
         return MaterialPageRoute(
           builder: (_) => AssessmentLobbyPage(
@@ -48,6 +51,9 @@ class AppRouter {
             totalQuestions: totalQuestions,
             passingThreshold: passingThreshold,
             timeLimitSec: timeLimitSec,
+            learningObjective: learningObjective,
+            successMessage: successMessage,
+            failureMessage: failureMessage,
           ),
         );
       case questionPage:
@@ -56,9 +62,11 @@ class AppRouter {
           builder: (_) => QuestionPage(sessionId: sessionId),
         );
       case resultPage:
-        final isPassed = settings.arguments as bool? ?? false;
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final isPassed = args['isPassed'] as bool? ?? false;
+        final customMessage = args['customMessage'] as String?;
         return MaterialPageRoute(
-          builder: (_) => ResultPage(isPassed: isPassed),
+          builder: (_) => ResultPage(isPassed: isPassed, customMessage: customMessage),
         );
       default:
         return MaterialPageRoute(builder: (_) => const LoginPage());

@@ -22,6 +22,9 @@ class AssessmentLobbyPage extends ConsumerStatefulWidget {
   final int totalQuestions;
   final int passingThreshold;
   final int timeLimitSec;
+  final String? learningObjective;
+  final String? successMessage;
+  final String? failureMessage;
 
   const AssessmentLobbyPage({
     super.key,
@@ -32,6 +35,9 @@ class AssessmentLobbyPage extends ConsumerStatefulWidget {
     required this.totalQuestions,
     required this.passingThreshold,
     required this.timeLimitSec,
+    this.learningObjective,
+    this.successMessage,
+    this.failureMessage,
   });
 
   @override
@@ -60,12 +66,16 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
 
     // ── Minggu 2: ambil access_id dari cache lokal ────────────────────────
     // CategoryDao menyimpan access_id dari assessment_access saat sync
-    final localCategory = await db.categoryDao.getCategoryById(widget.categoryId);
+    final localCategory = await db.categoryDao.getCategoryById(
+      widget.categoryId,
+    );
     final accessId = localCategory?.accessId;
 
     if (accessId == null) {
-      log('PERINGATAN: access_id tidak ditemukan untuk categoryId=${widget.categoryId}. '
-          'Pastikan sync sudah berjalan. Sesi tetap dibuat tanpa access_id (backward compat).');
+      log(
+        'PERINGATAN: access_id tidak ditemukan untuk categoryId=${widget.categoryId}. '
+        'Pastikan sync sudah berjalan. Sesi tetap dibuat tanpa access_id (backward compat).',
+      );
     }
     // ── Minggu 2: Online Check (Force Insert ke Supabase) ──────────────
     // Ini adalah 'best implementation' untuk mencegah sesi tersangkut jika
@@ -96,7 +106,9 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Akses asesmen ini telah ditutup atau dicabut oleh Admin.'),
+              content: Text(
+                'Akses asesmen ini telah ditutup atau dicabut oleh Admin.',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -129,13 +141,11 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
     );
 
     if (mounted) {
-      Navigator.of(context).pushReplacementNamed(
-        AppRouter.questionPage,
-        arguments: sessionId,
-      );
+      Navigator.of(
+        context,
+      ).pushReplacementNamed(AppRouter.questionPage, arguments: sessionId);
     }
   }
-
 
   void _promptAccessCode() {
     showDialog(
@@ -225,9 +235,7 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
           builder: (context, constraints) {
             return SingleChildScrollView(
               child: Container(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -253,9 +261,11 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
                         ),
                         _InfoRow(
                           icon: Icons.check_circle_outline,
-                          label: 'Target Lulus: ${widget.passingThreshold} Benar',
+                          label:
+                              'Target Lulus: ${widget.passingThreshold} Benar',
                         ),
-                        if (widget.accessCode != null && widget.accessCode!.isNotEmpty)
+                        if (widget.accessCode != null &&
+                            widget.accessCode!.isNotEmpty)
                           const _InfoRow(
                             icon: Icons.lock_outline,
                             label: 'Membutuhkan Kode Akses',
@@ -264,6 +274,22 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
                         const SizedBox(height: 24),
                         const Divider(color: AppColors.border),
                         const SizedBox(height: 16),
+
+                        if (widget.learningObjective != null &&
+                            widget.learningObjective!.isNotEmpty) ...[
+                          Text(
+                            'Capaian Belajar:',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.learningObjective!,
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
 
                         Container(
                           padding: const EdgeInsets.all(16),
@@ -300,9 +326,11 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
                         fullWidth: true,
                         onPressed: () async {
                           final db = ref.read(databaseProvider);
-                          final cats = await (db.select(
-                            db.localCategories,
-                          )..where((t) => t.id.equals(widget.categoryId))).get();
+                          final cats =
+                              await (db.select(db.localCategories)..where(
+                                    (t) => t.id.equals(widget.categoryId),
+                                  ))
+                                  .get();
                           if (cats.isNotEmpty) {
                             final cat = cats.first;
                             final now = DateTime.now();
@@ -321,12 +349,14 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
                               }
                               return;
                             }
-                            if (cat.validFrom != null && now.isBefore(cat.validFrom!)) {
+                            if (cat.validFrom != null &&
+                                now.isBefore(cat.validFrom!)) {
                               if (context.mounted) {
                                 showPspkDialog(
                                   context,
                                   title: 'Belum Mulai',
-                                  message: 'Asesmen ini belum bisa dimulai sekarang.',
+                                  message:
+                                      'Asesmen ini belum bisa dimulai sekarang.',
                                   isError: true,
                                   confirmText: 'Kembali',
                                   onConfirm: () => Navigator.pop(context),

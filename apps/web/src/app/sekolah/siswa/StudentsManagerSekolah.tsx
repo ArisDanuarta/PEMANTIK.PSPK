@@ -11,6 +11,7 @@ import {
   resetStudentPasswordAction,
   bulkCreateStudentsAction,
 } from "@/app/actions/students";
+import { requestRetakeAction } from "@/app/actions/retake-requests";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 
 interface StudentRow {
@@ -51,6 +52,9 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
   const [genderFilter, setGenderFilter] = useState<string>("all");
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [retakeModalOpen, setRetakeModalOpen] = useState(false);
+  const [retakeStudent, setRetakeStudent] = useState<StudentRow | null>(null);
+  const [retakeReason, setRetakeReason] = useState("");
   const [editingStudent, setEditingStudent] = useState<StudentRow | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -140,6 +144,29 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
     return res;
   };
 
+  const handleOpenRetake = (s: StudentRow) => {
+    setRetakeStudent(s);
+    setRetakeReason("");
+    setRetakeModalOpen(true);
+  };
+
+  const handleRequestRetake = async () => {
+    if (!retakeStudent || !retakeReason.trim()) return;
+    startTransition(async () => {
+      const res = await requestRetakeAction({
+        schoolId,
+        studentId: retakeStudent.id,
+        reason: retakeReason,
+      });
+      if (res.success) {
+        showSuccess("Berhasil", res.message ?? "Permintaan dikirim.");
+        setRetakeModalOpen(false);
+      } else {
+        showError("Gagal", res.error ?? "Gagal mengirim permintaan.");
+      }
+    });
+  };
+
   const handleDownloadTemplate = () => {
     const headers = ["nama_siswa", "nisn", "jenis_kelamin", "tanggal_lahir", "nama_kelas", "pekerjaan_ibu", "pekerjaan_ayah", "pendidikan_ibu", "pendidikan_ayah", "kelurahan", "kecamatan", "kabupaten", "provinsi"];
     const wsData = [
@@ -209,6 +236,37 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
         </div>
       </div>
 
+      {/* ── Modal Request Ujian Ulang ── */}
+      {retakeModalOpen && retakeStudent && createPortal(
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", backdropFilter: "blur(2px)" }} onClick={() => setRetakeModalOpen(false)} />
+          <div style={{ position: "relative", backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", width: "100%", maxWidth: "28rem", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" }}>
+            <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.1rem", fontWeight: 600 }}>Request Ujian Ulang</h3>
+            <div style={{ marginBottom: "1rem", fontSize: "0.9rem", color: "#475569" }}>
+              Ajukan permintaan ke Superadmin untuk me-reset sesi ujian terakhir <strong>{retakeStudent.full_name}</strong>.
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", marginBottom: "1.25rem" }}>
+              <label style={{ fontSize: "0.85rem", fontWeight: 500, color: "#1e293b" }}>Alasan Request <span style={{ color: "red" }}>*</span></label>
+              <textarea 
+                className="form-input" 
+                rows={3}
+                placeholder="Misal: Perangkat mati saat ujian, tidak sengaja kepencet selesai..."
+                value={retakeReason}
+                onChange={e => setRetakeReason(e.target.value)}
+                disabled={isPending}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+              <Button type="button" variant="outline" onClick={() => setRetakeModalOpen(false)} disabled={isPending}>Batal</Button>
+              <Button type="button" onClick={handleRequestRetake} disabled={isPending || !retakeReason.trim()} style={{ backgroundColor: "#ca8a04", color: "white" }}>
+                {isPending ? "Mengirim..." : "Kirim Request"}
+              </Button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {/* ── Tabel ── */}
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <table className="pemantik-table" style={{ width: "100%" }}>
@@ -247,6 +305,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
                   <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
                     <Button variant="outline" size="sm" onClick={() => handleOpenEdit(s)}>Edit</Button>
                     <Button variant="outline" size="sm" onClick={() => handleResetPassword(s)}>Reset PIN</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleOpenRetake(s)} style={{ color: "#ca8a04", borderColor: "#ca8a04" }}>Request Ujian Ulang</Button>
                     <Button variant="outline" size="sm" onClick={() => handleDelete(s)} style={{ color: "#dc2626" }}>Hapus</Button>
                   </div>
                 </td>

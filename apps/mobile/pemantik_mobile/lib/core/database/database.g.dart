@@ -542,6 +542,40 @@ class $LocalLevelsTable extends LocalLevels
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _learningObjectiveMeta = const VerificationMeta(
+    'learningObjective',
+  );
+  @override
+  late final GeneratedColumn<String> learningObjective =
+      GeneratedColumn<String>(
+        'learning_objective',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _successMessageMeta = const VerificationMeta(
+    'successMessage',
+  );
+  @override
+  late final GeneratedColumn<String> successMessage = GeneratedColumn<String>(
+    'success_message',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _failureMessageMeta = const VerificationMeta(
+    'failureMessage',
+  );
+  @override
+  late final GeneratedColumn<String> failureMessage = GeneratedColumn<String>(
+    'failure_message',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -550,6 +584,9 @@ class $LocalLevelsTable extends LocalLevels
     timeLimitSec,
     passingThreshold,
     accessCode,
+    learningObjective,
+    successMessage,
+    failureMessage,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -611,6 +648,33 @@ class $LocalLevelsTable extends LocalLevels
         accessCode.isAcceptableOrUnknown(data['access_code']!, _accessCodeMeta),
       );
     }
+    if (data.containsKey('learning_objective')) {
+      context.handle(
+        _learningObjectiveMeta,
+        learningObjective.isAcceptableOrUnknown(
+          data['learning_objective']!,
+          _learningObjectiveMeta,
+        ),
+      );
+    }
+    if (data.containsKey('success_message')) {
+      context.handle(
+        _successMessageMeta,
+        successMessage.isAcceptableOrUnknown(
+          data['success_message']!,
+          _successMessageMeta,
+        ),
+      );
+    }
+    if (data.containsKey('failure_message')) {
+      context.handle(
+        _failureMessageMeta,
+        failureMessage.isAcceptableOrUnknown(
+          data['failure_message']!,
+          _failureMessageMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -644,6 +708,18 @@ class $LocalLevelsTable extends LocalLevels
         DriftSqlType.string,
         data['${effectivePrefix}access_code'],
       ),
+      learningObjective: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}learning_objective'],
+      ),
+      successMessage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}success_message'],
+      ),
+      failureMessage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}failure_message'],
+      ),
     );
   }
 
@@ -660,6 +736,9 @@ class LocalLevel extends DataClass implements Insertable<LocalLevel> {
   final int? timeLimitSec;
   final int passingThreshold;
   final String? accessCode;
+  final String? learningObjective;
+  final String? successMessage;
+  final String? failureMessage;
   const LocalLevel({
     required this.id,
     required this.categoryId,
@@ -667,6 +746,9 @@ class LocalLevel extends DataClass implements Insertable<LocalLevel> {
     this.timeLimitSec,
     required this.passingThreshold,
     this.accessCode,
+    this.learningObjective,
+    this.successMessage,
+    this.failureMessage,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -680,6 +762,15 @@ class LocalLevel extends DataClass implements Insertable<LocalLevel> {
     map['passing_threshold'] = Variable<int>(passingThreshold);
     if (!nullToAbsent || accessCode != null) {
       map['access_code'] = Variable<String>(accessCode);
+    }
+    if (!nullToAbsent || learningObjective != null) {
+      map['learning_objective'] = Variable<String>(learningObjective);
+    }
+    if (!nullToAbsent || successMessage != null) {
+      map['success_message'] = Variable<String>(successMessage);
+    }
+    if (!nullToAbsent || failureMessage != null) {
+      map['failure_message'] = Variable<String>(failureMessage);
     }
     return map;
   }
@@ -696,6 +787,15 @@ class LocalLevel extends DataClass implements Insertable<LocalLevel> {
       accessCode: accessCode == null && nullToAbsent
           ? const Value.absent()
           : Value(accessCode),
+      learningObjective: learningObjective == null && nullToAbsent
+          ? const Value.absent()
+          : Value(learningObjective),
+      successMessage: successMessage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(successMessage),
+      failureMessage: failureMessage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(failureMessage),
     );
   }
 
@@ -711,6 +811,11 @@ class LocalLevel extends DataClass implements Insertable<LocalLevel> {
       timeLimitSec: serializer.fromJson<int?>(json['timeLimitSec']),
       passingThreshold: serializer.fromJson<int>(json['passingThreshold']),
       accessCode: serializer.fromJson<String?>(json['accessCode']),
+      learningObjective: serializer.fromJson<String?>(
+        json['learningObjective'],
+      ),
+      successMessage: serializer.fromJson<String?>(json['successMessage']),
+      failureMessage: serializer.fromJson<String?>(json['failureMessage']),
     );
   }
   @override
@@ -723,6 +828,9 @@ class LocalLevel extends DataClass implements Insertable<LocalLevel> {
       'timeLimitSec': serializer.toJson<int?>(timeLimitSec),
       'passingThreshold': serializer.toJson<int>(passingThreshold),
       'accessCode': serializer.toJson<String?>(accessCode),
+      'learningObjective': serializer.toJson<String?>(learningObjective),
+      'successMessage': serializer.toJson<String?>(successMessage),
+      'failureMessage': serializer.toJson<String?>(failureMessage),
     };
   }
 
@@ -733,6 +841,9 @@ class LocalLevel extends DataClass implements Insertable<LocalLevel> {
     Value<int?> timeLimitSec = const Value.absent(),
     int? passingThreshold,
     Value<String?> accessCode = const Value.absent(),
+    Value<String?> learningObjective = const Value.absent(),
+    Value<String?> successMessage = const Value.absent(),
+    Value<String?> failureMessage = const Value.absent(),
   }) => LocalLevel(
     id: id ?? this.id,
     categoryId: categoryId ?? this.categoryId,
@@ -740,6 +851,15 @@ class LocalLevel extends DataClass implements Insertable<LocalLevel> {
     timeLimitSec: timeLimitSec.present ? timeLimitSec.value : this.timeLimitSec,
     passingThreshold: passingThreshold ?? this.passingThreshold,
     accessCode: accessCode.present ? accessCode.value : this.accessCode,
+    learningObjective: learningObjective.present
+        ? learningObjective.value
+        : this.learningObjective,
+    successMessage: successMessage.present
+        ? successMessage.value
+        : this.successMessage,
+    failureMessage: failureMessage.present
+        ? failureMessage.value
+        : this.failureMessage,
   );
   LocalLevel copyWithCompanion(LocalLevelsCompanion data) {
     return LocalLevel(
@@ -759,6 +879,15 @@ class LocalLevel extends DataClass implements Insertable<LocalLevel> {
       accessCode: data.accessCode.present
           ? data.accessCode.value
           : this.accessCode,
+      learningObjective: data.learningObjective.present
+          ? data.learningObjective.value
+          : this.learningObjective,
+      successMessage: data.successMessage.present
+          ? data.successMessage.value
+          : this.successMessage,
+      failureMessage: data.failureMessage.present
+          ? data.failureMessage.value
+          : this.failureMessage,
     );
   }
 
@@ -770,7 +899,10 @@ class LocalLevel extends DataClass implements Insertable<LocalLevel> {
           ..write('levelNumber: $levelNumber, ')
           ..write('timeLimitSec: $timeLimitSec, ')
           ..write('passingThreshold: $passingThreshold, ')
-          ..write('accessCode: $accessCode')
+          ..write('accessCode: $accessCode, ')
+          ..write('learningObjective: $learningObjective, ')
+          ..write('successMessage: $successMessage, ')
+          ..write('failureMessage: $failureMessage')
           ..write(')'))
         .toString();
   }
@@ -783,6 +915,9 @@ class LocalLevel extends DataClass implements Insertable<LocalLevel> {
     timeLimitSec,
     passingThreshold,
     accessCode,
+    learningObjective,
+    successMessage,
+    failureMessage,
   );
   @override
   bool operator ==(Object other) =>
@@ -793,7 +928,10 @@ class LocalLevel extends DataClass implements Insertable<LocalLevel> {
           other.levelNumber == this.levelNumber &&
           other.timeLimitSec == this.timeLimitSec &&
           other.passingThreshold == this.passingThreshold &&
-          other.accessCode == this.accessCode);
+          other.accessCode == this.accessCode &&
+          other.learningObjective == this.learningObjective &&
+          other.successMessage == this.successMessage &&
+          other.failureMessage == this.failureMessage);
 }
 
 class LocalLevelsCompanion extends UpdateCompanion<LocalLevel> {
@@ -803,6 +941,9 @@ class LocalLevelsCompanion extends UpdateCompanion<LocalLevel> {
   final Value<int?> timeLimitSec;
   final Value<int> passingThreshold;
   final Value<String?> accessCode;
+  final Value<String?> learningObjective;
+  final Value<String?> successMessage;
+  final Value<String?> failureMessage;
   final Value<int> rowid;
   const LocalLevelsCompanion({
     this.id = const Value.absent(),
@@ -811,6 +952,9 @@ class LocalLevelsCompanion extends UpdateCompanion<LocalLevel> {
     this.timeLimitSec = const Value.absent(),
     this.passingThreshold = const Value.absent(),
     this.accessCode = const Value.absent(),
+    this.learningObjective = const Value.absent(),
+    this.successMessage = const Value.absent(),
+    this.failureMessage = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalLevelsCompanion.insert({
@@ -820,6 +964,9 @@ class LocalLevelsCompanion extends UpdateCompanion<LocalLevel> {
     this.timeLimitSec = const Value.absent(),
     this.passingThreshold = const Value.absent(),
     this.accessCode = const Value.absent(),
+    this.learningObjective = const Value.absent(),
+    this.successMessage = const Value.absent(),
+    this.failureMessage = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        categoryId = Value(categoryId),
@@ -831,6 +978,9 @@ class LocalLevelsCompanion extends UpdateCompanion<LocalLevel> {
     Expression<int>? timeLimitSec,
     Expression<int>? passingThreshold,
     Expression<String>? accessCode,
+    Expression<String>? learningObjective,
+    Expression<String>? successMessage,
+    Expression<String>? failureMessage,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -840,6 +990,9 @@ class LocalLevelsCompanion extends UpdateCompanion<LocalLevel> {
       if (timeLimitSec != null) 'time_limit_sec': timeLimitSec,
       if (passingThreshold != null) 'passing_threshold': passingThreshold,
       if (accessCode != null) 'access_code': accessCode,
+      if (learningObjective != null) 'learning_objective': learningObjective,
+      if (successMessage != null) 'success_message': successMessage,
+      if (failureMessage != null) 'failure_message': failureMessage,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -851,6 +1004,9 @@ class LocalLevelsCompanion extends UpdateCompanion<LocalLevel> {
     Value<int?>? timeLimitSec,
     Value<int>? passingThreshold,
     Value<String?>? accessCode,
+    Value<String?>? learningObjective,
+    Value<String?>? successMessage,
+    Value<String?>? failureMessage,
     Value<int>? rowid,
   }) {
     return LocalLevelsCompanion(
@@ -860,6 +1016,9 @@ class LocalLevelsCompanion extends UpdateCompanion<LocalLevel> {
       timeLimitSec: timeLimitSec ?? this.timeLimitSec,
       passingThreshold: passingThreshold ?? this.passingThreshold,
       accessCode: accessCode ?? this.accessCode,
+      learningObjective: learningObjective ?? this.learningObjective,
+      successMessage: successMessage ?? this.successMessage,
+      failureMessage: failureMessage ?? this.failureMessage,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -885,6 +1044,15 @@ class LocalLevelsCompanion extends UpdateCompanion<LocalLevel> {
     if (accessCode.present) {
       map['access_code'] = Variable<String>(accessCode.value);
     }
+    if (learningObjective.present) {
+      map['learning_objective'] = Variable<String>(learningObjective.value);
+    }
+    if (successMessage.present) {
+      map['success_message'] = Variable<String>(successMessage.value);
+    }
+    if (failureMessage.present) {
+      map['failure_message'] = Variable<String>(failureMessage.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -900,6 +1068,9 @@ class LocalLevelsCompanion extends UpdateCompanion<LocalLevel> {
           ..write('timeLimitSec: $timeLimitSec, ')
           ..write('passingThreshold: $passingThreshold, ')
           ..write('accessCode: $accessCode, ')
+          ..write('learningObjective: $learningObjective, ')
+          ..write('successMessage: $successMessage, ')
+          ..write('failureMessage: $failureMessage, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3852,6 +4023,9 @@ typedef $$LocalLevelsTableCreateCompanionBuilder =
       Value<int?> timeLimitSec,
       Value<int> passingThreshold,
       Value<String?> accessCode,
+      Value<String?> learningObjective,
+      Value<String?> successMessage,
+      Value<String?> failureMessage,
       Value<int> rowid,
     });
 typedef $$LocalLevelsTableUpdateCompanionBuilder =
@@ -3862,6 +4036,9 @@ typedef $$LocalLevelsTableUpdateCompanionBuilder =
       Value<int?> timeLimitSec,
       Value<int> passingThreshold,
       Value<String?> accessCode,
+      Value<String?> learningObjective,
+      Value<String?> successMessage,
+      Value<String?> failureMessage,
       Value<int> rowid,
     });
 
@@ -3901,6 +4078,21 @@ class $$LocalLevelsTableFilterComposer
 
   ColumnFilters<String> get accessCode => $composableBuilder(
     column: $table.accessCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get learningObjective => $composableBuilder(
+    column: $table.learningObjective,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get successMessage => $composableBuilder(
+    column: $table.successMessage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get failureMessage => $composableBuilder(
+    column: $table.failureMessage,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3943,6 +4135,21 @@ class $$LocalLevelsTableOrderingComposer
     column: $table.accessCode,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get learningObjective => $composableBuilder(
+    column: $table.learningObjective,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get successMessage => $composableBuilder(
+    column: $table.successMessage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get failureMessage => $composableBuilder(
+    column: $table.failureMessage,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$LocalLevelsTableAnnotationComposer
@@ -3979,6 +4186,21 @@ class $$LocalLevelsTableAnnotationComposer
 
   GeneratedColumn<String> get accessCode => $composableBuilder(
     column: $table.accessCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get learningObjective => $composableBuilder(
+    column: $table.learningObjective,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get successMessage => $composableBuilder(
+    column: $table.successMessage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get failureMessage => $composableBuilder(
+    column: $table.failureMessage,
     builder: (column) => column,
   );
 }
@@ -4020,6 +4242,9 @@ class $$LocalLevelsTableTableManager
                 Value<int?> timeLimitSec = const Value.absent(),
                 Value<int> passingThreshold = const Value.absent(),
                 Value<String?> accessCode = const Value.absent(),
+                Value<String?> learningObjective = const Value.absent(),
+                Value<String?> successMessage = const Value.absent(),
+                Value<String?> failureMessage = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalLevelsCompanion(
                 id: id,
@@ -4028,6 +4253,9 @@ class $$LocalLevelsTableTableManager
                 timeLimitSec: timeLimitSec,
                 passingThreshold: passingThreshold,
                 accessCode: accessCode,
+                learningObjective: learningObjective,
+                successMessage: successMessage,
+                failureMessage: failureMessage,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4038,6 +4266,9 @@ class $$LocalLevelsTableTableManager
                 Value<int?> timeLimitSec = const Value.absent(),
                 Value<int> passingThreshold = const Value.absent(),
                 Value<String?> accessCode = const Value.absent(),
+                Value<String?> learningObjective = const Value.absent(),
+                Value<String?> successMessage = const Value.absent(),
+                Value<String?> failureMessage = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LocalLevelsCompanion.insert(
                 id: id,
@@ -4046,6 +4277,9 @@ class $$LocalLevelsTableTableManager
                 timeLimitSec: timeLimitSec,
                 passingThreshold: passingThreshold,
                 accessCode: accessCode,
+                learningObjective: learningObjective,
+                successMessage: successMessage,
+                failureMessage: failureMessage,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
