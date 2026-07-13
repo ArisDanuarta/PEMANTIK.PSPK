@@ -57,6 +57,9 @@ final assessmentLevelsProvider = StreamProvider.family<List<LevelInfo>, String>(
     final student = jsonDecode(studentStr);
     final studentId = student['id'] as String;
 
+    final category = await db.categoryDao.getCategoryById(categoryId);
+    final String currentPhase = category?.phase ?? 'Tahap 1';
+
     final result = <LevelInfo>[];
     bool nextLevelUnlocked =
         true; // Level 1 (or first level in sorted list) always unlocked
@@ -64,12 +67,12 @@ final assessmentLevelsProvider = StreamProvider.family<List<LevelInfo>, String>(
     for (final level in levels) {
       // Cari skor tertinggi dari local_answers
       final highestCorrectAnswers = await db.sessionDao
-          .getHighestCorrectAnswersForLevel(studentId, level.id);
+          .getHighestCorrectAnswersForLevel(studentId, level.id, currentPhase);
       final isPassed = highestCorrectAnswers >= level.passingThreshold;
 
       // Cari jumlah sesi yang selesai
       final attemptsCount = await db.sessionDao
-          .getCompletedSessionsCountForLevel(studentId, level.id);
+          .getCompletedSessionsCountForLevel(studentId, level.id, currentPhase);
       final isFailed = attemptsCount > 0 && !isPassed;
 
       // Cari jumlah total soal untuk level ini

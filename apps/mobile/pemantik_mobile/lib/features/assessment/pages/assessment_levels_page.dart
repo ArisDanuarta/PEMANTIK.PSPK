@@ -78,9 +78,13 @@ class _LevelCard extends ConsumerWidget {
 
     final studentId = student['id'] as String;
     final db = ref.read(databaseProvider);
+    final category = await db.categoryDao.getCategoryById(categoryId);
+    final String currentPhase = category?.phase ?? 'Tahap 1';
+
     final sessions = await db.sessionDao.getSessionsForLevel(
       studentId,
       levelId,
+      currentPhase,
     );
 
     if (!context.mounted) return;

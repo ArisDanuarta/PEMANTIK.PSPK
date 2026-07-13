@@ -94,16 +94,19 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   Future<int> getHighestCorrectAnswersForLevel(
     String studentId,
     String levelId,
+    String phase,
   ) async {
     // Cari semua sesi untuk studentId dan levelId yang sudah 'completed'
     // Cek levelId DAN currentLevelId agar tahan terhadap perubahan saat sync/advance
+    // JUGA filter berdasarkan phase agar Tahap A terpisah dari Tahap B
     final sessions =
         await (select(localSessions)..where(
               (t) =>
                   t.studentId.equals(studentId) &
                   (t.levelId.equals(levelId) |
                       t.currentLevelId.equals(levelId)) &
-                  t.status.equals('completed'),
+                  t.status.equals('completed') &
+                  t.phase.equals(phase),
             ))
             .get();
 
@@ -131,6 +134,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   Future<List<SessionHistoryItem>> getSessionsForLevel(
     String studentId,
     String levelId,
+    String phase,
   ) async {
     final sessions =
         await (select(localSessions)
@@ -139,7 +143,8 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
                     t.studentId.equals(studentId) &
                     (t.levelId.equals(levelId) |
                         t.currentLevelId.equals(levelId)) &
-                    t.status.equals('completed'),
+                    t.status.equals('completed') &
+                    t.phase.equals(phase),
               )
               ..orderBy([
                 (t) => OrderingTerm(
@@ -186,6 +191,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
   Future<int> getCompletedSessionsCountForLevel(
     String studentId,
     String levelId,
+    String phase,
   ) async {
     final sessions =
         await (select(localSessions)..where(
@@ -193,7 +199,8 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
                   t.studentId.equals(studentId) &
                   (t.levelId.equals(levelId) |
                       t.currentLevelId.equals(levelId)) &
-                  t.status.equals('completed'),
+                  t.status.equals('completed') &
+                  t.phase.equals(phase),
             ))
             .get();
     return sessions.length;

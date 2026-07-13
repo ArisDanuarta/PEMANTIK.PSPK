@@ -262,6 +262,10 @@ export async function deleteSchoolAction(id: string): Promise<ActionResponse> {
       }
     }
 
+    // Explicitly delete records with RESTRICT foreign keys to allow school deletion
+    await supabase.from("assessment_sessions").delete().eq("school_id", id);
+    await supabase.from("students").delete().eq("school_id", id);
+
     const { error } = await supabase.from("schools").delete().eq("id", id);
     
     if (error) {
@@ -848,6 +852,40 @@ export async function importDapodikAction(
 
       schoolId = newSchool.id;
     }
+
+    // --- Ensure School Admin Account Exists ---
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("id")
+      .eq("school_id", schoolId)
+      .eq("role", "school")
+      .maybeSingle();
+
+    if (!existingUser) {
+      const { data: schoolData } = await supabase.from("schools").select("npsn, name").eq("id", schoolId).single();
+      if (schoolData) {
+        const username = `sch_${schoolData.npsn || generateRandomString(5)}`;
+        const adminEmail = `${username}@pemantik.local`;
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: adminEmail,
+          password: "Password123!",
+          email_confirm: true,
+          user_metadata: { full_name: `Admin ${schoolData.name}`, role: "school" },
+        });
+
+        if (!authError && authData.user) {
+          await supabase.from("users").insert({
+            id: authData.user.id,
+            username,
+            full_name: `Admin ${schoolData.name}`,
+            role: "school",
+            school_id: schoolId,
+            is_active: true,
+          });
+        }
+      }
+    }
+    // ------------------------------------------
 
     const classIdMap = new Map<string, string>(); 
 
