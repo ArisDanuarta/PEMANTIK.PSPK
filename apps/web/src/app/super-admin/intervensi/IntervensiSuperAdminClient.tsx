@@ -334,6 +334,22 @@ export default function IntervensiSuperAdminClient({
       {/* Tab 1: Global List */}
       {activeTab === "list" && (
         <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5" }}>
+          {/* Stats Summary Bar */}
+          <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+            {[
+              { label: "Total Laporan", value: initialInterventions.length, color: "#102e50", bg: "#f0f4ff" },
+              { label: "Dari Komunitas", value: initialInterventions.filter((i: any) => ["community", "super_admin"].includes(i.users?.role)).length, color: "#4f46e5", bg: "#eef2ff" },
+              { label: "Dari Sekolah", value: initialInterventions.filter((i: any) => i.users?.role === "school").length, color: "#0284c7", bg: "#e0f2fe" },
+              { label: "Dari Guru", value: initialInterventions.filter((i: any) => i.users?.role === "teacher").length, color: "#059669", bg: "#d1fae5" },
+              { label: "Independen", value: initialInterventions.filter((i: any) => !i.community_id).length, color: "#d97706", bg: "#fef3c7" },
+            ].map((s) => (
+              <div key={s.label} style={{ padding: "0.65rem 1rem", borderRadius: "0.625rem", backgroundColor: s.bg, minWidth: "110px" }}>
+                <div style={{ fontSize: "1.35rem", fontWeight: 800, color: s.color }}>{s.value}</div>
+                <div style={{ fontSize: "0.7rem", color: s.color, fontWeight: 600 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+
           {filteredInterventions.length === 0 ? (
             <div style={{ textAlign: "center", padding: "3rem", color: "#6b7280", backgroundColor: "#f9fafb", borderRadius: "0.75rem" }}>
               Belum ada laporan intervensi atau tidak ada yang sesuai dengan filter pencarian.
@@ -343,7 +359,7 @@ export default function IntervensiSuperAdminClient({
               <table className="pemantik-table">
                 <thead>
                   <tr>
-                    <th>Komunitas Pembina</th>
+                    <th>Sumber &amp; Pembina</th>
                     <th>Sekolah &amp; Fase</th>
                     <th>Diagnosa Awal</th>
                     <th>Upaya Dilakukan</th>
@@ -353,44 +369,63 @@ export default function IntervensiSuperAdminClient({
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredInterventions.map((item) => (
-                    <tr key={item.id}>
-                      <td style={{ fontWeight: 600, color: "#102e50", fontSize: "0.92rem" }}>
-                        🏢 {item.communities?.name || "Komunitas"}
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 700, color: "#1e293b" }}>{item.schools?.name || "Sekolah"}</div>
-                        <div style={{ marginTop: "0.2rem" }}><Badge variant="info">{item.phase}</Badge></div>
-                      </td>
-                      <td style={{ maxWidth: "200px" }}>
-                        <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                          {item.kondisi_awal}
-                        </div>
-                      </td>
-                      <td style={{ maxWidth: "220px" }}>
-                        <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                          {item.upaya_dilakukan}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
-                          {(item.intervention_tag_links || []).map((lnk: any) => (
-                            <span key={lnk.intervention_tags?.id} style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 600 }}>
-                              #{lnk.intervention_tags?.name}
+                  {filteredInterventions.map((item: any) => {
+                    const role = item.users?.role ?? "unknown";
+                    const roleMeta: Record<string, { label: string; color: string; bg: string }> = {
+                      community: { label: "Komunitas", color: "#4f46e5", bg: "#eef2ff" },
+                      super_admin: { label: "SuperAdmin", color: "#102e50", bg: "#e0f7ff" },
+                      school: { label: "Sekolah", color: "#0284c7", bg: "#e0f2fe" },
+                      teacher: { label: "Guru", color: "#059669", bg: "#d1fae5" },
+                    };
+                    const rm = roleMeta[role] ?? { label: role, color: "#64748b", bg: "#f1f5f9" };
+                    const isIndependent = !item.community_id;
+
+                    return (
+                      <tr key={item.id}>
+                        <td>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                            <span style={{ padding: "0.15rem 0.5rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, backgroundColor: rm.bg, color: rm.color, display: "inline-block", width: "fit-content" }}>
+                              {rm.label}
                             </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td style={{ fontSize: "0.82rem", color: "#64748b" }}>
-                        {formatDate(item.created_at)}
-                      </td>
-                      <td style={{ textAlign: "center" }}>
-                        <Button size="sm" variant="outline" onClick={() => setSelectedDetail(item)}>
-                          Detail
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#102e50" }}>
+                              {isIndependent ? "⭐ Sekolah Independen" : `🏛️ ${item.communities?.name || "Komunitas"}`}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 700, color: "#1e293b" }}>{item.schools?.name || "Sekolah"}</div>
+                          <div style={{ marginTop: "0.2rem" }}><Badge variant="info">{item.phase}</Badge></div>
+                        </td>
+                        <td style={{ maxWidth: "200px" }}>
+                          <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                            {item.kondisi_awal}
+                          </div>
+                        </td>
+                        <td style={{ maxWidth: "220px" }}>
+                          <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                            {item.upaya_dilakukan}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
+                            {(item.intervention_tag_links || []).map((lnk: any) => (
+                              <span key={lnk.intervention_tags?.id} style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 600 }}>
+                                #{lnk.intervention_tags?.name}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td style={{ fontSize: "0.82rem", color: "#64748b" }}>
+                          {formatDate(item.created_at)}
+                        </td>
+                        <td style={{ textAlign: "center" }}>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedDetail(item)}>
+                            Detail
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

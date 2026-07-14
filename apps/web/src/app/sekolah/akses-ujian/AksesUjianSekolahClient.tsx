@@ -25,6 +25,7 @@ interface Props {
   students: StudentOption[];
   schoolId: string;
   hasCommunity?: boolean;
+  currentStage?: string;
   allCategories?: CategoryOption[];
   phaseRequests?: PhaseRequestOption[];
 }
@@ -35,6 +36,7 @@ export default function AksesUjianSekolahClient({
   students,
   schoolId,
   hasCommunity,
+  currentStage = "persiapan_akun",
   allCategories = [],
   phaseRequests = [],
 }: Props) {
@@ -156,44 +158,74 @@ export default function AksesUjianSekolahClient({
     <div style={{ display: "flex", flexDirection: "column", gap: "1.75rem", fontFamily: "var(--font-sans, system-ui, sans-serif)" }}>
       {/* ── Status Kendali (Independen vs Komunitas) ── */}
       {!hasCommunity ? (
-        <div style={{
-          backgroundColor: "#f0f9ff",
-          border: "1px solid #bae6fd",
-          borderRadius: "1.25rem",
-          padding: "1.75rem",
-          boxShadow: "0 4px 15px rgba(0,0,0,0.03)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "1.25rem",
-        }}>
-          <div>
-            <div style={{ marginBottom: "0.5rem" }}>
-              <Badge variant="info">🏢 Sekolah Independen</Badge>
+        // ── Sekolah Independen ──────────────────────────────────────────────
+        currentStage === "persiapan_akun" ? (
+          // Tahap 1 masih berjalan → tampilkan banner terkunci
+          <div style={{
+            backgroundColor: "#fefce8",
+            border: "1px solid #fde68a",
+            borderRadius: "1.25rem",
+            padding: "1.75rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "1.25rem",
+          }}>
+            <div style={{ fontSize: "2.5rem" }}>🔒</div>
+            <div>
+              <div style={{ marginBottom: "0.4rem" }}>
+                <Badge variant="warning">Tahap 1 — Persiapan Akun</Badge>
+              </div>
+              <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#92400e" }}>
+                Pengajuan Asesmen Belum Tersedia
+              </h2>
+              <p style={{ margin: "0.35rem 0 0 0", fontSize: "0.88rem", color: "#78350f", lineHeight: 1.6 }}>
+                Sekolah Anda masih berada di <strong>Tahap 1: Persiapan Akun &amp; Dapodik</strong>.
+                Konfirmasi ke Tahap 2 diperlukan terlebih dahulu melalui halaman <strong>Dashboard → Timeline Asesmen</strong> sebelum Anda dapat mengajukan fase asesmen.
+              </p>
             </div>
-            <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, color: "#0369a1" }}>
-              Tahap 2: Pengajuan Fase Asesmen ke Superadmin
-            </h2>
-            <p style={{ margin: "0.35rem 0 0 0", fontSize: "0.88rem", color: "#334155" }}>
-              Karena sekolah Anda bersifat independen (tidak di bawah naungan komunitas), Anda memiliki kendali penuh untuk mengajukan jadwal dan paket asesmen langsung ke Superadmin.
-            </p>
           </div>
-          <Button
-            onClick={() => setShowModalRequest(true)}
-            style={{
-              backgroundColor: "#0284c7",
-              color: "white",
-              fontWeight: 700,
-              padding: "0.75rem 1.5rem",
-              borderRadius: "0.75rem",
-              boxShadow: "0 4px 12px rgba(2, 132, 199, 0.25)",
-            }}
-          >
-            + Ajukan Fase Asesmen Baru
-          </Button>
-        </div>
+        ) : (
+          // Tahap 2 ke atas → tampilkan form pengajuan
+          <div style={{
+            backgroundColor: "#f0f9ff",
+            border: "1px solid #bae6fd",
+            borderRadius: "1.25rem",
+            padding: "1.75rem",
+            boxShadow: "0 4px 15px rgba(0,0,0,0.03)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "1.25rem",
+          }}>
+            <div>
+              <div style={{ marginBottom: "0.5rem" }}>
+                <Badge variant="info">🏢 Sekolah Independen</Badge>
+              </div>
+              <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, color: "#0369a1" }}>
+                Tahap 2: Pengajuan Fase Asesmen ke Superadmin
+              </h2>
+              <p style={{ margin: "0.35rem 0 0 0", fontSize: "0.88rem", color: "#334155" }}>
+                Karena sekolah Anda bersifat independen (tidak di bawah naungan komunitas), Anda memiliki kendali penuh untuk mengajukan jadwal dan paket asesmen langsung ke Superadmin.
+              </p>
+            </div>
+            <Button
+              onClick={() => setShowModalRequest(true)}
+              style={{
+                backgroundColor: "#0284c7",
+                color: "white",
+                fontWeight: 700,
+                padding: "0.75rem 1.5rem",
+                borderRadius: "0.75rem",
+                boxShadow: "0 4px 12px rgba(2, 132, 199, 0.25)",
+              }}
+            >
+              + Ajukan Fase Asesmen Baru
+            </Button>
+          </div>
+        )
       ) : (
+        // ── Sekolah Binaan Komunitas ────────────────────────────────────────
         <div style={{
           backgroundColor: "#f8fafc",
           border: "1px solid #cbd5e1",

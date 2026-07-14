@@ -259,11 +259,6 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
                           icon: Icons.library_books_outlined,
                           label: 'Jumlah Soal: ${widget.totalQuestions}',
                         ),
-                        _InfoRow(
-                          icon: Icons.check_circle_outline,
-                          label:
-                              'Target Lulus: ${widget.passingThreshold} Benar',
-                        ),
                         if (widget.accessCode != null &&
                             widget.accessCode!.isNotEmpty)
                           const _InfoRow(

@@ -6,6 +6,8 @@ import '../../../core/supabase/supabase_client.dart';
 import '../../../core/sync/sync_service.dart';
 import '../../../core/database/database.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
+import '../../assessment/providers/assessment_history_provider.dart';
+import '../../assessment/providers/assessment_levels_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_provider.g.dart';
@@ -140,6 +142,9 @@ class Auth extends _$Auth {
         // Invalidate provider yang mungkin masih menyimpan cache sebelumnya
         ref.invalidate(currentStudentProvider);
         ref.invalidate(availableAssessmentsProvider);
+        ref.invalidate(studentHistoryProvider);
+        ref.invalidate(studentCompletedSessionsStreamProvider);
+        ref.invalidate(assessmentLevelsProvider);
 
         state = AuthState(isAuthenticated: true);
         // Memicu sinkronisasi background untuk mengupload sesi offline milik anak yang baru login
@@ -181,6 +186,9 @@ class Auth extends _$Auth {
       // Invalidate provider yang menyimpan state/cache dari user sebelumnya
       ref.invalidate(currentStudentProvider);
       ref.invalidate(availableAssessmentsProvider);
+      ref.invalidate(studentHistoryProvider);
+      ref.invalidate(studentCompletedSessionsStreamProvider);
+      ref.invalidate(assessmentLevelsProvider);
 
       log(
         '=== [Auth] Logout berhasil. Semua data sesi & database dihapus. ===',

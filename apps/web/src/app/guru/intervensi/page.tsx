@@ -25,21 +25,17 @@ export default async function GuruIntervensiPage() {
 
   const supabase = createServerClient();
   const { data: school } = await supabase.from("schools").select("name").eq("id", schoolId).maybeSingle();
-  const schoolName = school?.name || "Sekolah Anda";
+  const schoolName = (school as any)?.name || "Sekolah Anda";
 
   const stagesRes = await getStagesForSchool(schoolId);
   const stages = stagesRes.success ? (stagesRes.data || []) : [];
-  const currentStageKey = stages[0]?.current_stage || "persiapan_akun";
-  const currentStageId = stages[0]?.id || "";
-  const currentPhase = stages[0]?.phase || "Awal";
 
   const resList = await getInterventionsForSchool(schoolId);
   const interventions = resList.success ? (resList.data || []) : [];
 
-  // Akses terbuka apabila tracking progres minimal berada di tahap 4 (intervensi / selesai)
-  // atau jika sudah terdapat riwayat intervensi yang tercatat
-  const isUnlocked = ["intervensi", "selesai"].includes(currentStageKey) || interventions.length > 0;
-  const canAdd = ["intervensi", "selesai"].includes(currentStageKey);
+  // Stage aktif (hanya yg di fase intervensi) — konsisten dengan sekolah/komunitas client
+  const activeStages = stages.filter((s: any) => s.current_stage === "intervensi");
+  const isUnlocked = stages.some((s: any) => ["intervensi", "selesai"].includes(s.current_stage)) || interventions.length > 0;
 
   if (!isUnlocked) {
     return (
@@ -122,10 +118,8 @@ export default async function GuruIntervensiPage() {
       <IntervensiGuruClient
         schoolId={schoolId}
         schoolName={schoolName}
-        stageId={currentStageId}
-        phase={currentPhase}
+        activeStages={activeStages}
         initialInterventions={interventions}
-        canAdd={canAdd}
       />
     </div>
   );

@@ -74,7 +74,7 @@ class AssessmentHistoryPage extends ConsumerWidget {
           Text('Riwayat Asesmen 📜', style: AppTextStyles.heading1),
           const SizedBox(height: 4),
           Text(
-            'Rekam jejak dan hasil asesmen yang telah kamu kerjakan',
+            'Rekam jejak capaian level asesmen yang telah kamu kerjakan',
             style: AppTextStyles.label,
           ),
         ],
@@ -200,22 +200,22 @@ class _HistoryCard extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                if (item.levelName != null) ...[
-                  Icon(
-                    Icons.emoji_events_outlined,
-                    size: 16,
+                Icon(
+                  Icons.emoji_events_outlined,
+                  size: 16,
+                  color: AppColors.birTeal,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  item.levelName != null
+                      ? 'Capaian: ${item.levelName!}'
+                      : 'Selesai Dikerjakan',
+                  style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.birTeal,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    item.levelName!,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.birTeal,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                ],
+                ),
+                const SizedBox(width: 16),
                 Icon(
                   Icons.calendar_today_outlined,
                   size: 14,
@@ -225,33 +225,7 @@ class _HistoryCard extends StatelessWidget {
                 Text(dateStr, style: AppTextStyles.bodySmall),
               ],
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Skor Jawaban Benar', style: AppTextStyles.bodySmall),
-                Text(
-                  '${item.formattedScore} (${item.scorePercentage}%)',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.birNavyGelap,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value:
-                    item.totalQuestions > 0
-                        ? item.correctAnswers / item.totalQuestions
-                        : 0,
-                backgroundColor: AppColors.border,
-                color: AppColors.sukses,
-                minHeight: 8,
-              ),
-            ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -290,11 +264,9 @@ class _HistoryCard extends StatelessWidget {
               _detailRow('Kategori', item.categoryName),
               _detailRow('Fase / Sesi', item.phase),
               if (item.levelName != null)
-                _detailRow('Level Dicapai', item.levelName!),
-              _detailRow(
-                'Skor Akhir',
-                '${item.formattedScore} (${item.scorePercentage}%)',
-              ),
+                _detailRow('Level Dicapai', item.levelName!)
+              else
+                _detailRow('Status Pengerjaan', 'Selesai Dikerjakan'),
               _detailRow('Waktu Pengerjaan', item.formattedTimeSpent),
               _detailRow(
                 'Status Sinkronisasi',

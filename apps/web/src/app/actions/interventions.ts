@@ -35,7 +35,7 @@ export interface InterventionRow {
 
 export interface GraphNode {
   id: string;
-  type: "school" | "intervention" | "tag";
+  type: "school" | "community" | "intervention" | "tag";
   label: string;
   data: Record<string, any>;
 }
@@ -246,6 +246,11 @@ export async function submitInterventionAction(
 
     revalidatePath("/komunitas/intervensi");
     revalidatePath("/komunitas/dashboard");
+    revalidatePath("/sekolah/intervensi");
+    revalidatePath("/sekolah/dashboard");
+    revalidatePath("/guru/intervensi");
+    revalidatePath("/guru/dashboard");
+    revalidatePath("/super-admin/intervensi");
     return { success: true, interventionId: newIntervention.id };
   } catch (err: any) {
     console.error("[submitInterventionAction]", err);
@@ -450,12 +455,12 @@ export async function getGlobalInterventionGraph(): Promise<{
     const seenTags = new Set<string>();
 
     for (const intervention of result.data) {
-      // Node Komunitas
+      // Node Komunitas — type: 'community'
       if (intervention.community_id && !seenCommunities.has(intervention.community_id)) {
         nodes.push({
           id: `comm_${intervention.community_id}`,
-          type: "school", // reuse styling atau custom
-          label: `🏢 ${(intervention as any).communities?.name || "Komunitas"}`,
+          type: "community",  // Distinct type for proper graph styling
+          label: (intervention as any).communities?.name || "Komunitas",
           data: { type: "community", community_id: intervention.community_id },
         });
         seenCommunities.add(intervention.community_id);
@@ -467,9 +472,15 @@ export async function getGlobalInterventionGraph(): Promise<{
           id: `school_${intervention.school_id}`,
           type: "school",
           label: intervention.schools?.name ?? intervention.school_id,
-          data: { school_id: intervention.school_id, npsn: intervention.schools?.npsn },
+          data: {
+            school_id: intervention.school_id,
+            npsn: intervention.schools?.npsn,
+            is_independent: !intervention.community_id,
+          },
         });
         seenSchools.add(intervention.school_id);
+
+        // Edge: Komunitas → Sekolah (hanya jika punya komunitas)
         if (intervention.community_id) {
           edges.push({
             id: `e_comm_school_${intervention.community_id}_${intervention.school_id}`,
@@ -479,9 +490,9 @@ export async function getGlobalInterventionGraph(): Promise<{
         }
       }
 
-      // Node Intervensi
-      const submitterRole = (intervention as any).users?.role;
-      const isCommunitySubmitter = submitterRole === "community" || submitterRole === "super_admin";
+      // Node Intervensi — include all 4 narrative fields
+      const submitterRole = (intervention as any).users?.role ?? "unknown";
+      const isCommunitySubmitter = ["community", "super_admin"].includes(submitterRole);
 
       nodes.push({
         id: `intervention_${intervention.id}`,
@@ -498,15 +509,16 @@ export async function getGlobalInterventionGraph(): Promise<{
         },
       });
 
+      // Edge asal intervensi:
+      // - Jika komunitas yang submit dan ada community_id → dari komunitas
+      // - Selainnya → dari sekolah
       if (isCommunitySubmitter && intervention.community_id) {
-        // Jika komunitas yg mengisi, hubungkan intervensi ini ke node komunitas
         edges.push({
           id: `e_comm_intervention_${intervention.id}`,
           source: `comm_${intervention.community_id}`,
           target: `intervention_${intervention.id}`,
         });
       } else {
-        // Jika sekolah yg mengisi, hubungkan ke node sekolah
         edges.push({
           id: `e_school_intervention_${intervention.id}`,
           source: `school_${intervention.school_id}`,
@@ -530,7 +542,6 @@ export async function getGlobalInterventionGraph(): Promise<{
           id: `e_intervention_tag_${intervention.id}_${tag.id}`,
           source: `intervention_${intervention.id}`,
           target: `tag_${tag.id}`,
-          label: "tag",
         });
       }
     }

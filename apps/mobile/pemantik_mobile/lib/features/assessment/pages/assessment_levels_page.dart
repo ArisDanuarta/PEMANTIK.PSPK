@@ -152,8 +152,8 @@ class _LevelCard extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Skor: ${item.correctAnswers}',
-                                  style: AppTextStyles.heading2,
+                                  'Sesi Pengerjaan Selesai',
+                                  style: AppTextStyles.heading2.copyWith(fontSize: 15),
                                 ),
                                 const SizedBox(height: 4),
                                 Row(
@@ -300,25 +300,6 @@ class _LevelCard extends ConsumerWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Target: ${level.passingThreshold} Jawaban Benar',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textMuted,
-            ),
-          ),
-          if (info.highestScore > 0 || isPassed || isFailed) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Skor Tertinggi: ${info.highestScore}',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: isPassed
-                    ? AppColors.sukses
-                    : (isFailed ? AppColors.merahMarun : AppColors.jingga),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
           if (!isLocked && !isPassed && !isFailed) ...[
             const SizedBox(height: 16),
             Row(

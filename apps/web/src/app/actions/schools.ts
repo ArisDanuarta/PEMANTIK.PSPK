@@ -761,27 +761,13 @@ export async function importDapodikAction(
         import_source: "dapodik",
       }).eq("id", schoolId);
     } else {
+      // Sekolah independen: community_id = null jika bukan dari role community.
+      // Superadmin yang membuat sekolah via Dapodik = sekolah independen (tidak punya induk komunitas).
       let finalCommunityId = null as string | null;
       if (role === "community" && authCommunityId) {
         finalCommunityId = authCommunityId;
-      } else {
-        let { data: indepComm } = await supabase
-          .from("communities")
-          .select("id")
-          .eq("name", "SEKOLAH INDEPENDEN")
-          .maybeSingle();
-
-        if (!indepComm) {
-          const { data: newComm, error: commErr } = await supabase
-            .from("communities")
-            .insert({ name: "SEKOLAH INDEPENDEN", code: "IND", is_active: true })
-            .select("id")
-            .single();
-          if (commErr) return { success: false, error: "Gagal membuat komunitas independen: " + commErr.message };
-          indepComm = newComm;
-        }
-        finalCommunityId = indepComm!.id;
       }
+      // ↑ Tidak ada lagi pencarian/pembuatan komunitas "SEKOLAH INDEPENDEN".
 
       const npsn = payload.confirmed_npsn?.trim() || null;
       if (npsn) {

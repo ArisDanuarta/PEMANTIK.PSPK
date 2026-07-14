@@ -49,26 +49,26 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         fontFamily: "Inter, sans-serif"
       }}>
         <div style={{ fontWeight: 700, fontSize: "0.95rem", borderBottom: "1px solid #334155", paddingBottom: "0.5rem", marginBottom: "0.65rem", color: "#38bdf8" }}>
-          📊 {label}
+          {label}
         </div>
-        
+
         <div style={{ marginBottom: "0.65rem" }}>
           <div style={{ color: "#94a3b8", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: 600 }}>Partisipasi</div>
           <div style={{ fontWeight: 700, color: "#fff", marginTop: "0.15rem" }}>
-            👥 {data.peserta} Anak <span style={{ fontSize: "0.75rem", color: "#cbd5e1", fontWeight: 500 }}>({data.totalSesi} sesi selesai)</span>
+            {data.peserta} Anak <span style={{ fontSize: "0.75rem", color: "#cbd5e1", fontWeight: 500 }}>({data.totalSesi} sesi selesai)</span>
           </div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", borderTop: "1px solid #1e293b", paddingTop: "0.65rem" }}>
           <div>
-            <div style={{ color: "#34d399", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.25rem" }}>📖 Literasi</div>
+            <div style={{ color: "#34d399", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.25rem" }}>Literasi</div>
             <div>Rata-rata: <strong>{data.avgLiterasi}%</strong></div>
             <div>Max Level: <strong>{data.maxLevelLit > 0 ? `Level ${data.maxLevelLit}` : "—"}</strong></div>
             <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.1rem" }}>{data.countLit} sesi</div>
           </div>
 
           <div>
-            <div style={{ color: "#fbbf24", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.25rem" }}>🔢 Numerasi</div>
+            <div style={{ color: "#fbbf24", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.25rem" }}>Numerasi</div>
             <div>Rata-rata: <strong>{data.avgNumerasi}%</strong></div>
             <div>Max Level: <strong>{data.maxLevelNum > 0 ? `Level ${data.maxLevelNum}` : "—"}</strong></div>
             <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.1rem" }}>{data.countNum} sesi</div>

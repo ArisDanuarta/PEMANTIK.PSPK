@@ -3,6 +3,7 @@ import { createServerClient } from "@pemantik/supabase";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import AksesUjianSekolahClient from "./AksesUjianSekolahClient";
+import { getStagesForSchool } from "@/app/actions/stages";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,9 @@ export default async function SekolahAksesUjianPage() {
   let communityData: any = null;
   let allCategories: any[] = [];
   let phaseRequests: any[] = [];
+  let currentStage = "persiapan_akun";
+  let isIndependent = true;
+  let communityName: string | null = null;
 
   try {
     // 1. Kategori yang bisa diakses sekolah ini (dari assessment_access level school atau community)
@@ -57,6 +61,25 @@ export default async function SekolahAksesUjianPage() {
     communityData = commData;
     allCategories = catData ?? [];
     phaseRequests = reqData ?? [];
+
+    // Tentukan status independen dan stage saat ini
+    const communityId = communityData?.community_id ?? null;
+    const stagesRes = await getStagesForSchool(schoolId);
+    const latestStage = stagesRes.data?.[0] ?? null;
+    currentStage = latestStage?.current_stage ?? "persiapan_akun";
+
+    // Cek apakah komunitas adalah "SEKOLAH INDEPENDEN" (legacy) atau null
+    if (communityId) {
+      const { data: commInfo } = await supabase
+        .from("communities")
+        .select("name")
+        .eq("id", communityId)
+        .maybeSingle();
+      communityName = (commInfo as any)?.name ?? null;
+      isIndependent = !communityId || communityName === "SEKOLAH INDEPENDEN";
+    } else {
+      isIndependent = true;
+    }
 
     const pkgMap = new Map<string, any>();
     const now = new Date();
@@ -122,7 +145,8 @@ export default async function SekolahAksesUjianPage() {
         classes={classes}
         students={students}
         schoolId={schoolId}
-        hasCommunity={!!communityData?.community_id}
+        hasCommunity={!isIndependent}
+        currentStage={currentStage}
         allCategories={allCategories}
         phaseRequests={phaseRequests}
       />

@@ -78,7 +78,10 @@ export default function SchoolInteractiveTimeline({
   const { success: showSuccess, error: showError } = useToast();
   const { confirm } = useConfirm();
 
-  const isIndependent = !communityId;
+  // Sekolah dianggap independen jika:
+  // 1. Tidak punya community_id (normal case), ATAU
+  // 2. community_id-nya adalah komunitas "SEKOLAH INDEPENDEN" (kasus legacy — sebelum bug diperbaiki)
+  const isIndependent = !communityId || communityName === "SEKOLAH INDEPENDEN";
 
   // Cari stage saat ini untuk sekolah ini
   const currentStageRow = stages && stages.length > 0 ? stages[0] : null;
@@ -222,7 +225,7 @@ export default function SchoolInteractiveTimeline({
         <div>
           <div style={{ marginBottom: "0.5rem", fontSize: "0.75rem" }}>
             <Badge variant={isIndependent ? "info" : "primary"}>
-              {isIndependent ? "✨ Sekolah Independen (Kendali Penuh)" : `🏛️ Binaan Komunitas: ${communityName || "Komunitas Induk"}`}
+              {isIndependent ? "Sekolah Independen" : `Binaan Komunitas: ${communityName || "Komunitas Induk"}`}
             </Badge>
           </div>
           <h2 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 800, color: "#0f172a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -407,7 +410,7 @@ export default function SchoolInteractiveTimeline({
                 {isIndependent ? (
                   <span>Sebagai Sekolah Independen, Anda siap menekan tombol <em>&ldquo;Ajukan Fase Baru Sekarang&rdquo;</em> untuk memulai ulang timeline dari awal bagi siklus asesmen berikutnya (misal: beralih dari Fase 1 ke Fase 2).</span>
                 ) : (
-                  <span style={{ color: "#2d9e5f", fontWeight: 600 }}>✨ Sekolah Anda akan mengikuti jadwal pembukaan siklus fase berikutnya yang diajukan oleh Komunitas Induk.</span>
+                  <span style={{ color: "#2d9e5f", fontWeight: 600 }}>Sekolah Anda akan mengikuti jadwal pembukaan siklus fase berikutnya yang diajukan oleh Komunitas Induk.</span>
                 )}
               </p>
             </div>
