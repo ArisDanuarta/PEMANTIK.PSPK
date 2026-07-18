@@ -8,7 +8,7 @@ import { headers } from "next/headers";
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: "Akses Ujian — Distribusi ke Sekolah",
+  title: "Akses Ujian - Distribusi ke Sekolah",
   description: "Manajemen penugasan kategori ujian ke sekolah binaan",
 };
 

@@ -210,9 +210,9 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                         <span key={c.id} style={{ padding: "0.15rem 0.4rem", backgroundColor: "#eff6ff", color: "#1d4ed8", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 500 }}>{c.name}</span>
                       ))}
                     </div>
-                  ) : <span style={{ color: "#adb5bd", fontSize: "0.8rem" }}>—</span>}
+                  ) : <span style={{ color: "#adb5bd", fontSize: "0.8rem" }}>-</span>}
                 </td>
-                <td style={{ fontSize: "0.85rem" }}>{t.gender === "L" ? "Laki-laki" : t.gender === "P" ? "Perempuan" : "—"}</td>
+                <td style={{ fontSize: "0.85rem" }}>{t.gender === "L" ? "Laki-laki" : t.gender === "P" ? "Perempuan" : "-"}</td>
                 <td><Badge variant={t.is_active ? "success" : "danger"}>{t.is_active ? "Aktif" : "Nonaktif"}</Badge></td>
                 <td>
                   <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
@@ -266,7 +266,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                         return (
                           <label key={c.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", cursor: "pointer" }}>
                             <input type="checkbox" name="class_ids" value={c.id} defaultChecked={isChecked} />
-                            Kelas {c.grade} — {c.name}
+                            Kelas {c.grade} - {c.name}
                           </label>
                         );
                       })

@@ -67,7 +67,7 @@ export default function AppLayout({
         />
       )}
 
-      {/* Sidebar — responsive via CSS class */}
+      {/* Sidebar - responsive via CSS class */}
       <div className={`layout-sidebar-wrapper ${sidebarOpen ? "sidebar-open" : ""}`}>
         <Sidebar role={role} roleName={roleName} sections={sections} />
       </div>
@@ -75,7 +75,7 @@ export default function AppLayout({
       {/* Main content area */}
       <div className="layout-main">
         <header className="layout-topbar">
-          {/* Hamburger button — hidden on desktop, visible on mobile */}
+          {/* Hamburger button - hidden on desktop, visible on mobile */}
           <button
             className="sidebar-toggle-btn"
             onClick={toggleSidebar}

@@ -8,7 +8,7 @@ import DapodikKomunitasClient from "./DapodikKomunitasClient";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Upload Data Dapodik | Komunitas — Pemantik",
+  title: "Upload Data Dapodik | Komunitas - Pemantik",
   description: "Impor dan pemutakhiran data Dapodik terpusat untuk Sekolah Binaan Komunitas",
 };
 

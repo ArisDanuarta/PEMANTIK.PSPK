@@ -173,7 +173,7 @@ export default function AksesUjianSekolahClient({
             <div style={{ fontSize: "2.5rem" }}>🔒</div>
             <div>
               <div style={{ marginBottom: "0.4rem" }}>
-                <Badge variant="warning">Tahap 1 — Persiapan Akun</Badge>
+                <Badge variant="warning">Tahap 1 - Persiapan Akun</Badge>
               </div>
               <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#92400e" }}>
                 Pengajuan Asesmen Belum Tersedia
@@ -311,7 +311,7 @@ export default function AksesUjianSekolahClient({
                   required
                   style={{ width: "100%", padding: "0.65rem 0.85rem" }}
                 >
-                  <option value="">— Pilih Kategori —</option>
+                  <option value="">- Pilih Kategori -</option>
                   {allCategories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name} ({cat.subject_area.toUpperCase()})
@@ -438,7 +438,7 @@ export default function AksesUjianSekolahClient({
                     )}
                   </td>
                   <td style={{ padding: "1rem 1.5rem", fontSize: "0.85rem", color: "#475569" }}>
-                    {new Date(req.valid_from).toLocaleDateString("id-ID")} — {new Date(req.valid_until).toLocaleDateString("id-ID")}
+                    {new Date(req.valid_from).toLocaleDateString("id-ID")} - {new Date(req.valid_until).toLocaleDateString("id-ID")}
                   </td>
                   <td style={{ padding: "1rem 1.5rem" }}>
                     {statusBadge(req.status)}
@@ -476,7 +476,7 @@ export default function AksesUjianSekolahClient({
                       </span>
                     </td>
                     <td style={{ padding: "1rem 1.5rem", fontSize: "0.85rem", color: "#475569" }}>
-                      {pkg.valid_from ? new Date(pkg.valid_from).toLocaleDateString("id-ID") : "—"} — {pkg.valid_until ? new Date(pkg.valid_until).toLocaleDateString("id-ID") : "—"}
+                      {pkg.valid_from ? new Date(pkg.valid_from).toLocaleDateString("id-ID") : "-"} - {pkg.valid_until ? new Date(pkg.valid_until).toLocaleDateString("id-ID") : "-"}
                     </td>
                     <td style={{ padding: "1rem 1.5rem" }}>
                       <Badge variant="success">Disetujui / Aktif</Badge>
@@ -502,7 +502,7 @@ export default function AksesUjianSekolahClient({
             <div>
               <label className="form-label" style={{ fontWeight: 700, color: "#334155" }}>Kategori Ujian</label>
               <select className="form-input" value={selectedPackageId} onChange={(e) => setSelectedPackageId(e.target.value)}>
-                <option value="">— Pilih Kategori —</option>
+                <option value="">- Pilih Kategori -</option>
                 {packages.map((pkg) => (
                   <option key={pkg.id} value={pkg.id}>{pkg.name}</option>
                 ))}
@@ -519,7 +519,7 @@ export default function AksesUjianSekolahClient({
                   setSelectedStudentId("");
                 }}
               >
-                <option value="">— Pilih Kelas —</option>
+                <option value="">- Pilih Kelas -</option>
                 {classes.map((cls) => (
                   <option key={cls.id} value={cls.id}>
                     Kelas {cls.grade} - {cls.name} ({cls.students?.[0]?.count ?? 0} Anak)
@@ -549,7 +549,7 @@ export default function AksesUjianSekolahClient({
                 onChange={(e) => setSelectedStudentId(e.target.value)}
                 style={{ maxWidth: "400px" }}
               >
-                <option value="">— Seluruh Anak di Kelas Ini —</option>
+                <option value="">- Seluruh Anak di Kelas Ini -</option>
                 {students
                   .filter((s) => s.class_id === selectedClassId)
                   .map((std) => (

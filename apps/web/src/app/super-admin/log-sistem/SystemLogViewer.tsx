@@ -100,11 +100,11 @@ export default function SystemLogViewer({ initialLogs }: { initialLogs: any[] })
                       {log.source === "feedback" ? "Feedback/Bug Report" : log.source}
                     </strong>
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#6c757d" }}>Role: {log.role_context || "—"}</div>
+                  <div style={{ fontSize: "0.75rem", color: "#6c757d" }}>Role: {log.role_context || "-"}</div>
                   {log.source === "feedback" && (
                     <div style={{ fontSize: "0.75rem", color: "#495057", marginTop: "0.25rem" }}>
-                      Oleh: <strong>{log.details?.sender_name || "—"}</strong><br/>
-                      Asal: <strong>{log.details?.entity_name || "—"}</strong>
+                      Oleh: <strong>{log.details?.sender_name || "-"}</strong><br/>
+                      Asal: <strong>{log.details?.entity_name || "-"}</strong>
                     </div>
                   )}
                 </td>

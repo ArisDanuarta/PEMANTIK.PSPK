@@ -75,7 +75,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
   const router = useRouter();
   const { success, error } = useToast();
 
-  // ── Mount guard — prevents SSR/client SCALE hydration mismatch ─────────────
+  // ── Mount guard - prevents SSR/client SCALE hydration mismatch ─────────────
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => { setIsMounted(true); }, []);
 
@@ -369,7 +369,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
   // ─── Mobile Preview ────────────────────────────────────────────────────────
   // FIX: Skala diturunkan ke 0.72 agar phone (320×640) muat dalam kolom 260px
   // tanpa terpotong. Rumus: PHONE_W * SCALE = 320 * 0.72 = 230px < 260px ✓
-  // PHONE_H * SCALE = 640 * 0.72 = 461px — jauh lebih kecil dari viewport.
+  // PHONE_H * SCALE = 640 * 0.72 = 461px - jauh lebih kecil dari viewport.
   const renderMobilePreview = () => {
     const ytId = getYouTubeId(mediaUrl);
     const selectedLevel = levels.find(l => l.id === levelId);
@@ -582,7 +582,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
       case "multiple_choice":
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <label className="form-label" style={{ fontWeight: 600 }}>Opsi Jawaban <span style={{ color: "#6c757d", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>— centang radio untuk jawaban benar</span></label>
+            <label className="form-label" style={{ fontWeight: 600 }}>Opsi Jawaban <span style={{ color: "#6c757d", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>- centang radio untuk jawaban benar</span></label>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
               {mcOptions.map((opt, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem", borderRadius: "8px", border: mcCorrectIndex === i ? "1px solid rgba(45,158,95,0.3)" : "1px solid transparent", backgroundColor: mcCorrectIndex === i ? "rgba(45,158,95,0.04)" : "transparent" }}>
@@ -599,7 +599,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
       case "image_choice":
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            <label className="form-label" style={{ fontWeight: 600 }}>Opsi Gambar <span style={{ color: "#6c757d", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>— centang radio untuk jawaban benar</span></label>
+            <label className="form-label" style={{ fontWeight: 600 }}>Opsi Gambar <span style={{ color: "#6c757d", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>- centang radio untuk jawaban benar</span></label>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {imgOptions.map((opt, i) => (
                 <div key={i} style={{ display: "flex", gap: "0.875rem", alignItems: "flex-start", padding: "0.875rem", borderRadius: "10px", border: imgCorrectIndex === i ? "1.5px solid rgba(45,158,95,0.4)" : "1.5px solid #e9ecef", backgroundColor: imgCorrectIndex === i ? "rgba(45,158,95,0.03)" : "#fff" }}>
@@ -640,7 +640,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               </div>
             </div>
             <div>
-              <label className="form-label" style={{ fontWeight: 600, marginBottom: "0.5rem", display: "block" }}>Opsi Jawaban Pilihan Ganda <span style={{ color: "#6c757d", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>— centang radio untuk jawaban benar</span></label>
+              <label className="form-label" style={{ fontWeight: 600, marginBottom: "0.5rem", display: "block" }}>Opsi Jawaban Pilihan Ganda <span style={{ color: "#6c757d", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>- centang radio untuk jawaban benar</span></label>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
                 {avOptions.map((opt, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem", borderRadius: "8px", border: avCorrectIndex === i ? "1px solid rgba(45,158,95,0.3)" : "1px solid transparent", backgroundColor: avCorrectIndex === i ? "rgba(45,158,95,0.04)" : "transparent" }}>
@@ -676,7 +676,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
                   <input type="text" className="form-input" style={{ marginTop: "0.375rem" }} placeholder='Contoh: "Ibu ___ ke pasar setiap ___"' value={fbSentence} onChange={e => setFbSentence(e.target.value)} />
                 </div>
                 <div>
-                  <label className="form-label" style={{ fontWeight: 600, marginBottom: "0.5rem", display: "block" }}>Bank Kata <span style={{ color: "#6c757d", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>— urutan input = urutan jawaban benar</span></label>
+                  <label className="form-label" style={{ fontWeight: 600, marginBottom: "0.5rem", display: "block" }}>Bank Kata <span style={{ color: "#6c757d", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>- urutan input = urutan jawaban benar</span></label>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                     {fbWordBank.map((w, i) => (
                       <div key={w.id} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
@@ -888,7 +888,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             label={
               questionType === "audio_question" ? "File Audio Soal (wajib)"
               : questionType === "video_question" ? "File Video Soal (URL YouTube atau upload)"
-              : "Media Stimulus (URL YouTube, gambar, audio, video — opsional)"
+              : "Media Stimulus (URL YouTube, gambar, audio, video - opsional)"
             }
             hint={
               questionType === "audio_question" ? "Anak akan mendengarkan audio ini sebagai soal utama."
@@ -933,11 +933,11 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
         </div>
       </div>
 
-      {/* ── Kolom kanan: preview — TIDAK scroll, tetap di tempat ── */}
+      {/* ── Kolom kanan: preview - TIDAK scroll, tetap di tempat ── */}
       {/* Karena parent pakai overflow: hidden + height: 100%, kolom ini         */}
       {/* otomatis tingginya sama dengan kolom kiri (area konten).               */}
       {/* overflowY: auto hanya sebagai fallback jika preview lebih tinggi       */}
-      {/* dari area — tapi normalnya preview (461px) < tinggi area konten.       */}
+      {/* dari area - tapi normalnya preview (461px) < tinggi area konten.       */}
       {isMounted && (
         <div style={{
           width: "260px",

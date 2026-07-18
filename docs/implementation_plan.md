@@ -15,7 +15,7 @@ Rancangan ini mendetailkan pembuatan aplikasi *mobile* untuk Siswa menggunakan f
 
 # Rancangan Implementasi Aplikasi Mobile Pemantik (Flutter)
 
-**Versi:** 2.0 (Revisi — Dashboard disederhanakan, gamifikasi dihapus)  
+**Versi:** 2.0 (Revisi - Dashboard disederhanakan, gamifikasi dihapus)  
 **Tanggal:** Juni 2025  
 **Target Platform:** iOS & Android  
 **Framework:** Flutter (Dart)  
@@ -26,16 +26,16 @@ Rancangan ini mendetailkan pembuatan aplikasi *mobile* untuk Siswa menggunakan f
 ## Daftar Isi
 
 1. [Konteks & Tujuan](#1-konteks--tujuan)
-2. [Prinsip Desain — Brand PSPK](#2-prinsip-desain--brand-pspk)
+2. [Prinsip Desain - Brand PSPK](#2-prinsip-desain--brand-pspk)
 3. [Arsitektur Sistem](#3-arsitektur-sistem)
 4. [Struktur Folder](#4-struktur-folder)
 5. [Dependensi & pubspec.yaml](#5-dependensi--pubspecyaml)
-6. [Fitur 1 — Autentikasi: Login Username + PIN](#6-fitur-1--autentikasi-login-username--pin)
-7. [Fitur 2 — Dashboard: Halaman Utama Siswa](#7-fitur-2--dashboard-halaman-utama-siswa)
-8. [Fitur 3 — Pilih Asesmen](#8-fitur-3--pilih-asesmen)
-9. [Fitur 4 — Engine Soal Interaktif](#9-fitur-4--engine-soal-interaktif)
-10. [Fitur 5 — Voice Recording & Analisis Pengucapan](#10-fitur-5--voice-recording--analisis-pengucapan)
-11. [Fitur 6 — Halaman Hasil Asesmen](#11-fitur-6--halaman-hasil-asesmen)
+6. [Fitur 1 - Autentikasi: Login Username + PIN](#6-fitur-1--autentikasi-login-username--pin)
+7. [Fitur 2 - Dashboard: Halaman Utama Siswa](#7-fitur-2--dashboard-halaman-utama-siswa)
+8. [Fitur 3 - Pilih Asesmen](#8-fitur-3--pilih-asesmen)
+9. [Fitur 4 - Engine Soal Interaktif](#9-fitur-4--engine-soal-interaktif)
+10. [Fitur 5 - Voice Recording & Analisis Pengucapan](#10-fitur-5--voice-recording--analisis-pengucapan)
+11. [Fitur 6 - Halaman Hasil Asesmen](#11-fitur-6--halaman-hasil-asesmen)
 12. [Skema Database Lokal (Drift/SQLite)](#12-skema-database-lokal-driftsqlite)
 13. [Strategi Sinkronisasi Offline-First](#13-strategi-sinkronisasi-offline-first)
 14. [Panduan UI/UX Lengkap](#14-panduan-uiux-lengkap)
@@ -52,12 +52,12 @@ Aplikasi mobile Pemantik adalah antarmuka utama bagi **siswa usia 6–12 tahun**
 
 ### Filosofi Utama
 
-Aplikasi ini bukan aplikasi belajar mandiri. Ia adalah **alat asesmen** yang dioperasikan siswa — sering kali dengan pendampingan guru. Prioritas utama adalah:
+Aplikasi ini bukan aplikasi belajar mandiri. Ia adalah **alat asesmen** yang dioperasikan siswa - sering kali dengan pendampingan guru. Prioritas utama adalah:
 
-- **Navigasi yang jelas dan tidak membingungkan** — siswa (termasuk yang baru pertama kali pegang tablet) harus bisa memahami apa yang harus dilakukan tanpa instruksi verbal panjang.
-- **Stabil dan dapat diandalkan** — lebih baik sederhana dan tidak pernah error daripada kaya fitur tapi sering bermasalah.
-- **Tanpa distraksi gamifikasi** — tidak ada poin, streak, lencana, atau elemen kompetitif. Fokus sepenuhnya pada pengerjaan soal.
-- **Offline-first** — seluruh asesmen berjalan tanpa koneksi internet. Sinkronisasi terjadi otomatis di latar belakang saat online.
+- **Navigasi yang jelas dan tidak membingungkan** - siswa (termasuk yang baru pertama kali pegang tablet) harus bisa memahami apa yang harus dilakukan tanpa instruksi verbal panjang.
+- **Stabil dan dapat diandalkan** - lebih baik sederhana dan tidak pernah error daripada kaya fitur tapi sering bermasalah.
+- **Tanpa distraksi gamifikasi** - tidak ada poin, streak, lencana, atau elemen kompetitif. Fokus sepenuhnya pada pengerjaan soal.
+- **Offline-first** - seluruh asesmen berjalan tanpa koneksi internet. Sinkronisasi terjadi otomatis di latar belakang saat online.
 
 ### Relasi dengan Database yang Ada
 
@@ -76,7 +76,7 @@ Aplikasi mobile membaca dan menulis ke tabel-tabel Supabase berikut:
 
 ---
 
-## 2. Prinsip Desain — Brand PSPK
+## 2. Prinsip Desain - Brand PSPK
 
 Seluruh antarmuka aplikasi mengikuti Brand Guidelines PSPK secara konsisten. Tagline visual utama adalah: **"Bersih, Sederhana, dan Elegan"**.
 
@@ -118,7 +118,7 @@ Sesuai Brand Guidelines PSPK, gunakan dua typeface:
 ```dart
 // core/theme/app_text_styles.dart
 class AppTextStyles {
-  // LORA — untuk judul dan heading (formal, elegan)
+  // LORA - untuk judul dan heading (formal, elegan)
   static final heading1 = GoogleFonts.lora(
     fontSize: 26, fontWeight: FontWeight.bold,
     color: AppColors.birNavyGelap, height: 1.3,
@@ -129,13 +129,13 @@ class AppTextStyles {
     color: AppColors.birNavyGelap, height: 1.4,
   );
 
-  // Lora juga digunakan untuk teks soal — konsisten dengan konten akademis
+  // Lora juga digunakan untuk teks soal - konsisten dengan konten akademis
   static final questionText = GoogleFonts.lora(
     fontSize: 18, fontWeight: FontWeight.normal,
     color: AppColors.birNavyGelap, height: 1.7,
   );
 
-  // RUBIK — untuk body, tombol, label UI (ramah, mudah dibaca anak)
+  // RUBIK - untuk body, tombol, label UI (ramah, mudah dibaca anak)
   static final bodyLarge = GoogleFonts.rubik(
     fontSize: 16, fontWeight: FontWeight.normal,
     color: AppColors.birNavy, height: 1.5,
@@ -198,8 +198,8 @@ Aplikasi menggunakan **Clean Architecture berlapis empat**:
 Riverpod dipilih karena:
 - Aliran data reaktif antara state lokal (Drift) dan remote (Supabase) tanpa boilerplate.
 - `AsyncNotifierProvider` cocok untuk operasi yang bisa gagal dan perlu retry otomatis.
-- Tidak bergantung pada `BuildContext` — provider bisa diakses dari service layer.
-- Compile-safe — error terdeteksi di build time, bukan saat runtime.
+- Tidak bergantung pada `BuildContext` - provider bisa diakses dari service layer.
+- Compile-safe - error terdeteksi di build time, bukan saat runtime.
 
 ---
 
@@ -289,7 +289,7 @@ apps/mobile/
 
 ```yaml
 name: pemantik_mobile
-description: Aplikasi asesmen siswa Pemantik — offline-first, sederhana, stabil
+description: Aplikasi asesmen siswa Pemantik - offline-first, sederhana, stabil
 publish_to: "none"
 version: 1.0.0+1
 
@@ -346,7 +346,7 @@ dev_dependencies:
 
 ---
 
-## 6. Fitur 1 — Autentikasi: Login Username + PIN
+## 6. Fitur 1 - Autentikasi: Login Username + PIN
 
 ### Konsep
 
@@ -439,7 +439,7 @@ Halaman login sengaja dibuat **sangat sederhana**. Dua area: username di atas, n
 ```
 ┌─────────────────────────────┐
 │                             │
-│    [Logo PSPK — kecil]      │
+│    [Logo PSPK - kecil]      │
 │                             │
 │    Nama Pengguna            │
 │   ┌─────────────────────┐   │
@@ -553,7 +553,7 @@ class _NumpadKey extends StatelessWidget {
 
 ---
 
-## 7. Fitur 2 — Dashboard: Halaman Utama Siswa
+## 7. Fitur 2 - Dashboard: Halaman Utama Siswa
 
 ### Konsep
 
@@ -563,7 +563,7 @@ Dashboard adalah halaman pertama setelah login. Fungsinya **satu hal saja**: men
 
 ```
 ┌─────────────────────────────────┐
-│  ← (tidak ada — ini home)       │
+│  ← (tidak ada - ini home)       │
 │                                 │
 │  Halo, Budi! 👋                 │  ← Sapaan hangat dengan nama siswa
 │  Kelas 4 · SDN Maju Bersama     │  ← Info kelas dan sekolah (kecil, muted)
@@ -599,7 +599,7 @@ Dashboard adalah halaman pertama setelah login. Fungsinya **satu hal saja**: men
 ### Aturan Konten Dashboard
 
 - Tampilkan **hanya paket asesmen yang memang tersedia** untuk siswa ini (berdasarkan `assessment_access` sesuai `school_id` atau `class_id` siswa).
-- Jika belum ada asesmen yang diberikan: tampilkan pesan kosong yang jelas — "Belum ada asesmen yang tersedia. Tanya gurumu ya."
+- Jika belum ada asesmen yang diberikan: tampilkan pesan kosong yang jelas - "Belum ada asesmen yang tersedia. Tanya gurumu ya."
 - Jika siswa sudah mengerjakan sebuah asesmen dan nilainya sudah di-submit: tampilkan badge "Selesai" di kartu itu. Tombol "Mulai" berubah menjadi "Lihat Hasil".
 - Jika `assessment_access.max_attempts > 1` dan masih ada attempt tersisa: tampilkan "Coba Lagi".
 
@@ -765,12 +765,12 @@ class _EmptyState extends StatelessWidget {
 
 ---
 
-## 8. Fitur 3 — Pilih Asesmen
+## 8. Fitur 3 - Pilih Asesmen
 
 ### Lobby Asesmen (Sebelum Mulai)
 
 Sebelum soal pertama muncul, siswa diarahkan ke halaman konfirmasi. Ini penting karena:
-- Siswa yang awam butuh konteks — "soal apa yang akan dikerjakan, berapa lama."
+- Siswa yang awam butuh konteks - "soal apa yang akan dikerjakan, berapa lama."
 - Guru yang mendampingi butuh momen untuk memastikan siswa siap.
 - Aplikasi perlu mengunci attempt (membuat `assessment_session` baru di Drift).
 
@@ -886,7 +886,7 @@ class AssessmentLobbyPage extends ConsumerWidget {
 
 ---
 
-## 9. Fitur 4 — Engine Soal Interaktif
+## 9. Fitur 4 - Engine Soal Interaktif
 
 ### Struktur Halaman Soal
 
@@ -939,7 +939,7 @@ class QuestionPage extends ConsumerWidget {
               total: state.questions.length,
             ),
 
-            // Area soal — tidak bisa di-swipe
+            // Area soal - tidak bisa di-swipe
             Expanded(
               child: PageView.builder(
                 controller: state.pageController,
@@ -982,7 +982,7 @@ class QuestionPage extends ConsumerWidget {
 
 ### Progress Bar Sederhana
 
-Tidak ada bintang atau ikon khusus — cukup bar linear yang mengisi seiring soal dijawab.
+Tidak ada bintang atau ikon khusus - cukup bar linear yang mengisi seiring soal dijawab.
 
 ```dart
 // features/assessment/widgets/progress_bar.dart
@@ -1049,7 +1049,7 @@ class MultipleChoiceWidget extends ConsumerWidget {
         Text(question.questionText ?? '', style: AppTextStyles.questionText),
         const SizedBox(height: 24),
 
-        // Grid pilihan — 2 kolom
+        // Grid pilihan - 2 kolom
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -1133,7 +1133,7 @@ class DragDropWidget extends ConsumerWidget {
   }
 }
 
-// Drop zone — area penerima item yang diseret
+// Drop zone - area penerima item yang diseret
 class _DropZone extends StatelessWidget {
   final String zoneId;
   final String? currentItem;
@@ -1198,7 +1198,7 @@ class AudioQuestionWidget extends ConsumerWidget {
           const SizedBox(height: 20),
         ],
 
-        // Player tombol play sederhana — tidak perlu gelombang audio animasi
+        // Player tombol play sederhana - tidak perlu gelombang audio animasi
         GestureDetector(
           onTap: () => ref.read(assessmentProvider(sessionId).notifier)
               .toggleAudio(question.questionAudioUrl!),
@@ -1283,7 +1283,7 @@ class VideoQuestionWidget extends ConsumerWidget {
 
 ---
 
-## 10. Fitur 5 — Voice Recording & Analisis Pengucapan
+## 10. Fitur 5 - Voice Recording & Analisis Pengucapan
 
 ### Pendekatan: On-Device STT + Levenshtein Distance
 
@@ -1531,7 +1531,7 @@ Simpan LocalAnswer:
   - recording_url        = null
   - sync_status          = "pending_audio_upload"
 
-[ONLINE — SyncService aktif]
+[ONLINE - SyncService aktif]
 1. Temukan LocalAnswer dengan sync_status = "pending_audio_upload"
 2. Upload .m4a ke Supabase Storage: recordings/{session_id}/{question_id}.m4a
 3. Dapatkan URL publik
@@ -1545,11 +1545,11 @@ Simpan LocalAnswer:
 
 ---
 
-## 11. Fitur 6 — Halaman Hasil Asesmen
+## 11. Fitur 6 - Halaman Hasil Asesmen
 
 ### Prinsip: Tidak Ada Angka Skor
 
-Siswa hanya melihat dua kemungkinan layar — lulus ke level berikutnya, atau tetap di level yang sama dan bisa mencoba lagi. Tidak ada persentase, tidak ada rangking.
+Siswa hanya melihat dua kemungkinan layar - lulus ke level berikutnya, atau tetap di level yang sama dan bisa mencoba lagi. Tidak ada persentase, tidak ada rangking.
 
 ### Layar Lulus (Naik Level)
 
@@ -1590,7 +1590,7 @@ class ResultSuccessPage extends StatelessWidget {
             children: [
               const Spacer(),
 
-              // Ikon centang — tidak ada animasi confetti
+              // Ikon centang - tidak ada animasi confetti
               Container(
                 width: 96,
                 height: 96,
@@ -2085,10 +2085,10 @@ class PspkButton extends StatelessWidget {
 
 ### Hierarki Navigasi
 
-Aplikasi menggunakan navigasi **dua tab di bottom navigation bar** — sesederhana mungkin:
+Aplikasi menggunakan navigasi **dua tab di bottom navigation bar** - sesederhana mungkin:
 
-- **Tab 1 — Beranda:** Dashboard + daftar asesmen
-- **Tab 2 — Profil:** Nama, kelas, sekolah, tombol keluar
+- **Tab 1 - Beranda:** Dashboard + daftar asesmen
+- **Tab 2 - Profil:** Nama, kelas, sekolah, tombol keluar
 
 Tidak ada drawer, tidak ada nested tab, tidak ada hamburger menu.
 
@@ -2128,7 +2128,7 @@ Tidak ada drawer, tidak ada nested tab, tidak ada hamburger menu.
 
 ## 16. Tahapan Implementasi (Sprint Plan)
 
-### Sprint 1 — Fondasi (2 minggu)
+### Sprint 1 - Fondasi (2 minggu)
 
 **Deliverable:** Proyek Flutter berjalan, login berfungsi end-to-end, data siswa tersimpan lokal.
 
@@ -2142,7 +2142,7 @@ Tidak ada drawer, tidak ada nested tab, tidak ada hamburger menu.
 | Login Page | Numpad kustom, PIN display, validasi username, pesan error ramah |
 | Auth Provider | Riverpod, secure storage, routing guard `/dashboard` vs `/login` |
 
-### Sprint 2 — Dashboard & Daftar Asesmen (2 minggu)
+### Sprint 2 - Dashboard & Daftar Asesmen (2 minggu)
 
 **Deliverable:** Dashboard menampilkan sapaan siswa dan daftar asesmen yang tersedia, lobby asesmen berfungsi.
 
@@ -2154,7 +2154,7 @@ Tidak ada drawer, tidak ada nested tab, tidak ada hamburger menu.
 | Connection Banner | Indikator offline muncul otomatis jika tidak ada koneksi |
 | Assessment Lobby | Info asesmen, petunjuk singkat, tombol Mulai yang membuat sesi baru |
 
-### Sprint 3 — Engine Soal Dasar (2 minggu)
+### Sprint 3 - Engine Soal Dasar (2 minggu)
 
 **Deliverable:** Multiple Choice, Image Choice, Audio, dan Video bisa dikerjakan dan tersimpan offline.
 
@@ -2168,7 +2168,7 @@ Tidak ada drawer, tidak ada nested tab, tidak ada hamburger menu.
 | VideoQuestionWidget | Deteksi YouTube vs lokal, AspectRatio 16:9 |
 | ResultPage | Layar berhasil + layar coba lagi, tanpa skor |
 
-### Sprint 4 — Soal Interaktif (2 minggu)
+### Sprint 4 - Soal Interaktif (2 minggu)
 
 **Deliverable:** Drag & Drop dan Voice Recording berfungsi dengan scoring.
 
@@ -2180,7 +2180,7 @@ Tidak ada drawer, tidak ada nested tab, tidak ada hamburger menu.
 | Scoring voice | Ambil threshold dari `question_levels.passing_threshold` |
 | Result voice | Feedback teks "Bagus sekali!" / "Coba lagi" (tanpa skor angka) |
 
-### Sprint 5 — Sinkronisasi Penuh & Stabilisasi (2 minggu)
+### Sprint 5 - Sinkronisasi Penuh & Stabilisasi (2 minggu)
 
 **Deliverable:** Semua data tersinkronisasi ke Supabase, skenario kritis diuji, aplikasi stabil.
 
@@ -2208,8 +2208,8 @@ Tidak ada drawer, tidak ada nested tab, tidak ada hamburger menu.
 | Threshold | Dari `question_levels.passing_threshold` | Fleksibel, dikontrol admin soal |
 | Hasil asesmen | Hanya lulus/tidak lulus, tanpa angka | Mengurangi kecemasan, sesuai prinsip pedagogi |
 | Keyboard | Numpad kustom untuk PIN, keyboard sistem untuk username | Kontrol UX penuh untuk PIN |
-| Gamifikasi | Tidak ada — dihapus sepenuhnya | Arahan atasan: fokus stabilitas dan navigasi |
-| Animasi | Minimal — hanya transisi halaman dan haptic tap | Sesuai brand PSPK: bersih, tidak ramai |
+| Gamifikasi | Tidak ada - dihapus sepenuhnya | Arahan atasan: fokus stabilitas dan navigasi |
+| Animasi | Minimal - hanya transisi halaman dan haptic tap | Sesuai brand PSPK: bersih, tidak ramai |
 | Font | Lora (heading) + Rubik (body) | Sesuai Brand Guidelines PSPK resmi |
 | Warna | Hanya dari palet primer + sekunder PSPK | Sesuai Brand Guidelines PSPK resmi |
 
@@ -2269,7 +2269,7 @@ flutter test test/widget/progress_bar_test.dart
 ---
 
 *Dokumen ini adalah living document. Diperbarui setiap akhir sprint.*  
-*Versi 2.0 — Revisi: dashboard disederhanakan menjadi daftar kartu, gamifikasi dihapus sepenuhnya, brand PSPK diterapkan secara penuh.*
+*Versi 2.0 - Revisi: dashboard disederhanakan menjadi daftar kartu, gamifikasi dihapus sepenuhnya, brand PSPK diterapkan secara penuh.*
 
 
 

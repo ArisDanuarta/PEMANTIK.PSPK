@@ -1,4 +1,4 @@
-// ─── Shared Types — Pemantik Platform ────────────────────────────────────────
+// ─── Shared Types - Pemantik Platform ────────────────────────────────────────
 // Re-export all type modules
 export * from "./user";
 export * from "./question";

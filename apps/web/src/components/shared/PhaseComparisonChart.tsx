@@ -63,14 +63,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           <div>
             <div style={{ color: "#34d399", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.25rem" }}>Literasi</div>
             <div>Rata-rata: <strong>{data.avgLiterasi}%</strong></div>
-            <div>Max Level: <strong>{data.maxLevelLit > 0 ? `Level ${data.maxLevelLit}` : "—"}</strong></div>
+            <div>Max Level: <strong>{data.maxLevelLit > 0 ? `Level ${data.maxLevelLit}` : "-"}</strong></div>
             <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.1rem" }}>{data.countLit} sesi</div>
           </div>
 
           <div>
             <div style={{ color: "#fbbf24", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.25rem" }}>Numerasi</div>
             <div>Rata-rata: <strong>{data.avgNumerasi}%</strong></div>
-            <div>Max Level: <strong>{data.maxLevelNum > 0 ? `Level ${data.maxLevelNum}` : "—"}</strong></div>
+            <div>Max Level: <strong>{data.maxLevelNum > 0 ? `Level ${data.maxLevelNum}` : "-"}</strong></div>
             <div style={{ fontSize: "0.72rem", color: "#94a3b8", marginTop: "0.1rem" }}>{data.countNum} sesi</div>
           </div>
         </div>
@@ -254,11 +254,11 @@ export default function PhaseComparisonChart({
             </div>
             <div style={{ fontSize: "0.8rem", color: "#059669", display: "flex", justifyContent: "space-between" }}>
               <span>Literasi (Avg / Max):</span>
-              <strong>{d.avgLiterasi}% ({d.maxLevelLit > 0 ? `Lvl ${d.maxLevelLit}` : "—"})</strong>
+              <strong>{d.avgLiterasi}% ({d.maxLevelLit > 0 ? `Lvl ${d.maxLevelLit}` : "-"})</strong>
             </div>
             <div style={{ fontSize: "0.8rem", color: "#d97706", display: "flex", justifyContent: "space-between" }}>
               <span>Numerasi (Avg / Max):</span>
-              <strong>{d.avgNumerasi}% ({d.maxLevelNum > 0 ? `Lvl ${d.maxLevelNum}` : "—"})</strong>
+              <strong>{d.avgNumerasi}% ({d.maxLevelNum > 0 ? `Lvl ${d.maxLevelNum}` : "-"})</strong>
             </div>
           </div>
         ))}

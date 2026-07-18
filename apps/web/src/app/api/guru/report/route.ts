@@ -97,7 +97,7 @@ export async function GET(request: Request) {
       gender: student?.gender ?? "",
       ses_class: student?.ses_class ?? "",
       class_id: cls?.id ?? "",
-      class_name: cls ? `Kelas ${cls.grade} — ${cls.name}` : "—",
+      class_name: cls ? `Kelas ${cls.grade} - ${cls.name}` : "-",
     };
   });
 

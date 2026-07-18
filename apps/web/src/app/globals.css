@@ -1,5 +1,5 @@
 /* ─── Pemantik Design System ─────────────────────────────────────────────────
- * Brand: PSPK — "Bersih, Sederhana, Elegan" · #BerpihakKepadaAnak
+ * Brand: PSPK - "Bersih, Sederhana, Elegan" · #BerpihakKepadaAnak
  * ──────────────────────────────────────────────────────────────────────────── */
 
 /* ─── Google Fonts (must be before @import tailwindcss) ────────────────────── */
@@ -243,7 +243,7 @@ h6 { font-size: 0.875rem; }
   border-radius: 999px;
 }
 
-/* Right column: sticky preview — does NOT scroll */
+/* Right column: sticky preview - does NOT scroll */
 .split-col-right {
   flex-shrink: 0;
   overflow-y: auto;
@@ -845,7 +845,7 @@ phantom-ui {
 
 /* ─── Responsive Layout System ─────────────────────────────────────────────── */
 
-/* Sidebar wrapper — renders the sidebar inside and handles mobile transform */
+/* Sidebar wrapper - renders the sidebar inside and handles mobile transform */
 .layout-sidebar-wrapper {
   position: fixed;
   top: 0;
@@ -868,7 +868,7 @@ phantom-ui {
   animation: fadeIn var(--duration-fast) var(--ease-smooth);
 }
 
-/* Hamburger toggle button — hidden on desktop */
+/* Hamburger toggle button - hidden on desktop */
 .sidebar-toggle-btn {
   display: none;
   align-items: center;
@@ -952,7 +952,7 @@ phantom-ui {
     display: block;
   }
 
-  /* Use sibling selector pattern — overlay shown via JS render */
+  /* Use sibling selector pattern - overlay shown via JS render */
   .sidebar-mobile-overlay {
     display: block;
   }
@@ -1010,7 +1010,7 @@ phantom-ui {
     padding: 1rem;
   }
 
-  /* Stat cards — 2 columns on mobile */
+  /* Stat cards - 2 columns on mobile */
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;

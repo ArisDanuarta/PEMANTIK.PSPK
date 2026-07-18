@@ -133,7 +133,7 @@ export async function notifyAllSuperAdmins(
       console.error("[notifyAllSuperAdmins] Gagal insert notifikasi:", insertErr);
     }
   } catch (err: any) {
-    // Gagal silent — notifikasi tidak boleh gagalkan action utama
+    // Gagal silent - notifikasi tidak boleh gagalkan action utama
     console.error("[notifyAllSuperAdmins]", err);
   }
 }

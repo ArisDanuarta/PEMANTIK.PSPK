@@ -6,7 +6,7 @@ import * as XLSX from "xlsx";
 export const dynamic = "force-dynamic";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helper: group baris view per sekolah untuk Sheet 1 — Ringkasan Sekolah
+// Helper: group baris view per sekolah untuk Sheet 1 - Ringkasan Sekolah
 // ─────────────────────────────────────────────────────────────────────────────
 function buildRingkasanSekolah(rows: any[]) {
   const schools = new Map<string, any>();
@@ -15,11 +15,11 @@ function buildRingkasanSekolah(rows: any[]) {
     const sid = row.school_id;
     if (!schools.has(sid)) {
       schools.set(sid, {
-        Komunitas:       row.community_name ?? "—",
-        Sekolah:         row.school_name    ?? "—",
-        NPSN:            row.npsn           ?? "—",
-        Provinsi:        row.province       ?? "—",
-        Kota:            row.city           ?? "—",
+        Komunitas:       row.community_name ?? "-",
+        Sekolah:         row.school_name    ?? "-",
+        NPSN:            row.npsn           ?? "-",
+        Provinsi:        row.province       ?? "-",
+        Kota:            row.city           ?? "-",
         _totalStudents:  new Set<string>(),
         _completedCount: 0,
         _scores:         [] as number[],
@@ -38,10 +38,10 @@ function buildRingkasanSekolah(rows: any[]) {
   return Array.from(schools.values()).map((s) => {
     const avgScore  = s._scores.length > 0
       ? (s._scores.reduce((a: number, b: number) => a + b, 0) / s._scores.length).toFixed(1)
-      : "—";
-    const maxLevel  = s._levels.length > 0 ? Math.max(...s._levels) : "—";
+      : "-";
+    const maxLevel  = s._levels.length > 0 ? Math.max(...s._levels) : "-";
     const total     = s._totalStudents.size;
-    const passRate  = total > 0 ? ((s._completedCount / total) * 100).toFixed(1) + "%" : "—";
+    const passRate  = total > 0 ? ((s._completedCount / total) * 100).toFixed(1) + "%" : "-";
 
     return {
       Komunitas:        s.Komunitas,
@@ -59,7 +59,7 @@ function buildRingkasanSekolah(rows: any[]) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helper: build Sheet 3 — Hasil per Level dari student_answers
+// Helper: build Sheet 3 - Hasil per Level dari student_answers
 // ─────────────────────────────────────────────────────────────────────────────
 function buildHasilPerLevel(
   viewRows: any[],
@@ -87,18 +87,18 @@ function buildHasilPerLevel(
     if (!lvlMap) return;
 
     lvlMap.forEach((agg, levelNumber) => {
-      const pct = agg.total > 0 ? ((agg.correct / agg.total) * 100).toFixed(1) + "%" : "—";
+      const pct = agg.total > 0 ? ((agg.correct / agg.total) * 100).toFixed(1) + "%" : "-";
       result.push({
-        Komunitas:      row.community_name   ?? "—",
-        Sekolah:        row.school_name      ?? "—",
-        "Nama Anak":   row.student_name     ?? "—",
-        NISN:           row.nisn             ?? "—",
-        Fase:           row.phase            ?? "—",
+        Komunitas:      row.community_name   ?? "-",
+        Sekolah:        row.school_name      ?? "-",
+        "Nama Anak":   row.student_name     ?? "-",
+        NISN:           row.nisn             ?? "-",
+        Fase:           row.phase            ?? "-",
         Level:          levelNumber,
         "Soal Dijawab": agg.total,
         "Jawaban Benar": agg.correct,
         "% Benar":       pct,
-        "Level Dicapai": row.final_level_number ?? "—",
+        "Level Dicapai": row.final_level_number ?? "-",
       });
     });
   });
@@ -136,9 +136,9 @@ function buildAnalisisSoal(allQuestions: any[], answers: any[], levelMap: Map<st
     levelCounts[ln] = (levelCounts[ln] ?? 0) + 1;
     const stat = byQuestion.get(q.id) || { total: 0, correct: 0, incorrect: 0, totalTime: 0 };
     const pctNum = stat.total > 0 ? (stat.correct / stat.total) * 100 : 0;
-    const pctStr = stat.total > 0 ? pctNum.toFixed(1) + "%" : "—";
+    const pctStr = stat.total > 0 ? pctNum.toFixed(1) + "%" : "-";
     
-    let difficulty = "—";
+    let difficulty = "-";
     if (stat.total > 0) {
       if (pctNum < 30) difficulty = "Sulit";
       else if (pctNum <= 70) difficulty = "Sedang";
@@ -150,8 +150,8 @@ function buildAnalisisSoal(allQuestions: any[], answers: any[], levelMap: Map<st
     return {
       Level: `Level ${ln}`,
       "Urutan Soal (Admin)": `Soal ${levelCounts[ln]}`,
-      "Teks Soal": q.question_text ?? "—",
-      "Tipe Soal": q.question_type ?? "—",
+      "Teks Soal": q.question_text ?? "-",
+      "Tipe Soal": q.question_type ?? "-",
       "Total Anak Menjawab": stat.total,
       "Jumlah Benar": stat.correct,
       "Jumlah Salah": stat.incorrect,
@@ -163,7 +163,7 @@ function buildAnalisisSoal(allQuestions: any[], answers: any[], levelMap: Map<st
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helper: build Sheet 1 Khusus Komunitas — RAW Data Lengkap 1 Sheet
+// Helper: build Sheet 1 Khusus Komunitas - RAW Data Lengkap 1 Sheet
 // ─────────────────────────────────────────────────────────────────────────────
 function buildRawSheetCommunity(
   rows: any[],
@@ -181,12 +181,12 @@ function buildRawSheetCommunity(
 
   return rows.map((row) => {
     const demo = studentDemoMap.get(row.student_id) || {};
-    const pendAyah = sesMap.get(demo.father_education_id) ?? "—";
-    const pendIbu  = sesMap.get(demo.mother_education_id) ?? "—";
-    const kerjAyah = sesMap.get(demo.father_occupation_id) ?? "—";
-    const kerjIbu  = sesMap.get(demo.mother_occupation_id) ?? "—";
+    const pendAyah = sesMap.get(demo.father_education_id) ?? "-";
+    const pendIbu  = sesMap.get(demo.mother_education_id) ?? "-";
+    const kerjAyah = sesMap.get(demo.father_occupation_id) ?? "-";
+    const kerjIbu  = sesMap.get(demo.mother_occupation_id) ?? "-";
 
-    let umurSiswa = "—";
+    let umurSiswa = "-";
     if (row.birth_date) {
       const birth = new Date(row.birth_date);
       const refDate = row.started_at ? new Date(row.started_at) : new Date();
@@ -195,21 +195,21 @@ function buildRawSheetCommunity(
     }
 
     const baseRow: Record<string, any> = {
-      id:                   row.session_id        ?? "—",
-      id_user:              row.student_username  || row.nisn || row.student_id || "—",
-      category:             row.category_name     ?? "—",
-      type_soal:            row.subject_area || (allQuestions[0]?.question_type ?? "—"),
+      id:                   row.session_id        ?? "-",
+      id_user:              row.student_username  || row.nisn || row.student_id || "-",
+      category:             row.category_name     ?? "-",
+      type_soal:            row.subject_area || (allQuestions[0]?.question_type ?? "-"),
       attempt:              row.attempt_number    ?? 1,
-      level:                row.final_level_number != null ? `Level ${row.final_level_number}` : "—",
-      nama_siswa:           row.student_name      ?? "—",
-      gender:               row.gender            ?? "—",
-      kelas:                row.grade ? `Kelas ${row.grade} - ${row.class_name ?? ""}`.trim() : row.class_name ?? "—",
+      level:                row.final_level_number != null ? `Level ${row.final_level_number}` : "-",
+      nama_siswa:           row.student_name      ?? "-",
+      gender:               row.gender            ?? "-",
+      kelas:                row.grade ? `Kelas ${row.grade} - ${row.class_name ?? ""}`.trim() : row.class_name ?? "-",
     };
 
     allQuestions.forEach((q, idx) => {
       const num = idx + 1;
       const ansObj = answerBySessionQuestion.get(`${row.session_id}_${q.id}`);
-      let ansText = "—";
+      let ansText = "-";
       if (ansObj) {
         if (ansObj.answer_data) {
           if (typeof ansObj.answer_data === "object") {
@@ -226,21 +226,21 @@ function buildRawSheetCommunity(
 
     allQuestions.forEach((q, idx) => {
       const num = idx + 1;
-      baseRow[`Pilihan ${num}`] = q.question_text ?? "—";
+      baseRow[`Pilihan ${num}`] = q.question_text ?? "-";
     });
 
     baseRow["umur_siswa"]          = umurSiswa;
-    baseRow["tgl_lahir_siswa"]     = row.birth_date ?? "—";
-    baseRow["asal_provinsi"]       = row.student_province || row.province || "—";
-    baseRow["asal_kabupaten_kota"] = row.student_city || row.city || "—";
+    baseRow["tgl_lahir_siswa"]     = row.birth_date ?? "-";
+    baseRow["asal_provinsi"]       = row.student_province || row.province || "-";
+    baseRow["asal_kabupaten_kota"] = row.student_city || row.city || "-";
     baseRow["pekerjaan_ayah"]      = kerjAyah;
     baseRow["pekerjaan_ibu"]       = kerjIbu;
     baseRow["pendidikan_ayah"]     = pendAyah;
     baseRow["pendidikan_ibu"]      = pendIbu;
-    baseRow["SES"]                 = row.ses_class ? `${row.ses_class}${row.ses_score != null ? ` (${row.ses_score})` : ""}` : "—";
-    baseRow["asal_sekolah"]        = row.school_name       ?? "—";
-    baseRow["komunitas_user"]      = row.community_name    ?? "—";
-    baseRow["Waktu Mulai"]         = row.started_at ? new Date(row.started_at).toLocaleString("id-ID") : "—";
+    baseRow["SES"]                 = row.ses_class ? `${row.ses_class}${row.ses_score != null ? ` (${row.ses_score})` : ""}` : "-";
+    baseRow["asal_sekolah"]        = row.school_name       ?? "-";
+    baseRow["komunitas_user"]      = row.community_name    ?? "-";
+    baseRow["Waktu Mulai"]         = row.started_at ? new Date(row.started_at).toLocaleString("id-ID") : "-";
     baseRow["Durasi Pengerjaan"]   = row.time_spent_sec != null ? `${row.time_spent_sec} detik` : "0 detik";
 
     return baseRow;
@@ -254,8 +254,8 @@ function buildRawSheetCommunity(
 //
 // Params:
 //   - category_id (required)
-//   - target_id   — school_id, community_id, atau 'all'
-//   - target_type — 'school' | 'community' | 'teacher' | 'all'
+//   - target_id   - school_id, community_id, atau 'all'
+//   - target_type - 'school' | 'community' | 'teacher' | 'all'
 //   - phase       (optional)
 // ─────────────────────────────────────────────────────────────────────────────
 export async function GET(request: Request) {
@@ -459,30 +459,30 @@ export async function GET(request: Request) {
           access_id: s.access_id,
           phase: s.phase || "Tahap 1",
           category_id: s.category_id,
-          category_name: qc?.name || "—",
-          subject_area: qc?.subject_area || "—",
+          category_name: qc?.name || "-",
+          subject_area: qc?.subject_area || "-",
           community_id: sc?.community_id,
-          community_name: cm?.name || "—",
+          community_name: cm?.name || "-",
           school_id: sc?.id,
-          school_name: sc?.name || "—",
-          npsn: sc?.npsn || "—",
-          province: sc?.province || st?.province || "—",
-          city: sc?.city || st?.city || "—",
+          school_name: sc?.name || "-",
+          npsn: sc?.npsn || "-",
+          province: sc?.province || st?.province || "-",
+          city: sc?.city || st?.city || "-",
           class_id: cl?.id,
-          class_name: cl?.name || "—",
-          grade: cl?.grade || "—",
+          class_name: cl?.name || "-",
+          grade: cl?.grade || "-",
           teacher_id: us?.id,
-          teacher_name: us?.full_name || "—",
+          teacher_name: us?.full_name || "-",
           student_id: st?.id || s.student_id,
-          student_name: st?.full_name || "—",
-          student_username: st?.username || "—",
-          nisn: st?.nisn || "—",
-          gender: st?.gender || "—",
+          student_name: st?.full_name || "-",
+          student_username: st?.username || "-",
+          nisn: st?.nisn || "-",
+          gender: st?.gender || "-",
           birth_date: st?.birth_date,
-          ses_class: st?.ses_class || "—",
+          ses_class: st?.ses_class || "-",
           ses_score: st?.ses_score,
-          student_province: st?.province || "—",
-          student_city: st?.city || "—",
+          student_province: st?.province || "-",
+          student_city: st?.city || "-",
           session_id: s.id,
           session_status: s.status,
           started_at: s.started_at,
@@ -641,12 +641,12 @@ export async function GET(request: Request) {
     let rawData = buildRawSheetCommunity(rows, answers, allQuestions, studentDemoMap, sesMap);
     if (rawData.length === 0) {
       rawData = [{
-        id: "—", id_user: "—", category: "—", type_soal: "—", attempt: 1, level: "—",
-        nama_siswa: "Belum Ada Data Sesi Asesmen", gender: "—", kelas: "—",
-        "Answer 1": "—", "Pilihan 1": "—",
-        umur_siswa: "—", tgl_lahir_siswa: "—", asal_provinsi: "—", asal_kabupaten_kota: "—",
-        pekerjaan_ayah: "—", pekerjaan_ibu: "—", pendidikan_ayah: "—", pendidikan_ibu: "—",
-        SES: "—", asal_sekolah: "—", komunitas_user: "—", "Waktu Mulai": "—", "Durasi Pengerjaan": "0 detik"
+        id: "-", id_user: "-", category: "-", type_soal: "-", attempt: 1, level: "-",
+        nama_siswa: "Belum Ada Data Sesi Asesmen", gender: "-", kelas: "-",
+        "Answer 1": "-", "Pilihan 1": "-",
+        umur_siswa: "-", tgl_lahir_siswa: "-", asal_provinsi: "-", asal_kabupaten_kota: "-",
+        pekerjaan_ayah: "-", pekerjaan_ibu: "-", pendidikan_ayah: "-", pendidikan_ibu: "-",
+        SES: "-", asal_sekolah: "-", komunitas_user: "-", "Waktu Mulai": "-", "Durasi Pengerjaan": "0 detik"
       }];
     }
     XLSX.utils.book_append_sheet(
@@ -673,40 +673,40 @@ export async function GET(request: Request) {
 
     const sheet2Data = rows.map((row) => {
       const demo = studentDemoMap.get(row.student_id) || {};
-      const pendAyah = sesMap.get(demo.father_education_id) ?? "—";
-      const pendIbu  = sesMap.get(demo.mother_education_id) ?? "—";
-      const kerjAyah = sesMap.get(demo.father_occupation_id) ?? "—";
-      const kerjIbu  = sesMap.get(demo.mother_occupation_id) ?? "—";
+      const pendAyah = sesMap.get(demo.father_education_id) ?? "-";
+      const pendIbu  = sesMap.get(demo.mother_education_id) ?? "-";
+      const kerjAyah = sesMap.get(demo.father_occupation_id) ?? "-";
+      const kerjIbu  = sesMap.get(demo.mother_occupation_id) ?? "-";
 
       const baseRow: Record<string, any> = {
-        Komunitas:         row.community_name    ?? "—",
-        Sekolah:           row.school_name       ?? "—",
-        NPSN:              row.npsn              ?? "—",
-        Kelas:             row.class_name        ? `Kelas ${row.grade} - ${row.class_name}` : "—",
-        Guru:              row.teacher_name      ?? "—",
-        "Nama Anak":      row.student_name      ?? "—",
-        Username:          row.student_username  ?? "—",
-        NISN:              row.nisn              ?? "—",
-        Gender:            row.gender            ?? "—",
-        "Tanggal Lahir":   row.birth_date        ?? "—",
+        Komunitas:         row.community_name    ?? "-",
+        Sekolah:           row.school_name       ?? "-",
+        NPSN:              row.npsn              ?? "-",
+        Kelas:             row.class_name        ? `Kelas ${row.grade} - ${row.class_name}` : "-",
+        Guru:              row.teacher_name      ?? "-",
+        "Nama Anak":      row.student_name      ?? "-",
+        Username:          row.student_username  ?? "-",
+        NISN:              row.nisn              ?? "-",
+        Gender:            row.gender            ?? "-",
+        "Tanggal Lahir":   row.birth_date        ?? "-",
         "Pendidikan Ayah": pendAyah,
         "Pendidikan Ibu":  pendIbu,
         "Pekerjaan Ayah":  kerjAyah,
         "Pekerjaan Ibu":   kerjIbu,
-        "SES Class":       row.ses_class         ?? "—",
-        "SES Score":       row.ses_score         ?? "—",
-        Provinsi:          row.student_province  ?? "—",
-        Kota:              row.student_city      ?? "—",
-        Kecamatan:         row.student_district  ?? "—",
-        Desa:              row.student_village   ?? "—",
-        Fase:              row.phase             ?? "—",
-        Status:            row.session_status    ?? "—",
-        "Skor Akhir":      row.final_score       ?? "—",
-        "Level Dicapai":   row.final_level_number ?? "—",
+        "SES Class":       row.ses_class         ?? "-",
+        "SES Score":       row.ses_score         ?? "-",
+        Provinsi:          row.student_province  ?? "-",
+        Kota:              row.student_city      ?? "-",
+        Kecamatan:         row.student_district  ?? "-",
+        Desa:              row.student_village   ?? "-",
+        Fase:              row.phase             ?? "-",
+        Status:            row.session_status    ?? "-",
+        "Skor Akhir":      row.final_score       ?? "-",
+        "Level Dicapai":   row.final_level_number ?? "-",
         "Waktu (Detik)":   row.time_spent_sec    ?? 0,
         "Percobaan ke":    row.attempt_number    ?? 1,
-        Mulai:             row.started_at        ? new Date(row.started_at).toLocaleString("id-ID") : "—",
-        Selesai:           row.completed_at      ? new Date(row.completed_at).toLocaleString("id-ID") : "—",
+        Mulai:             row.started_at        ? new Date(row.started_at).toLocaleString("id-ID") : "-",
+        Selesai:           row.completed_at      ? new Date(row.completed_at).toLocaleString("id-ID") : "-",
       };
 
       const sessMatrix = answerMatrixMap.get(row.session_id);
@@ -739,7 +739,7 @@ export async function GET(request: Request) {
 
     // ── SHEET 5: Detail Jawaban (Diurutkan berdasarkan Urutan Admin Soal) ─────
     const studentBySession = new Map<string, string>();
-    rows.forEach((r) => { if (r.session_id) studentBySession.set(r.session_id, r.student_name ?? "—"); });
+    rows.forEach((r) => { if (r.session_id) studentBySession.set(r.session_id, r.student_name ?? "-"); });
 
     const sortedAnswers = [...answers].sort((a, b) => {
       const nameA = studentBySession.get(a.session_id) ?? "";
@@ -755,22 +755,22 @@ export async function GET(request: Request) {
 
     const sheet4Data = sortedAnswers.map((ans) => {
       const qObj = (ans.questions as any) || {};
-      const lvlNum = qObj?.question_levels?.level_number ?? "—";
-      const ordIdx = qObj?.order_index != null ? `Soal ${qObj.order_index}` : "—";
+      const lvlNum = qObj?.question_levels?.level_number ?? "-";
+      const ordIdx = qObj?.order_index != null ? `Soal ${qObj.order_index}` : "-";
 
       return {
         "Session ID":          ans.session_id,
-        "Nama Anak":          studentBySession.get(ans.session_id) ?? "—",
+        "Nama Anak":          studentBySession.get(ans.session_id) ?? "-",
         Level:                 lvlNum,
         "Urutan Soal (Admin)": ordIdx,
-        Soal:                  qObj?.question_text ?? "—",
-        "Tipe Soal":           qObj?.question_type ?? "—",
-        Jawaban:               ans.answer_data ? JSON.stringify(ans.answer_data) : "—",
+        Soal:                  qObj?.question_text ?? "-",
+        "Tipe Soal":           qObj?.question_type ?? "-",
+        Jawaban:               ans.answer_data ? JSON.stringify(ans.answer_data) : "-",
         Benar:                 ans.is_correct ? "Ya" : "Tidak",
         Skor:                  ans.score ?? 0,
         "Waktu (Detik)":       ans.time_spent_sec ?? 0,
         "Ada Rekaman":         ans.recording_url ? "Ya" : "Tidak",
-        "Dijawab Pada":        ans.answered_at ? new Date(ans.answered_at).toLocaleString("id-ID") : "—",
+        "Dijawab Pada":        ans.answered_at ? new Date(ans.answered_at).toLocaleString("id-ID") : "-",
       };
     });
 

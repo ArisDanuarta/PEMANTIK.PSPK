@@ -214,7 +214,7 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
                       <span style={{ fontSize: "0.75rem", color: "#6c757d" }}>anak</span>
                     </div>
                   </td>
-                  <td><span style={{ fontSize: "0.85rem", color: "#4b5563" }}>{cls.academic_year ?? "—"}</span></td>
+                  <td><span style={{ fontSize: "0.85rem", color: "#4b5563" }}>{cls.academic_year ?? "-"}</span></td>
                   <td><Badge variant={cls.is_active ? "success" : "danger"}>{cls.is_active ? "Aktif" : "Nonaktif"}</Badge></td>
                   <td>
                     <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
@@ -265,7 +265,7 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
                 <div>
                   <label className="form-label">Guru Pengampu</label>
                   <select name="teacher_id" className="form-input" defaultValue={editingClass?.users?.id ?? ""}>
-                    <option value="">— Pilih Guru (opsional) —</option>
+                    <option value="">- Pilih Guru (opsional) -</option>
                     {teachers.map((t) => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                   </select>
                 </div>

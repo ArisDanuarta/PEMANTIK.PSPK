@@ -1,6 +1,6 @@
 # Blueprint Sistem Pemantik v2.0
-> Rancangan Teknis Lengkap — Platform Asesmen Literasi & Numerasi  
-> **Status:** Internal — tidak untuk distribusi publik
+> Rancangan Teknis Lengkap - Platform Asesmen Literasi & Numerasi  
+> **Status:** Internal - tidak untuk distribusi publik
 
 ---
 
@@ -76,9 +76,9 @@ Sistem memiliki 6 role: `super_admin` · `question_admin` · `community` · `sch
 | Role        | Set Paket       | Per Sekolah    | Per Kelas    | Per Siswa       | Lihat Hasil          |
 |-------------|-----------------|----------------|--------------|-----------------|----------------------|
 | Super Admin | ✓ per komunitas | ✓ override     | ✓            | ✓               | ✓ semua level        |
-| Komunitas   | —               | ✓              | via sekolah  | ✓               | ✓ lintas sekolah     |
-| Sekolah     | —               | —              | ✓            | ✓               | ✓ per kelas          |
-| Guru        | —               | —              | —            | ✓ muridnya saja | ✓ per soal           |
+| Komunitas   | -               | ✓              | via sekolah  | ✓               | ✓ lintas sekolah     |
+| Sekolah     | -               | -              | ✓            | ✓               | ✓ per kelas          |
+| Guru        | -               | -              | -            | ✓ muridnya saja | ✓ per soal           |
 
 ---
 
@@ -86,32 +86,32 @@ Sistem memiliki 6 role: `super_admin` · `question_admin` · `community` · `sch
 
 Enam tahap dari konfigurasi paket hingga hasil tersaji di dashboard semua level:
 
-### Tahap 1 — Super Admin Menetapkan Paket Asesmen per Komunitas
+### Tahap 1 - Super Admin Menetapkan Paket Asesmen per Komunitas
 - Komunitas X hanya bisa akses paket literasi level 1–4; Komunitas Y dapat akses penuh
 - Konfigurasi disimpan di tabel `community_assessment_access` dalam format `JSONB`
 
-### Tahap 2 — Komunitas / Sekolah / Guru Membuat Akun Siswa
+### Tahap 2 - Komunitas / Sekolah / Guru Membuat Akun Siswa
 - Bisa manual satu per satu atau bulk import via template Excel
 - Akun siswa otomatis berelasi ke sekolah dan kelas yang sesuai
 - Data siswa mencakup SES (kelas I–IV) dan gender
 
-### Tahap 3 — Guru / Sekolah / Komunitas Membuka Akses Ujian
+### Tahap 3 - Guru / Sekolah / Komunitas Membuka Akses Ujian
 - Akses diatur per siswa, per kelas, atau per sekolah
 - Status berjenjang: `Belum Bisa Ujian → Siap Ujian → Sudah Selesai`
 - Guru hanya bisa membuka akses untuk muridnya sendiri
 
-### Tahap 4 — Siswa Login di Mobile App dan Mulai Asesmen
+### Tahap 4 - Siswa Login di Mobile App dan Mulai Asesmen
 - App fetch soal sesuai paket yang diizinkan via Supabase REST API / Realtime
 - Soal dapat diacak atau berurutan sesuai konfigurasi
 - Progress tersimpan real-time; bisa dilanjutkan jika koneksi terputus (offline-first SQLite)
 
-### Tahap 5 — Jawaban Tersimpan dan Dikoreksi
+### Tahap 5 - Jawaban Tersimpan dan Dikoreksi
 - Pilihan ganda dan drag & drop: **auto-score**
 - Voice recording: masuk antrian **manual review** oleh guru
 - Skor disimpan per soal dan per sesi
 - UPSERT digunakan untuk mencegah duplikat jawaban
 
-### Tahap 6 — Hasil Tampil di Dashboard Semua Level Hierarki
+### Tahap 6 - Hasil Tampil di Dashboard Semua Level Hierarki
 - Guru → per siswa | Sekolah → per kelas | Komunitas → per sekolah | Super Admin → agregat semua
 - Filter tersedia: tahun, SES I–IV, gender, kelas, provinsi
 
@@ -132,17 +132,17 @@ Enam tahap dari konfigurasi paket hingga hasil tersaji di dashboard semua level:
 
 ### 3.2 Alur Input Soal oleh Admin Soal
 
-1. **Pilih jenis & level asesmen** — Literasi (Level 1–9) atau Numerasi (Level 0–3+)
-2. **Pilih tipe soal** — form input berubah adaptif sesuai tipe yang dipilih
+1. **Pilih jenis & level asesmen** - Literasi (Level 1–9) atau Numerasi (Level 0–3+)
+2. **Pilih tipe soal** - form input berubah adaptif sesuai tipe yang dipilih
    - Pilihan ganda → input teks/gambar pilihan
    - Drag & drop → input item dan target posisi
    - Audio/Video → upload file media ke Supabase Storage
 3. **Input konten soal + kunci jawaban**
    - Soal disimpan dalam format JSON terstruktur (`content: jsonb`)
    - Media diupload ke Supabase Storage, URL disimpan di `media_url`
-4. **Preview & Publish** — status: `Draft → Review → Published`
+4. **Preview & Publish** - status: `Draft → Review → Published`
    - Hanya soal berstatus `Published` yang bisa diakses siswa
-5. **Delivery ke Flutter via Supabase API** — widget khusus per tipe interaksi, cache lokal SQLite
+5. **Delivery ke Flutter via Supabase API** - widget khusus per tipe interaksi, cache lokal SQLite
 
 ---
 
@@ -235,7 +235,7 @@ question_version text   (untuk deteksi soal berubah saat offline)
 
 ### 4.1 Constraint & Row Level Security
 
-- `UNIQUE(session_id, question_id)` pada tabel `answers` — mencegah duplikat, mendukung UPSERT
+- `UNIQUE(session_id, question_id)` pada tabel `answers` - mencegah duplikat, mendukung UPSERT
 - RLS per role: komunitas hanya bisa lihat sekolah miliknya, guru hanya muridnya
 - JWT claim menyimpan `entity_id` untuk filtering otomatis di setiap query
 - `assessment_access` di tabel `communities` disimpan sebagai `JSONB` untuk fleksibilitas
@@ -258,22 +258,22 @@ Siswa dapat mengerjakan soal tanpa internet. Jawaban disimpan lokal di SQLite vi
 
 ### 5.2 Empat Tahap Alur Offline-First
 
-**Tahap 1 — App Launch: Fetch & Cache Soal**
+**Tahap 1 - App Launch: Fetch & Cache Soal**
 - Saat online, fetch semua soal yang diizinkan untuk siswa tersebut
 - Simpan ke SQLite lokal via Drift (typed SQLite ORM untuk Flutter)
 - Media audio/video kecil bisa di-preload ke local storage
 - Tabel: `Questions` dengan field `cachedAt`
 
-**Tahap 2 — Siswa Menjawab: Simpan Lokal Dulu, Selalu**
+**Tahap 2 - Siswa Menjawab: Simpan Lokal Dulu, Selalu**
 - Setiap jawaban SELALU disimpan ke tabel `pending_answers` di SQLite lokal terlebih dahulu
-- Berlaku terlepas dari status koneksi — satu-satunya cara menghindari kehilangan data
+- Berlaku terlepas dari status koneksi - satu-satunya cara menghindari kehilangan data
 - Field `synced` defaultnya `false`
 
-**Tahap 3 — SyncService: Jaga Koneksi & Proses Antrian**
+**Tahap 3 - SyncService: Jaga Koneksi & Proses Antrian**
 - Background service listen perubahan konektivitas via package `connectivity_plus`
 - Saat koneksi terdeteksi kembali, SyncService langsung memproses semua jawaban dengan `synced = false`
 
-**Tahap 4 — Upload ke Supabase: Batch dengan Retry**
+**Tahap 4 - Upload ke Supabase: Batch dengan Retry**
 - Kirim jawaban pending ke Supabase dalam batch
 - Jika sukses → tandai `synced = true`
 - Jika gagal (error jaringan) → biarkan di antrian, coba lagi saat koneksi stabil
@@ -283,7 +283,7 @@ Siswa dapat mengerjakan soal tanpa internet. Jawaban disimpan lokal di SQLite vi
 
 **Skenario 1: Jawaban Ganda (Paling Umum)**
 - Penyebab: Internet mati-nyala, jawaban dikirim 2x ke server
-- Solusi: UPSERT dengan constraint `UNIQUE(session_id, question_id)` — bukan INSERT biasa
+- Solusi: UPSERT dengan constraint `UNIQUE(session_id, question_id)` - bukan INSERT biasa
 
 **Skenario 2: Sesi Asesmen Sudah Expired**
 - Penyebab: Siswa mulai ujian lalu offline lama; sesi ditutup guru atau sudah expired
@@ -303,21 +303,21 @@ Siswa dapat mengerjakan soal tanpa internet. Jawaban disimpan lokal di SQLite vi
 ### 6.1 Pendekatan Monorepo
 
 - Satu codebase Next.js, satu deploy, satu domain
-- Isolasi data bukan soal project terpisah — itu tugas **RLS Supabase + middleware Next.js**
+- Isolasi data bukan soal project terpisah - itu tugas **RLS Supabase + middleware Next.js**
 - Type safety dishare antar role via `packages/shared-types/`
 - Shared React components di `packages/ui/` (Button, Table, Modal, Chart, dll)
 - Update fitur shared sekali jalan untuk semua role
 
-### 6.2 URL Structure — 1 Next.js Project, 5 Role
+### 6.2 URL Structure - 1 Next.js Project, 5 Role
 
 | Route              | JWT Claim    | Deskripsi                                           |
 |--------------------|--------------|-----------------------------------------------------|
-| `/super-admin/*`   | super_admin  | Kontrol penuh sistem — dashboard, user, soal, laporan |
-| `/admin-soal/*`    | question_admin | Manajemen konten soal — input, preview, publish   |
-| `/komunitas/*`     | community_id | Jaringan sekolah — inject community_id dari JWT    |
-| `/sekolah/*`       | school_id    | Manajemen guru & siswa — inject school_id dari JWT |
-| `/guru/*`          | teacher_id   | Dashboard kelas — inject teacher_id + class_ids dari JWT |
-| `/login`           | —            | Satu halaman login, redirect otomatis ke route sesuai role |
+| `/super-admin/*`   | super_admin  | Kontrol penuh sistem - dashboard, user, soal, laporan |
+| `/admin-soal/*`    | question_admin | Manajemen konten soal - input, preview, publish   |
+| `/komunitas/*`     | community_id | Jaringan sekolah - inject community_id dari JWT    |
+| `/sekolah/*`       | school_id    | Manajemen guru & siswa - inject school_id dari JWT |
+| `/guru/*`          | teacher_id   | Dashboard kelas - inject teacher_id + class_ids dari JWT |
+| `/login`           | -            | Satu halaman login, redirect otomatis ke route sesuai role |
 
 ### 6.3 Struktur Folder Monorepo
 
@@ -346,7 +346,7 @@ pnpm-workspace.yaml
 
 | Teknologi               | Kategori         | Peran dalam Sistem                                              |
 |-------------------------|------------------|-----------------------------------------------------------------|
-| Next.js (App Router)    | Frontend web     | Monorepo semua 5 role admin — satu codebase, satu deploy       |
+| Next.js (App Router)    | Frontend web     | Monorepo semua 5 role admin - satu codebase, satu deploy       |
 | Turborepo + pnpm        | Build system     | Monorepo orchestration, shared packages, type safety           |
 | Tailwind CSS + shadcn/ui | UI library      | Design system terpadu untuk semua route group                  |
 | Flutter                 | Mobile siswa     | iOS & Android, offline-first, interaksi soal kaya             |
@@ -376,8 +376,8 @@ Area yang belum terdefinisi dan perlu keputusan sebelum implementasi:
 | Notifikasi push             | Apakah guru/sekolah perlu push notification saat siswa selesai ujian? Jika ya, integrasi FCM (Firebase Cloud Messaging).    |
 | UI review voice recording   | Antarmuka untuk review rekaman suara? Perlu timestamp per jawaban agar guru bisa scrub audio dengan mudah.                   |
 | Expiry sesi asesmen         | Apakah ada batas waktu otomatis per sesi? Siapa yang bisa extend? Perlu field `expires_at` di tabel `assessment_sessions`.  |
-| Version history soal        | Saat soal diedit setelah ada jawaban, perlu strategi snapshot versi — kolom terpisah atau tabel `questions_history`?         |
-| Kolom export Excel          | Perlu definisi kolom dan agregasi per level role — format per siswa vs per kelas vs per komunitas bisa berbeda.              |
+| Version history soal        | Saat soal diedit setelah ada jawaban, perlu strategi snapshot versi - kolom terpisah atau tabel `questions_history`?         |
+| Kolom export Excel          | Perlu definisi kolom dan agregasi per level role - format per siswa vs per kelas vs per komunitas bisa berbeda.              |
 | Batas waktu pengerjaan      | Apakah ada timer per sesi atau per soal? Jika ya, perlu konfigurasi di level paket dan penanganan saat waktu habis di Flutter.|
 
 ---

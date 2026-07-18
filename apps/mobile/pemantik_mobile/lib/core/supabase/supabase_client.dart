@@ -14,7 +14,7 @@ class SupabaseConfig {
   static const String supabaseAnonKey =
       'sb_publishable_SzhpIVvCr63y2FuU4fAAHg_pUw-rB7u';
 
-  /// Kunci storage untuk JWT siswa — gunakan konstanta ini di seluruh app
+  /// Kunci storage untuk JWT siswa - gunakan konstanta ini di seluruh app
   /// agar tidak ada typo key yang menyebabkan token tidak terbaca.
   static const String studentJwtKey = _kStudentJwtKey;
 

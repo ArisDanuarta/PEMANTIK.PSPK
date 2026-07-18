@@ -388,7 +388,7 @@ export async function reviewPhaseRequestAction(
       .single();
 
     if (accessErr) {
-      // Unique violation: akses sudah ada — ambil yang existing
+      // Unique violation: akses sudah ada - ambil yang existing
       if (accessErr.code !== "23505") throw accessErr;
     }
 
@@ -419,7 +419,7 @@ export async function reviewPhaseRequestAction(
 
     if (!distResult.success) {
       console.warn("[reviewPhaseRequestAction] Distribusi parsial:", distResult.error);
-      // Lanjutkan walau distribusi parsial — jangan batalkan approve
+      // Lanjutkan walau distribusi parsial - jangan batalkan approve
     }
 
     // 3. UPSERT school_assessment_stages → proses_asesmen
@@ -503,7 +503,7 @@ export async function getPhaseRequestsForCommunity(): Promise<{
 }
 
 /**
- * Ambil semua pengajuan yang masih pending — digunakan oleh halaman Approval Center Super Admin.
+ * Ambil semua pengajuan yang masih pending - digunakan oleh halaman Approval Center Super Admin.
  */
 export async function getPendingPhaseRequests(): Promise<{
   success: boolean;

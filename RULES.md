@@ -1,4 +1,4 @@
-# 📋 RULES.MD — AI WORKFLOW & EXECUTION PROTOCOL
+# 📋 RULES.MD - AI WORKFLOW & EXECUTION PROTOCOL
 
 > **Setiap kali file ini di-mention, AI WAJIB mengikuti seluruh aturan berikut sebelum menulis satu baris kode pun.**
 
@@ -10,7 +10,7 @@ Jangan pernah langsung coding. Selalu **pahami dulu, rencanakan, verifikasi, bar
 
 ---
 
-## PHASE 1 — 🔍 FULL PROJECT AUDIT (WAJIB DILAKUKAN PERTAMA)
+## PHASE 1 - 🔍 FULL PROJECT AUDIT (WAJIB DILAKUKAN PERTAMA)
 
 Sebelum apapun, lakukan pengecekan menyeluruh pada seluruh project:
 
@@ -48,7 +48,7 @@ Sebelum apapun, lakukan pengecekan menyeluruh pada seluruh project:
 
 ---
 
-## PHASE 2 — 🌐 CONTEXT & REFERENCE GATHERING
+## PHASE 2 - 🌐 CONTEXT & REFERENCE GATHERING
 
 Setelah memahami project, kumpulkan referensi yang dibutuhkan:
 
@@ -62,7 +62,7 @@ Setelah memahami project, kumpulkan referensi yang dibutuhkan:
 
 ---
 
-## PHASE 3 — 📐 IMPLEMENTATION PLAN (WAJIB DITULIS SEBELUM CODING)
+## PHASE 3 - 📐 IMPLEMENTATION PLAN (WAJIB DITULIS SEBELUM CODING)
 
 Buat rencana implementasi yang jelas dan terstruktur:
 
@@ -75,10 +75,10 @@ Buat rencana implementasi yang jelas dan terstruktur:
 [Jelaskan apa yang ingin dicapai]
 
 ### Files yang akan dibuat:
-- path/to/file.ext — [alasan]
+- path/to/file.ext - [alasan]
 
 ### Files yang akan dimodifikasi:
-- path/to/file.ext — [perubahan apa, baris berapa]
+- path/to/file.ext - [perubahan apa, baris berapa]
 
 ### Database changes (jika ada):
 - Tabel: [nama tabel]
@@ -104,7 +104,7 @@ Buat rencana implementasi yang jelas dan terstruktur:
 
 ---
 
-## PHASE 4 — ⚙️ EKSEKUSI TERVERIFIKASI
+## PHASE 4 - ⚙️ EKSEKUSI TERVERIFIKASI
 
 Saat mengeksekusi implementation plan:
 
@@ -116,7 +116,7 @@ Saat mengeksekusi implementation plan:
 
 ### 4.2 Code Quality
 - [ ] Ikuti konvensi penamaan yang sudah ada di project
-- [ ] Jangan duplikasi logic yang sudah ada — reuse helper/service yang tersedia
+- [ ] Jangan duplikasi logic yang sudah ada - reuse helper/service yang tersedia
 - [ ] Tambahkan komentar untuk logic yang kompleks
 - [ ] Tangani error dan edge case dengan benar
 
@@ -134,7 +134,7 @@ Saat mengeksekusi implementation plan:
 
 ---
 
-## PHASE 5 — ✅ CROSSCHECK & VERIFIKASI AKHIR
+## PHASE 5 - ✅ CROSSCHECK & VERIFIKASI AKHIR
 
 Setelah semua selesai dibuat, lakukan crosscheck menyeluruh:
 
@@ -198,9 +198,9 @@ Setelah crosscheck, berikan laporan singkat:
 
 Setiap kali `RULES.MD` di-mention, AI harus:
 
-1. **Acknowledge** — Konfirmasi bahwa rules ini sedang diikuti
-2. **State current phase** — Sebutkan sedang di phase mana
-3. **Report before proceeding** — Laporkan temuan sebelum lanjut ke phase berikutnya
+1. **Acknowledge** - Konfirmasi bahwa rules ini sedang diikuti
+2. **State current phase** - Sebutkan sedang di phase mana
+3. **Report before proceeding** - Laporkan temuan sebelum lanjut ke phase berikutnya
 
 ---
 

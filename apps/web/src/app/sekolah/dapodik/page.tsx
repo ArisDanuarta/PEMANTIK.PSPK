@@ -8,7 +8,7 @@ import DapodikSekolahClient from "./DapodikSekolahClient";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Upload Data Dapodik | Sekolah — Pemantik",
+  title: "Upload Data Dapodik | Sekolah - Pemantik",
   description: "Impor dan pemutakhiran data Dapodik sekolah (Guru, Anak, dan Kelas)",
 };
 

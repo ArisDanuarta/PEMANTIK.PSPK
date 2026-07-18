@@ -80,7 +80,7 @@ export default function SchoolInteractiveTimeline({
 
   // Sekolah dianggap independen jika:
   // 1. Tidak punya community_id (normal case), ATAU
-  // 2. community_id-nya adalah komunitas "SEKOLAH INDEPENDEN" (kasus legacy — sebelum bug diperbaiki)
+  // 2. community_id-nya adalah komunitas "SEKOLAH INDEPENDEN" (kasus legacy - sebelum bug diperbaiki)
   const isIndependent = !communityId || communityName === "SEKOLAH INDEPENDEN";
 
   // Cari stage saat ini untuk sekolah ini

@@ -203,7 +203,7 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
         </div>
       </div>
 
-      {/* Info banner — read-only global view */}
+      {/* Info banner - read-only global view */}
       <div style={{ margin: "0 1.5rem 1rem", padding: "0.75rem 1rem", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "0.5rem", fontSize: "0.85rem", color: "#0369a1", display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <span>ℹ</span>
         <span>
@@ -238,7 +238,7 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
               <tr key={row.id}>
                 <td><strong>{row.full_name}</strong></td>
                 <td>
-                  <div style={{ fontWeight: 500 }}>NISN: {row.nisn || "—"}</div>
+                  <div style={{ fontWeight: 500 }}>NISN: {row.nisn || "-"}</div>
                   <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>{row.gender === "L" ? "Laki-laki" : "Perempuan"}</div>
                 </td>
                 <td>
@@ -248,10 +248,10 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
                   </div>
                 </td>
                 <td>
-                  <div style={{ fontWeight: 500, color: "#102e50" }}>{row.classes?.name || "—"}</div>
-                  <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>Guru: {row.classes?.users?.full_name || "—"}</div>
+                  <div style={{ fontWeight: 500, color: "#102e50" }}>{row.classes?.name || "-"}</div>
+                  <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>Guru: {row.classes?.users?.full_name || "-"}</div>
                 </td>
-                <td>{row.schools?.name || "—"}</td>
+                <td>{row.schools?.name || "-"}</td>
                 <td>
                   {row.ses_class ? (
                   <SesBadge sesClass={row.ses_class} />

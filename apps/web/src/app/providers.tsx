@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AppProviders — Client Component wrapper untuk semua global providers.
+ * AppProviders - Client Component wrapper untuk semua global providers.
  * Digunakan di root layout (Server Component) agar providers bisa pakai hooks
  * tanpa membuat layout.tsx menjadi Client Component.
  */

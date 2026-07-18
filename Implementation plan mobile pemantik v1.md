@@ -1,8 +1,8 @@
-# Implementation Plan — Penyempurnaan Mobile App Pemantik
+# Implementation Plan - Penyempurnaan Mobile App Pemantik
 
 > **Scope:** `apps/mobile/pemantik_mobile`
 > **Referensi:** `Blueprint_Sistem_Pemantik_v2.md`, Audit Report (Antigravity/Gemini)
-> **Status:** Siap eksekusi — pseudocode & SQL sudah disiapkan
+> **Status:** Siap eksekusi - pseudocode & SQL sudah disiapkan
 > **Stack terkonfirmasi:** Flutter · Riverpod (code-gen) · Drift (SQLite) · Supabase · connectivity_plus
 
 ---
@@ -11,11 +11,11 @@
 
 | # | Gap | File Terdampak | Severity |
 |---|-----|-----------------|----------|
-| 0 | `recordingLocalPath` tidak pernah di-mapping saat `submitAssessment()` — data path rekaman terkubur di JSON `answerData` | `assessment_provider.dart` | 🔴 Blocker untuk Phase 4 |
+| 0 | `recordingLocalPath` tidak pernah di-mapping saat `submitAssessment()` - data path rekaman terkubur di JSON `answerData` | `assessment_provider.dart` | 🔴 Blocker untuk Phase 4 |
 | 1 | Tidak ada Countdown Timer & force auto-submit | `assessment_provider.dart`, `question_page.dart` | 🔴 Tinggi |
 | 2 | `connection_banner.dart` & `SyncService.uploadCompletedSessions()` belum terhubung (tidak ada auto-trigger) | `main.dart` | 🔴 Tinggi |
 | 3 | Payload UPSERT `student_answers` tidak menyertakan `question_version` | `sync_service.dart` | 🟠 Menengah |
-| 4 | Error handling sync masih generic `catch` — tidak membedakan `403 session_expired` | `sync_service.dart` | 🟠 Menengah |
+| 4 | Error handling sync masih generic `catch` - tidak membedakan `403 session_expired` | `sync_service.dart` | 🟠 Menengah |
 | 5 | File `.m4a` voice recording tidak pernah diupload ke Supabase Storage | `sync_service.dart`, migration SQL | 🟠 Menengah (depend on #0) |
 
 **Urutan eksekusi final** (gap #0 disisipkan sebagai prasyarat wajib sebelum Phase 4, sisanya sesuai prioritas yang sudah disepakati):
@@ -34,7 +34,7 @@ Phase 4  → Upload Voice Recording ke Supabase Storage
 
 Aturan ini berlaku di **setiap phase** di bawah, tanpa kecuali:
 
-1. **Tidak menyentuh layer di luar scope phase.** Phase 1 hanya boleh menyentuh `assessment_provider.dart` + `question_page.dart`. Jangan refactor `sync_service.dart` di tengah-tengah Phase 1, walau "kelihatan rapi" — itu jadi scope Phase 3/4.
+1. **Tidak menyentuh layer di luar scope phase.** Phase 1 hanya boleh menyentuh `assessment_provider.dart` + `question_page.dart`. Jangan refactor `sync_service.dart` di tengah-tengah Phase 1, walau "kelihatan rapi" - itu jadi scope Phase 3/4.
 2. **Riverpod code-gen wajib di-regenerate setiap ada perubahan provider.** Setiap selesai edit file `*_provider.dart`, jalankan:
    ```bash
    dart run build_runner build --delete-conflicting-outputs
@@ -43,13 +43,13 @@ Aturan ini berlaku di **setiap phase** di bawah, tanpa kecuali:
 3. **Setiap perubahan skema Drift wajib naik versi migration.** Jangan edit kolom existing tanpa `MigrationStrategy.onUpgrade`. Drift akan crash di device lama jika `schemaVersion` tidak dinaikkan.
 4. **State timer/listener tidak boleh memicu rebuild seluruh halaman.** Gunakan `ref.watch(provider.select((s) => s.remainingSeconds))` di widget timer, jangan `ref.watch(assessmentProvider)` polos.
 5. **Tidak ada `print()` untuk debug di kode final.** Gunakan logger yang sudah ada di project (atau `debugPrint` minimal, dengan guard `kDebugMode`).
-6. **Setiap fungsi async yang menyentuh Supabase wajib dibungkus try-catch spesifik**, bukan `catch (e)` generik — lihat Phase 3 untuk pattern-nya.
-7. **Tidak ada perubahan ke RLS Policy / SQL migration tanpa eksplisit ditandai sebagai "perlu dijalankan manual di Supabase Dashboard"** — karena migration lokal tidak otomatis sinkron ke Supabase project.
+6. **Setiap fungsi async yang menyentuh Supabase wajib dibungkus try-catch spesifik**, bukan `catch (e)` generik - lihat Phase 3 untuk pattern-nya.
+7. **Tidak ada perubahan ke RLS Policy / SQL migration tanpa eksplisit ditandai sebagai "perlu dijalankan manual di Supabase Dashboard"** - karena migration lokal tidak otomatis sinkron ke Supabase project.
 8. **Setiap phase wajib ada validasi manual sebelum lanjut ke phase berikutnya** (lihat bagian Validasi di tiap phase). Jangan menumpuk 2 phase sekaligus sebelum testing.
 
 ---
 
-## 2. Phase 0 — Fix Mapping `recordingLocalPath` (Prasyarat)
+## 2. Phase 0 - Fix Mapping `recordingLocalPath` (Prasyarat)
 
 ### Root cause
 `voice_recording_widget.dart` mengirim data sebagai string JSON gabungan:
@@ -72,7 +72,7 @@ Map<String, dynamic>? _tryParseAnswerJson(String raw) {
     final decoded = jsonDecode(raw);
     if (decoded is Map<String, dynamic>) return decoded;
   } catch (_) {
-    // bukan JSON valid — berarti tipe soal selain voice_recording, aman diabaikan
+    // bukan JSON valid - berarti tipe soal selain voice_recording, aman diabaikan
   }
   return null;
 }
@@ -97,17 +97,17 @@ final companion = LocalAnswersCompanion(
 );
 ```
 
-> Catatan: jangan double-encode lagi — simpan `parsed` (sudah berupa Map asli dari widget) langsung sebagai `answerData`, bukan dibungkus `{'value': ...}` sekali lagi.
+> Catatan: jangan double-encode lagi - simpan `parsed` (sudah berupa Map asli dari widget) langsung sebagai `answerData`, bukan dibungkus `{'value': ...}` sekali lagi.
 
 ### Validasi Phase 0
 - [ ] Kerjakan 1 soal `voice_recording` di emulator/device, submit assessment.
-- [ ] Query manual ke SQLite lokal (lewat `drift_db_viewer` atau debug print sementara) — pastikan kolom `recordingLocalPath` **terisi path file**, bukan `null`.
+- [ ] Query manual ke SQLite lokal (lewat `drift_db_viewer` atau debug print sementara) - pastikan kolom `recordingLocalPath` **terisi path file**, bukan `null`.
 - [ ] Pastikan kolom `answerData` berisi JSON bersih (`transcription`, `score`, `path`), bukan JSON yang ter-nested dua kali.
-- [ ] Soal tipe lain (multiple_choice, drag_drop, dst) tetap tersimpan normal — tidak regresi.
+- [ ] Soal tipe lain (multiple_choice, drag_drop, dst) tetap tersimpan normal - tidak regresi.
 
 ---
 
-## 3. Phase 1 — Timer & Force Auto-Submit
+## 3. Phase 1 - Timer & Force Auto-Submit
 
 ### File yang disentuh
 - `lib/features/assessment/providers/assessment_provider.dart`
@@ -205,11 +205,11 @@ ref.listen(assessmentProvider.select((s) => s.isTimeUp), (prev, next) {
 - [ ] Set `timeLimitMin` ke nilai kecil (misal 1 menit) di data test untuk mempercepat pengujian.
 - [ ] Timer berjalan mundur tanpa nge-lag UI soal (cek dengan Flutter DevTools, pastikan rebuild hanya pada widget badge).
 - [ ] Saat waktu = 0, assessment otomatis ter-submit dan navigasi ke `ResultPage` tanpa interaksi user.
-- [ ] Tutup app saat timer berjalan, buka kembali — pastikan tidak crash (timer harus re-init dari state tersimpan, bukan dari nol lagi tanpa konteks).
+- [ ] Tutup app saat timer berjalan, buka kembali - pastikan tidak crash (timer harus re-init dari state tersimpan, bukan dari nol lagi tanpa konteks).
 
 ---
 
-## 4. Phase 2 — Auto-Sync Background Listener
+## 4. Phase 2 - Auto-Sync Background Listener
 
 ### File yang disentuh
 - `lib/main.dart` (atau root widget seperti `dashboard_page.dart` jika lebih tepat secara lifecycle)
@@ -244,7 +244,7 @@ class _AppRootState extends ConsumerState<AppRoot> {
 }
 ```
 
-> **Penting:** `connection_banner.dart` **tidak diubah fungsinya** — biarkan tetap sebagai pure UI indicator yang baca status koneksi. Jangan duplikasi listener di dua tempat (root + banner), karena akan memicu `uploadCompletedSessions()` dipanggil dobel setiap reconnect.
+> **Penting:** `connection_banner.dart` **tidak diubah fungsinya** - biarkan tetap sebagai pure UI indicator yang baca status koneksi. Jangan duplikasi listener di dua tempat (root + banner), karena akan memicu `uploadCompletedSessions()` dipanggil dobel setiap reconnect.
 
 ### Validasi Phase 2
 - [ ] Matikan WiFi/data di device → kerjakan beberapa soal → status jawaban di Drift tetap `pending`.
@@ -253,7 +253,7 @@ class _AppRootState extends ConsumerState<AppRoot> {
 
 ---
 
-## 5. Phase 3 — `question_version` & Error Handling (403/Expired)
+## 5. Phase 3 - `question_version` & Error Handling (403/Expired)
 
 ### File yang disentuh
 - `lib/core/sync/sync_service.dart`
@@ -270,7 +270,7 @@ class LocalAnswers extends Table {
 ```
 
 ```dart
-// database.dart — naikkan schemaVersion dan tambahkan migration step
+// database.dart - naikkan schemaVersion dan tambahkan migration step
 @override
 int get schemaVersion => /* versi lama + 1 */;
 
@@ -301,7 +301,7 @@ await supabase.from('student_answers').upsert(
 );
 ```
 
-> Nilai `questionVersion` diisi saat soal pertama kali di-cache (Tahap 1 offline-first) — ambil dari kolom versi/updated_at soal yang sudah ada di tabel `Questions` lokal, lalu salin ke `LocalAnswers.questionVersion` saat jawaban disimpan (di `assessment_provider.dart`, bersamaan dengan perubahan Phase 0).
+> Nilai `questionVersion` diisi saat soal pertama kali di-cache (Tahap 1 offline-first) - ambil dari kolom versi/updated_at soal yang sudah ada di tabel `Questions` lokal, lalu salin ke `LocalAnswers.questionVersion` saat jawaban disimpan (di `assessment_provider.dart`, bersamaan dengan perubahan Phase 0).
 
 ### 5.3 Error handling spesifik
 
@@ -322,11 +322,11 @@ Future<void> uploadCompletedSessions() async {
         // tampilkan notifikasi ke siswa, jangan retry otomatis
         _notifySessionExpired(answer.sessionId);
       } else {
-        // error lain (network blip, dll) — biarkan tetap 'pending' untuk retry
+        // error lain (network blip, dll) - biarkan tetap 'pending' untuk retry
         debugPrint('Sync error (will retry): ${e.message}');
       }
     } catch (e) {
-      // error tak terduga — tetap pending, log untuk investigasi
+      // error tak terduga - tetap pending, log untuk investigasi
       debugPrint('Unexpected sync error: $e');
     }
   }
@@ -334,7 +334,7 @@ Future<void> uploadCompletedSessions() async {
 ```
 
 ```dart
-// local_answers_dao.dart — tambah method baru
+// local_answers_dao.dart - tambah method baru
 Future<void> markFailedSync(String id, {required String reason}) {
   return (update(localAnswers)..where((t) => t.id.equals(id))).write(
     LocalAnswersCompanion(
@@ -345,7 +345,7 @@ Future<void> markFailedSync(String id, {required String reason}) {
 }
 ```
 
-> Jika kolom `failReason` belum ada di tabel, tambahkan bersamaan dengan migration `questionVersion` di langkah 5.1 — jangan buat migration terpisah untuk dua kolom yang ditambahkan di phase yang sama.
+> Jika kolom `failReason` belum ada di tabel, tambahkan bersamaan dengan migration `questionVersion` di langkah 5.1 - jangan buat migration terpisah untuk dua kolom yang ditambahkan di phase yang sama.
 
 ### Validasi Phase 3
 - [ ] Kerjakan soal, edit soal yang sama dari panel Admin Soal **saat siswa masih offline** → reconnect → cek di database Supabase, kolom `question_version` terisi versi lama, dan server (atau log) menandainya sebagai `answered_on_old_version` bukan error.
@@ -354,11 +354,11 @@ Future<void> markFailedSync(String id, {required String reason}) {
 
 ---
 
-## 6. Phase 4 — Upload Voice Recording ke Supabase Storage
+## 6. Phase 4 - Upload Voice Recording ke Supabase Storage
 
 ### 6.1 Migration SQL (jalankan manual di Supabase Dashboard / SQL editor)
 
-> ⚠️ **Wajib dijalankan manual** — tidak otomatis sinkron dari migration lokal project.
+> ⚠️ **Wajib dijalankan manual** - tidak otomatis sinkron dari migration lokal project.
 
 ```sql
 -- Bucket baru khusus jawaban siswa (terpisah dari question_media)
@@ -393,7 +393,7 @@ using (
 );
 ```
 
-> Catatan keamanan: policy insert di atas masih cukup terbuka (semua `authenticated` boleh insert ke bucket ini). Jika butuh isolasi lebih ketat (siswa hanya bisa upload ke folder dengan prefix `student_id`-nya sendiri), tambahkan kondisi `using (storage.foldername(name)[1] = auth.uid()::text)` — didiskusikan dulu apakah path upload akan distrukturkan per siswa.
+> Catatan keamanan: policy insert di atas masih cukup terbuka (semua `authenticated` boleh insert ke bucket ini). Jika butuh isolasi lebih ketat (siswa hanya bisa upload ke folder dengan prefix `student_id`-nya sendiri), tambahkan kondisi `using (storage.foldername(name)[1] = auth.uid()::text)` - didiskusikan dulu apakah path upload akan distrukturkan per siswa.
 
 ### 6.2 Implementasi Upload di `sync_service.dart`
 
@@ -421,7 +421,7 @@ Future<String?> _uploadVoiceFile(LocalAnswer answer) async {
 ```
 
 ```dart
-// Integrasi ke _uploadSingleAnswer() — dipanggil SEBELUM upsert ke student_answers
+// Integrasi ke _uploadSingleAnswer() - dipanggil SEBELUM upsert ke student_answers
 Future<void> _uploadSingleAnswer(LocalAnswer answer) async {
   String? mediaUrl;
 
@@ -443,7 +443,7 @@ Future<void> _uploadSingleAnswer(LocalAnswer answer) async {
 }
 ```
 
-> Bucket dideklarasikan `public: false` pada migration di atas — jadi `getPublicUrl()` tidak akan menghasilkan URL yang bisa diakses langsung. Pilih salah satu sesuai kebutuhan:
+> Bucket dideklarasikan `public: false` pada migration di atas - jadi `getPublicUrl()` tidak akan menghasilkan URL yang bisa diakses langsung. Pilih salah satu sesuai kebutuhan:
 > - Jika panel guru boleh akses langsung tanpa expiry → ubah bucket jadi `public: true` (lebih sederhana, tapi semua link bisa diakses siapa saja yang punya URL).
 > - Jika ingin tetap private → ganti `getPublicUrl()` dengan `createSignedUrl(remotePath, expiresInSeconds)` dan simpan **signed URL akan expired**, sehingga panel web sebaiknya generate signed URL on-demand saat guru membuka halaman review, bukan menyimpan URL statis di `media_url`. *(Keputusan ini perlu disepakati sebelum eksekusi.)*
 
@@ -470,4 +470,4 @@ Future<void> _uploadSingleAnswer(LocalAnswer answer) async {
 
 ---
 
-*Dokumen ini disusun sebagai kelanjutan dari Audit Report & Implementation Plan (Antigravity/Gemini) dan Blueprint Sistem Pemantik v2.0 — fokus penyempurnaan eksklusif pada `apps/mobile/pemantik_mobile`.*
+*Dokumen ini disusun sebagai kelanjutan dari Audit Report & Implementation Plan (Antigravity/Gemini) dan Blueprint Sistem Pemantik v2.0 - fokus penyempurnaan eksklusif pada `apps/mobile/pemantik_mobile`.*

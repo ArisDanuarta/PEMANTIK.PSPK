@@ -339,24 +339,24 @@ export default function SchoolDetailKomunitas({
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
                 <span style={{ color: "#6c757d" }}>NPSN:</span>
-                <strong style={{ color: "#111827" }}>{school.npsn || "—"}</strong>
+                <strong style={{ color: "#111827" }}>{school.npsn || "-"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
                 <span style={{ color: "#6c757d" }}>Kepala Sekolah:</span>
-                <strong style={{ color: "#111827" }}>{school.principal_name || "—"}</strong>
+                <strong style={{ color: "#111827" }}>{school.principal_name || "-"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
                 <span style={{ color: "#6c757d" }}>No. Kontak:</span>
-                <strong style={{ color: "#111827" }}>{school.contact_phone || "—"}</strong>
+                <strong style={{ color: "#111827" }}>{school.contact_phone || "-"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
                 <span style={{ color: "#6c757d" }}>Alamat:</span>
-                <strong style={{ color: "#111827", textAlign: "right" }}>{school.address || "—"}</strong>
+                <strong style={{ color: "#111827", textAlign: "right" }}>{school.address || "-"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ color: "#6c757d" }}>Lokasi:</span>
                 <strong style={{ color: "#111827", textAlign: "right" }}>
-                  {[school.village, school.district, school.city, school.province].filter(Boolean).join(", ") || "—"}
+                  {[school.village, school.district, school.city, school.province].filter(Boolean).join(", ") || "-"}
                 </strong>
               </div>
             </div>
@@ -457,7 +457,7 @@ export default function SchoolDetailKomunitas({
                 <tbody>
                   {filteredTeachers.map((t, i) => (
                     <tr key={t.id} style={{ borderBottom: i < filteredTeachers.length - 1 ? "1px solid #f3f4f6" : "none" }}>
-                      <td style={{ padding: "0.875rem 1rem", fontWeight: 500 }}>{t.full_name || "—"}</td>
+                      <td style={{ padding: "0.875rem 1rem", fontWeight: 500 }}>{t.full_name || "-"}</td>
                       <td style={{ padding: "0.875rem 1rem", fontFamily: "monospace", fontSize: "0.85rem", color: "#6b7280" }}>{t.username}</td>
                       <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>
                         {t.classes && t.classes.length > 0
@@ -530,14 +530,14 @@ export default function SchoolDetailKomunitas({
                     <tr key={s.id} style={{ borderBottom: i < filteredStudents.length - 1 ? "1px solid #f3f4f6" : "none" }}>
                       <td style={{ padding: "0.875rem 1rem", fontWeight: 500 }}>{s.full_name}</td>
                       <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>{s.gender === "perempuan" || s.gender === "P" ? "P" : "L"}</td>
-                      <td style={{ padding: "0.875rem 1rem", fontFamily: "monospace", fontSize: "0.8rem", color: "#6b7280" }}>{s.nisn || "—"}</td>
-                      <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>{(s.classes as any)?.name || <span style={{ color: "#9ca3af" }}>—</span>}</td>
+                      <td style={{ padding: "0.875rem 1rem", fontFamily: "monospace", fontSize: "0.8rem", color: "#6b7280" }}>{s.nisn || "-"}</td>
+                      <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>{(s.classes as any)?.name || <span style={{ color: "#9ca3af" }}>-</span>}</td>
                       <td style={{ padding: "0.875rem 1rem" }}>
                         {s.socioeconomic_status || s.ses_class ? (
                           <span style={{ fontSize: "0.75rem", fontWeight: 600, padding: "0.15rem 0.5rem", borderRadius: 999, background: (sesColorMap[s.socioeconomic_status || s.ses_class] || "#6b7280") + "20", color: sesColorMap[s.socioeconomic_status || s.ses_class] || "#6b7280" }}>
                             {s.socioeconomic_status || s.ses_class}
                           </span>
-                        ) : <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>—</span>}
+                        ) : <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>-</span>}
                       </td>
                       <td style={{ padding: "0.875rem 1rem" }}>
                         <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: 999, background: s.import_source === "dapodik" ? "#e0f2fe" : "#f3f4f6", color: s.import_source === "dapodik" ? "#0369a1" : "#6b7280" }}>

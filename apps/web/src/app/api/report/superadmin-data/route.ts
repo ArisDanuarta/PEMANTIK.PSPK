@@ -12,8 +12,8 @@ export const dynamic = 'force-dynamic';
  *
  * Query params:
  *   - category_id (required)
- *   - community_id (optional) — filter ke komunitas tertentu
- *   - school_id (optional) — filter ke sekolah tertentu
+ *   - community_id (optional) - filter ke komunitas tertentu
+ *   - school_id (optional) - filter ke sekolah tertentu
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -123,8 +123,8 @@ export async function GET(request: Request) {
       id:                 row.session_id,
       category_id:        row.category_id,
       school_id:          row.school_id,
-      school_name:        row.school_name      ?? "—",
-      community_name:     row.community_name   ?? "—",
+      school_name:        row.school_name      ?? "-",
+      community_name:     row.community_name   ?? "-",
       status:             row.session_status   ?? "in_progress",
       score_total:        row.final_score      ?? agg.totalCorrect,
       score_lit:          agg.scoreLit,

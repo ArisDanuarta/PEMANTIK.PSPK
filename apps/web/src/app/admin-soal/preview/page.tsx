@@ -31,7 +31,7 @@ export default async function PreviewSoalPage({
         overflow: "hidden",
       }}
     >
-      {/* Page header — fixed, tidak pernah scroll */}
+      {/* Page header - fixed, tidak pernah scroll */}
       <div className="page-header" style={{ flexShrink: 0, marginBottom: "1.25rem" }}>
         <div className="page-header-left">
           <h1 className="page-title">Preview Soal</h1>
@@ -44,7 +44,7 @@ export default async function PreviewSoalPage({
       </div>
 
       {/* Filter dipindahkan ke PreviewPageClient (client-side, instant, tanpa reload).
-          Tidak ada filter bar di sini lagi — mencegah duplikasi & ruang vertikal yang terbuang. */}
+          Tidak ada filter bar di sini lagi - mencegah duplikasi & ruang vertikal yang terbuang. */}
 
       {questions.length === 0 ? (
         <div className="card">

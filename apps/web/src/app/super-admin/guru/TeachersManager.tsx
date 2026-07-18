@@ -192,7 +192,7 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
         </div>
       </div>
 
-      {/* Info banner — read-only global view */}
+      {/* Info banner - read-only global view */}
       <div style={{ margin: "0 1.5rem 1rem", padding: "0.75rem 1rem", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "0.5rem", fontSize: "0.85rem", color: "#0369a1", display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <span>ℹ</span>
         <span>
@@ -231,8 +231,8 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
                     <div><span style={{ color: "#6c757d" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code></div>
                   </div>
                 </td>
-                <td>{row.schools?.name || "—"}</td>
-                <td>{row.schools?.communities?.name || "—"}</td>
+                <td>{row.schools?.name || "-"}</td>
+                <td>{row.schools?.communities?.name || "-"}</td>
                 <td>
                   {row.classes && row.classes.length > 0 ? (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
@@ -242,7 +242,7 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
                         </span>
                       ))}
                     </div>
-                  ) : "—"}
+                  ) : "-"}
                 </td>
                 <td>
                   <Badge variant={row.is_active ? "success" : "danger"}>

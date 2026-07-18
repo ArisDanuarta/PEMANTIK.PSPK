@@ -46,7 +46,7 @@ interface Props {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function fmt(iso: string | null | undefined) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -380,7 +380,7 @@ export default function CommunityReportDashboard({ schools, packages, communityI
                 options={packages.map((p) => ({ value: p.id, label: p.name }))}
                 value={selectedPackageId}
                 onChange={handlePackageChange}
-                placeholder="— Pilih Kategori Ujian —"
+                placeholder="- Pilih Kategori Ujian -"
               />
             </div>
             <div style={{ fontSize: "0.8rem", color: "#6b7280", paddingTop: "1.5rem" }}>
@@ -463,7 +463,7 @@ export default function CommunityReportDashboard({ schools, packages, communityI
                       <DataCard
                         key={card.school_id}
                         title={card.school_name}
-                        subtitle={[card.npsn !== "—" ? `NPSN: ${card.npsn}` : null, card.city !== "—" ? card.city : null].filter(Boolean).join(" · ") || undefined}
+                        subtitle={[card.npsn !== "-" ? `NPSN: ${card.npsn}` : null, card.city !== "-" ? card.city : null].filter(Boolean).join(" · ") || undefined}
                         count={card.student_count}
                         countLabel="siswa"
                         onDownload={() => handleCardDownload("school", card.school_id)}
@@ -572,14 +572,14 @@ export default function CommunityReportDashboard({ schools, packages, communityI
                   const avgScore =
                     schoolRows.length > 0
                       ? (schoolRows.reduce((acc, r) => acc + r.score_total, 0) / schoolRows.length).toFixed(1)
-                      : "—";
+                      : "-";
 
                   return (
                     <tr key={school.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
                       <td style={{ padding: "0.85rem 1rem", color: "#6b7280" }}>{idx + 1}</td>
                       <td style={{ padding: "0.85rem 1rem", fontWeight: 600, color: "#102e50" }}>{school.name}</td>
-                      <td style={{ padding: "0.85rem 1rem", color: "#4b5563" }}>{(school as any).npsn || "—"}</td>
-                      <td style={{ padding: "0.85rem 1rem", color: "#4b5563" }}>{(school as any).city || "—"}</td>
+                      <td style={{ padding: "0.85rem 1rem", color: "#4b5563" }}>{(school as any).npsn || "-"}</td>
+                      <td style={{ padding: "0.85rem 1rem", color: "#4b5563" }}>{(school as any).city || "-"}</td>
                       <td style={{ padding: "0.85rem 1rem", textAlign: "center", fontWeight: 600, color: "#1e40af" }}>
                         {(school as any).registeredStudentsCount ?? 0}
                       </td>
@@ -591,10 +591,10 @@ export default function CommunityReportDashboard({ schools, packages, communityI
                           color: uniqueAssessedStudents > 0 ? "#16a34a" : "#9ca3af",
                         }}
                       >
-                        {selectedPackageId ? uniqueAssessedStudents : "—"}
+                        {selectedPackageId ? uniqueAssessedStudents : "-"}
                       </td>
                       <td style={{ padding: "0.85rem 1rem", textAlign: "center", fontWeight: 700, color: "#102e50" }}>
-                        {selectedPackageId ? avgScore : "—"}
+                        {selectedPackageId ? avgScore : "-"}
                       </td>
                       <td style={{ padding: "0.85rem 1rem", textAlign: "center" }}>
                         <button

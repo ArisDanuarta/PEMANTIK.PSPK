@@ -43,7 +43,7 @@ interface Props {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function fmt(iso: string | null | undefined) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -349,7 +349,7 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
                 options={packages.map((p) => ({ value: p.id, label: p.name }))}
                 value={selectedPackageId}
                 onChange={handlePackageChange}
-                placeholder="— Pilih Kategori Ujian —"
+                placeholder="- Pilih Kategori Ujian -"
               />
             </div>
             <div style={{ fontSize: "0.8rem", color: "#6b7280", paddingTop: "1.5rem" }}>
@@ -388,7 +388,7 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
                     {classCards.map((card) => (
                       <DataCard
                         key={card.class_id}
-                        title={`Kelas ${card.grade} — ${card.class_name}`}
+                        title={`Kelas ${card.grade} - ${card.class_name}`}
                         subtitle={card.academic_year ?? undefined}
                         count={card.student_count}
                         countLabel="siswa"
@@ -564,11 +564,11 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
                 <tr key={card.class_id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                   <td style={{ padding: "1rem 1.5rem" }}>
                     <div style={{ fontWeight: 700, color: "#0f172a", fontSize: "0.95rem" }}>
-                      Kelas {card.grade} — {card.class_name}
+                      Kelas {card.grade} - {card.class_name}
                     </div>
                   </td>
                   <td style={{ padding: "1rem 1.5rem", fontSize: "0.88rem", color: "#64748b" }}>
-                    {card.academic_year || "—"}
+                    {card.academic_year || "-"}
                   </td>
                   <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
                     <div style={{ fontSize: "0.85rem", display: "inline-block" }}>

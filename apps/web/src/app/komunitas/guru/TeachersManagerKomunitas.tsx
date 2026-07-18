@@ -235,7 +235,7 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
                     <div><span style={{ color: "#6c757d" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code></div>
                   </div>
                 </td>
-                <td>{row.schools?.name || "—"}</td>
+                <td>{row.schools?.name || "-"}</td>
                 <td>
                   {row.classes && row.classes.length > 0 ? (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
@@ -245,7 +245,7 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
                         </span>
                       ))}
                     </div>
-                  ) : "—"}
+                  ) : "-"}
                 </td>
                 <td>
                   <Badge variant={row.is_active ? "success" : "danger"}>

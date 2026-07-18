@@ -962,7 +962,7 @@ export async function importDapodikAction(
               row_number: rowNum,
               full_name: row.full_name,
               field: "rombel",
-              message: `Rombel "${row.rombel}" tidak bisa dibuat/ditemukan — siswa diimport tanpa kelas.`,
+              message: `Rombel "${row.rombel}" tidak bisa dibuat/ditemukan - siswa diimport tanpa kelas.`,
             });
           }
 

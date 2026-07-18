@@ -1,4 +1,4 @@
-// ─── Supabase Package — Pemantik Platform ─────────────────────────────────────
+// ─── Supabase Package - Pemantik Platform ─────────────────────────────────────
 export { createBrowserClient, createServerClient } from "./client";
 
 // Database schema

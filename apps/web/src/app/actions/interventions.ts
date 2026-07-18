@@ -14,7 +14,7 @@ export interface InterventionPayload {
   upayaDilakukan: string;
   perubahanSignifikan: string;
   alasanBermakna: string;
-  tagNames: string[];  // Nama-nama tag (bukan ID) — akan di create-or-get
+  tagNames: string[];  // Nama-nama tag (bukan ID) - akan di create-or-get
 }
 
 export interface InterventionRow {
@@ -114,7 +114,7 @@ export async function createOrGetTagAction(
  * 4. Batch insert tag_links (create-or-get tiap tag)
  * 5. Update school_assessment_stages → current_stage = 'selesai'
  *
- * Semua dalam 1 "transaksi" — jika step 5 gagal, intervensi tetap tersimpan
+ * Semua dalam 1 "transaksi" - jika step 5 gagal, intervensi tetap tersimpan
  * tapi stage tidak berubah → komunitas bisa submit ulang tanpa kehilangan data.
  */
 export async function submitInterventionAction(
@@ -210,7 +210,7 @@ export async function submitInterventionAction(
 
         if (linkErr) {
           console.error("[submitInterventionAction] Gagal insert tag_links:", linkErr);
-          // Tidak gagalkan submit — intervensi sudah tersimpan
+          // Tidak gagalkan submit - intervensi sudah tersimpan
         }
       }
     }
@@ -336,7 +336,7 @@ export async function getInterventionGraph(): Promise<{
       nodes.push({
         id: `intervention_${intervention.id}`,
         type: "intervention",
-        label: `${intervention.phase} — ${intervention.schools?.name ?? ""}`,
+        label: `${intervention.phase} - ${intervention.schools?.name ?? ""}`,
         data: {
           phase: intervention.phase,
           created_at: intervention.created_at,
@@ -455,7 +455,7 @@ export async function getGlobalInterventionGraph(): Promise<{
     const seenTags = new Set<string>();
 
     for (const intervention of result.data) {
-      // Node Komunitas — type: 'community'
+      // Node Komunitas - type: 'community'
       if (intervention.community_id && !seenCommunities.has(intervention.community_id)) {
         nodes.push({
           id: `comm_${intervention.community_id}`,
@@ -490,14 +490,14 @@ export async function getGlobalInterventionGraph(): Promise<{
         }
       }
 
-      // Node Intervensi — include all 4 narrative fields
+      // Node Intervensi - include all 4 narrative fields
       const submitterRole = (intervention as any).users?.role ?? "unknown";
       const isCommunitySubmitter = ["community", "super_admin"].includes(submitterRole);
 
       nodes.push({
         id: `intervention_${intervention.id}`,
         type: "intervention",
-        label: `${intervention.phase} — ${intervention.schools?.name ?? ""}`,
+        label: `${intervention.phase} - ${intervention.schools?.name ?? ""}`,
         data: {
           phase: intervention.phase,
           created_at: intervention.created_at,

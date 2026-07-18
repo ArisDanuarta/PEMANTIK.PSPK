@@ -71,9 +71,9 @@ export async function GET(request: Request) {
       .filter((id) => countMap.has(id))
       .map((id) => ({
         school_id: id,
-        school_name: schoolMap.get(id)?.name ?? "—",
-        npsn: schoolMap.get(id)?.npsn ?? "—",
-        city: schoolMap.get(id)?.city ?? "—",
+        school_name: schoolMap.get(id)?.name ?? "-",
+        npsn: schoolMap.get(id)?.npsn ?? "-",
+        city: schoolMap.get(id)?.city ?? "-",
         student_count: countMap.get(id)?.size ?? 0,
       }))
       .sort((a, b) => b.student_count - a.student_count);
@@ -147,7 +147,7 @@ export async function GET(request: Request) {
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SECTION: per_level  (Opsi B: student_answers → questions.level_id → question_levels)
-  // Gap 7.5 Decision: Opsi B — level yang benar-benar pernah dikerjakan.
+  // Gap 7.5 Decision: Opsi B - level yang benar-benar pernah dikerjakan.
   // ═══════════════════════════════════════════════════════════════════════════
   if (section === "per_level") {
     // Ambil session ids & student_id yang relevan di komunitas ini dulu

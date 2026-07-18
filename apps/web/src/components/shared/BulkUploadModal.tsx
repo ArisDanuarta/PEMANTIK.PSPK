@@ -393,10 +393,10 @@ export default function BulkUploadModal({
 
         <ModalHeader
           title={
-            dapodikStep === "upload" ? "Import Dapodik — Upload File" :
-            dapodikStep === "confirm" ? "Import Dapodik — Konfirmasi Data" :
-            dapodikStep === "progress" ? "Import Dapodik — Sedang Memproses..." :
-            "Import Dapodik — Selesai"
+            dapodikStep === "upload" ? "Import Dapodik - Upload File" :
+            dapodikStep === "confirm" ? "Import Dapodik - Konfirmasi Data" :
+            dapodikStep === "progress" ? "Import Dapodik - Sedang Memproses..." :
+            "Import Dapodik - Selesai"
           }
           onClose={onClose}
           disabled={isUploading}
@@ -448,7 +448,7 @@ export default function BulkUploadModal({
 
             {parseSummary.warning_count > 0 && (
               <div style={{ padding: "0.75rem", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "0.5rem", marginBottom: "1rem", fontSize: "0.85rem", color: "#1e40af" }}>
-                ℹ <strong>{parseSummary.warning_count} baris</strong> memiliki field opsional yang kosong (rombel, NISN, dll) — tetap akan diimport.
+                ℹ <strong>{parseSummary.warning_count} baris</strong> memiliki field opsional yang kosong (rombel, NISN, dll) - tetap akan diimport.
               </div>
             )}
 
@@ -550,12 +550,12 @@ export default function BulkUploadModal({
                         <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
                           <td style={{ padding: "0.5rem 0.75rem" }}>{row.full_name}</td>
                           <td style={{ padding: "0.5rem 0.75rem" }}>{row.gender === "laki-laki" ? "L" : "P"}</td>
-                          <td style={{ padding: "0.5rem 0.75rem", fontFamily: "monospace" }}>{row.nisn || "—"}</td>
+                          <td style={{ padding: "0.5rem 0.75rem", fontFamily: "monospace" }}>{row.nisn || "-"}</td>
                           <td style={{ padding: "0.5rem 0.75rem" }}>{row.rombel || <span style={{ color: "#9ca3af" }}>kosong</span>}</td>
                           <td style={{ padding: "0.5rem 0.75rem" }}>
                             {row.birth_date_parse_error
                               ? <span style={{ color: "#f59e0b" }}>⚠ {row.birth_date_raw}</span>
-                              : row.birth_date || "—"}
+                              : row.birth_date || "-"}
                           </td>
                         </tr>
                       ))}
@@ -644,7 +644,7 @@ export default function BulkUploadModal({
                 <div style={{ marginTop: "0.75rem", maxHeight: 180, overflowY: "auto", border: "1px solid #fca5a5", borderRadius: "0.5rem" }}>
                   {batchStatus.errors.map((e: any, i: number) => (
                     <div key={i} style={{ padding: "0.5rem 0.75rem", borderBottom: "1px solid #fee2e2", fontSize: "0.8rem" }}>
-                      <strong>Baris {e.row_number} — {e.full_name || "?"}</strong>: {e.message}
+                      <strong>Baris {e.row_number} - {e.full_name || "?"}</strong>: {e.message}
                     </div>
                   ))}
                 </div>

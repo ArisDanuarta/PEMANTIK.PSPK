@@ -22,7 +22,7 @@ class QuestionData {
   final int version;
   final int timeLimitSec;
   final String levelId;
-  // Media URLs — diambil dari kolom native database (bukan dari options JSON)
+  // Media URLs - diambil dari kolom native database (bukan dari options JSON)
   final String? audioUrl;
   final String? videoUrl;
   final String? imageUrl;
@@ -86,7 +86,7 @@ Map<String, dynamic>? _tryParseAnswerJson(String? raw) {
     final decoded = jsonDecode(raw);
     if (decoded is Map<String, dynamic>) return decoded;
   } catch (_) {
-    // bukan JSON valid — berarti tipe soal selain voice_recording, aman diabaikan
+    // bukan JSON valid - berarti tipe soal selain voice_recording, aman diabaikan
   }
   return null;
 }

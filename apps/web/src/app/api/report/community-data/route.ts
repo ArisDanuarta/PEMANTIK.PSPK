@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
   const supabase = createServerClient();
 
-  // 1. Dapatkan school_id milik komunitas ini — ISOLASI DATA KRITIS (termasuk arsip)
+  // 1. Dapatkan school_id milik komunitas ini - ISOLASI DATA KRITIS (termasuk arsip)
   const { data: schools, error: schoolsErr } = await supabase
     .from("schools")
     .select("id")
@@ -104,7 +104,7 @@ export async function GET(request: Request) {
       nisn: student?.nisn || "",
       full_name: student?.full_name || "Tanpa Nama",
       gender: student?.gender || "",
-      school_name: student?.schools?.name || "—",
+      school_name: student?.schools?.name || "-",
     };
   });
 

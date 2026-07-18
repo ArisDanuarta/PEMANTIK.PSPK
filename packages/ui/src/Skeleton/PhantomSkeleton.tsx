@@ -15,7 +15,7 @@ interface PhantomSkeletonProps {
 }
 
 /**
- * PhantomSkeleton — Structure-aware skeleton loader using phantom-ui Web Component.
+ * PhantomSkeleton - Structure-aware skeleton loader using phantom-ui Web Component.
  *
  * Usage:
  * ```tsx

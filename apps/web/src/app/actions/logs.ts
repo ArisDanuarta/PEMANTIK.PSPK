@@ -168,8 +168,8 @@ export async function submitFeedbackAction(message: string, currentPath: string)
       }
     }
 
-    let entityName = "—";
-    let senderName = "—";
+    let entityName = "-";
+    let senderName = "-";
 
     if (userId) {
       const { data: user } = await (admin as any).from("users").select("full_name").eq("id", userId).single();

@@ -10,7 +10,7 @@ import { createServerClient } from "@pemantik/supabase";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Riwayat Intervensi | Guru — Pemantik",
+  title: "Riwayat Intervensi | Guru - Pemantik",
   description: "Daftar laporan pembinaan intervensi",
 };
 
@@ -33,7 +33,7 @@ export default async function GuruIntervensiPage() {
   const resList = await getInterventionsForSchool(schoolId);
   const interventions = resList.success ? (resList.data || []) : [];
 
-  // Stage aktif (hanya yg di fase intervensi) — konsisten dengan sekolah/komunitas client
+  // Stage aktif (hanya yg di fase intervensi) - konsisten dengan sekolah/komunitas client
   const activeStages = stages.filter((s: any) => s.current_stage === "intervensi");
   const isUnlocked = stages.some((s: any) => ["intervensi", "selesai"].includes(s.current_stage)) || interventions.length > 0;
 

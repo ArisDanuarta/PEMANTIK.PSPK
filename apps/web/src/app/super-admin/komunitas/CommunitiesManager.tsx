@@ -162,7 +162,7 @@ export default function CommunitiesManager({
       label: "Kontak Representatif",
       render: (_: any, row: Community) => (
         <div>
-          <div style={{ fontWeight: 500 }}>{row.contact_name || "—"}</div>
+          <div style={{ fontWeight: 500 }}>{row.contact_name || "-"}</div>
           <div style={{ fontSize: "0.75rem", color: "#6c757d" }}>
             {row.contact_email ? `${row.contact_email}` : ""}
             {row.contact_phone ? ` • ${row.contact_phone}` : ""}

@@ -39,7 +39,7 @@ class SyncService {
       //   - school_id dari JWT claims (via jwt_school_id())
       //   - is_active = true
       //   - valid_from <= now() <= valid_until
-      // Sehingga kita tidak perlu filter manual di sini — cukup pakai .select().
+      // Sehingga kita tidak perlu filter manual di sini - cukup pakai .select().
       // Catatan: target_id di assessment_access adalah school_id atau community_id,
       //          BUKAN student_id, sehingga student_id tidak relevan di sini.
       final accessResponse = await SupabaseConfig.client
@@ -249,21 +249,21 @@ class SyncService {
             );
             log('Sesi kedaluwarsa untuk jawaban ${answer.id}');
           } else {
-            // error lain (network blip, dll) — biarkan tetap 'pending' untuk retry
+            // error lain (network blip, dll) - biarkan tetap 'pending' untuk retry
             log('Sync error (will retry): ${e.message}');
           }
         } catch (e) {
-          // error tak terduga — tetap pending, log untuk investigasi
+          // error tak terduga - tetap pending, log untuk investigasi
           log('Unexpected sync error: $e');
         }
       }
 
       // 3. Panggil advance_student_level HANYA untuk sesi 'completed' yang sudah terupload.
-      // Fungsi ini menggantikan validate_level_completion() (Minggu 1) — versi baru ini
+      // Fungsi ini menggantikan validate_level_completion() (Minggu 1) - versi baru ini
       // juga melakukan UPDATE di database (current_level_id atau status=completed).
       for (final session in pendingSessions) {
         if (session.status == 'completed' && !session.id.startsWith('ses_')) {
-          // Butuh current_level_id — ambil dari levelId yang disimpan lokal
+          // Butuh current_level_id - ambil dari levelId yang disimpan lokal
           final levelId = session.currentLevelId ?? session.levelId;
           if (levelId == null) {
             log('[Sync] Sesi ${session.id}: tidak ada current_level_id, lewati advance_student_level');
@@ -302,7 +302,7 @@ class SyncService {
               }
             }
           } catch (rpcError) {
-            // Jangan crash sync karena error RPC — sesi tetap tersimpan lokal
+            // Jangan crash sync karena error RPC - sesi tetap tersimpan lokal
             log('[Sync] Gagal panggil advance_student_level untuk sesi ${session.id}: $rpcError');
           }
         }

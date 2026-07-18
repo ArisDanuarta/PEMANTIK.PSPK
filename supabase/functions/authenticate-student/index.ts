@@ -65,7 +65,7 @@ serve(async (req) => {
     const communityId = schoolData?.community_id ?? null;
 
     // ─────────────────────────────────────────────────────────────────────────
-    // GENERATE JWT VALID — ditandatangani dengan SUPABASE_JWT_SECRET
+    // GENERATE JWT VALID - ditandatangani dengan SUPABASE_JWT_SECRET
     // Token ini bisa dibaca oleh RLS via current_setting('request.jwt.claims')
     // ─────────────────────────────────────────────────────────────────────────
     const jwtSecret = Deno.env.get("STUDENT_JWT_SECRET") ?? Deno.env.get("JWT_SECRET") ?? Deno.env.get("SUPABASE_JWT_SECRET") ?? "";
@@ -105,7 +105,7 @@ serve(async (req) => {
 
     const token = await create({ alg: "HS256", typ: "JWT" }, payload, key);
 
-    // Hapus pin_hash dari response — JANGAN pernah kirim ke client
+    // Hapus pin_hash dari response - JANGAN pernah kirim ke client
     const { pin_hash: _removed, ...studentData } = student as any;
 
     return new Response(

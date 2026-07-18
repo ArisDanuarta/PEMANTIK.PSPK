@@ -180,10 +180,10 @@ export default function DapodikKomunitasClient({ schools, communityId, community
                     <tr key={s.id}>
                       <td>
                         <div style={{ fontWeight: 600, color: "#102e50" }}>{s.name}</div>
-                        <div style={{ fontSize: "0.8rem", color: "#64748b" }}>NPSN: {s.npsn || "—"}</div>
+                        <div style={{ fontSize: "0.8rem", color: "#64748b" }}>NPSN: {s.npsn || "-"}</div>
                       </td>
                       <td>
-                        <div style={{ fontSize: "0.85rem", color: "#334155" }}>{s.city || s.province || "—"}</div>
+                        <div style={{ fontSize: "0.85rem", color: "#334155" }}>{s.city || s.province || "-"}</div>
                       </td>
                       <td>
                         <div style={{ fontWeight: 600, color: "#d97706" }}>{s.classes_count} Kelas</div>

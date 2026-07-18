@@ -239,10 +239,10 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                       <a href={`/komunitas/sekolah/${row.id}`} style={{ fontWeight: 600, color: "#102e50", textDecoration: "none" }} className="hover:underline">
                         {row.name}
                       </a>
-                      <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>Kepsek: {row.principal_name || "—"}</div>
+                      <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>Kepsek: {row.principal_name || "-"}</div>
                     </td>
                     <td>
-                      <div style={{ fontWeight: 500 }}>NPSN: {row.npsn || "—"}</div>
+                      <div style={{ fontWeight: 500 }}>NPSN: {row.npsn || "-"}</div>
                       <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>
                         {row.address ? `${row.address}, ` : ""}
                         {row.village ? `${row.village}, ` : ""}
@@ -269,7 +269,7 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                             </span>
                           ))}
                         </div>
-                      ) : "—"}
+                      ) : "-"}
                     </td>
                     <td>
                       <Badge variant={row.is_active ? "success" : "danger"}>

@@ -2,7 +2,7 @@
   "name": "pemantik",
   "version": "0.0.1",
   "private": true,
-  "description": "Platform Asesmen Literasi & Numerasi — Sistem Pemantik PSPK",
+  "description": "Platform Asesmen Literasi & Numerasi - Sistem Pemantik PSPK",
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",

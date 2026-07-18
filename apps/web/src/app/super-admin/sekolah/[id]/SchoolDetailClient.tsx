@@ -350,10 +350,10 @@ export default function SchoolDetailClient({ school, teachers, students, classes
               <div>
                 <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#102e50", marginBottom: "1rem" }}>Informasi Sekolah</h3>
                 <InfoRow label="Nama" value={school.name} />
-                <InfoRow label="NPSN" value={school.npsn || "—"} mono />
-                <InfoRow label="Kepala Sekolah" value={school.principal_name || "—"} />
-                <InfoRow label="Telepon" value={school.contact_phone || "—"} />
-                <InfoRow label="Alamat" value={[school.village, school.district, school.city, school.province].filter(Boolean).join(", ") || "—"} />
+                <InfoRow label="NPSN" value={school.npsn || "-"} mono />
+                <InfoRow label="Kepala Sekolah" value={school.principal_name || "-"} />
+                <InfoRow label="Telepon" value={school.contact_phone || "-"} />
+                <InfoRow label="Alamat" value={[school.village, school.district, school.city, school.province].filter(Boolean).join(", ") || "-"} />
                 <InfoRow label="Komunitas" value={school.communities?.name || "SEKOLAH INDEPENDEN"} />
                 <InfoRow label="Status" value={school.is_active ? "Aktif" : "Nonaktif"} />
               </div>
@@ -512,14 +512,14 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                           )}
                         </td>
                         <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>{s.gender === "laki-laki" ? "L" : "P"}</td>
-                        <td style={{ padding: "0.875rem 1rem", fontFamily: "monospace", fontSize: "0.8rem", color: "#6b7280" }}>{s.nisn || "—"}</td>
-                        <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>{(s.classes as any)?.name || <span style={{ color: "#9ca3af" }}>—</span>}</td>
+                        <td style={{ padding: "0.875rem 1rem", fontFamily: "monospace", fontSize: "0.8rem", color: "#6b7280" }}>{s.nisn || "-"}</td>
+                        <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>{(s.classes as any)?.name || <span style={{ color: "#9ca3af" }}>-</span>}</td>
                         <td style={{ padding: "0.875rem 1rem" }}>
                           {s.ses_class ? (
                             <span style={{ fontSize: "0.75rem", fontWeight: 600, padding: "0.15rem 0.5rem", borderRadius: 999, background: sesColorMap[s.ses_class] + "20", color: sesColorMap[s.ses_class] }}>
                               {s.ses_class}
                             </span>
-                          ) : <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>—</span>}
+                          ) : <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>-</span>}
                         </td>
                         <td style={{ padding: "0.875rem 1rem" }}>
                           <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: 999, background: s.import_source === "dapodik" ? "#e0f2fe" : "#f3f4f6", color: s.import_source === "dapodik" ? "#0369a1" : "#6b7280" }}>

@@ -178,7 +178,7 @@ export default function QuestionTableClient({
                   {/* Level / Kategori */}
                   <td className="col-hide-mobile">
                     <div style={{ fontSize: "0.82rem", fontWeight: 500, color: "#343a40" }}>
-                      {q.question_levels?.question_categories?.name || "—"}
+                      {q.question_levels?.question_categories?.name || "-"}
                     </div>
                     {q.question_levels?.level_number != null && (
                       <div style={{ fontSize: "0.72rem", color: "#adb5bd", marginTop: "0.1rem" }}>

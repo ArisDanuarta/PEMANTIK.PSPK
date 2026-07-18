@@ -9,7 +9,7 @@ class LocalCategories extends Table {
   DateTimeColumn get validUntil => dateTime().nullable()();
 
   // ── Tambahan Minggu 2 ─────────────────────────────────────────────────────
-  // access_id dari assessment_access — disimpan lokal agar bisa dipakai
+  // access_id dari assessment_access - disimpan lokal agar bisa dipakai
   // saat membuat sesi baru tanpa harus query Supabase lagi.
   TextColumn get accessId => text().nullable()();
   // ─────────────────────────────────────────────────────────────────────────

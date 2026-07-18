@@ -111,7 +111,7 @@ class _VoiceRecordingWidgetState extends ConsumerState<VoiceRecordingWidget> {
     // Memberikan jeda sedikit agar STT menyelesaikan parsing kalimat terakhir
     await Future.delayed(const Duration(milliseconds: 500));
 
-    // Menghitung Similarity — Admin menyimpan teks di correctAnswer['target_text']
+    // Menghitung Similarity - Admin menyimpan teks di correctAnswer['target_text']
     final targetText =
         widget.question.correctAnswer['target_text']?.toString() ??
         widget.question.options['display_text']?.toString() ??

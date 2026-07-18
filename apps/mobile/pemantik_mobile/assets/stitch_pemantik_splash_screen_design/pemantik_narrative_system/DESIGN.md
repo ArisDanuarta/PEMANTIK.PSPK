@@ -110,7 +110,7 @@ spacing:
 
 This design system is built on the philosophy of **#BerpihakKepadaAnak** (Side with the Child). It balances professional academic assessment with a warm, storytelling atmosphere. The aesthetic is **Minimalist-Professional**, utilizing generous whitespace to reduce cognitive load for assessors while maintaining an air of authoritative elegance.
 
-The emotional response should be one of "Structured Warmth"—feeling like a premium educational journal that is nonetheless accessible and child-centric. The visual narrative leverages subtle "ignition" metaphors (flame/sparks) to symbolize the sparking of a child's potential.
+The emotional response should be one of "Structured Warmth"-feeling like a premium educational journal that is nonetheless accessible and child-centric. The visual narrative leverages subtle "ignition" metaphors (flame/sparks) to symbolize the sparking of a child's potential.
 
 - **Primary Style:** Minimalism with an Editorial lean.
 - **Visual Cues:** High-quality serif typography, soft transitions, and meaningful iconography.

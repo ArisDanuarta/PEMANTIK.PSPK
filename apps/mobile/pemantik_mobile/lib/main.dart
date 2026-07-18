@@ -25,7 +25,7 @@ class _PemantikAppState extends ConsumerState<PemantikApp> {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   List<ConnectivityResult> _lastStatus = [ConnectivityResult.none];
 
-  // FIX 1: Flag — hanya izinkan sync setelah user sudah terautentikasi.
+  // FIX 1: Flag - hanya izinkan sync setelah user sudah terautentikasi.
   // Sync sebelum login menyebabkan hang karena tidak ada student_data
   // di secure storage, SyncService lalu query Supabase tanpa konteks
   // dan hang di sana sebelum LoginPage sempat tampil.
@@ -39,7 +39,7 @@ class _PemantikAppState extends ConsumerState<PemantikApp> {
           _lastStatus.every((r) => r == ConnectivityResult.none);
       final isNowOnline = result.any((r) => r != ConnectivityResult.none);
 
-      // FIX 2: Guard — hanya sync kalau sudah login
+      // FIX 2: Guard - hanya sync kalau sudah login
       if (wasOffline && isNowOnline && _isAuthenticated) {
         ref.read(syncServiceProvider).uploadCompletedSessions();
       }

@@ -112,7 +112,7 @@ export default function InterventionGraph({
   initialNodes = [],
   initialEdges = [],
   title = "Knowledge Graph Intervensi & Dampak Pembelajaran",
-  description = "Peta pengetahuan hidup — hubungan antar Komunitas, Sekolah, Laporan Intervensi, dan Topik Pembelajaran",
+  description = "Peta pengetahuan hidup - hubungan antar Komunitas, Sekolah, Laporan Intervensi, dan Topik Pembelajaran",
 }: InterventionGraphProps) {
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [searchTag, setSearchTag] = useState("");
@@ -440,7 +440,7 @@ export default function InterventionGraph({
               </h4>
               <p style={{ margin: 0, color: "#374151", fontSize: "0.85rem", textAlign: "center", maxWidth: "380px" }}>
                 Setelah laporan intervensi diisi dan disubmit, peta pengetahuan akan
-                tumbuh secara organik di sini — menghubungkan sekolah, topik, dan dampak.
+                tumbuh secara organik di sini - menghubungkan sekolah, topik, dan dampak.
               </p>
             </div>
           ) : (
@@ -607,7 +607,7 @@ export default function InterventionGraph({
                   Tag ini adalah <strong style={{ color: "#c4b5fd" }}>kata kunci pengetahuan</strong> yang menghubungkan berbagai laporan intervensi dengan tantangan atau solusi serupa.
                 </p>
                 <p style={{ margin: 0, fontSize: "0.78rem", color: "#64748b" }}>
-                  Semakin banyak edge yang terhubung ke tag ini, semakin banyak sekolah yang mengalami tantangan yang sama — informasi berharga untuk intervensi sistemik.
+                  Semakin banyak edge yang terhubung ke tag ini, semakin banyak sekolah yang mengalami tantangan yang sama - informasi berharga untuk intervensi sistemik.
                 </p>
               </div>
             )}

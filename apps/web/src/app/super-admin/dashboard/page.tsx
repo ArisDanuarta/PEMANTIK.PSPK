@@ -4,7 +4,7 @@ import React from "react";
 
 export const metadata: Metadata = {
   title: "Dashboard Super Admin",
-  description: "Kontrol penuh sistem Pemantik — dashboard agregat semua entitas",
+  description: "Kontrol penuh sistem Pemantik - dashboard agregat semua entitas",
 };
 
 import IntegratedDashboardManager from "./IntegratedDashboardManager";

@@ -1,4 +1,4 @@
-# Pemantik Mobile — Flutter App (Siswa)
+# Pemantik Mobile - Flutter App (Siswa)
 
 ## Overview
 Aplikasi mobile Flutter untuk siswa mengerjakan asesmen literasi & numerasi.

@@ -124,7 +124,7 @@ class _AudioQuestionWidgetState extends ConsumerState<AudioQuestionWidget> {
     final selected = ref.watch(
       selectedAnswerProvider(widget.sessionId, widget.question.id),
     );
-    // Admin menyimpan options sebagai array strings langsung — di-parse ke format umum
+    // Admin menyimpan options sebagai array strings langsung - di-parse ke format umum
     final rawChoices =
         widget.question.options['choices'] as List<dynamic>? ??
         widget.question.options['answers'] as List<dynamic>? ??
@@ -212,7 +212,7 @@ class _AudioQuestionWidgetState extends ConsumerState<AudioQuestionWidget> {
 
         const SizedBox(height: 32),
 
-        // Pilihan Ganda Text di bawahnya — safe-parse setiap format choice
+        // Pilihan Ganda Text di bawahnya - safe-parse setiap format choice
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),

@@ -1,5 +1,5 @@
 /// <reference path="./phantom-ui.d.ts" />
-// ─── Shared UI Components — Pemantik Platform ────────────────────────────────
+// ─── Shared UI Components - Pemantik Platform ────────────────────────────────
 // All exports from the shared UI package
 
 export { PhantomSkeleton } from "./Skeleton/PhantomSkeleton";

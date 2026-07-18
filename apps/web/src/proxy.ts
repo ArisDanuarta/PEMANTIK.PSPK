@@ -81,7 +81,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Get role — our hook injects "user_role", fallback to built-in "role"
+  // Get role - our hook injects "user_role", fallback to built-in "role"
   let role = (payload.user_role ?? payload.role) as string | undefined;
   console.log("[Proxy] Initial Role from token payload:", role);
 

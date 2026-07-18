@@ -7,7 +7,7 @@ import SchoolReportDashboard from "./SchoolReportDashboard";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Hasil Ujian | Sekolah — Pemantik",
+  title: "Hasil Ujian | Sekolah - Pemantik",
   description: "Pusat data hasil ujian sekolah",
 };
 
@@ -71,7 +71,7 @@ export default async function SekolahLaporanPage() {
         </div>
       </div>
 
-      {/* Dashboard selalu dirender — packages kosong hanya jika memang belum ada sesi */}
+      {/* Dashboard selalu dirender - packages kosong hanya jika memang belum ada sesi */}
       <SchoolReportDashboard
         packages={packages}
         classes={classes}

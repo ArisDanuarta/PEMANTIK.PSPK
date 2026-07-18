@@ -243,7 +243,7 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
               <tr key={row.id}>
                 <td><strong>{row.full_name}</strong></td>
                 <td>
-                  <div style={{ fontWeight: 500 }}>NISN: {row.nisn || "—"}</div>
+                  <div style={{ fontWeight: 500 }}>NISN: {row.nisn || "-"}</div>
                   <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>{row.gender === "L" ? "Laki-laki" : "Perempuan"}</div>
                 </td>
                 <td>
@@ -253,10 +253,10 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
                   </div>
                 </td>
                 <td>
-                  <div style={{ fontWeight: 500, color: "#102e50" }}>{row.classes?.name || "—"}</div>
-                  <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>Guru: {row.classes?.users?.full_name || "—"}</div>
+                  <div style={{ fontWeight: 500, color: "#102e50" }}>{row.classes?.name || "-"}</div>
+                  <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>Guru: {row.classes?.users?.full_name || "-"}</div>
                 </td>
-                <td>{row.schools?.name || "—"}</td>
+                <td>{row.schools?.name || "-"}</td>
                 <td>
                   {row.ses_class ? (
                   <SesBadge sesClass={row.ses_class} />

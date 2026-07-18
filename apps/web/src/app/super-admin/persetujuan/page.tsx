@@ -25,7 +25,7 @@ export default async function PersetujuanSuperAdminPage() {
     <div className="animate-fade-in">
       <div className="page-header">
         <div className="page-header-left">
-          <h1 className="page-title">Approval Center — Persetujuan Fase</h1>
+          <h1 className="page-title">Approval Center - Persetujuan Fase</h1>
           <div className="page-breadcrumb">
             <span>Super Admin</span>
             <span className="page-breadcrumb-sep">›</span>

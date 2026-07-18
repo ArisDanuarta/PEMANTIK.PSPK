@@ -298,7 +298,7 @@ function MobilePreview({
                 <div style={{ fontSize: "0.65rem", color: "#6c757d", textAlign: "center" }}>
                   Sistem akan meminta siswa merekam dan membacakan teks:
                 </div>
-                {/* Teks target — kotak bergaris emas (sama persis dengan tampilan mobile) */}
+                {/* Teks target - kotak bergaris emas (sama persis dengan tampilan mobile) */}
                 {targetText ? (
                   <div
                     style={{

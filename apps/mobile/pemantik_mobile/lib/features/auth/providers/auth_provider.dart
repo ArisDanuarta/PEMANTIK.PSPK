@@ -44,7 +44,7 @@ class Auth extends _$Auth {
   /// 2. Baca 'student_data' (data profil siswa) dari SecureStorage
   /// 3. Kedua data harus ada agar dianggap valid
   ///
-  /// JWT diverifikasi tidak perlu decode di Flutter — RLS Supabase yang akan
+  /// JWT diverifikasi tidak perlu decode di Flutter - RLS Supabase yang akan
   /// memvalidasi signature-nya saat request pertama.
   Future<bool> checkInitialAuth() async {
     try {
@@ -125,7 +125,7 @@ class Auth extends _$Auth {
         // Simpan data profil siswa untuk kebutuhan UI & offline
         await _storage.write(key: 'student_data', value: jsonEncode(student));
 
-        // Log untuk debugging — cek format JWT (harus 3 bagian dipisah titik)
+        // Log untuk debugging - cek format JWT (harus 3 bagian dipisah titik)
         final parts = token.toString().split('.');
         if (parts.length == 3) {
           log(

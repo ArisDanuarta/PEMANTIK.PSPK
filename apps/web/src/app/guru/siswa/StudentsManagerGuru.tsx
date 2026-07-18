@@ -82,7 +82,7 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
           />
           <select className="form-input" value={classFilter} onChange={(e) => setClassFilter(e.target.value)} style={{ width: "180px" }}>
             <option value="all">Semua Kelas</option>
-            {classes.map((c) => <option key={c.id} value={c.id}>Kelas {c.grade} — {c.name}</option>)}
+            {classes.map((c) => <option key={c.id} value={c.id}>Kelas {c.grade} - {c.name}</option>)}
           </select>
           <select className="form-input" value={genderFilter} onChange={(e) => setGenderFilter(e.target.value)} style={{ width: "150px" }}>
             <option value="all">Semua Gender</option>
@@ -123,7 +123,7 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
                     <td>
                       {s.classes ? (
                         <Badge variant="info">
-                          Kelas {s.classes.grade} — {s.classes.name}
+                          Kelas {s.classes.grade} - {s.classes.name}
                         </Badge>
                       ) : (
                         <span style={{ color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic" }}>Tanpa Kelas</span>

@@ -1,4 +1,4 @@
-# Implementation Plan — Sistem Pemantik v2.1
+# Implementation Plan - Sistem Pemantik v2.1
 > Dokumen ini adalah rencana implementasi end-to-end berdasarkan analisis menyeluruh sistem yang berjalan saat ini. Urutan prioritas dari yang paling kritis (keamanan) hingga fitur.
 
 ---
@@ -8,7 +8,7 @@
 | # | Masalah | Tingkat Risiko | Prioritas |
 |---|---------|---------------|-----------|
 | 1 | Token JWT siswa adalah string palsu, bukan JWT valid | 🔴 KRITIS | P1 |
-| 2 | RLS siswa berbasis `anon` — tidak ada isolasi antar siswa | 🔴 KRITIS | P1 |
+| 2 | RLS siswa berbasis `anon` - tidak ada isolasi antar siswa | 🔴 KRITIS | P1 |
 | 3 | Komunitas punya `ALL` permission di `assessment_access` | 🟠 TINGGI | P2 |
 | 4 | `assessment_sessions` tidak punya `access_id` → laporan tidak bisa dibangun | 🟠 TINGGI | P2 |
 | 5 | `assessment_sessions` tidak punya `current_level_id` → adaptive level tidak bisa ditrack | 🟡 SEDANG | P3 |
@@ -17,7 +17,7 @@
 
 ---
 
-## PRIORITAS 1 — Perbaikan Autentikasi & RLS Siswa (KRITIS)
+## PRIORITAS 1 - Perbaikan Autentikasi & RLS Siswa (KRITIS)
 
 ### Masalah Saat Ini
 
@@ -31,7 +31,7 @@ Ini adalah string biasa, bukan JWT yang bisa divalidasi Supabase. Akibatnya:
 - Supabase tidak bisa membaca claims dari token ini
 - Semua request dari Flutter tetap dianggap `anon` oleh Supabase
 - RLS policy `auth.role() = 'anon'` berlaku untuk **semua orang yang belum login**, bukan hanya siswa
-- Tidak ada isolasi data antar siswa — siswa A bisa baca jawaban siswa B
+- Tidak ada isolasi data antar siswa - siswa A bisa baca jawaban siswa B
 
 ### Solusi: Generate JWT Valid dengan Custom Claims
 
@@ -250,7 +250,7 @@ CREATE POLICY student_view_questions ON questions
   );
 ```
 
-#### 1D. Update Flutter — Cara Pakai Token Baru
+#### 1D. Update Flutter - Cara Pakai Token Baru
 
 Di Flutter, setelah dapat token dari Edge Function, gunakan token tersebut sebagai Authorization header untuk semua request Supabase:
 
@@ -278,7 +278,7 @@ await secureStorage.write(key: 'student_data', value: jsonEncode(student));
 
 ---
 
-## PRIORITAS 2 — Perbaikan Struktur Data & Permission
+## PRIORITAS 2 - Perbaikan Struktur Data & Permission
 
 ### 2A. Perbaiki Permission Komunitas di `assessment_access`
 
@@ -336,7 +336,7 @@ CREATE INDEX IF NOT EXISTS idx_sessions_access_id ON assessment_sessions(access_
 CREATE INDEX IF NOT EXISTS idx_sessions_current_level ON assessment_sessions(current_level_id);
 
 -- Backfill: update data lama yang sudah ada
--- (data lama tidak punya access_id, biarkan NULL — tidak merusak data existing)
+-- (data lama tidak punya access_id, biarkan NULL - tidak merusak data existing)
 -- Tidak perlu backfill karena laporan hanya akan filter sesi yang punya access_id
 ```
 
@@ -354,7 +354,7 @@ CREATE INDEX IF NOT EXISTS idx_students_class_id ON students(class_id);
 
 ---
 
-## PRIORITAS 3 — Alur Distribusi Akses & Adaptive Level
+## PRIORITAS 3 - Alur Distribusi Akses & Adaptive Level
 
 ### 3A. Alur Distribusi Akses (Super Admin → Komunitas → Sekolah)
 
@@ -384,7 +384,7 @@ Ini diimplementasikan di **Server Actions** di Next.js, bukan di level database.
   → SELECT assessment_access WHERE target_type='school' AND target_id=sekolah_X
   → Tampilkan paket aktif + valid waktunya
 
-[Siswa di Sekolah X — saat login]
+[Siswa di Sekolah X - saat login]
   → Validasi akses: cek assessment_access untuk school_id siswa
   → Download soal dari category_id yang aktif
   → INSERT assessment_sessions:
@@ -571,7 +571,7 @@ $$;
 
 ---
 
-## PRIORITAS 4 — Laporan & Export Excel
+## PRIORITAS 4 - Laporan & Export Excel
 
 ### 4A. Query Foundation untuk Laporan
 
@@ -751,27 +751,27 @@ export async function GET(request: Request) {
 ## Urutan Implementasi yang Disarankan
 
 ```
-Minggu 1 — Keamanan (P1)
+Minggu 1 - Keamanan (P1)
   ✅ Update Edge Function authenticate-student → JWT valid
   ✅ Buat jwt_student_id() dan jwt_user_role_extended() helper functions
   ✅ Drop & recreate semua RLS policy siswa
   ✅ Update Flutter untuk pakai token baru
   ✅ Test: siswa A tidak bisa baca data siswa B
 
-Minggu 2 — Fondasi Data (P2)
+Minggu 2 - Fondasi Data (P2)
   ✅ Tambah kolom access_id dan current_level_id di assessment_sessions
   ✅ Tambah semua index untuk performa
   ✅ Perbaiki permission komunitas di assessment_access (split ALL → SELECT + INSERT)
   ✅ Test: komunitas tidak bisa edit/delete akses Super Admin
 
-Minggu 3 — Logika Bisnis (P3)
+Minggu 3 - Logika Bisnis (P3)
   ✅ Buat Server Action distributeAccessToSchools
   ✅ Buat Supabase Function advance_student_level
   ✅ Update Flutter untuk pakai access_id saat INSERT sesi
   ✅ Update Flutter untuk panggil advance_student_level setelah selesai tiap level
   ✅ Test: alur distribusi end-to-end dari Super Admin → Komunitas → Sekolah → Siswa
 
-Minggu 4 — Laporan (P4)
+Minggu 4 - Laporan (P4)
   ✅ Buat VIEW v_assessment_report
   ✅ Buat API Route export Excel
   ✅ Buat UI halaman laporan (kotak-kotak per fase, tombol download Excel)
@@ -786,7 +786,7 @@ Minggu 4 — Laporan (P4)
 ### Backward Compatibility
 - Kolom `access_id` ditambah dengan `ON DELETE SET NULL` → data sesi lama yang tidak punya `access_id` tetap aman (nilainya `NULL`), tidak perlu migrasi data
 - Laporan cukup filter `WHERE access_id IS NOT NULL` untuk hanya tampilkan sesi yang terikat ke akses ujian formal
-- RLS lama di-DROP dulu sebelum dibuat yang baru — jangan jalankan keduanya bersamaan
+- RLS lama di-DROP dulu sebelum dibuat yang baru - jangan jalankan keduanya bersamaan
 
 ### Testing yang Wajib Dilakukan Setelah P1
 1. Login sebagai siswa A → coba akses `student_answers` siswa B → harus gagal (0 rows)

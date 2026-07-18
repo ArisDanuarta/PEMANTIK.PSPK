@@ -82,7 +82,7 @@ Komponen master ini sudah dibangun untuk mendukung **6 tipe interaksi asesmen mo
 3. **Audio**: Soal bertipe pendengaran (*listening*) atau literasi suara.
 4. **Video**: Stimulus interaktif yang bisa menampung `iframe` otomatis dari link YouTube maupun berkas mandiri.
 5. **Drag & Drop**: Mendukung manipulasi interaktif pengisian titik rumpang (*Fill in the Blank*) dengan deteksi format spesifik `___` (tiga *underscore*), atau metode pengelompokan kategori silang.
-6. **Voice Recording (Deteksi Suara)**: Modul canggih yang memadukan input teks referensi dengan suara siswa, yang mana komparasinya dinilai otomatis melalui perhitungan jarak algoritme *Levenshtein Distance* — disertai dengan kontrol persentase batas kelonggaran (*Threshold*) toleransi aksen/ejaan bagi guru.
+6. **Voice Recording (Deteksi Suara)**: Modul canggih yang memadukan input teks referensi dengan suara siswa, yang mana komparasinya dinilai otomatis melalui perhitungan jarak algoritme *Levenshtein Distance* - disertai dengan kontrol persentase batas kelonggaran (*Threshold*) toleransi aksen/ejaan bagi guru.
 
 ### B. Live Mobile Phone Preview (Inovasi UX)
 - Simulator layar *smartphone* vertikal yang dibuat secara murni dengan CSS Flexbox & kalkulasi rasio, untuk memberikan pratinjau seketika tanpa perlu perangkat sungguhan.

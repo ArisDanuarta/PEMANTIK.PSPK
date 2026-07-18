@@ -2,9 +2,9 @@
  * parseDapodik.ts
  * =====================================================================================
  * Fungsi pure untuk mem-parsing file Excel Dapodik "Daftar Peserta Didik".
- * TIDAK ada side-effect database — murni transformasi buffer → struktur data.
+ * TIDAK ada side-effect database - murni transformasi buffer → struktur data.
  *
- * v4.1 — GLOBAL METADATA SCANNING (ANTI-FALSE-POSITIVE)
+ * v4.1 - GLOBAL METADATA SCANNING (ANTI-FALSE-POSITIVE)
  * Membaca metadata dari seluruh sheet, dengan kecerdasan tambahan untuk
  * membedakan antara "baris profil sekolah" dan "baris judul kolom tabel siswa".
  * =====================================================================================
@@ -416,7 +416,7 @@ export function parseDapodikFile(buffer: ArrayBuffer): DapodikParseResult {
         row_number: rowNum,
         full_name: rawName,
         field: skip_reasons.map((r) => r.split(" ")[0]).join(", "),
-        message: `Baris dilewati — field wajib bermasalah: ${skip_reasons.join("; ")}`,
+        message: `Baris dilewati - field wajib bermasalah: ${skip_reasons.join("; ")}`,
       });
       return;
     }
@@ -457,7 +457,7 @@ export function parseDapodikFile(buffer: ArrayBuffer): DapodikParseResult {
         row_number: rowNum,
         full_name: rawName,
         field: "rombel",
-        message: `Rombel kosong — siswa akan diimport tanpa kelas (class_id = null).`,
+        message: `Rombel kosong - siswa akan diimport tanpa kelas (class_id = null).`,
       });
     }
     

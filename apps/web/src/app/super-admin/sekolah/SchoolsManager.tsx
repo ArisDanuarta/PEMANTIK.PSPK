@@ -254,10 +254,10 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
                   <tr key={row.id}>
                     <td>
                       <div style={{ fontWeight: 600, color: "#102e50" }}>{row.name}</div>
-                      <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>Kepsek: {row.principal_name || "—"}</div>
+                      <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>Kepsek: {row.principal_name || "-"}</div>
                     </td>
                     <td>
-                      <div style={{ fontWeight: 500 }}>NPSN: {row.npsn || "—"}</div>
+                      <div style={{ fontWeight: 500 }}>NPSN: {row.npsn || "-"}</div>
                       <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>
                         {row.address ? `${row.address}, ` : ""}
                         {row.village ? `${row.village}, ` : ""}
@@ -291,7 +291,7 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
                             </span>
                           ))}
                         </div>
-                      ) : "—"}
+                      ) : "-"}
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>

@@ -23,7 +23,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Pemantik — Platform Asesmen Literasi & Numerasi",
+    default: "Pemantik_Platform Asesmen Literasi & Numerasi",
     template: "%s | Pemantik PSPK",
   },
   description:

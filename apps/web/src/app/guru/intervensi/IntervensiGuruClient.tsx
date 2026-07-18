@@ -8,7 +8,7 @@ interface IntervensiGuruClientProps {
   initialInterventions: any[];
   schoolId: string;
   schoolName: string;
-  /** Stages yang sedang di fase 'intervensi' — bisa lebih dari satu jika ada multi-fase */
+  /** Stages yang sedang di fase 'intervensi' - bisa lebih dari satu jika ada multi-fase */
   activeStages?: any[];
 }
 
@@ -42,7 +42,7 @@ export default function IntervensiGuruClient({
             📋 Daftar Laporan Pembinaan &amp; Intervensi
           </h3>
           <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.85rem", color: "#64748b" }}>
-            Total {initialInterventions.length} catatan pembinaan intervensi — {schoolName}
+            Total {initialInterventions.length} catatan pembinaan intervensi - {schoolName}
           </p>
         </div>
         {activeStages.length > 0 && (
@@ -54,7 +54,7 @@ export default function IntervensiGuruClient({
         )}
       </div>
 
-      {/* Daftar Tahap Intervensi Aktif — sama dengan pola SekolahClient */}
+      {/* Daftar Tahap Intervensi Aktif - sama dengan pola SekolahClient */}
       {activeStages.length > 0 && (
         <div style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a", padding: "1.25rem 1.5rem", borderRadius: "1rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>

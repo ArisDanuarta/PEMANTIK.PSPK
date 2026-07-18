@@ -2,7 +2,7 @@
 
 /**
  * Extract entity_id from JWT payload for RLS filtering.
- * Server-side only — use in Server Components and Route Handlers.
+ * Server-side only - use in Server Components and Route Handlers.
  */
 export function getEntityIdFromJWT(accessToken: string): string | null {
   try {

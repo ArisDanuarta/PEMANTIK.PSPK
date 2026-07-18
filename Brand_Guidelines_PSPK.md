@@ -42,8 +42,8 @@ Untuk **brand guideline inti**, PSPK **tidak bisa selalu mengikuti trend design*
 
 ### 1.1 Elemen Logo
 Logo PSPK terdiri dari dua elemen yang **tidak bisa dipisahkan** dan menjadi kesatuan:
-- **Logogram** — bentuk *bubble chat* / kotak dialog, melambangkan interaksi dan hubungan antar pihak yang menghasilkan opini untuk publik. Dilengkapi simbol markah buku sebagai pelambangan pencarian kebijakan yang berpihak kepada anak.
-- **Logotype** — teks "Pusat Studi Pendidikan dan Kebijakan"
+- **Logogram** - bentuk *bubble chat* / kotak dialog, melambangkan interaksi dan hubungan antar pihak yang menghasilkan opini untuk publik. Dilengkapi simbol markah buku sebagai pelambangan pencarian kebijakan yang berpihak kepada anak.
+- **Logotype** - teks "Pusat Studi Pendidikan dan Kebijakan"
 
 ### 1.2 Tiga Variasi Logo
 
@@ -56,17 +56,17 @@ Logo PSPK terdiri dari dua elemen yang **tidak bisa dipisahkan** dan menjadi kes
 ### 1.3 Versi Warna Logo
 
 Setiap variasi tersedia dalam 3 versi:
-- **Full color** — digunakan di atas latar terang / netral
-- **Putih (monochrome light)** — digunakan di atas latar gelap
-- **Hitam (monochrome dark)** — digunakan untuk cetak hitam-putih
+- **Full color** - digunakan di atas latar terang / netral
+- **Putih (monochrome light)** - digunakan di atas latar gelap
+- **Hitam (monochrome dark)** - digunakan untuk cetak hitam-putih
 
 ### 1.4 Area Aman (Safety Area)
 
 - Logo memiliki area aman di sekeliling yang **tidak boleh diisi elemen lain**
-- Saat disandingkan dengan logo mitra, perhatikan safe-area — **dilarang meletakkan logo lain di dalam safe-area logo PSPK**
+- Saat disandingkan dengan logo mitra, perhatikan safe-area - **dilarang meletakkan logo lain di dalam safe-area logo PSPK**
 - Bila digunakan di atas latar berwarna/foto, tambahkan bentuk putih (persegi panjang atau lingkaran) di belakang logo sebagai alas
 
-### 1.5 Logo Don'ts — Hal yang Dilarang
+### 1.5 Logo Don'ts - Hal yang Dilarang
 
 | ❌ Larangan |
 |---|
@@ -148,7 +148,7 @@ Subjek foto diutamakan: anak-anak, siswa, guru, dan interaksi dunia pendidikan.
 
 - Gunakan ikon dengan tipe **outline** (bukan solid/filled)
 - Tujuan: menjaga desain tetap terlihat **bersih dan sederhana**
-- Konsisten dalam satu desain — jangan mencampur gaya outline dan solid
+- Konsisten dalam satu desain - jangan mencampur gaya outline dan solid
 
 ---
 
@@ -175,4 +175,4 @@ Subjek foto diutamakan: anak-anak, siswa, guru, dan interaksi dunia pendidikan.
 
 ---
 
-*Brand Guidelines PSPK — Dokumen internal, tidak untuk distribusi publik*
+*Brand Guidelines PSPK - Dokumen internal, tidak untuk distribusi publik*

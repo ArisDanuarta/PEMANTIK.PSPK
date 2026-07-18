@@ -9,9 +9,9 @@ import '../providers/assessment_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 /// DragDropWidget mendukung 3 subtype yang dibuat di Admin Soal:
-/// 1. fill_blank  — seret kata ke dalam kalimat rumpang
-/// 2. sorting     — urutkan item dengan tap atau drag
-/// 3. matching    — pasangkan kolom kiri dengan kolom kanan
+/// 1. fill_blank  - seret kata ke dalam kalimat rumpang
+/// 2. sorting     - urutkan item dengan tap atau drag
+/// 3. matching    - pasangkan kolom kiri dengan kolom kanan
 class DragDropWidget extends ConsumerStatefulWidget {
   final QuestionData question;
   final String sessionId;
@@ -32,11 +32,11 @@ class _DragDropWidgetState extends ConsumerState<DragDropWidget> {
   // Fill Blank state
   Map<int, String> _filledWords = {};
 
-  // Sorting state — list indeks dari sortItems dalam urutan yang dipilih user
+  // Sorting state - list indeks dari sortItems dalam urutan yang dipilih user
   late List<Map<String, dynamic>> _sortItems;
   late List<Map<String, dynamic>> _sortAnswer;
 
-  // Matching state — map leftId → rightId
+  // Matching state - map leftId → rightId
   late Map<String, String> _matchMap;
   String? _selectedLeftId;
 
@@ -711,7 +711,7 @@ class _DragDropWidgetState extends ConsumerState<DragDropWidget> {
         .toList();
 
     // Setiap pasangan benar: leftId (kiri) harus dipasangkan ke rightId (kanan)
-    // Admin menyimpan pairs sebagai [{id, left, right}] — pasangan benar adalah
+    // Admin menyimpan pairs sebagai [{id, left, right}] - pasangan benar adalah
     // ketika user memetakan sebuah leftId ke rightId yang memiliki id yang SAMA.
     // Karena rightItems diacak namun tetap menggunakan p['id'] sebagai identifier,
     // pasangan benar adalah _matchMap[leftId] == leftId (yaitu id baris yang sama).

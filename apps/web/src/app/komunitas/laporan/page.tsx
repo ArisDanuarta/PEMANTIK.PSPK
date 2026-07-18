@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Hasil Ujian | Komunitas — Pemantik",
+  title: "Hasil Ujian | Komunitas - Pemantik",
   description: "Pusat data hasil ujian komunitas",
 };
 
@@ -34,8 +34,8 @@ export default async function KomunitasLaporanPage() {
     schools = (scData ?? []).map((s: any) => ({
       id: s.id,
       name: s.name,
-      npsn: s.npsn ?? "—",
-      city: s.city ?? "—",
+      npsn: s.npsn ?? "-",
+      city: s.city ?? "-",
       registeredStudentsCount: Array.isArray(s.students) ? s.students.length : 0,
     }));
 
@@ -83,7 +83,7 @@ export default async function KomunitasLaporanPage() {
         </div>
       </div>
 
-      {/* Dashboard selalu dirender — packages kosong hanya jika memang belum ada sesi */}
+      {/* Dashboard selalu dirender - packages kosong hanya jika memang belum ada sesi */}
       <CommunityReportDashboard
         schools={schools}
         packages={packages}

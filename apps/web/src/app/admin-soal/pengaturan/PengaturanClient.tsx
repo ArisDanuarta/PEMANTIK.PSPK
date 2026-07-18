@@ -364,7 +364,7 @@ export default function PengaturanClient() {
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid #e9ecef", background: "#f8f9fa" }}>
             <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "var(--clr-biru)" }}>
-              Kategori — {subjectFilter === "literasi" ? "Literasi" : "Numerasi"}
+              Kategori - {subjectFilter === "literasi" ? "Literasi" : "Numerasi"}
             </h2>
             <p style={{ margin: "0.25rem 0 0", fontSize: "0.8rem", color: "#6c757d" }}>
               Klik kategori untuk melihat level di dalamnya

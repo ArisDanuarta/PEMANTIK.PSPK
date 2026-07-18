@@ -213,7 +213,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
           <input type="text" className="form-input" placeholder="Cari nama, NISN, atau username..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ flex: 1, minWidth: "200px", maxWidth: "300px" }} />
           <select className="form-input" value={classFilter} onChange={(e) => setClassFilter(e.target.value)} style={{ width: "180px" }}>
             <option value="all">Semua Kelas</option>
-            {classes.map((c) => <option key={c.id} value={c.id}>Kelas {c.grade} — {c.name}</option>)}
+            {classes.map((c) => <option key={c.id} value={c.id}>Kelas {c.grade} - {c.name}</option>)}
           </select>
           <select className="form-input" value={genderFilter} onChange={(e) => setGenderFilter(e.target.value)} style={{ width: "150px" }}>
             <option value="all">Semua Gender</option>
@@ -292,13 +292,13 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
                 <td>
                   {s.classes ? (
                     <span style={{ padding: "0.15rem 0.5rem", backgroundColor: "#eff6ff", color: "#1d4ed8", borderRadius: "0.375rem", fontSize: "0.8rem", fontWeight: 500 }}>
-                      Kelas {s.classes.grade} — {s.classes.name}
+                      Kelas {s.classes.grade} - {s.classes.name}
                     </span>
-                  ) : <span style={{ color: "#adb5bd", fontSize: "0.8rem" }}>—</span>}
+                  ) : <span style={{ color: "#adb5bd", fontSize: "0.8rem" }}>-</span>}
                 </td>
-                <td style={{ fontSize: "0.85rem" }}>{s.gender === "L" ? "Laki-laki" : s.gender === "P" ? "Perempuan" : "—"}</td>
+                <td style={{ fontSize: "0.85rem" }}>{s.gender === "L" ? "Laki-laki" : s.gender === "P" ? "Perempuan" : "-"}</td>
                 <td>
-                  {s.ses_class ? <span style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3f4f6", borderRadius: "0.375rem", fontSize: "0.8rem", fontWeight: 600 }}>SES {s.ses_class}</span> : "—"}
+                  {s.ses_class ? <span style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3f4f6", borderRadius: "0.375rem", fontSize: "0.8rem", fontWeight: 600 }}>SES {s.ses_class}</span> : "-"}
                 </td>
                 <td><Badge variant={s.is_active ? "success" : "danger"}>{s.is_active ? "Aktif" : "Nonaktif"}</Badge></td>
                 <td>
@@ -360,7 +360,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
                 <div>
                   <label className="form-label">Jenis Kelamin <span style={{ color: "#dc2626" }}>*</span></label>
                   <select name="gender" className="form-input" defaultValue={editingStudent?.gender ?? ""} required>
-                    <option value="">— Pilih —</option>
+                    <option value="">- Pilih -</option>
                     <option value="L">Laki-laki</option>
                     <option value="P">Perempuan</option>
                   </select>
@@ -372,8 +372,8 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
                 <div>
                   <label className="form-label">Kelas <span style={{ color: "#dc2626" }}>*</span></label>
                   <select name="class_id" className="form-input" defaultValue={editingStudent?.classes?.id ?? ""} required>
-                    <option value="">— Pilih Kelas —</option>
-                    {classes.map((c) => <option key={c.id} value={c.id}>Kelas {c.grade} — {c.name}</option>)}
+                    <option value="">- Pilih Kelas -</option>
+                    {classes.map((c) => <option key={c.id} value={c.id}>Kelas {c.grade} - {c.name}</option>)}
                   </select>
                 </div>
               </div>

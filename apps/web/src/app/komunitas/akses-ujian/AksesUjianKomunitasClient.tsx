@@ -140,12 +140,12 @@ export default function AksesUjianKomunitasClient({
         if (result.distributed_to === 0) {
           success(
             "Selesai",
-            `Semua ${result.total_schools} sekolah sudah memiliki akses ujian "${access.name} — ${access.phase}".`
+            `Semua ${result.total_schools} sekolah sudah memiliki akses ujian "${access.name} - ${access.phase}".`
           );
         } else {
           success(
             "Berhasil",
-            `${result.distributed_to} sekolah baru mendapat akses "${access.name} — ${access.phase}".` +
+            `${result.distributed_to} sekolah baru mendapat akses "${access.name} - ${access.phase}".` +
               (result.skipped && result.skipped > 0
                 ? ` (${result.skipped} sekolah dilewati karena sudah punya akses)`
                 : "")
@@ -359,7 +359,7 @@ export default function AksesUjianKomunitasClient({
                           color: "#374151",
                         }}
                       >
-                        {acc.phase || "—"}
+                        {acc.phase || "-"}
                       </span>
                     </td>
                     <td

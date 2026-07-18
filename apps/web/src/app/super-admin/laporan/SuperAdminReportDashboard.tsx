@@ -417,7 +417,7 @@ export default function SuperAdminReportDashboard({
                         Level {row.final_level_number}
                       </span>
                     ) : (
-                      <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>—</span>
+                      <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>-</span>
                     )}
                   </td>
                   <td style={{ textAlign: "center" }}>{(row.time_spent / 60).toFixed(1)}</td>

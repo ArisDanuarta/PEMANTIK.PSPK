@@ -149,7 +149,7 @@ export async function GET(request: Request) {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // SECTION: per_level  (Opsi B — Gap 7.5 Decision: level dari student_answers)
+  // SECTION: per_level  (Opsi B - Gap 7.5 Decision: level dari student_answers)
   // Konsisten dengan community-sections/route.ts
   // ═══════════════════════════════════════════════════════════════════════════
   if (section === "per_level") {

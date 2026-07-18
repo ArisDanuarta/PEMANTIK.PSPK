@@ -206,7 +206,7 @@ export async function resetStudentSession(sessionId: string) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// distributeAccessToSchools — Minggu 3
+// distributeAccessToSchools - Minggu 3
 // Distribusikan satu parent access (community) ke banyak sekolah sekaligus.
 // schoolIds = ['all'] → semua sekolah aktif. Tanggal DIWARISI dari parent.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -285,7 +285,7 @@ export async function distributeAccessToSchools(
       return { success: true, distributed_to: 0, skipped, total_schools: targetIds.length };
     }
 
-    // 4. Insert — tanggal valid DIWARISI dari parent
+    // 4. Insert - tanggal valid DIWARISI dari parent
     const headersList = await headers();
     const userId = headersList.get("x-user-id");
     const rows = toInsert.map((schoolId) => ({

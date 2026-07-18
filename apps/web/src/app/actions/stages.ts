@@ -78,7 +78,7 @@ export async function markPersiapanSelesaiAction(
       .maybeSingle();
 
     if (existing) {
-      // Sudah ada — validasi bisa di-update
+      // Sudah ada - validasi bisa di-update
       if (existing.current_stage !== "persiapan_akun") {
         return {
           success: false,
@@ -96,7 +96,7 @@ export async function markPersiapanSelesaiAction(
 
       if (updateErr) throw updateErr;
     } else {
-      // Belum ada — buat baru langsung di 'pengajuan_fase'
+      // Belum ada - buat baru langsung di 'pengajuan_fase'
       const { error: insertErr } = await (supabase as any)
         .from("school_assessment_stages")
         .insert({
@@ -273,7 +273,7 @@ export async function checkAndAutoTransitionStages(communityId: string): Promise
 
     console.log(`[AutoTransition] ${stagesToTransition.length} stage(s) diubah ke 'intervensi'.`);
   } catch (err: any) {
-    // Gagal silent — tidak boleh crash dashboard
+    // Gagal silent - tidak boleh crash dashboard
     console.error("[checkAndAutoTransitionStages]", err);
   }
 }
