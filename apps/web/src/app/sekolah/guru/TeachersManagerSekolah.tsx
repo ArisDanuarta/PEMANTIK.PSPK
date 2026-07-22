@@ -116,10 +116,10 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
   };
 
   const handleDownloadTemplate = () => {
-    const headers = ["nama_guru", "email", "nip", "jenis_kelamin", "tanggal_lahir", "kelurahan", "kecamatan", "kabupaten", "provinsi", "nama_sekolah", "kelas"];
+    const headers = ["nama_guru", "nip", "email_guru", "jenis_kelamin", "tanggal_lahir", "nama_sekolah", "kelas", "kelurahan_desa", "kecamatan", "kabupaten", "provinsi"];
     const wsData = [
       headers,
-      ["Budi Santoso", "budi@sekolah.com", "198001012005011003", "L", "1980-01-01", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta", "Sekolah Contoh", "5A"]
+      ["Budi Santoso", "198001012005011003", "budi@sekolah.com", "L", "1980-01-01", "Sekolah Contoh", "5A", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta"]
     ];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     
@@ -127,16 +127,16 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
     const petunjukData = [
       ["Kolom", "Wajib?", "Keterangan / Contoh"],
       ["nama_guru", "Ya", "Nama lengkap guru."],
-      ["email", "Ya", "Email aktif. Digunakan sebagai username login."],
       ["nip", "Tidak", "Nomor Induk Pegawai."],
+      ["email_guru", "Tidak", "Email aktif guru."],
       ["jenis_kelamin", "Ya", "L untuk Laki-laki, P untuk Perempuan."],
       ["tanggal_lahir", "Ya", "Format YYYY-MM-DD (Misal: 1980-01-01)."],
-      ["kelurahan", "Ya", "Kelurahan / Desa domisili/sekolah."],
+      ["nama_sekolah", "Ya", "Pastikan ejaan nama sekolah persis sama dengan yang terdaftar."],
+      ["kelas", "Tidak", "Daftar kelas yang diajar. Pisahkan dengan koma jika lebih dari satu (Misal: 5A, 6B)."],
+      ["kelurahan_desa", "Ya", "Kelurahan / Desa domisili/sekolah."],
       ["kecamatan", "Ya", "Kecamatan domisili/sekolah."],
       ["kabupaten", "Ya", "Kabupaten / Kota."],
-      ["provinsi", "Ya", "Provinsi."],
-      ["nama_sekolah", "Ya", "Pastikan ejaan nama sekolah persis sama dengan yang terdaftar."],
-      ["kelas", "Tidak", "Daftar kelas yang diajar. Pisahkan dengan koma jika lebih dari satu (Misal: 5A, 6B)."]
+      ["provinsi", "Ya", "Provinsi."]
     ];
     const wsPetunjuk = XLSX.utils.aoa_to_sheet(petunjukData);
 
@@ -283,8 +283,8 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                   <input type="text" name="full_name" required defaultValue={editingTeacher?.full_name} className="form-input" style={{ width: "100%" }} />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Email (Menjadi Username) *</label>
-                  <input type="email" name="email" required defaultValue={editingTeacher?.email ?? ""} className="form-input" style={{ width: "100%" }} disabled={!!editingTeacher} />
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Email (Opsional)</label>
+                  <input type="email" name="email" defaultValue={editingTeacher?.email ?? ""} className="form-input" style={{ width: "100%" }} disabled={!!editingTeacher} />
                   {editingTeacher && <p style={{ fontSize: "0.75rem", color: "#6c757d", marginTop: "0.25rem" }}>Email tidak bisa diubah.</p>}
                 </div>
                 <div>

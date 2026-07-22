@@ -64,6 +64,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
       .select("id, full_name, username, role")
       .eq("school_id", id)
       .eq("role", "school")
+      .limit(1)
       .maybeSingle(),
     (supabase as any)
       .from("users")

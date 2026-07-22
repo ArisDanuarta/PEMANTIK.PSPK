@@ -458,6 +458,12 @@ export default function CommunitiesManager({
               Aktifkan komunitas ini langsung
             </label>
           </div>
+          
+          {!editingComm && (
+            <div style={{ fontSize: "0.8rem", color: "#6b7280", marginTop: "0.5rem" }}>
+              * Sistem akan meng-generate <b>Username</b> dari Nama Komunitas + 3 angka acak. Password default adalah <b>Password123!</b>
+            </div>
+          )}
 
           <div
             style={{

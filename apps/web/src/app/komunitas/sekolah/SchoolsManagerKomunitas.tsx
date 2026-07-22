@@ -24,6 +24,9 @@ interface School {
   users?: { username: string; role: string }[];
   classes?: any[];
   is_active: boolean;
+  email?: string;
+  jenjang_sekolah?: string;
+  status_sekolah?: string;
 }
 
 interface SchoolsManagerKomunitasProps {
@@ -144,8 +147,7 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
     // Sisipkan community_id pada setiap baris data agar backend action menggunakan milik komunitas kita
     const preparedData = data.map(row => ({
       ...row,
-      community_id: communityId,
-      Nama_Komunitas: communityName // Just in case as fallback reference
+      community_id: communityId
     }));
 
     const result = await bulkCreateSchoolsAction(preparedData);
@@ -157,26 +159,28 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
   };
 
   const handleDownloadTemplate = () => {
-    const headers = ["Nama_Sekolah", "NPSN", "Provinsi", "Kota", "Kecamatan", "Desa", "Nama_Kepsek", "Telp", "Alamat", "Daftar_Kelas"];
+    const headers = ["nama_sekolah", "npsn", "email_sekolah", "status_sekolah", "jenjang_sekolah", "kepala_sekolah", "nomor_telepon", "daftar_kelas", "kelurahan_desa", "kecamatan", "kabupaten", "provinsi"];
     const wsData = [
       headers,
-      ["Contoh SD 1", "20101010", "Jawa Barat", "Bandung", "Coblong", "Dago", "Budi", "08123", "Jl. ABC", "5A, 5B, 6A"]
+      ["Contoh SD 1", "20101010", "sd1@contoh.com", "Negeri", "SD", "Budi", "08123456789", "5A, 5B, 6A", "Dago", "Coblong", "Bandung", "Jawa Barat"]
     ];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     
     // Add instruction sheet
     const instructions = [
       ["Kolom", "Wajib", "Keterangan"],
-      ["Nama_Sekolah", "Ya", "Nama lengkap sekolah"],
-      ["NPSN", "Tidak", "Nomor Pokok Sekolah Nasional"],
-      ["Provinsi", "Ya", "Provinsi lokasi sekolah"],
-      ["Kota", "Ya", "Kota/Kabupaten lokasi sekolah"],
-      ["Kecamatan", "Ya", "Kecamatan lokasi sekolah"],
-      ["Desa", "Ya", "Desa/Kelurahan lokasi sekolah"],
-      ["Nama_Kepsek", "Tidak", "Nama Kepala Sekolah"],
-      ["Telp", "Tidak", "Nomor Telepon Sekolah"],
-      ["Alamat", "Tidak", "Alamat Sekolah"],
-      ["Daftar_Kelas", "Ya", "Daftar kelas yang ikut asesmen. Pisahkan dengan koma jika lebih dari satu (Contoh: 5A, 5B, 6A). Sistem akan otomatis membuat kelas ini dan nanti bisa dipilih saat membuat akun Guru."],
+      ["nama_sekolah", "Ya", "Nama lengkap sekolah"],
+      ["npsn", "Tidak", "Nomor Pokok Sekolah Nasional"],
+      ["email_sekolah", "Tidak", "Email sekolah"],
+      ["status_sekolah", "Ya", "Status sekolah (Misal: Negeri / Swasta)"],
+      ["jenjang_sekolah", "Ya", "Jenjang pendidikan (Misal: SD, SMP, SMA)"],
+      ["kepala_sekolah", "Tidak", "Nama Kepala Sekolah"],
+      ["nomor_telepon", "Tidak", "Nomor Telepon Sekolah"],
+      ["daftar_kelas", "Ya", "Daftar kelas yang ikut asesmen. Pisahkan dengan koma (Contoh: 5A, 5B)."],
+      ["kelurahan_desa", "Ya", "Kelurahan / Desa lokasi sekolah"],
+      ["kecamatan", "Ya", "Kecamatan lokasi sekolah"],
+      ["kabupaten", "Ya", "Kabupaten / Kota lokasi sekolah"],
+      ["provinsi", "Ya", "Provinsi lokasi sekolah"]
     ];
     const wsHelp = XLSX.utils.aoa_to_sheet(instructions);
 
@@ -315,40 +319,45 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                 </div>
 
                 <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>NPSN</label>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>NPSN (Opsional)</label>
                   <input type="text" name="npsn" defaultValue={editingSchool?.npsn || ""} className="form-input" style={{ width: "100%" }} />
                 </div>
+                
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Email Sekolah (Opsional)</label>
+                  <input type="email" name="email" defaultValue={editingSchool?.email || ""} className="form-input" style={{ width: "100%" }} />
+                </div>
+                
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Status Sekolah *</label>
+                  <select name="status_sekolah" required defaultValue={editingSchool?.status_sekolah || ""} className="form-input" style={{ width: "100%" }}>
+                    <option value="">-- Pilih Status --</option>
+                    <option value="Negeri">Negeri</option>
+                    <option value="Swasta">Swasta</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Jenjang Sekolah *</label>
+                  <select name="jenjang_sekolah" required defaultValue={editingSchool?.jenjang_sekolah || ""} className="form-input" style={{ width: "100%" }}>
+                    <option value="">-- Pilih Jenjang --</option>
+                    <option value="SD">SD</option>
+                    <option value="SMP">SMP</option>
+                    <option value="SMA">SMA</option>
+                    <option value="SMK">SMK</option>
+                  </select>
+                </div>
 
                 <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Kepala Sekolah</label>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Kepala Sekolah (Opsional)</label>
                   <input type="text" name="principal_name" defaultValue={editingSchool?.principal_name || ""} className="form-input" style={{ width: "100%" }} />
                 </div>
-
+                
                 <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Provinsi *</label>
-                  <input type="text" name="province" required defaultValue={editingSchool?.province || ""} className="form-input" style={{ width: "100%" }} />
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Nomor Telepon (Opsional)</label>
+                  <input type="text" name="contact_phone" defaultValue={editingSchool?.contact_phone || ""} className="form-input" style={{ width: "100%" }} />
                 </div>
-
-                <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Kota / Kabupaten *</label>
-                  <input type="text" name="city" required defaultValue={editingSchool?.city || ""} className="form-input" style={{ width: "100%" }} />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Kecamatan *</label>
-                  <input type="text" name="district" required defaultValue={editingSchool?.district || ""} className="form-input" style={{ width: "100%" }} />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Desa / Kelurahan *</label>
-                  <input type="text" name="village" required defaultValue={editingSchool?.village || ""} className="form-input" style={{ width: "100%" }} />
-                </div>
-
-                <div style={{ gridColumn: "span 2" }}>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Alamat Lengkap</label>
-                  <input type="text" name="address" defaultValue={editingSchool?.address || ""} className="form-input" style={{ width: "100%" }} />
-                </div>
-
+                
                 <div style={{ gridColumn: "span 2" }}>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Daftar Kelas (Ikut Asesmen) *</label>
                   <input type="text" name="classes" required placeholder="Misal: 5A, 5B, 6A (Pisahkan dengan koma)" className="form-input" style={{ width: "100%" }} />
@@ -356,6 +365,32 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                     Kelas ini nanti akan muncul sebagai pilihan saat Anda membuat akun Guru.
                   </p>
                 </div>
+
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Desa / Kelurahan *</label>
+                  <input type="text" name="village" required defaultValue={editingSchool?.village || ""} className="form-input" style={{ width: "100%" }} />
+                </div>
+                
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Kecamatan *</label>
+                  <input type="text" name="district" required defaultValue={editingSchool?.district || ""} className="form-input" style={{ width: "100%" }} />
+                </div>
+                
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Kota / Kabupaten *</label>
+                  <input type="text" name="city" required defaultValue={editingSchool?.city || ""} className="form-input" style={{ width: "100%" }} />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Provinsi *</label>
+                  <input type="text" name="province" required defaultValue={editingSchool?.province || ""} className="form-input" style={{ width: "100%" }} />
+                </div>
+                
+                {!editingSchool && (
+                  <div style={{ gridColumn: "span 2", fontSize: "0.8rem", color: "#6b7280", marginTop: "0.5rem" }}>
+                    * Sistem akan meng-generate <b>Username</b> dari Nama Sekolah + 4 digit NPSN/acak. Password default adalah <b>Password123!</b>
+                  </div>
+                )}
               </div>
               
               <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "2rem" }}>

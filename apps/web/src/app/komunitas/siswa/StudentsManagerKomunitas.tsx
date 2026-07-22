@@ -152,10 +152,10 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
   };
 
   const handleDownloadTemplate = () => {
-    const headers = ["nama_siswa", "nisn", "jenis_kelamin", "tanggal_lahir", "nama_sekolah", "npsn", "pilih_kelas", "pekerjaan_ibu", "pekerjaan_ayah", "pendidikan_ibu", "pendidikan_ayah", "kelurahan", "kecamatan", "kabupaten", "provinsi"];
+    const headers = ["nama_siswa", "nisn", "npsn", "jenis_kelamin", "tanggal_lahir", "nama_sekolah", "kelas", "pekerjaan_ibu", "pekerjaan_ayah", "pendidikan_ibu", "pendidikan_ayah", "kelurahan_desa", "kecamatan", "kabupaten", "provinsi"];
     const wsData = [
       headers,
-      ["Ahmad Fikri", "10203040", "L", "2015-05-12", schools[0]?.name || "Sekolah Contoh", "20202020", "5A", "Petani", "Guru", "SD", "S1", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta"]
+      ["Ahmad Fikri", "10203040", "20202020", "L", "2015-05-12", schools[0]?.name || "Sekolah Contoh", "5A", "Petani", "Guru", "SD", "S1", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta"]
     ];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     
@@ -164,16 +164,16 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
       ["Kolom", "Wajib?", "Keterangan / Contoh"],
       ["nama_siswa", "Ya", "Nama lengkap siswa."],
       ["nisn", "Tidak", "NISN siswa. Opsional."],
+      ["npsn", "Tidak", "NPSN sekolah. Opsional."],
       ["jenis_kelamin", "Ya", "L untuk Laki-laki, P untuk Perempuan."],
       ["tanggal_lahir", "Ya", "Format YYYY-MM-DD (Misal: 2010-12-05)."],
       ["nama_sekolah", "Ya", "Pastikan ejaan nama sekolah persis sama dengan yang terdaftar sebagai sekolah binaan."],
-      ["npsn", "Tidak", "NPSN sekolah. Opsional."],
-      ["pilih_kelas", "Ya", "Nama atau kode kelas. (Misal: 5A, 6B). Harus sama dengan kelas yang ada di sistem."],
+      ["kelas", "Ya", "Nama atau kode kelas. (Misal: 5A, 6B). Harus sama dengan kelas yang ada di sistem."],
       ["pekerjaan_ibu", "Ya", "Pekerjaan ibu. Contoh: Guru, Petani, Wiraswasta."],
       ["pekerjaan_ayah", "Ya", "Pekerjaan ayah. Contoh: Guru, Petani, Wiraswasta."],
       ["pendidikan_ibu", "Ya", "Pendidikan ibu. Contoh: SD, SMP, SMA, S1."],
       ["pendidikan_ayah", "Ya", "Pendidikan ayah. Contoh: SD, SMP, SMA, S1."],
-      ["kelurahan", "Ya", "Kelurahan / Desa."],
+      ["kelurahan_desa", "Ya", "Kelurahan / Desa."],
       ["kecamatan", "Ya", "Kecamatan."],
       ["kabupaten", "Ya", "Kabupaten / Kota."],
       ["provinsi", "Ya", "Provinsi."]
@@ -326,6 +326,10 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>NISN (Opsional)</label>
                   <input type="text" name="nisn" defaultValue={editingStudent?.nisn} className="form-input" style={{ width: "100%" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>NPSN Sekolah (Opsional)</label>
+                  <input type="text" name="npsn" defaultValue={editingStudent?.schools?.npsn} className="form-input" style={{ width: "100%" }} />
                 </div>
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Gender *</label>

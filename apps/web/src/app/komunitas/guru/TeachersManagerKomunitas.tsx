@@ -145,10 +145,10 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
   };
 
   const handleDownloadTemplate = () => {
-    const headers = ["nama_guru", "email", "nip", "jenis_kelamin", "tanggal_lahir", "kelurahan", "kecamatan", "kabupaten", "provinsi", "nama_sekolah", "kelas"];
+    const headers = ["nama_guru", "nip", "email_guru", "jenis_kelamin", "tanggal_lahir", "nama_sekolah", "kelas", "kelurahan_desa", "kecamatan", "kabupaten", "provinsi"];
     const wsData = [
       headers,
-      ["Budi Santoso", "budi@sekolah.com", "198001012005011003", "L", "1980-01-01", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta", schools[0]?.name || "Sekolah Contoh", "5A"]
+      ["Budi Santoso", "198001012005011003", "budi@sekolah.com", "L", "1980-01-01", schools[0]?.name || "Sekolah Contoh", "5A", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta"]
     ];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     
@@ -156,16 +156,16 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
     const petunjukData = [
       ["Kolom", "Wajib?", "Keterangan / Contoh"],
       ["nama_guru", "Ya", "Nama lengkap guru."],
-      ["email", "Ya", "Email aktif. Digunakan sebagai username login."],
-      ["nip", "Tidak", "Nomor Induk Pegawai."],
+      ["nip", "Tidak", "Nomor Induk Pegawai. Opsional."],
+      ["email_guru", "Tidak", "Email aktif. Digunakan sebagai username. Opsional."],
       ["jenis_kelamin", "Ya", "L untuk Laki-laki, P untuk Perempuan."],
       ["tanggal_lahir", "Ya", "Format YYYY-MM-DD (Misal: 1980-01-01)."],
-      ["kelurahan", "Ya", "Kelurahan / Desa domisili."],
+      ["nama_sekolah", "Ya", "Pastikan ejaan sama dengan nama sekolah binaan di sistem komunitas Anda."],
+      ["kelas", "Ya", "Daftar kelas yang diajar. Pisahkan dengan koma jika lebih dari satu (Contoh: 5A, 5B). Kelas harus sudah terdaftar di sekolah tersebut."],
+      ["kelurahan_desa", "Ya", "Kelurahan / Desa domisili."],
       ["kecamatan", "Ya", "Kecamatan domisili."],
       ["kabupaten", "Ya", "Kabupaten / Kota domisili."],
-      ["provinsi", "Ya", "Provinsi domisili."],
-      ["nama_sekolah", "Ya", "Pastikan ejaan sama dengan nama sekolah binaan di sistem komunitas Anda."],
-      ["kelas", "Ya", "Daftar kelas yang diajar. Pisahkan dengan koma jika lebih dari satu (Contoh: 5A, 5B). Kelas harus sudah terdaftar di sekolah tersebut."]
+      ["provinsi", "Ya", "Provinsi domisili."]
     ];
     const wsPetunjuk = XLSX.utils.aoa_to_sheet(petunjukData);
 
@@ -323,8 +323,8 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
                   <input type="text" name="full_name" required defaultValue={editingTeacher?.full_name} className="form-input" style={{ width: "100%" }} />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Email (Menjadi Username) *</label>
-                  <input type="email" name="email" required defaultValue={editingTeacher?.username ? `${editingTeacher.username}@pemantik.id` : ""} className="form-input" style={{ width: "100%" }} />
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Email (Opsional)</label>
+                  <input type="email" name="email" defaultValue={editingTeacher?.username ? `${editingTeacher.username}@pemantik.id` : ""} className="form-input" style={{ width: "100%" }} />
                 </div>
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Tanggal Lahir *</label>
@@ -365,7 +365,7 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
 
               {!editingTeacher && (
                 <div style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1.5rem" }}>
-                  * Password default untuk guru baru adalah <b>Password123!</b>
+                  * Sistem akan meng-generate <b>Username</b> secara acak jika email kosong, dan password default adalah <b>Password123!</b>
                 </div>
               )}
               

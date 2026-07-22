@@ -10,6 +10,7 @@ import { createTeacherAction, updateTeacherAction, deleteTeacherAction, bulkCrea
 import { createStudentAction, updateStudentAction, deleteStudentAction, bulkCreateStudentsAction } from "../../../actions/students";
 import { createClassAction, updateClassAction, deleteClassAction } from "../../../actions/classes";
 import type { SchoolAssessmentStageRow } from "@/app/actions/stages";
+import { useRouter } from "next/navigation";
 
 interface SchoolDetailKomunitasProps {
   school: any;
@@ -47,6 +48,7 @@ export default function SchoolDetailKomunitas({
   const [isClassModalOpen, setIsClassModalOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<any | null>(null);
 
+  const router = useRouter();
   const { success: showSuccessToast, error: showErrorToast } = useToast();
   const { confirm } = useConfirm();
   const [isPending, startTransition] = useTransition();
@@ -80,6 +82,7 @@ export default function SchoolDetailKomunitas({
         showSuccessToast("Berhasil", result.message || `Guru berhasil ${editingTeacher ? "diperbarui" : "ditambahkan"}.`);
         setIsTeacherModalOpen(false);
         setEditingTeacher(null);
+        router.refresh();
       } else {
         showErrorToast("Gagal", result.error || "Terjadi kesalahan.");
       }
@@ -91,8 +94,12 @@ export default function SchoolDetailKomunitas({
     if (!isConfirmed) return;
     startTransition(async () => {
       const res = await deleteTeacherAction(row.id);
-      if (res.success) showSuccessToast("Berhasil", "Guru dihapus.");
-      else showErrorToast("Gagal", res.error || "Gagal menghapus.");
+      if (res.success) {
+        showSuccessToast("Berhasil", "Guru dihapus.");
+        router.refresh();
+      } else {
+        showErrorToast("Gagal", res.error || "Gagal menghapus.");
+      }
     });
   };
 
@@ -171,6 +178,7 @@ export default function SchoolDetailKomunitas({
       if (result.success) {
         showSuccessToast("Berhasil", `Anak berhasil ${editingStudent ? "diperbarui" : "ditambahkan"}.`);
         setIsStudentModalOpen(false); setEditingStudent(null);
+        router.refresh();
       } else showErrorToast("Gagal", result.error || "Terjadi kesalahan.");
     });
   };
@@ -180,8 +188,10 @@ export default function SchoolDetailKomunitas({
     if (!isConfirmed) return;
     startTransition(async () => {
       const res = await deleteStudentAction(row.id);
-      if (res.success) showSuccessToast("Berhasil", "Anak dihapus.");
-      else showErrorToast("Gagal", res.error || "Gagal menghapus.");
+      if (res.success) {
+        showSuccessToast("Berhasil", "Anak dihapus.");
+        router.refresh();
+      } else showErrorToast("Gagal", res.error || "Gagal menghapus.");
     });
   };
 
@@ -249,7 +259,7 @@ export default function SchoolDetailKomunitas({
     if (result.success) {
       showSuccessToast("Berhasil", result.message || "Data anak berhasil diimport");
       setIsStudentBulkModalOpen(false);
-      setTimeout(() => window.location.reload(), 2000);
+      router.refresh();
     } else {
       showErrorToast("Gagal", result.error || "Gagal mengimport data anak");
     }
@@ -266,6 +276,7 @@ export default function SchoolDetailKomunitas({
       if (result.success) {
         showSuccessToast("Berhasil", `Kelas berhasil ${editingClass ? "diperbarui" : "ditambahkan"}.`);
         setIsClassModalOpen(false); setEditingClass(null);
+        router.refresh();
       } else showErrorToast("Gagal", result.error || "Terjadi kesalahan.");
     });
   };
@@ -275,8 +286,10 @@ export default function SchoolDetailKomunitas({
     if (!isConfirmed) return;
     startTransition(async () => {
       const res = await deleteClassAction(row.id);
-      if (res.success) showSuccessToast("Berhasil", "Kelas dihapus.");
-      else showErrorToast("Gagal", res.error || "Gagal menghapus.");
+      if (res.success) {
+        showSuccessToast("Berhasil", "Kelas dihapus.");
+        router.refresh();
+      } else showErrorToast("Gagal", res.error || "Gagal menghapus.");
     });
   };
 

@@ -8,6 +8,7 @@ import { createTeacherAction, updateTeacherAction, deleteTeacherAction, resetTea
 import { createStudentAction, updateStudentAction, deleteStudentAction, resetStudentPasswordAction, bulkCreateStudentsAction } from "../../../actions/students";
 import { createClassAction, updateClassAction, deleteClassAction } from "../../../actions/classes";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
+import { useRouter } from "next/navigation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -115,6 +116,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
   const [searchSiswa, setSearchSiswa] = useState("");
   const [isPending, startTransition] = useTransition();
   const [isTeacherBulkModalOpen, setIsTeacherBulkModalOpen] = useState(false);
+  const router = useRouter();
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -209,6 +211,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
         showSuccess("Berhasil", result.message || `Guru berhasil ${editingTeacher ? "diperbarui" : "ditambahkan"}.`);
         setIsTeacherModalOpen(false);
         setEditingTeacher(null);
+        router.refresh();
       } else {
         showError("Gagal", result.error || "Terjadi kesalahan.");
       }
@@ -220,7 +223,10 @@ export default function SchoolDetailClient({ school, teachers, students, classes
     if (!isConfirmed) return;
     startTransition(async () => {
       const res = await deleteTeacherAction(row.id);
-      if (res.success) showSuccess("Berhasil", "Guru dihapus.");
+      if (res.success) {
+        showSuccess("Berhasil", "Guru dihapus.");
+        router.refresh();
+      }
       else showError("Gagal", res.error || "Gagal menghapus.");
     });
   };
@@ -245,6 +251,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
       if (result.success) {
         showSuccess("Berhasil", `Anak berhasil ${editingStudent ? "diperbarui" : "ditambahkan"}.`);
         setIsStudentModalOpen(false); setEditingStudent(null);
+        router.refresh();
       } else showError("Gagal", result.error || "Terjadi kesalahan.");
     });
   };
@@ -254,8 +261,10 @@ export default function SchoolDetailClient({ school, teachers, students, classes
     if (!isConfirmed) return;
     startTransition(async () => {
       const res = await deleteStudentAction(row.id);
-      if (res.success) showSuccess("Berhasil", "Anak dihapus.");
-      else showError("Gagal", res.error || "Gagal menghapus.");
+      if (res.success) {
+        showSuccess("Berhasil", "Anak dihapus.");
+        router.refresh();
+      } else showError("Gagal", res.error || "Gagal menghapus.");
     });
   };
 
@@ -350,6 +359,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
       if (result.success) {
         showSuccess("Berhasil", `Kelas berhasil ${editingClass ? "diperbarui" : "ditambahkan"}.`);
         setIsClassModalOpen(false); setEditingClass(null);
+        router.refresh();
       } else showError("Gagal", result.error || "Terjadi kesalahan.");
     });
   };

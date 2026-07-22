@@ -71,6 +71,7 @@ export async function createStudentAction(
     const gender = normalizeGenderToEnum(rawGender);
     
     const nisn = (formData.get("nisn") as string)?.trim() || null;
+    const npsn = (formData.get("npsn") as string)?.trim() || null;
     const ses_class = (formData.get("ses_class") as string)?.trim() || null;
     
     // birth_date is now mandatory
@@ -278,7 +279,8 @@ export async function bulkCreateStudentsAction(
 
       const pin = generatePin();
       const pin_hash = bcrypt.hashSync(pin, 10);
-      const username = generateUsername(full_name, row.nisn);
+      const identifier = row.nisn || row.NISN || row.npsn || row.NPSN || null;
+      const username = generateUsername(full_name, identifier);
 
       createdCredentials.push({ nama: full_name, username, pin });
       

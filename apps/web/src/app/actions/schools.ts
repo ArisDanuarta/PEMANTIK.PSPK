@@ -87,9 +87,6 @@ export async function createSchoolAction(
       community_id: finalCommunityId,
       name,
       npsn,
-      email,
-      status_sekolah,
-      jenjang_sekolah,
       address,
       province,
       city,
@@ -105,11 +102,13 @@ export async function createSchoolAction(
       return { success: false, error: "Gagal membuat sekolah: " + error?.message };
     }
 
-    await (supabase as any).from("school_assessment_stages").insert({
-      school_id: newSchool.id,
-      community_id: finalCommunityId || null,
-      current_stage: "persiapan_akun",
-    });
+    if (finalCommunityId) {
+      await (supabase as any).from("school_assessment_stages").insert({
+        school_id: newSchool.id,
+        community_id: finalCommunityId,
+        current_stage: "persiapan_akun",
+      });
+    }
 
     if (classesStr) {
       const classesToInsert = processClassesString(classesStr, newSchool.id);
@@ -223,9 +222,6 @@ export async function updateSchoolAction(
         community_id: finalCommunityId,
         name,
         npsn,
-        email,
-        status_sekolah,
-        jenjang_sekolah,
         address,
         province,
         city,
@@ -329,32 +325,17 @@ export async function bulkCreateSchoolsAction(
         continue;
       }
 
-      let community_id: string | undefined;
+      let community_id: string | null = null;
 
       if (role === "community") {
+        if (!authCommunityId) {
+          errors.push(`Baris ${i + 2} gagal: Anda tidak memiliki akses komunitas.`);
+          continue;
+        }
         community_id = authCommunityId;
       } else {
-        const directCommunityId = row.community_id;
-        const isUUID = directCommunityId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(directCommunityId));
-
-        if (isUUID) {
-          community_id = directCommunityId;
-        } else {
-          const commName = row.nama_komunitas || row.Nama_Komunitas || row.Community_ID || row.community_id;
-          if (commName) {
-            community_id = commsMap.get(String(commName).toLowerCase().trim());
-            if (!community_id && String(commName).length === 36) {
-              const exactMatch = (commsData || []).find((c: any) => c.id === commName);
-              if (exactMatch) community_id = exactMatch.id;
-            }
-          }
-        }
-      }
-
-      if (!community_id) {
-        const commName = row.nama_komunitas || row.Nama_Komunitas || row.community_id || "(tidak ada)";
-        errors.push(`Baris ${i + 2} gagal: Komunitas "${commName}" tidak ditemukan di database.`);
-        continue;
+        // Superadmin uploads are independent schools
+        community_id = null;
       }
 
       const generatedAddress = `${village}, ${district}, ${city}, ${province}`;
@@ -363,9 +344,6 @@ export async function bulkCreateSchoolsAction(
         community_id,
         name,
         npsn,
-        email: email_sekolah,
-        status_sekolah,
-        jenjang_sekolah,
         address: generatedAddress,
         province,
         city,
@@ -382,11 +360,14 @@ export async function bulkCreateSchoolsAction(
         continue;
       }
 
-      await (supabase as any).from("school_assessment_stages").insert({
-        school_id: newSchool.id,
-        community_id: community_id || null,
-        current_stage: "persiapan_akun",
-      });
+      if (community_id) {
+        await (supabase as any).from("school_assessment_stages").insert({
+          school_id: newSchool.id,
+          community_id: community_id,
+          phase: "Tahap 1",
+          current_stage: "persiapan_akun"
+        });
+      }
 
       const defaultPassword = "Password123!";
       let schoolNamePart = name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();

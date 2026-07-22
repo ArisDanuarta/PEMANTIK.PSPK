@@ -57,11 +57,6 @@ export async function createCommunityAction(
   const { data: newComm, error } = await supabase.from("communities").insert({
     name,
     code,
-    status_kepemilikan,
-    village,
-    district,
-    regency,
-    province,
     address,
     contact_name: contactName,
     contact_phone: contactPhone,
@@ -156,11 +151,6 @@ export async function updateCommunityAction(
       .from("communities")
       .update({
         name,
-        status_kepemilikan,
-        village,
-        district,
-        regency,
-        province,
         address,
         contact_name: contactName,
         contact_phone: contactPhone,
@@ -282,11 +272,6 @@ export async function bulkCreateCommunitiesAction(
       const { data: newComm, error } = await supabase.from("communities").insert({
         name,
         code,
-        status_kepemilikan,
-        village,
-        district,
-        regency,
-        province,
         address,
         contact_name: contactName,
         contact_phone: contactPhone,
@@ -361,14 +346,43 @@ export async function deleteCommunityAction(id: string): Promise<ActionResponse>
   try {
     const supabase = createServerClient();
     
-    // Attempt to delete community (Supabase handles constraints)
+    // Check if there are schools attached
+    const { count, error: countError } = await supabase
+      .from("schools")
+      .select("id", { count: "exact", head: true })
+      .eq("community_id", id);
+      
+    if (countError) {
+      return { success: false, error: "Gagal mengecek data sekolah: " + countError.message };
+    }
+    
+    if (count && count > 0) {
+      return { success: false, error: `Komunitas tidak bisa dihapus karena masih memiliki ${count} sekolah yang terhubung.` };
+    }
+
+    // Get all users associated with this community to delete their auth accounts
+    const { data: commUsers } = await supabase
+      .from("users")
+      .select("id")
+      .eq("community_id", id)
+      .eq("role", "community");
+      
+    if (commUsers && commUsers.length > 0) {
+      for (const user of commUsers) {
+        // Delete from public.users first to avoid FK issues if any
+        await supabase.from("users").delete().eq("id", user.id);
+        // Delete from auth.users (requires admin privilege, but createServerClient has service role)
+        await supabase.auth.admin.deleteUser(user.id);
+      }
+    }
+    
+    // Attempt to delete community
     const { error } = await supabase.from("communities").delete().eq("id", id);
     
     if (error) {
       console.error("Failed to delete community:", error);
-      // Custom message for foreign key violation
       if (error.code === '23503') {
-        return { success: false, error: "Komunitas tidak bisa dihapus karena masih memiliki sekolah/data yang terhubung." };
+        return { success: false, error: "Komunitas tidak bisa dihapus karena masih memiliki data yang terhubung." };
       }
       return { success: false, error: "Gagal menghapus komunitas: " + error.message };
     }

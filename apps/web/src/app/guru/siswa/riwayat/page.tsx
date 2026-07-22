@@ -2,16 +2,17 @@ import type { Metadata } from "next";
 import { createServerClient } from "@pemantik/supabase";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import StudentsManagerGuru from "./StudentsManagerGuru";
+import RiwayatFaseGuru from "./RiwayatFaseGuru";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Manajemen Anak | Guru",
-  description: "Kelola data anak di kelas yang Anda ajar",
+  title: "Riwayat Fase Anak | Guru",
+  description: "Melihat histori asesmen anak dari fase-fase sebelumnya",
 };
 
-export default async function GuruSiswaPage() {
+export default async function RiwayatFasePage() {
   const supabase = createServerClient();
   const headersList = await headers();
   const teacherId = headersList.get("x-user-id");
@@ -24,7 +25,6 @@ export default async function GuruSiswaPage() {
   let activePhase = "Belum Ada Fase";
 
   try {
-    // 1. Get classes taught by this teacher
     const { data: classData } = await supabase
       .from("classes")
       .select("id, name, grade")
@@ -38,7 +38,6 @@ export default async function GuruSiswaPage() {
     const classIds = classes.map((c: any) => c.id);
 
     if (classIds.length > 0) {
-      // 2. Fetch the active phase for the school
       const { data: activeStage } = await supabase
         .from("school_assessment_stages")
         .select("phase")
@@ -51,13 +50,10 @@ export default async function GuruSiswaPage() {
         activePhase = activeStage.phase;
       }
 
-      // 3. Get students in these classes along with their assessment sessions for the active phase
       const { data: studentData } = await supabase
         .from("students")
         .select(`
-          id, full_name, nisn, gender, birth_date, username, is_active, ses_class,
-          father_education_id, mother_education_id, father_occupation_id, mother_occupation_id,
-          village, district, city, province,
+          id, full_name, nisn, gender, username,
           classes!students_class_id_fkey(id, name, grade),
           assessment_sessions(
             id, status, score, phase,
@@ -69,34 +65,35 @@ export default async function GuruSiswaPage() {
         .in("class_id", classIds)
         .order("full_name");
 
-      // Filter assessment sessions inside JavaScript because Supabase inner join filtering can be tricky
       if (studentData) {
-        students = studentData.map((student: any) => ({
-          ...student,
-          active_sessions: student.assessment_sessions?.filter((s: any) => s.phase === activePhase) || []
-        }));
+        students = studentData;
       }
     }
   } catch (err) {
-    console.error("Failed to load siswa guru:", err);
+    console.error("Failed to load riwayat siswa guru:", err);
   }
 
   return (
     <div className="animate-fade-in">
       <div className="page-header">
         <div className="page-header-left">
-          <h1 className="page-title">Manajemen Anak</h1>
+          <Link href="/guru/siswa" style={{ color: "var(--clr-biru)", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600, display: "flex", alignItems: "center", gap: "0.3rem", marginBottom: "0.5rem" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"></path></svg>
+            Kembali ke Manajemen Anak
+          </Link>
+          <h1 className="page-title">Riwayat Fase Anak</h1>
           <div className="page-breadcrumb">
             <span>Guru</span>
             <span className="page-breadcrumb-sep">›</span>
             <span>Data Anak</span>
+            <span className="page-breadcrumb-sep">›</span>
+            <span>Riwayat Fase</span>
           </div>
         </div>
       </div>
-      <StudentsManagerGuru
-        initialStudents={students}
+      <RiwayatFaseGuru
+        students={students}
         classes={classes}
-        schoolId={schoolId}
         activePhase={activePhase}
       />
     </div>

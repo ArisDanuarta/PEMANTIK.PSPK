@@ -317,6 +317,10 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
                   <input type="text" name="nisn" defaultValue={editingStudent?.nisn} className="form-input" style={{ width: "100%" }} />
                 </div>
                 <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>NPSN Sekolah (Opsional)</label>
+                  <input type="text" name="npsn" defaultValue={editingStudent?.schools?.npsn} className="form-input" style={{ width: "100%" }} />
+                </div>
+                <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Gender *</label>
                   <select name="gender" required defaultValue={editingStudent?.gender} className="form-input" style={{ width: "100%" }}>
                     <option value="">Pilih</option>
