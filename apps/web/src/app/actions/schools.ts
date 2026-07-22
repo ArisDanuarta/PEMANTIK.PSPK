@@ -47,7 +47,9 @@ export async function createSchoolAction(
     const community_id = (formData.get("community_id") as string)?.trim();
     const name = (formData.get("name") as string)?.trim();
     const npsn = (formData.get("npsn") as string)?.trim() || null;
-    const address = (formData.get("address") as string)?.trim() || null;
+    const email = (formData.get("email") as string)?.trim() || null;
+    const status_sekolah = (formData.get("status_sekolah") as string)?.trim() || null;
+    const jenjang_sekolah = (formData.get("jenjang_sekolah") as string)?.trim() || null;
     const province = (formData.get("province") as string)?.trim() || null;
     const city = (formData.get("city") as string)?.trim() || null;
     const district = (formData.get("district") as string)?.trim() || null;
@@ -60,6 +62,7 @@ export async function createSchoolAction(
     if (!name || !province || !city || !district || !village || !classesStr) {
       return { success: false, error: "Nama Sekolah, Provinsi, Kota, Kecamatan, Desa, dan Daftar Kelas wajib diisi." };
     }
+    const address = `${village}, ${district}, ${city}, ${province}`;
 
     const supabase = createServerClient();
 
@@ -84,6 +87,9 @@ export async function createSchoolAction(
       community_id: finalCommunityId,
       name,
       npsn,
+      email,
+      status_sekolah,
+      jenjang_sekolah,
       address,
       province,
       city,
@@ -114,8 +120,11 @@ export async function createSchoolAction(
     }
 
     const defaultPassword = "Password123!";
-    const username = `sch_${npsn || generateRandomString(5)}`;
-    const adminEmail = `${username}@pemantik.local`;
+    let schoolNamePart = name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    if (schoolNamePart.length > 10) schoolNamePart = schoolNamePart.slice(0, 10);
+    let npsnPart = npsn ? npsn.slice(-4) : Math.floor(1000 + Math.random() * 9000).toString();
+    const username = `${schoolNamePart}${npsnPart}`;
+    const adminEmail = email || `${username}@pemantik.local`;
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: adminEmail,
@@ -172,7 +181,9 @@ export async function updateSchoolAction(
     const community_id = (formData.get("community_id") as string)?.trim();
     const name = (formData.get("name") as string)?.trim();
     const npsn = (formData.get("npsn") as string)?.trim() || null;
-    const address = (formData.get("address") as string)?.trim() || null;
+    const email = (formData.get("email") as string)?.trim() || null;
+    const status_sekolah = (formData.get("status_sekolah") as string)?.trim() || null;
+    const jenjang_sekolah = (formData.get("jenjang_sekolah") as string)?.trim() || null;
     const province = (formData.get("province") as string)?.trim() || null;
     const city = (formData.get("city") as string)?.trim() || null;
     const district = (formData.get("district") as string)?.trim() || null;
@@ -185,6 +196,7 @@ export async function updateSchoolAction(
     if (!name || !province || !city || !district || !village || !classesStr) {
       return { success: false, error: "Nama Sekolah, Provinsi, Kota, Kecamatan, Desa, dan Daftar Kelas wajib diisi." };
     }
+    const address = `${village}, ${district}, ${city}, ${province}`;
 
     const supabase = createServerClient();
 
@@ -211,6 +223,9 @@ export async function updateSchoolAction(
         community_id: finalCommunityId,
         name,
         npsn,
+        email,
+        status_sekolah,
+        jenjang_sekolah,
         address,
         province,
         city,
@@ -299,14 +314,18 @@ export async function bulkCreateSchoolsAction(
     for (let i = 0; i < dataArray.length; i++) {
       const row = dataArray[i];
       const name = row.Nama_Sekolah || row.name || row.nama_sekolah;
-      const province = row.Provinsi || row.province;
-      const city = row.Kota || row.city;
-      const district = row.Kecamatan || row.district;
-      const village = row.Desa || row.Kelurahan || row.village;
-      const classesStr = row.Daftar_Kelas || row.daftar_kelas || row.classes;
+      const province = row.provinsi || row.Provinsi || row.province;
+      const city = row.kabupaten || row.Kota || row.city;
+      const district = row.kecamatan || row.Kecamatan || row.district;
+      const village = row.kelurahan_desa || row.Desa || row.Kelurahan || row.village;
+      const classesStr = row.daftar_kelas || row.Daftar_Kelas || row.classes;
+      const status_sekolah = row.status_sekolah || null;
+      const jenjang_sekolah = row.jenjang_sekolah || null;
+      const email_sekolah = row.email_sekolah || null;
+      const npsn = row.npsn || row.NPSN ? String(row.npsn || row.NPSN).trim() : null;
 
       if (!name || !province || !city || !district || !village || !classesStr) {
-        errors.push(`Baris ${i + 2} gagal: Kolom 'Nama_Sekolah', 'Provinsi', 'Kota', 'Kecamatan', 'Desa', dan 'Daftar_Kelas' wajib diisi.`);
+        errors.push(`Baris ${i + 2} gagal: Kolom 'nama_sekolah', 'provinsi', 'kabupaten', 'kecamatan', 'kelurahan_desa', dan 'daftar_kelas' wajib diisi.`);
         continue;
       }
 
@@ -338,22 +357,25 @@ export async function bulkCreateSchoolsAction(
         continue;
       }
 
-      const npsn = row.NPSN || row.npsn ? String(row.NPSN || row.npsn).trim() : null;
+      const generatedAddress = `${village}, ${district}, ${city}, ${province}`;
 
       const { data: newSchool, error: schoolErr } = await supabase.from("schools").insert({
         community_id,
         name,
         npsn,
-        address: row.Alamat || row.address || null,
-        province: row.Provinsi || row.province || null,
-        city: row.Kota || row.city || null,
-        district: row.Kecamatan || row.district || null,
-        village: row.Desa || row.Kelurahan || row.village || null,
-        principal_name: row.Nama_Kepsek || row.principal_name || null,
-        contact_phone: row.Telp || row.contact_phone ? String(row.Telp || row.contact_phone) : null,
+        email: email_sekolah,
+        status_sekolah,
+        jenjang_sekolah,
+        address: generatedAddress,
+        province,
+        city,
+        district,
+        village,
+        principal_name: row.kepala_sekolah || row.Nama_Kepsek || row.principal_name || null,
+        contact_phone: row.nomor_telepon || row.Telp || row.contact_phone ? String(row.nomor_telepon || row.Telp || row.contact_phone) : null,
         is_active: true,
         import_source: "manual", 
-      }).select().single();
+      } as any).select().single();
 
       if (schoolErr || !newSchool) {
         errors.push(`Baris ${i + 2} gagal: ${schoolErr?.message || "Unknown error"}`);
@@ -367,8 +389,12 @@ export async function bulkCreateSchoolsAction(
       });
 
       const defaultPassword = "Password123!";
-      const username = `sch_${npsn || generateRandomString(5)}`;
-      const adminEmail = `${username}@pemantik.local`;
+      let schoolNamePart = name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+      if (schoolNamePart.length > 10) schoolNamePart = schoolNamePart.slice(0, 10);
+      let npsnPart = npsn ? npsn.slice(-4) : Math.floor(1000 + Math.random() * 9000).toString();
+      const username = `${schoolNamePart}${npsnPart}`;
+      
+      const adminEmail = email_sekolah || `${username}@pemantik.local`;
 
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: adminEmail,

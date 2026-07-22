@@ -42,9 +42,10 @@ export default async function SchoolDetailPage({ params }: PageProps) {
   // 2. Fetch teachers specifically for this school
   const { data: teachers = [] } = await supabase
     .from("users")
-    .select("id, username, full_name, role, created_at")
+    .select("id, username, full_name, role, gender, is_active, created_at, classes(id, name)")
     .eq("school_id", schoolId)
-    .eq("role", "teacher");
+    .eq("role", "teacher")
+    .order("full_name", { ascending: true });
 
   // 3. Fetch students for this school
   const { data: students = [] } = await supabase
@@ -56,6 +57,13 @@ export default async function SchoolDetailPage({ params }: PageProps) {
   // 4. Fetch stages & sessions for timeline and progress
   const stagesRes = await getStagesForSchool(schoolId);
   const stages: SchoolAssessmentStageRow[] = stagesRes.success ? (stagesRes.data || []) : [];
+
+  // 5. Fetch SES variables
+  const { data: sesData } = await supabase
+    .from("ses_variables")
+    .select("*")
+    .order("score", { ascending: true });
+  const sesVariables = sesData || [];
 
   const { data: sessions = [] } = await supabase
     .from("assessment_sessions")
@@ -91,6 +99,7 @@ export default async function SchoolDetailPage({ params }: PageProps) {
         classes={school.classes || []}
         stages={stages}
         sessions={sessions || []}
+        sesVariables={sesVariables}
       />
     </div>
   );

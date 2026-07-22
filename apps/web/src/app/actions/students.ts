@@ -16,7 +16,7 @@ function generatePin(): string {
   return "123456";
 }
 
-function generateUsername(fullName: string, nisnOrNipd?: string | null): string {
+function generateUsername(fullName: string, nisnOrNpsn?: string | null): string {
   const words = fullName.split(/\s+/).map(w => w.replace(/[^a-zA-Z]/g, "").toLowerCase()).filter(w => w.length > 0);
   const balineseTitles = new Set([
     "i", "ni", "ida", "aa", "anak", "agung", "tjokorda", "cokorda", 
@@ -27,27 +27,23 @@ function generateUsername(fullName: string, nisnOrNipd?: string | null): string 
     "ketut", "kt"
   ]);
 
-  let firstName = "siswa";
-  for (const word of words) {
-    if (!balineseTitles.has(word) && word.length > 1) {
-      firstName = word.slice(0, 10);
-      break;
-    }
-  }
+  let validNames = words.filter(word => !balineseTitles.has(word) && word.length > 1);
+  if (validNames.length === 0) validNames = words;
   
-  if (firstName === "siswa" && words.length > 0) {
-    firstName = words[0].slice(0, 10);
+  let randomNamePart = "siswa";
+  if (validNames.length > 0) {
+    randomNamePart = validNames[Math.floor(Math.random() * validNames.length)].slice(0, 10);
   }
 
-  const identifier = (nisnOrNipd || "").replace(/[^0-9]/g, "");
+  const identifier = (nisnOrNpsn || "").replace(/[^0-9]/g, "");
   let digits = "";
-  if (identifier.length >= 4) {
-    digits = identifier.slice(-4);
+  if (identifier.length >= 3) {
+    digits = identifier.slice(-3);
   } else {
-    digits = Math.floor(1000 + Math.random() * 9000).toString();
+    digits = Math.floor(100 + Math.random() * 900).toString();
   }
 
-  return `${firstName}${digits}`;
+  return `${randomNamePart}${digits}`;
 }
 
 // FUNGSI BARU: Konversi cerdas gender untuk memastikan format L/P untuk database
@@ -209,15 +205,15 @@ export async function bulkCreateStudentsAction(
       const full_name = row.nama_siswa || row.Nama_Siswa || row.full_name;
       const rawGender = row.jenis_kelamin || row.Gender || row.gender;
       const schoolName = row.nama_sekolah || row.School_ID || row.school_id;
-      const className = row.pilih_kelas || row.kelas || row.kode_kelas;
-      const village = row.kelurahan || null;
-      const district = row.kecamatan || null;
-      const city = row.kabupaten || null;
-      const province = row.provinsi || null;
-      const father_edu_text = row.pendidikan_ayah;
-      const mother_edu_text = row.pendidikan_ibu;
-      const father_job_text = row.pekerjaan_ayah;
-      const mother_job_text = row.pekerjaan_ibu;
+      const className = row.kelas || row.pilih_kelas || row.kode_kelas || row.Kelas;
+      const village = row.kelurahan_desa || row.kelurahan || row.Kelurahan || null;
+      const district = row.kecamatan || row.Kecamatan || null;
+      const city = row.kabupaten || row.Kabupaten || null;
+      const province = row.provinsi || row.Provinsi || null;
+      const father_edu_text = row.pendidikan_ayah || row.Pendidikan_Ayah;
+      const mother_edu_text = row.pendidikan_ibu || row.Pendidikan_Ibu;
+      const father_job_text = row.pekerjaan_ayah || row.Pekerjaan_Ayah;
+      const mother_job_text = row.pekerjaan_ibu || row.Pekerjaan_Ibu;
       let birth_date = row.tanggal_lahir || row.Tanggal_Lahir || row.birth_date || null;
       
       if (!schoolName || !className || !full_name || !rawGender || !birth_date || !father_edu_text || !mother_edu_text || !father_job_text || !mother_job_text || !village || !district || !city || !province) {

@@ -135,10 +135,10 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
   };
 
   const handleDownloadTemplate = () => {
-    const headers = ["nama_guru", "email", "nip", "jenis_kelamin", "tanggal_lahir", "kelurahan", "kecamatan", "kabupaten", "provinsi", "nama_sekolah", "kelas"];
+    const headers = ["nama_guru", "nip", "email_guru", "jenis_kelamin", "tanggal_lahir", "nama_sekolah", "kelas", "kelurahan_desa", "kecamatan", "kabupaten", "provinsi"];
     const wsData = [
       headers,
-      ["Budi Santoso", "budi@sekolah.com", "198001012005011003", "L", "1980-01-01", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta", schools[0]?.name || "Sekolah Contoh", "5A"]
+      ["Budi Santoso", "198001012005011003", "budi@sekolah.com", "L", "1980-01-01", schools[0]?.name || "Sekolah Contoh", "5A", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta"]
     ];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     
@@ -146,16 +146,16 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
     const petunjukData = [
       ["Kolom", "Wajib?", "Keterangan / Contoh"],
       ["nama_guru", "Ya", "Nama lengkap guru."],
-      ["email", "Ya", "Email aktif. Digunakan sebagai username login."],
       ["nip", "Tidak", "Nomor Induk Pegawai."],
+      ["email_guru", "Tidak", "Email aktif (opsional)."],
       ["jenis_kelamin", "Ya", "L untuk Laki-laki, P untuk Perempuan."],
       ["tanggal_lahir", "Ya", "Format YYYY-MM-DD (Misal: 1980-01-01)."],
-      ["kelurahan", "Ya", "Kelurahan / Desa domisili."],
+      ["nama_sekolah", "Ya", "Pastikan ejaan persis sama dengan nama sekolah di sistem."],
+      ["kelas", "Ya", "Daftar kelas yang diajar. Pisahkan dengan koma jika lebih dari satu (Contoh: 5A, 5B). Kelas harus sudah terdaftar di sekolah tersebut."],
+      ["kelurahan_desa", "Ya", "Kelurahan / Desa domisili."],
       ["kecamatan", "Ya", "Kecamatan domisili."],
       ["kabupaten", "Ya", "Kabupaten / Kota domisili."],
-      ["provinsi", "Ya", "Provinsi domisili."],
-      ["nama_sekolah", "Ya", "Pastikan ejaan persis sama dengan nama sekolah di sistem."],
-      ["kelas", "Ya", "Daftar kelas yang diajar. Pisahkan dengan koma jika lebih dari satu (Contoh: 5A, 5B). Kelas harus sudah terdaftar di sekolah tersebut."]
+      ["provinsi", "Ya", "Provinsi domisili."]
     ];
     const wsPetunjuk = XLSX.utils.aoa_to_sheet(petunjukData);
 
@@ -314,24 +314,24 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
                   <input type="text" name="full_name" required defaultValue={editingTeacher?.full_name} className="form-input" style={{ width: "100%" }} />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Email (Menjadi Username) *</label>
-                  <input type="email" name="email" required defaultValue={editingTeacher?.username ? `${editingTeacher.username}@pemantik.id` : ""} className="form-input" style={{ width: "100%" }} />
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>NIP (Opsional)</label>
+                  <input type="text" name="nip" defaultValue={editingTeacher?.nip} className="form-input" style={{ width: "100%" }} placeholder="Nomor Induk Pegawai" />
+                </div>
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Email Guru (Opsional)</label>
+                  <input type="email" name="email" defaultValue={editingTeacher?.email || ""} className="form-input" style={{ width: "100%" }} placeholder="email@contoh.com" />
                 </div>
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Tanggal Lahir *</label>
                   <input type="date" name="birth_date" required defaultValue={editingTeacher?.birth_date} className="form-input" style={{ width: "100%" }} />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Gender *</label>
-                  <select name="gender" required defaultValue={editingTeacher?.gender} className="form-input" style={{ width: "100%" }}>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Jenis Kelamin *</label>
+                  <select name="gender" required defaultValue={editingTeacher?.gender || "L"} className="form-input" style={{ width: "100%" }}>
                     <option value="">-- Pilih --</option>
                     <option value="L">Laki-laki</option>
                     <option value="P">Perempuan</option>
                   </select>
-                </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>NIP (Opsional)</label>
-                  <input type="text" name="nip" defaultValue={editingTeacher?.nip} className="form-input" style={{ width: "100%" }} />
                 </div>
               </div>
 
@@ -376,10 +376,10 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
       {isBulkModalOpen && (
         <BulkUploadModal
           title="Import Data Guru"
-          description="Download template di luar ini, isi data, dan upload kembali. Sistem akan otomatis membuat akun untuk setiap guru yang di-upload dengan password default (Password123!)."
+          description="Download template, isi data, dan upload kembali. Sistem akan otomatis membuat username (nama+NIP) dan password default (Password123!)."
           templateFileName="Template_Guru"
-          templateHeaders={["nama_guru", "email"]}
-          templateData={schools.slice(0, 3).map(s => [s.id, "Budi Santoso", "budi@sekolah.com"])}
+          templateHeaders={[]}
+          onDownloadTemplate={handleDownloadTemplate}
           onClose={() => setIsBulkModalOpen(false)}
           onUpload={handleBulkUpload}
         />

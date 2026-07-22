@@ -6,8 +6,8 @@ import * as XLSX from "xlsx";
 import { Badge, Button, useToast, useConfirm, Modal } from "@pemantik/ui";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import { parseDapodikAction, importDapodikAction } from "../../../actions/schools";
-import { createTeacherAction, updateTeacherAction, deleteTeacherAction } from "../../../actions/teachers";
-import { createStudentAction, updateStudentAction, deleteStudentAction } from "../../../actions/students";
+import { createTeacherAction, updateTeacherAction, deleteTeacherAction, bulkCreateTeachersAction } from "../../../actions/teachers";
+import { createStudentAction, updateStudentAction, deleteStudentAction, bulkCreateStudentsAction } from "../../../actions/students";
 import { createClassAction, updateClassAction, deleteClassAction } from "../../../actions/classes";
 import type { SchoolAssessmentStageRow } from "@/app/actions/stages";
 
@@ -18,6 +18,7 @@ interface SchoolDetailKomunitasProps {
   classes?: any[];
   stages: SchoolAssessmentStageRow[];
   sessions: any[];
+  sesVariables: any[];
 }
 
 export default function SchoolDetailKomunitas({
@@ -27,6 +28,7 @@ export default function SchoolDetailKomunitas({
   classes: propsClasses,
   stages,
   sessions,
+  sesVariables,
 }: SchoolDetailKomunitasProps) {
   const [activeTab, setActiveTab] = useState<"info" | "teachers" | "students" | "classes" | "ekspor">("info");
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,9 +37,11 @@ export default function SchoolDetailKomunitas({
   const [isDapodikModalOpen, setIsDapodikModalOpen] = useState(false);
   
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
+  const [isTeacherBulkModalOpen, setIsTeacherBulkModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<any | null>(null);
 
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
+  const [isStudentBulkModalOpen, setIsStudentBulkModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any | null>(null);
 
   const [isClassModalOpen, setIsClassModalOpen] = useState(false);
@@ -92,6 +96,71 @@ export default function SchoolDetailKomunitas({
     });
   };
 
+  const handleDownloadGuruTemplate = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+
+      // Sheet 1: Template
+      const templateData = [{
+        nama_guru: "",
+        nip: "",
+        email_guru: "",
+        jenis_kelamin: "L",
+        tanggal_lahir: "YYYY-MM-DD",
+        nama_sekolah: school.name,
+        kelas: "",
+        kelurahan_desa: "",
+        kecamatan: "",
+        kabupaten: "",
+        provinsi: ""
+      }];
+      
+      const ws = XLSX.utils.json_to_sheet(templateData);
+      ws["!cols"] = [
+        { wch: 25 }, { wch: 20 }, { wch: 25 }, { wch: 15 }, { wch: 15 },
+        { wch: 30 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }
+      ];
+      XLSX.utils.book_append_sheet(wb, ws, "Template_Guru");
+
+      // Sheet 2: Petunjuk Pengisian
+      const instructions = [
+        { Kolom: "nama_guru", Keterangan: "Wajib. Nama lengkap guru." },
+        { Kolom: "nip", Keterangan: "Opsional. Nomor Induk Pegawai." },
+        { Kolom: "email_guru", Keterangan: "Opsional. Email guru." },
+        { Kolom: "jenis_kelamin", Keterangan: "Wajib. Isi dengan 'L', 'P', 'Laki-laki', atau 'Perempuan'." },
+        { Kolom: "tanggal_lahir", Keterangan: "Wajib. Format YYYY-MM-DD (contoh: 1990-01-25)." },
+        { Kolom: "nama_sekolah", Keterangan: `Wajib. Pastikan sama persis: "${school.name}"` },
+        { Kolom: "kelas", Keterangan: "Opsional. Nama kelas jika menjadi wali kelas (harus sama dengan nama kelas di sistem)." },
+        { Kolom: "kelurahan_desa", Keterangan: "Wajib. Alamat domisili guru." },
+        { Kolom: "kecamatan", Keterangan: "Wajib. Alamat domisili guru." },
+        { Kolom: "kabupaten", Keterangan: "Wajib. Alamat domisili guru." },
+        { Kolom: "provinsi", Keterangan: "Wajib. Alamat domisili guru." }
+      ];
+      
+      const wsHelp = XLSX.utils.json_to_sheet(instructions);
+      wsHelp["!cols"] = [{ wch: 20 }, { wch: 80 }];
+      XLSX.utils.book_append_sheet(wb, wsHelp, "Petunjuk_Pengisian");
+
+      const safeSchoolName = school.name.replace(/[^a-zA-Z0-9]/g, "_");
+      XLSX.writeFile(wb, `Template_Guru_${safeSchoolName}.xlsx`);
+    } catch (err) {
+      console.error(err);
+      showErrorToast("Gagal", "Gagal mengunduh template");
+    }
+  };
+
+  const handleBulkUploadGuru = async (data: any[]) => {
+    const result = await bulkCreateTeachersAction(data);
+    if (result.success) {
+      showSuccessToast("Berhasil", result.message || "Data guru berhasil diimport");
+      setIsTeacherBulkModalOpen(false);
+      setTimeout(() => window.location.reload(), 2000);
+    } else {
+      showErrorToast("Gagal", result.error || "Gagal mengimport data guru");
+    }
+    return result;
+  };
+
   // ─── CRUD Anak ───────────────────────────────────────────────────────────
   const handleStudentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -114,6 +183,77 @@ export default function SchoolDetailKomunitas({
       if (res.success) showSuccessToast("Berhasil", "Anak dihapus.");
       else showErrorToast("Gagal", res.error || "Gagal menghapus.");
     });
+  };
+
+  const handleDownloadStudentTemplate = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+
+      const templateData = [{
+        nama_siswa: "",
+        nisn: "",
+        npsn: school.npsn || "",
+        jenis_kelamin: "L",
+        tanggal_lahir: "YYYY-MM-DD",
+        nama_sekolah: school.name,
+        kelas: "",
+        pekerjaan_ibu: "",
+        pekerjaan_ayah: "",
+        pendidikan_ibu: "",
+        pendidikan_ayah: "",
+        kelurahan_desa: "",
+        kecamatan: "",
+        kabupaten: "",
+        provinsi: ""
+      }];
+      
+      const ws = XLSX.utils.json_to_sheet(templateData);
+      ws["!cols"] = [
+        { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
+        { wch: 30 }, { wch: 10 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 },
+        { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
+      ];
+      XLSX.utils.book_append_sheet(wb, ws, "Template_Anak");
+
+      const instructions = [
+        { Kolom: "nama_siswa", Keterangan: "Wajib. Nama lengkap anak." },
+        { Kolom: "nisn", Keterangan: "Opsional. Nomor Induk Siswa Nasional." },
+        { Kolom: "npsn", Keterangan: "Opsional. NPSN Sekolah." },
+        { Kolom: "jenis_kelamin", Keterangan: "Wajib. L atau P." },
+        { Kolom: "tanggal_lahir", Keterangan: "Wajib. YYYY-MM-DD (Contoh: 2012-05-20)." },
+        { Kolom: "nama_sekolah", Keterangan: `Wajib. Harus persis: "${school.name}"` },
+        { Kolom: "kelas", Keterangan: "Opsional. Nama kelas di sistem." },
+        { Kolom: "pekerjaan_ibu", Keterangan: "Wajib. Sesuai nama pekerjaan di SES (contoh: Petani, Wiraswasta)." },
+        { Kolom: "pekerjaan_ayah", Keterangan: "Wajib. Sesuai nama pekerjaan di SES." },
+        { Kolom: "pendidikan_ibu", Keterangan: "Wajib. Sesuai nama pendidikan di SES (contoh: SD, S1)." },
+        { Kolom: "pendidikan_ayah", Keterangan: "Wajib. Sesuai nama pendidikan di SES." },
+        { Kolom: "kelurahan_desa", Keterangan: "Wajib. Domisili." },
+        { Kolom: "kecamatan", Keterangan: "Wajib. Domisili." },
+        { Kolom: "kabupaten", Keterangan: "Wajib. Domisili." },
+        { Kolom: "provinsi", Keterangan: "Wajib. Domisili." },
+      ];
+      const wsHelp = XLSX.utils.json_to_sheet(instructions);
+      wsHelp["!cols"] = [{ wch: 20 }, { wch: 80 }];
+      XLSX.utils.book_append_sheet(wb, wsHelp, "Petunjuk_Pengisian");
+
+      const safeSchoolName = school.name.replace(/[^a-zA-Z0-9]/g, "_");
+      XLSX.writeFile(wb, `Template_Anak_${safeSchoolName}.xlsx`);
+    } catch (err) {
+      console.error(err);
+      showErrorToast("Gagal", "Gagal mengunduh template");
+    }
+  };
+
+  const handleBulkUploadStudent = async (data: any[]) => {
+    const result = await bulkCreateStudentsAction(data);
+    if (result.success) {
+      showSuccessToast("Berhasil", result.message || "Data anak berhasil diimport");
+      setIsStudentBulkModalOpen(false);
+      setTimeout(() => window.location.reload(), 2000);
+    } else {
+      showErrorToast("Gagal", result.error || "Gagal mengimport data anak");
+    }
+    return result;
   };
 
   // ─── CRUD Kelas ───────────────────────────────────────────────────────────
@@ -258,7 +398,7 @@ export default function SchoolDetailKomunitas({
               transition: "all 0.2s"
             }}
           >
-            📋 Info Umum
+            Data Sekolah
           </button>
           <button
             onClick={() => { setActiveTab("teachers"); setSearchTerm(""); }}
@@ -273,7 +413,7 @@ export default function SchoolDetailKomunitas({
               transition: "all 0.2s"
             }}
           >
-            👨‍🏫 Daftar Guru ({teachers.length})
+            Daftar Guru ({teachers.length})
           </button>
           <button
             onClick={() => { setActiveTab("students"); setSearchTerm(""); }}
@@ -288,7 +428,7 @@ export default function SchoolDetailKomunitas({
               transition: "all 0.2s"
             }}
           >
-            🎓 Daftar Anak ({students.length})
+            Daftar Anak ({students.length})
           </button>
           <button
             onClick={() => { setActiveTab("classes"); setSearchTerm(""); }}
@@ -303,7 +443,7 @@ export default function SchoolDetailKomunitas({
               transition: "all 0.2s"
             }}
           >
-            🏫 Daftar Kelas ({classes.length})
+            Daftar Kelas ({classes.length})
           </button>
           <button
             onClick={() => { setActiveTab("ekspor"); setSearchTerm(""); }}
@@ -318,7 +458,7 @@ export default function SchoolDetailKomunitas({
               transition: "all 0.2s"
             }}
           >
-            📥 Ekspor Akun
+            Ekspor Akun
           </button>
         </div>
 
@@ -391,7 +531,7 @@ export default function SchoolDetailKomunitas({
               return (
                 <div style={{ padding: "0.85rem", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "0.5rem", marginBottom: "1rem", fontSize: "0.85rem" }}>
                   <div style={{ fontWeight: 600, color: "#1e293b", marginBottom: "0.3rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                    <span>🔐 Akun Admin Sekolah</span>
+                    <span>Akun Admin Sekolah</span>
                   </div>
                   {adminUser ? (
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
@@ -409,13 +549,13 @@ export default function SchoolDetailKomunitas({
               onClick={() => setIsDapodikModalOpen(true)}
               style={{ backgroundColor: "#102e50", color: "white", width: "100%", marginBottom: "0.75rem" }}
             >
-              {school.import_source === "dapodik" ? "🔄 Update Data Dapodik" : "📤 Import Dapodik Sekolah Ini"}
+              {school.import_source === "dapodik" ? "🔄 Update Data Dapodik" : "Import Dapodik Sekolah Ini"}
             </Button>
             <Button
               onClick={handleExportAccounts}
               style={{ backgroundColor: "#10b981", color: "white", width: "100%" }}
             >
-              📥 Download Akun Sekolah (Excel)
+              Download Akun Sekolah (Excel)
             </Button>
           </div>
         </div>
@@ -434,6 +574,19 @@ export default function SchoolDetailKomunitas({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{ padding: "0.5rem 0.875rem", borderRadius: "0.5rem", border: "1px solid #d1d5db", fontSize: "0.85rem", width: "280px" }}
               />
+              <Button
+                variant="outline"
+                onClick={handleDownloadGuruTemplate}
+                style={{ color: "#0874aa", borderColor: "#0874aa" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "0.4rem", display: "inline-block", verticalAlign: "middle" }}>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
+                Download Template
+              </Button>
+              <Button onClick={() => setIsTeacherBulkModalOpen(true)} style={{ backgroundColor: "#10b981", color: "white" }}>
+                Import Excel
+              </Button>
               <Button onClick={() => { setEditingTeacher(null); setIsTeacherModalOpen(true); }} style={{ backgroundColor: "#102e50", color: "white" }}>
                 + Tambah Guru
               </Button>
@@ -505,6 +658,19 @@ export default function SchoolDetailKomunitas({
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
+              <Button
+                variant="outline"
+                onClick={handleDownloadStudentTemplate}
+                style={{ color: "#0874aa", borderColor: "#0874aa" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "0.4rem", display: "inline-block", verticalAlign: "middle" }}>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
+                Download Template
+              </Button>
+              <Button onClick={() => setIsStudentBulkModalOpen(true)} style={{ backgroundColor: "#10b981", color: "white" }}>
+                Import Excel
+              </Button>
               <Button onClick={() => { setEditingStudent(null); setIsStudentModalOpen(true); }} style={{ backgroundColor: "#102e50", color: "white" }}>
                 + Tambah Anak
               </Button>
@@ -612,16 +778,34 @@ export default function SchoolDetailKomunitas({
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
             <h3 style={{ margin: 0, fontSize: "1.1rem", color: "#102e50" }}>Ekspor Data Akun Sekolah, Guru, & Anak</h3>
             <Button onClick={handleExportAccounts} style={{ backgroundColor: "#10b981", color: "white" }}>
-              📥 Unduh Excel Data Akun
+              Unduh Excel Data Akun
             </Button>
           </div>
 
-          <div style={{ padding: "1.5rem", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "0.5rem" }}>
+          <div style={{ padding: "1.5rem", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "0.5rem", marginBottom: "1.5rem" }}>
             <h4 style={{ margin: "0 0 0.5rem 0", color: "#166534" }}>Panduan Distribusi Akun</h4>
             <p style={{ margin: 0, fontSize: "0.85rem", color: "#15803d", lineHeight: "1.5" }}>
               Anda dapat mengunduh daftar lengkap username dan password default (<code>Password123!</code>) untuk Admin Sekolah, Guru, dan Anak di sekolah ini.
               Data Excel tersebut memiliki 3 sheet (Akun Sekolah, Akun Guru, dan Akun Anak) yang dapat dipilah dan didistribusikan kepada pihak sekolah atau wali kelas.
             </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: "0.5rem", padding: "1.25rem", background: "white" }}>
+              <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🏫</div>
+              <div style={{ fontWeight: 700, fontSize: "1.1rem" }}>{Array.isArray(school.users) && school.users.find((u: any) => u.role === "school") ? 1 : 0} Akun Sekolah</div>
+              <div style={{ fontSize: "0.85rem", color: "#6b7280", marginTop: "0.25rem" }}>Siap untuk di-export</div>
+            </div>
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: "0.5rem", padding: "1.25rem", background: "white" }}>
+              <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>👨‍🏫</div>
+              <div style={{ fontWeight: 700, fontSize: "1.1rem" }}>{teachers.length} Akun Guru</div>
+              <div style={{ fontSize: "0.85rem", color: "#6b7280", marginTop: "0.25rem" }}>Siap untuk di-export</div>
+            </div>
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: "0.5rem", padding: "1.25rem", background: "white" }}>
+              <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>👨‍🎓</div>
+              <div style={{ fontWeight: 700, fontSize: "1.1rem" }}>{students.length} Akun Anak</div>
+              <div style={{ fontSize: "0.85rem", color: "#6b7280", marginTop: "0.25rem" }}>Siap untuk di-export</div>
+            </div>
           </div>
         </div>
       )}
@@ -652,36 +836,84 @@ export default function SchoolDetailKomunitas({
         />
       )}
 
+      {/* MODAL BULK IMPORT GURU */}
+      {isTeacherBulkModalOpen && (
+        <BulkUploadModal
+          title="Import Data Guru"
+          description={`Upload file Excel sesuai template. Sistem akan membuat username (nama+NIP) dan password default (Password123!) untuk setiap guru. Pastikan kolom nama_sekolah diisi dengan: "${school.name}".`}
+          templateFileName={`Template_Guru_${school.name.replace(/[^a-zA-Z0-9]/g, "_")}`}
+          templateHeaders={[]}
+          onDownloadTemplate={handleDownloadGuruTemplate}
+          onClose={() => setIsTeacherBulkModalOpen(false)}
+          onUpload={handleBulkUploadGuru}
+        />
+      )}
+
       {/* MODAL TAMBAH/EDIT GURU */}
-      <Modal open={isTeacherModalOpen} onClose={() => setIsTeacherModalOpen(false)} title={editingTeacher ? "Edit Guru" : "Tambah Guru Baru"}>
+      <Modal open={isTeacherModalOpen} onClose={() => { setIsTeacherModalOpen(false); setEditingTeacher(null); }} title={editingTeacher ? "Edit Guru" : "Tambah Guru Baru"}>
         <form onSubmit={handleTeacherSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          {/* ── Identitas ── */}
           <div>
             <label className="form-label">Nama Lengkap *</label>
             <input name="full_name" className="form-input" required placeholder="Nama lengkap guru" defaultValue={editingTeacher?.full_name} style={{ width: "100%" }} />
           </div>
-          <div>
-            <label className="form-label">Email * (Sebagai username login)</label>
-            <input type="email" name="email" className="form-input" required={!editingTeacher} disabled={!!editingTeacher} placeholder="email@contoh.com" defaultValue={editingTeacher?.username} style={{ width: "100%" }} />
-            {editingTeacher && <small style={{color: "#6b7280"}}>Username tidak dapat diubah</small>}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div>
+              <label className="form-label">NIP (Opsional)</label>
+              <input name="nip" className="form-input" placeholder="Nomor Induk Pegawai" defaultValue={editingTeacher?.nip || ""} style={{ width: "100%" }} />
+            </div>
+            <div>
+              <label className="form-label">Email Guru (Opsional)</label>
+              <input type="email" name="email" className="form-input" placeholder="email@contoh.com" defaultValue={editingTeacher?.email || ""} style={{ width: "100%" }} />
+            </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
               <label className="form-label">Jenis Kelamin *</label>
-              <select name="gender" className="form-input" required defaultValue={editingTeacher?.gender || "laki-laki"} style={{ width: "100%" }}>
-                <option value="laki-laki">Laki-laki</option>
-                <option value="perempuan">Perempuan</option>
+              <select name="gender" className="form-input" required defaultValue={editingTeacher?.gender || "L"} style={{ width: "100%" }}>
+                <option value="L">Laki-laki</option>
+                <option value="P">Perempuan</option>
               </select>
             </div>
             <div>
-              <label className="form-label">Status Akun *</label>
-              <select name="is_active" className="form-input" required defaultValue={editingTeacher ? (editingTeacher.is_active ? "true" : "false") : "true"} style={{ width: "100%" }}>
-                <option value="true">Aktif</option>
-                <option value="false">Nonaktif</option>
-              </select>
+              <label className="form-label">Tanggal Lahir *</label>
+              <input type="date" name="birth_date" className="form-input" required defaultValue={editingTeacher?.birth_date || ""} style={{ width: "100%" }} />
             </div>
           </div>
-          
-          <div style={{ marginTop: "0.5rem" }}>
+
+          {/* ── Info Sekolah (Read-Only) & Alamat ── */}
+          <div>
+            <label className="form-label">Nama Sekolah</label>
+            <input
+              className="form-input"
+              value={school.name}
+              readOnly
+              style={{ width: "100%", background: "#f3f4f6", cursor: "not-allowed", color: "#6b7280" }}
+            />
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div>
+              <label className="form-label">Kelurahan / Desa *</label>
+              <input name="village" className="form-input" required defaultValue={editingTeacher?.village || ""} style={{ width: "100%" }} />
+            </div>
+            <div>
+              <label className="form-label">Kecamatan *</label>
+              <input name="district" className="form-input" required defaultValue={editingTeacher?.district || ""} style={{ width: "100%" }} />
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div>
+              <label className="form-label">Kabupaten / Kota *</label>
+              <input name="regency" className="form-input" required defaultValue={editingTeacher?.regency || ""} style={{ width: "100%" }} />
+            </div>
+            <div>
+              <label className="form-label">Provinsi *</label>
+              <input name="province" className="form-input" required defaultValue={editingTeacher?.province || ""} style={{ width: "100%" }} />
+            </div>
+          </div>
+
+          {/* ── Relasi Kelas ── */}
+          <div>
             <label className="form-label">Relasikan Kelas (Pilih yang akan diajar) *</label>
             <div style={{ padding: "0.75rem", border: "1px solid #e5e7eb", borderRadius: "0.5rem", maxHeight: "150px", overflowY: "auto" }}>
               {classes.length === 0 && <span style={{ fontSize: "0.85rem", color: "#6b7280" }}>Tidak ada kelas tersedia di sekolah ini.</span>}
@@ -691,15 +923,39 @@ export default function SchoolDetailKomunitas({
                 return (
                   <label key={c.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
                     <input type="checkbox" name="class_ids" value={c.id} defaultChecked={isChecked} />
-                    <span style={{ fontSize: "0.85rem" }}>{c.name} {existingTeacher && existingTeacher !== editingTeacher?.full_name ? <small style={{ color: "#ef4444" }}>(sudah ada wali: {existingTeacher})</small> : null}</span>
+                    <span style={{ fontSize: "0.85rem" }}>
+                      {c.name}{" "}
+                      {existingTeacher && existingTeacher !== editingTeacher?.full_name
+                        ? <small style={{ color: "#ef4444" }}>(sudah ada wali: {existingTeacher})</small>
+                        : null}
+                    </span>
                   </label>
                 );
               })}
             </div>
           </div>
 
-          <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
-            <Button type="button" variant="outline" onClick={() => setIsTeacherModalOpen(false)}>Batal</Button>
+          {/* ── Status & Info Akun ── */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div>
+              <label className="form-label">Status Akun *</label>
+              <select name="is_active" className="form-input" required defaultValue={editingTeacher ? (editingTeacher.is_active ? "true" : "false") : "true"} style={{ width: "100%" }}>
+                <option value="true">Aktif</option>
+                <option value="false">Nonaktif</option>
+              </select>
+            </div>
+            {!editingTeacher && (
+              <div style={{ display: "flex", alignItems: "flex-end" }}>
+                <div style={{ fontSize: "0.78rem", color: "#6b7280", background: "#f9fafb", padding: "0.625rem", borderRadius: "0.375rem", border: "1px solid #e5e7eb", width: "100%" }}>
+                  ℹ Username: <strong>nama+3 digit NIP/acak</strong><br />
+                  Password default: <code>Password123!</code>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div style={{ marginTop: "0.5rem", display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
+            <Button type="button" variant="outline" onClick={() => { setIsTeacherModalOpen(false); setEditingTeacher(null); }}>Batal</Button>
             <Button type="submit" disabled={isPending} style={{ backgroundColor: "#102e50", color: "white" }}>
               {isPending ? "Menyimpan..." : "Simpan Guru"}
             </Button>
@@ -707,18 +963,38 @@ export default function SchoolDetailKomunitas({
         </form>
       </Modal>
 
+      {/* MODAL BULK IMPORT ANAK */}
+      {isStudentBulkModalOpen && (
+        <BulkUploadModal
+          title="Import Data Anak"
+          description={`Upload file Excel sesuai template. Sistem akan otomatis men-generate username dan PIN anak berdasarkan NISN. Pastikan field SES diisi sama persis dengan opsi di sistem.`}
+          templateFileName={`Template_Anak_${school.name.replace(/[^a-zA-Z0-9]/g, "_")}`}
+          templateHeaders={[]}
+          onDownloadTemplate={handleDownloadStudentTemplate}
+          onClose={() => setIsStudentBulkModalOpen(false)}
+          onUpload={handleBulkUploadStudent}
+        />
+      )}
+
       {/* MODAL TAMBAH/EDIT ANAK */}
-      <Modal open={isStudentModalOpen} onClose={() => setIsStudentModalOpen(false)} title={editingStudent ? "Edit Anak" : "Tambah Anak Baru"}>
+      <Modal open={isStudentModalOpen} onClose={() => { setIsStudentModalOpen(false); setEditingStudent(null); }} title={editingStudent ? "Edit Anak" : "Tambah Anak Baru"}>
         <form onSubmit={handleStudentSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          {/* ── Identitas Siswa ── */}
           <div>
             <label className="form-label">Nama Lengkap *</label>
-            <input name="full_name" className="form-input" required defaultValue={editingStudent?.full_name} style={{ width: "100%" }} />
+            <input name="full_name" className="form-input" required defaultValue={editingStudent?.full_name} placeholder="Nama lengkap siswa" style={{ width: "100%" }} />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
               <label className="form-label">NISN (Opsional)</label>
-              <input name="nisn" className="form-input" defaultValue={editingStudent?.nisn || ""} style={{ width: "100%" }} />
+              <input name="nisn" className="form-input" defaultValue={editingStudent?.nisn || ""} placeholder="Nomor Induk Siswa Nasional" style={{ width: "100%" }} />
             </div>
+            <div>
+              <label className="form-label">NPSN (Opsional)</label>
+              <input name="npsn" className="form-input" defaultValue={school.npsn || ""} placeholder="Nomor Pokok Sekolah Nasional" style={{ width: "100%" }} />
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
               <label className="form-label">Jenis Kelamin *</label>
               <select name="gender" className="form-input" required defaultValue={editingStudent?.gender || "L"} style={{ width: "100%" }}>
@@ -726,15 +1002,106 @@ export default function SchoolDetailKomunitas({
                 <option value="P">Perempuan</option>
               </select>
             </div>
+            <div>
+              <label className="form-label">Tanggal Lahir *</label>
+              <input type="date" name="birth_date" className="form-input" required defaultValue={editingStudent?.birth_date || ""} style={{ width: "100%" }} />
+            </div>
           </div>
+
+          {/* ── Info Sekolah & Kelas ── */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div>
+              <label className="form-label">Nama Sekolah</label>
+              <input
+                className="form-input"
+                value={school.name}
+                readOnly
+                style={{ width: "100%", background: "#f3f4f6", cursor: "not-allowed", color: "#6b7280" }}
+              />
+            </div>
             <div>
               <label className="form-label">Pilih Kelas *</label>
               <select name="class_id" className="form-input" required defaultValue={editingStudent?.class_id || (editingStudent?.classes as any)?.id || ""} style={{ width: "100%" }}>
-                <option value="">-- Pilih Kelas --</option>
+                <option value="">-- Pilih --</option>
                 {classes.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
+          </div>
+
+          {/* ── Info Keluarga (SES) ── */}
+          <div style={{ border: "1px solid #e5e7eb", borderRadius: "0.5rem", padding: "0.875rem" }}>
+            <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "#374151", marginBottom: "0.625rem" }}>
+              👨‍👩‍👧 Latar Belakang Keluarga (Wajib diisi)
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
+              <div>
+                <label className="form-label" style={{ fontSize: "0.78rem" }}>Pekerjaan Ibu *</label>
+                <select name="mother_occupation_id" className="form-input" required defaultValue={editingStudent?.mother_occupation_id || ""} style={{ width: "100%", fontSize: "0.8rem" }}>
+                  <option value="">-- Pilih --</option>
+                  {sesVariables.filter(v => v.type === 'occupation').map(v => (
+                    <option key={v.id} value={v.id}>{v.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="form-label" style={{ fontSize: "0.78rem" }}>Pekerjaan Ayah *</label>
+                <select name="father_occupation_id" className="form-input" required defaultValue={editingStudent?.father_occupation_id || ""} style={{ width: "100%", fontSize: "0.8rem" }}>
+                  <option value="">-- Pilih --</option>
+                  {sesVariables.filter(v => v.type === 'occupation').map(v => (
+                    <option key={v.id} value={v.id}>{v.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              <div>
+                <label className="form-label" style={{ fontSize: "0.78rem" }}>Pendidikan Ibu *</label>
+                <select name="mother_education_id" className="form-input" required defaultValue={editingStudent?.mother_education_id || ""} style={{ width: "100%", fontSize: "0.8rem" }}>
+                  <option value="">-- Pilih --</option>
+                  {sesVariables.filter(v => v.type === 'education').map(v => (
+                    <option key={v.id} value={v.id}>{v.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="form-label" style={{ fontSize: "0.78rem" }}>Pendidikan Ayah *</label>
+                <select name="father_education_id" className="form-input" required defaultValue={editingStudent?.father_education_id || ""} style={{ width: "100%", fontSize: "0.8rem" }}>
+                  <option value="">-- Pilih --</option>
+                  {sesVariables.filter(v => v.type === 'education').map(v => (
+                    <option key={v.id} value={v.id}>{v.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Alamat Siswa ── */}
+          <div style={{ border: "1px solid #e5e7eb", borderRadius: "0.5rem", padding: "0.875rem" }}>
+            <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "#374151", marginBottom: "0.625rem" }}>
+              🏠 Alamat Domisili Anak
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+              <div>
+                <label className="form-label" style={{ fontSize: "0.78rem" }}>Kelurahan / Desa *</label>
+                <input name="village" className="form-input" required defaultValue={editingStudent?.village || ""} placeholder="Kelurahan" style={{ width: "100%" }} />
+              </div>
+              <div>
+                <label className="form-label" style={{ fontSize: "0.78rem" }}>Kecamatan *</label>
+                <input name="district" className="form-input" required defaultValue={editingStudent?.district || ""} placeholder="Kecamatan" style={{ width: "100%" }} />
+              </div>
+              <div>
+                <label className="form-label" style={{ fontSize: "0.78rem" }}>Kabupaten / Kota *</label>
+                <input name="city" className="form-input" required defaultValue={editingStudent?.city || ""} placeholder="Kabupaten" style={{ width: "100%" }} />
+              </div>
+              <div>
+                <label className="form-label" style={{ fontSize: "0.78rem" }}>Provinsi *</label>
+                <input name="province" className="form-input" required defaultValue={editingStudent?.province || ""} placeholder="Provinsi" style={{ width: "100%" }} />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Status Akun & Info ── */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
               <label className="form-label">Status Akun *</label>
               <select name="is_active" className="form-input" required defaultValue={editingStudent ? (editingStudent.is_active ? "true" : "false") : "true"} style={{ width: "100%" }}>
@@ -742,9 +1109,18 @@ export default function SchoolDetailKomunitas({
                 <option value="false">Nonaktif</option>
               </select>
             </div>
+            {!editingStudent && (
+              <div style={{ display: "flex", alignItems: "flex-end" }}>
+                <div style={{ fontSize: "0.78rem", color: "#6b7280", background: "#f9fafb", padding: "0.625rem", borderRadius: "0.375rem", border: "1px solid #e5e7eb", width: "100%" }}>
+                  ℹ Username otomatis: <strong>nama+3 digit NISN</strong><br />
+                  PIN default: <code>123456</code>
+                </div>
+              </div>
+            )}
           </div>
+
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1rem" }}>
-            <Button type="button" variant="outline" onClick={() => setIsStudentModalOpen(false)}>Batal</Button>
+            <Button type="button" variant="outline" onClick={() => { setIsStudentModalOpen(false); setEditingStudent(null); }}>Batal</Button>
             <Button type="submit" disabled={isPending}>{isPending ? "Menyimpan..." : "Simpan Anak"}</Button>
           </div>
         </form>

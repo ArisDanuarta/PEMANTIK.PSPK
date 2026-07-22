@@ -348,13 +348,13 @@ export default function PengaturanClient() {
           className={`btn btn-md ${subjectFilter === "literasi" ? "btn-primary" : "btn-outline"}`}
           onClick={() => setSubjectFilter("literasi")}
         >
-          📖 Literasi
+          Literasi
         </button>
         <button
           className={`btn btn-md ${subjectFilter === "numerasi" ? "btn-primary" : "btn-outline"}`}
           onClick={() => setSubjectFilter("numerasi")}
         >
-          🔢 Numerasi
+          Numerasi
         </button>
       </div>
 
@@ -487,8 +487,8 @@ export default function PengaturanClient() {
                     <input type="number" min="0" className="form-input" value={newLevelNumber} onChange={(e) => setNewLevelNumber(e.target.value ? Number(e.target.value) : "")} required />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Durasi (Detik)</label>
-                    <input type="number" min="1" className="form-input" value={newTimeLimit} onChange={(e) => setNewTimeLimit(e.target.value ? Number(e.target.value) : "")} required />
+                    <label className="form-label">Durasi (Menit)</label>
+                    <input type="number" min="0.1" step="any" className="form-input" value={newTimeLimit !== "" ? Number(newTimeLimit) / 60 : ""} onChange={(e) => setNewTimeLimit(e.target.value ? Number(e.target.value) * 60 : "")} required />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Min. Jawaban Benar</label>
@@ -542,9 +542,9 @@ export default function PengaturanClient() {
                                   onChange={(e) => setEditLevel((p) => ({ ...p, levelNumber: Number(e.target.value) }))} />
                               </div>
                               <div className="form-group">
-                                <label className="form-label">Durasi (dtk)</label>
-                                <input type="number" className="form-input" value={editLevel.timeLimit}
-                                  onChange={(e) => setEditLevel((p) => ({ ...p, timeLimit: Number(e.target.value) }))} />
+                                <label className="form-label">Durasi (Mnt)</label>
+                                <input type="number" min="0.1" step="any" className="form-input" value={editLevel.timeLimit ? Number(editLevel.timeLimit) / 60 : ""}
+                                  onChange={(e) => setEditLevel((p) => ({ ...p, timeLimit: e.target.value ? Number(e.target.value) * 60 : 0 }))} />
                               </div>
                               <div className="form-group">
                                 <label className="form-label">Min. Benar</label>
@@ -589,7 +589,7 @@ export default function PengaturanClient() {
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: "flex", gap: "0.75rem", fontSize: "0.8rem", color: "#495057", flexWrap: "wrap" }}>
-                                <span>⏱ {l.time_limit_sec} dtk</span>
+                                <span>⏱ {l.time_limit_sec / 60} mnt</span>
                                 <span>🎯 Min. {l.passing_threshold} benar</span>
                                 {l.access_code && <span>🔑 {l.access_code}</span>}
                               </div>

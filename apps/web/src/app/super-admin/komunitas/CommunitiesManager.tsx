@@ -9,13 +9,22 @@ import {
   updateCommunityAction,
   resetCommunityPasswordAction,
   toggleCommunityActiveAction,
+  bulkCreateCommunitiesAction,
+  deleteCommunityAction,
 } from "../../actions/communities";
+import * as XLSX from "xlsx";
+import BulkUploadModal from "@/components/shared/BulkUploadModal";
 
 interface Community {
   id: string;
   name: string;
   code: string;
   address: string | null;
+  status_kepemilikan?: string | null;
+  village?: string | null;
+  district?: string | null;
+  regency?: string | null;
+  province?: string | null;
   contact_name: string | null;
   contact_phone: string | null;
   contact_email: string | null;
@@ -34,6 +43,7 @@ export default function CommunitiesManager({
   const [communities, setCommunities] = useState<Community[]>(initialCommunities);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editingComm, setEditingComm] = useState<Community | null>(null);
   
   const [isPending, startTransition] = useTransition();
@@ -135,6 +145,69 @@ export default function CommunitiesManager({
     });
   };
 
+  const handleDeleteCommunity = async (comm: Community) => {
+    const ok = await confirm({
+      title: "Hapus Komunitas?",
+      description: `Apakah Anda yakin ingin menghapus komunitas '${comm.name}' secara permanen? Peringatan: Proses ini tidak dapat dibatalkan, dan jika komunitas ini memiliki sekolah/akun tertaut, proses mungkin gagal.`,
+      confirmLabel: "Ya, Hapus",
+      cancelLabel: "Batal",
+      variant: "danger",
+    });
+
+    if (!ok) return;
+
+    startTransition(async () => {
+      const result = await deleteCommunityAction(comm.id);
+      if (result.success) {
+        showSuccessToast("Berhasil", "Komunitas berhasil dihapus!");
+        window.location.reload();
+      } else {
+        showErrorToast("Gagal menghapus komunitas", result.error || "");
+      }
+    });
+  };
+
+  const handleBulkUpload = async (data: any[]) => {
+    const result = await bulkCreateCommunitiesAction(data);
+    if (result.success) {
+      showSuccessToast("Impor Selesai", result.message || "");
+      setIsBulkModalOpen(false);
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    }
+    return result;
+  };
+
+  const handleDownloadTemplate = () => {
+    const headers = ["nama_komunitas", "email_komunitas", "status_kepemilikan", "nama_penanggung_jawab", "nomor_telepon", "kelurahan_desa", "kecamatan", "kabupaten", "provinsi"];
+    const wsData = [
+      headers,
+      ["Yayasan Pendidikan Anak Bangsa", "yayasan.pab@mitra.com", "Yayasan", "Budi Santoso", "081234567890", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta"]
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    
+    // Petunjuk Sheet
+    const petunjukData = [
+      ["Kolom", "Wajib?", "Keterangan / Contoh"],
+      ["nama_komunitas", "Ya", "Nama lengkap komunitas atau yayasan."],
+      ["email_komunitas", "Tidak", "Email aktif komunitas (opsional)."],
+      ["status_kepemilikan", "Ya", "Negeri, Swasta, Yayasan, atau Lainnya."],
+      ["nama_penanggung_jawab", "Tidak", "Nama representatif (opsional)."],
+      ["nomor_telepon", "Tidak", "Nomor telepon (opsional)."],
+      ["kelurahan_desa", "Ya", "Kelurahan / Desa."],
+      ["kecamatan", "Ya", "Kecamatan."],
+      ["kabupaten", "Ya", "Kabupaten / Kota."],
+      ["provinsi", "Ya", "Provinsi."]
+    ];
+    const wsPetunjuk = XLSX.utils.aoa_to_sheet(petunjukData);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data");
+    XLSX.utils.book_append_sheet(wb, wsPetunjuk, "Petunjuk");
+    XLSX.writeFile(wb, "Template_Komunitas.xlsx");
+  };
+
   const columns = [
     {
       key: "name",
@@ -197,6 +270,9 @@ export default function CommunitiesManager({
           <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>
             Reset Sandi
           </Button>
+          <Button variant="danger" size="sm" onClick={() => handleDeleteCommunity(row)}>
+            Hapus
+          </Button>
         </div>
       ),
     },
@@ -224,9 +300,20 @@ export default function CommunitiesManager({
             style={{ width: "100%" }}
           />
         </div>
-        <Button variant="primary" onClick={handleOpenAddModal}>
-          + Tambah Komunitas
-        </Button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <Button variant="outline" onClick={handleDownloadTemplate} style={{ color: "#0874aa", borderColor: "#0874aa" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "0.4rem", display: "inline-block", verticalAlign: "middle" }}>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            Download Template
+          </Button>
+          <Button variant="outline" onClick={() => setIsBulkModalOpen(true)}>
+            Import Komunitas
+          </Button>
+          <Button variant="primary" onClick={handleOpenAddModal}>
+            + Tambah Komunitas
+          </Button>
+        </div>
       </div>
 
       <div className="card">
@@ -321,18 +408,41 @@ export default function CommunitiesManager({
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="comm-address">
-              Alamat Kantor
+            <label className="form-label" htmlFor="comm-status-kepemilikan">
+              Status Kepemilikan <span style={{ color: "#a8281c" }}>*</span>
             </label>
-            <textarea
-              id="comm-address"
-              name="address"
+            <select
+              id="comm-status-kepemilikan"
+              name="status_kepemilikan"
               className="form-input"
-              placeholder="Alamat lengkap komunitas"
-              rows={3}
-              defaultValue={editingComm?.address || ""}
-              style={{ resize: "vertical" }}
-            />
+              required
+              defaultValue={editingComm?.status_kepemilikan || ""}
+            >
+              <option value="">-- Pilih --</option>
+              <option value="Negeri">Negeri</option>
+              <option value="Swasta">Swasta</option>
+              <option value="Yayasan">Yayasan</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div className="form-group">
+              <label className="form-label">Kelurahan / Desa <span style={{ color: "#a8281c" }}>*</span></label>
+              <input type="text" name="village" className="form-input" required defaultValue={editingComm?.village || ""} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Kecamatan <span style={{ color: "#a8281c" }}>*</span></label>
+              <input type="text" name="district" className="form-input" required defaultValue={editingComm?.district || ""} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Kabupaten / Kota <span style={{ color: "#a8281c" }}>*</span></label>
+              <input type="text" name="regency" className="form-input" required defaultValue={editingComm?.regency || ""} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Provinsi <span style={{ color: "#a8281c" }}>*</span></label>
+              <input type="text" name="province" className="form-input" required defaultValue={editingComm?.province || ""} />
+            </div>
           </div>
 
           <div className="form-group" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -368,6 +478,19 @@ export default function CommunitiesManager({
           </div>
         </form>
       </Modal>
+      
+      {/* BULK UPLOAD MODAL */}
+      {isBulkModalOpen && (
+        <BulkUploadModal
+          title="Import Data Komunitas"
+          description="Download template di luar ini, isi data, dan upload kembali. Sistem akan otomatis membuat akun untuk setiap komunitas yang di-upload dengan password default (Password123!)."
+          templateFileName="Template_Komunitas"
+          templateHeaders={[]}
+          onDownloadTemplate={handleDownloadTemplate}
+          onUpload={handleBulkUpload}
+          onClose={() => setIsBulkModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

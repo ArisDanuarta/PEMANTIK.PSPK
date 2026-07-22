@@ -184,15 +184,15 @@ export default function IntegratedDashboardManager({
           </h2>
         </div>
         <div className="card" style={{ padding: "1.5rem", borderLeft: "4px solid #0874aa" }}>
-          <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Sesi Asesmen (Tersaring)</p>
+          <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Guru</p>
           <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#102e50", margin: "0.5rem 0", fontFamily: "var(--font-lora)" }}>
-            {totalSesi}
+            {teachers.length}
           </h2>
         </div>
         <div className="card" style={{ padding: "1.5rem", borderLeft: "4px solid #a8281c" }}>
-          <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Tingkat Kelulusan</p>
+          <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Anak</p>
           <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#a8281c", margin: "0.5rem 0", fontFamily: "var(--font-lora)" }}>
-            {passRate.toFixed(1)}%
+            {students.length}
           </h2>
         </div>
       </div>
@@ -237,7 +237,7 @@ export default function IntegratedDashboardManager({
                   <tr key={c.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
                     <td style={{ padding: "1rem", color: "#64748b" }}>{index + 1}</td>
                     <td style={{ padding: "1rem", fontWeight: 600, color: "#102e50" }}>
-                      🏢 {c.name}
+                      {c.name}
                     </td>
                     <td style={{ padding: "1rem" }}>
                       <code style={{ backgroundColor: "#f1f5f9", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", color: "#0874aa", fontSize: "0.82rem" }}>

@@ -12,6 +12,9 @@ interface School {
   id: string;
   name: string;
   npsn: string | null;
+  email?: string | null;
+  status_sekolah?: string | null;
+  jenjang_sekolah?: string | null;
   address: string | null;
   province: string | null;
   city: string | null;
@@ -145,33 +148,38 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
   };
 
   const handleDownloadTemplate = () => {
-    const headers = ["Nama_Sekolah", "NPSN", "Provinsi", "Kota", "Kecamatan", "Desa", "Nama_Kepsek", "Telp", "Alamat", "Nama_Komunitas", "Daftar_Kelas"];
+    const headers = ["nama_sekolah", "npsn", "email_sekolah", "status_sekolah", "jenjang_sekolah", "kepala_sekolah", "nomor_telepon", "daftar_kelas", "kelurahan_desa", "kecamatan", "kabupaten", "provinsi", "nama_komunitas"];
     const wsData = [
       headers,
-      ["Contoh SD 1", "20101010", "Jawa Barat", "Bandung", "Coblong", "Dago", "Budi", "08123", "Jl. ABC", communities[0]?.name || "Komunitas Contoh", "5A, 5B, 6A"]
+      ["SD Negeri 1 Contoh", "20101010", "admin@sd1.com", "Negeri", "SD", "Budi Santoso", "081234567890", "5A, 5B, 6A", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta", communities[0]?.name || "Komunitas Contoh"]
     ];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const colWidths = headers.map(h => ({ wch: Math.max(h.length, 15) }));
+    ws['!cols'] = colWidths;
     
-    // Add instruction sheet
-    const instructions = [
-      ["Kolom", "Wajib", "Keterangan"],
-      ["Nama_Sekolah", "Ya", "Nama lengkap sekolah"],
-      ["NPSN", "Tidak", "Nomor Pokok Sekolah Nasional"],
-      ["Provinsi", "Ya", "Provinsi lokasi sekolah"],
-      ["Kota", "Ya", "Kota/Kabupaten lokasi sekolah"],
-      ["Kecamatan", "Ya", "Kecamatan lokasi sekolah"],
-      ["Desa", "Ya", "Desa/Kelurahan lokasi sekolah"],
-      ["Nama_Kepsek", "Tidak", "Nama Kepala Sekolah"],
-      ["Telp", "Tidak", "Nomor Telepon Sekolah"],
-      ["Alamat", "Tidak", "Alamat Sekolah"],
-      ["Nama_Komunitas", "Ya", "Nama Komunitas Induk. Harus persis/mirip dengan nama komunitas di sistem"],
-      ["Daftar_Kelas", "Ya", "Daftar kelas yang ikut asesmen. Pisahkan dengan koma jika lebih dari satu (Contoh: 5A, 5B, 6A). Sistem akan otomatis membuat kelas ini dan nanti bisa dipilih saat membuat akun Guru."],
+    // Petunjuk Sheet
+    const petunjukData = [
+      ["Kolom", "Wajib?", "Keterangan / Contoh"],
+      ["nama_sekolah", "Ya", "Nama lengkap sekolah."],
+      ["npsn", "Tidak", "Nomor Pokok Sekolah Nasional (opsional)."],
+      ["email_sekolah", "Tidak", "Email sekolah untuk login. Jika kosong akan digenerate otomatis."],
+      ["status_sekolah", "Ya", "Status sekolah: Negeri atau Swasta."],
+      ["jenjang_sekolah", "Ya", "Jenjang: SD, SMP, SMA, atau SMK."],
+      ["kepala_sekolah", "Tidak", "Nama kepala sekolah (opsional)."],
+      ["nomor_telepon", "Tidak", "Nomor telepon sekolah (opsional)."],
+      ["daftar_kelas", "Ya", "Daftar kelas ikut asesmen, pisahkan koma. Contoh: 5A, 5B, 6A"],
+      ["kelurahan_desa", "Ya", "Kelurahan / Desa lokasi sekolah."],
+      ["kecamatan", "Ya", "Kecamatan lokasi sekolah."],
+      ["kabupaten", "Ya", "Kabupaten / Kota lokasi sekolah."],
+      ["provinsi", "Ya", "Provinsi lokasi sekolah."],
+      ["nama_komunitas", "Ya*", "Nama komunitas induk. Wajib jika diimport oleh Super Admin."],
     ];
-    const wsHelp = XLSX.utils.aoa_to_sheet(instructions);
+    const wsPetunjuk = XLSX.utils.aoa_to_sheet(petunjukData);
+    wsPetunjuk['!cols'] = [{ wch: 18 }, { wch: 10 }, { wch: 60 }];
 
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Data Sekolah");
-    XLSX.utils.book_append_sheet(wb, wsHelp, "Petunjuk Pengisian");
+    XLSX.utils.book_append_sheet(wb, wsPetunjuk, "Petunjuk Pengisian");
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
 
     XLSX.writeFile(wb, "Template_Sekolah.xlsx");
   };
@@ -401,9 +409,29 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
                   <input type="text" name="village" required defaultValue={editingSchool?.village || ""} className="form-input" style={{ width: "100%" }} />
                 </div>
 
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Status Sekolah *</label>
+                  <select name="status_sekolah" required defaultValue={editingSchool?.status_sekolah || ""} className="form-input" style={{ width: "100%" }}>
+                    <option value="">Pilih Status</option>
+                    <option value="Negeri">Negeri</option>
+                    <option value="Swasta">Swasta</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Jenjang Sekolah *</label>
+                  <select name="jenjang_sekolah" required defaultValue={editingSchool?.jenjang_sekolah || ""} className="form-input" style={{ width: "100%" }}>
+                    <option value="">Pilih Jenjang</option>
+                    <option value="SD">SD</option>
+                    <option value="SMP">SMP</option>
+                    <option value="SMA">SMA</option>
+                    <option value="SMK">SMK</option>
+                  </select>
+                </div>
+
                 <div style={{ gridColumn: "span 2" }}>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Alamat Lengkap</label>
-                  <input type="text" name="address" defaultValue={editingSchool?.address || ""} className="form-input" style={{ width: "100%" }} />
+                  <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Email Sekolah (Opsional)</label>
+                  <input type="email" name="email" defaultValue={editingSchool?.email || ""} placeholder="Jika dikosongkan akan digenerate otomatis" className="form-input" style={{ width: "100%" }} />
                 </div>
 
                 <div style={{ gridColumn: "span 2" }}>
@@ -431,10 +459,12 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
       {isBulkModalOpen && (
         <BulkUploadModal
           title="Import Data Sekolah"
-          description="Gunakan template Excel, isi data sekolah beserta kolom Kecamatan dan Desa, lalu upload kembali. Pastikan kolom Nama_Komunitas terisi dengan nama komunitas yang valid."
+          description="Gunakan template Excel, isi data sekolah, lalu upload kembali. Akun admin sekolah akan dibuat otomatis (Password123!). Pastikan nama komunitas yang diisi sesuai data yang ada di sistem."
           templateFileName="Template_Sekolah"
-          templateHeaders={["Nama_Sekolah", "NPSN", "Provinsi", "Kota", "Kecamatan", "Desa", "Nama_Kepsek", "Telp", "Alamat", "Nama_Komunitas"]}
-          templateData={communities.slice(0, 3).map(c => ["Contoh SD 1", "20101010", "Jawa Barat", "Bandung", "Coblong", "Dago", "Budi", "08123", "Jl. ABC", c.name])}
+          templateHeaders={["nama_sekolah", "npsn", "email_sekolah", "status_sekolah", "jenjang_sekolah", "kepala_sekolah", "nomor_telepon", "daftar_kelas", "kelurahan_desa", "kecamatan", "kabupaten", "provinsi", "nama_komunitas"]}
+          templateData={[
+            ["SD Negeri 1 Contoh", "20101010", "admin@sd1.com", "Negeri", "SD", "Budi Santoso", "081234567890", "5A, 5B, 6A", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta", communities[0]?.name || "Nama Komunitas"]
+          ]}
           onClose={() => setIsBulkModalOpen(false)}
           onUpload={handleBulkUpload}
         />

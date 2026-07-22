@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@pemantik/supabase";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "./auth";
 
 export interface ActionResponse {
   success: boolean;
@@ -13,9 +14,14 @@ export async function createCommunityAction(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
-    const name = (formData.get("name") as string)?.trim();
+  const name = (formData.get("name") as string)?.trim();
   const code = (formData.get("code") as string)?.trim().toLowerCase();
-  const address = (formData.get("address") as string)?.trim() || null;
+  const status_kepemilikan = (formData.get("status_kepemilikan") as string)?.trim() || null;
+  const village = (formData.get("village") as string)?.trim() || null;
+  const district = (formData.get("district") as string)?.trim() || null;
+  const regency = (formData.get("regency") as string)?.trim() || null;
+  const province = (formData.get("province") as string)?.trim() || null;
+  
   const contactName = (formData.get("contact_name") as string)?.trim() || null;
   const contactPhone = (formData.get("contact_phone") as string)?.trim() || null;
   const contactEmail = (formData.get("contact_email") as string)?.trim() || null;
@@ -45,10 +51,17 @@ export async function createCommunityAction(
   if (existing) {
     return { success: false, error: `Kode komunitas '${code}' sudah digunakan.` };
   }
+  
+  const address = village && district && regency && province ? `${village}, ${district}, ${regency}, ${province}` : null;
 
   const { data: newComm, error } = await supabase.from("communities").insert({
     name,
     code,
+    status_kepemilikan,
+    village,
+    district,
+    regency,
+    province,
     address,
     contact_name: contactName,
     contact_phone: contactPhone,
@@ -64,7 +77,9 @@ export async function createCommunityAction(
 
   // BUAT AKUN ADMIN KOMUNITAS SECARA OTOMATIS
   const defaultPassword = "Password123!";
-  const username = `admin_${code}`;
+  const namePart = name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 10);
+  const randomDigits = Math.floor(100 + Math.random() * 900).toString();
+  const username = `${namePart}${randomDigits}`;
   const adminEmail = contactEmail || `${username}@pemantik.local`;
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -118,7 +133,12 @@ export async function updateCommunityAction(
 ): Promise<ActionResponse> {
   try {
     const name = (formData.get("name") as string)?.trim();
-    const address = (formData.get("address") as string)?.trim() || null;
+    const status_kepemilikan = (formData.get("status_kepemilikan") as string)?.trim() || null;
+    const village = (formData.get("village") as string)?.trim() || null;
+    const district = (formData.get("district") as string)?.trim() || null;
+    const regency = (formData.get("regency") as string)?.trim() || null;
+    const province = (formData.get("province") as string)?.trim() || null;
+    
     const contactName = (formData.get("contact_name") as string)?.trim() || null;
     const contactPhone = (formData.get("contact_phone") as string)?.trim() || null;
     const contactEmail = (formData.get("contact_email") as string)?.trim() || null;
@@ -127,6 +147,8 @@ export async function updateCommunityAction(
     if (!name) {
       return { success: false, error: "Nama Komunitas wajib diisi." };
     }
+    
+    const address = village && district && regency && province ? `${village}, ${district}, ${regency}, ${province}` : null;
 
     const supabase = createServerClient();
 
@@ -134,6 +156,11 @@ export async function updateCommunityAction(
       .from("communities")
       .update({
         name,
+        status_kepemilikan,
+        village,
+        district,
+        regency,
+        province,
         address,
         contact_name: contactName,
         contact_phone: contactPhone,
@@ -213,6 +240,144 @@ export async function resetCommunityPasswordAction(communityId: string): Promise
     revalidatePath("/super-admin/komunitas");
     return { success: true };
   } catch (err: any) {
+    return { success: false, error: "Terjadi kesalahan sistem: " + (err.message || String(err)) };
+  }
+}
+
+export async function bulkCreateCommunitiesAction(
+  dataArray: any[]
+): Promise<ActionResponse> {
+  try {
+    const { role } = await requireAuth(["super_admin"]);
+    if (!dataArray || dataArray.length === 0) {
+      return { success: false, error: "Data kosong." };
+    }
+
+    const supabase = createServerClient();
+    let successCount = 0;
+    let failCount = 0;
+    const errors: string[] = [];
+
+    for (let i = 0; i < dataArray.length; i++) {
+      const row = dataArray[i];
+      const name = row.nama_komunitas || row.Nama_Komunitas || row.name;
+      const contactEmail = row.email_komunitas || row.Email_Komunitas || row.contact_email || null;
+      const status_kepemilikan = row.status_kepemilikan || row.Status_Kepemilikan || null;
+      const contactName = row.nama_penanggung_jawab || row.Nama_Penanggung_Jawab || null;
+      const contactPhone = row.nomor_telepon || row.Nomor_Telepon || null;
+      const village = row.kelurahan_desa || row.Kelurahan_Desa || null;
+      const district = row.kecamatan || row.Kecamatan || null;
+      const regency = row.kabupaten || row.Kabupaten || null;
+      const province = row.provinsi || row.Provinsi || null;
+
+      if (!name || !status_kepemilikan || !village || !district || !regency || !province) {
+        failCount++;
+        errors.push(`Baris ${i + 2} gagal: Kolom nama_komunitas, status_kepemilikan, kelurahan_desa, kecamatan, kabupaten, dan provinsi wajib diisi.`);
+        continue;
+      }
+
+      const code = name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 8) + Math.floor(100 + Math.random() * 900).toString();
+      const address = `${village}, ${district}, ${regency}, ${province}`;
+
+      const { data: newComm, error } = await supabase.from("communities").insert({
+        name,
+        code,
+        status_kepemilikan,
+        village,
+        district,
+        regency,
+        province,
+        address,
+        contact_name: contactName,
+        contact_phone: contactPhone,
+        contact_email: contactEmail,
+        is_active: true,
+        allowed_categories: null,
+      } as any).select().single();
+
+      if (error || !newComm) {
+        failCount++;
+        errors.push(`Baris ${i + 2} gagal: ${error?.message}`);
+        continue;
+      }
+
+      const defaultPassword = "Password123!";
+      const namePart = name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 10);
+      const randomDigits = Math.floor(100 + Math.random() * 900).toString();
+      const username = `${namePart}${randomDigits}`;
+      const adminEmail = contactEmail || `${username}@pemantik.local`;
+
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: adminEmail,
+        password: defaultPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: `Admin ${name}`,
+          role: 'community',
+        }
+      });
+
+      if (authError || !authData.user) {
+        failCount++;
+        errors.push(`Baris ${i + 2} gagal (Auth): ${authError?.message}`);
+        continue;
+      }
+
+      const { error: userError } = await supabase.from("users").insert({
+        id: authData.user.id,
+        username: username,
+        full_name: `Admin ${name}`,
+        role: "community",
+        community_id: newComm.id,
+        is_active: true,
+      });
+
+      if (userError) {
+        await supabase.auth.admin.deleteUser(authData.user.id);
+        failCount++;
+        errors.push(`Baris ${i + 2} gagal (User DB): ${userError.message}`);
+        continue;
+      }
+
+      successCount++;
+    }
+
+    revalidatePath("/super-admin/komunitas");
+    revalidatePath("/super-admin/dashboard");
+    const errText = errors.length > 0 ? " Detail: " + errors.slice(0, 3).join(" | ") + (errors.length > 3 ? "..." : "") : "";
+
+    if (successCount === 0) {
+      return { success: false, error: `Gagal mengimpor komunitas. Terdapat ${failCount} baris bermasalah.${errText}` };
+    }
+
+    return { success: true, message: `Berhasil mengimpor ${successCount} komunitas. Gagal: ${failCount} baris.${errText}` };
+  } catch (err: any) {
+    console.error("Exception in bulkCreateCommunitiesAction:", err);
+    return { success: false, error: "Terjadi kesalahan sistem: " + (err.message || String(err)) };
+  }
+}
+
+export async function deleteCommunityAction(id: string): Promise<ActionResponse> {
+  try {
+    const supabase = createServerClient();
+    
+    // Attempt to delete community (Supabase handles constraints)
+    const { error } = await supabase.from("communities").delete().eq("id", id);
+    
+    if (error) {
+      console.error("Failed to delete community:", error);
+      // Custom message for foreign key violation
+      if (error.code === '23503') {
+        return { success: false, error: "Komunitas tidak bisa dihapus karena masih memiliki sekolah/data yang terhubung." };
+      }
+      return { success: false, error: "Gagal menghapus komunitas: " + error.message };
+    }
+    
+    revalidatePath("/super-admin/komunitas");
+    revalidatePath("/super-admin/dashboard");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Exception in deleteCommunityAction:", err);
     return { success: false, error: "Terjadi kesalahan sistem: " + (err.message || String(err)) };
   }
 }

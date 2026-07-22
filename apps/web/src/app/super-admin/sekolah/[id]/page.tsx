@@ -25,6 +25,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
     { data: communities },
     { data: schoolAdmin },
     { data: studentUsers },
+    { data: sesVariables },
   ] = await Promise.all([
     supabase
       .from("schools")
@@ -69,6 +70,10 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
       .select("id, username")
       .eq("school_id", id)
       .eq("role", "student"),
+    (supabase as any)
+      .from("ses_variables")
+      .select("*")
+      .order("score", { ascending: true })
   ]);
 
   if (!school) return notFound();
@@ -105,6 +110,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
         importBatches={importBatches || []}
         communities={communities || []}
         schoolAdmin={schoolAdmin}
+        sesVariables={sesVariables || []}
       />
     </div>
   );

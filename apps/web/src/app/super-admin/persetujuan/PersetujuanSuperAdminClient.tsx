@@ -123,7 +123,7 @@ export default function PersetujuanSuperAdminClient({
               fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
             }}
           >
-            ⏳ Menunggu Persetujuan ({pendingCount})
+            Menunggu Persetujuan ({pendingCount})
           </button>
           <button
             onClick={() => setActiveTab("history")}
@@ -134,7 +134,7 @@ export default function PersetujuanSuperAdminClient({
               fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
             }}
           >
-            📜 Riwayat Peninjauan ({historyCount})
+            Riwayat Peninjauan ({historyCount})
           </button>
         </div>
 
@@ -152,7 +152,7 @@ export default function PersetujuanSuperAdminClient({
         {filteredRequests.length === 0 ? (
           <div style={{ textAlign: "center", padding: "3.5rem", color: "#6b7280", backgroundColor: "#f9fafb", borderRadius: "0.75rem", border: "1px dashed #e5e7eb" }}>
             <div style={{ fontSize: "2.2rem", marginBottom: "0.5rem" }}>
-              {activeTab === "pending" ? "🎉" : "📂"}
+              {activeTab === "pending" ? "" : ""}
             </div>
             <h4 style={{ margin: "0 0 0.25rem 0", color: "#374151" }}>
               {activeTab === "pending" ? "Tidak Ada Pengajuan Pending" : "Belum Ada Riwayat Persetujuan"}

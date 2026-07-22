@@ -15,6 +15,7 @@ interface BulkUploadModalProps {
   templateData?: any[][];
   onClose: () => void;
   onUpload: (data: any[]) => Promise<{ success: boolean; message?: string; error?: string }>;
+  onDownloadTemplate?: () => void;
 
   mode?: "generic" | "dapodik";
   existingSchools?: { id: string; name: string; npsn: string | null }[];
@@ -86,6 +87,7 @@ export default function BulkUploadModal({
   onDapodikConfirm,
   onPollStatus,
   inline,
+  onDownloadTemplate,
 }: BulkUploadModalProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [file, setFile] = useState<File | null>(null);
@@ -145,6 +147,10 @@ export default function BulkUploadModal({
   };
 
   const handleDownloadTemplate = () => {
+    if (onDownloadTemplate) {
+      onDownloadTemplate();
+      return;
+    }
     try {
       const worksheetData = [templateHeaders, ...(templateData || [])];
       const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
@@ -321,23 +327,17 @@ export default function BulkUploadModal({
 
   function renderGenericModal() {
     return (
-      <div style={modalBoxStyle("520px", inline)}>
+      <div style={modalBoxStyle("500px", inline)}>
         <ModalHeader title={title} onClose={onClose} disabled={isUploading} />
+        {description && <p style={{ fontSize: "0.9rem", color: "#4b5563", marginBottom: "1.25rem", lineHeight: 1.5 }}>{description}</p>}
 
-        {description && (
-          <p style={{ fontSize: "0.9rem", color: "#4b5563", marginBottom: "1rem", lineHeight: 1.5 }}>
-            {description}
-          </p>
-        )}
-
-        <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "flex-start" }}>
-          <Button
-            variant="outline"
-            onClick={handleDownloadTemplate}
-            disabled={isUploading}
-            style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#1d4ed8", borderColor: "#bfdbfe", backgroundColor: "#eff6ff" }}
-          >
-            ↓ Download Template Excel
+        <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0" }}>
+          <span style={{ fontSize: "0.85rem", color: "#334155" }}>Format file harus mengikuti template standar.</span>
+          <Button type="button" onClick={handleDownloadTemplate} variant="outline" size="sm" style={{ backgroundColor: "white", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download Template
           </Button>
         </div>
 

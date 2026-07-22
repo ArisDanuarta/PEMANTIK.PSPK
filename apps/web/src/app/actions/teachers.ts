@@ -11,6 +11,15 @@ export interface ActionResponse {
   message?: string;
 }
 
+// Normalisasi gender: menerima L, Laki-laki, laki, pria, male, P, Perempuan, wanita, female, dsb
+function normalizeGender(val: any): "L" | "P" {
+  if (!val) return "L";
+  const s = String(val).toLowerCase().trim();
+  if (s === "l" || s.includes("laki") || s === "pria" || s === "male" || s === "m") return "L";
+  return "P";
+}
+
+
 export async function createTeacherAction(
   formData: FormData
 ): Promise<ActionResponse> {
@@ -21,7 +30,7 @@ export async function createTeacherAction(
       return { success: false, error: "Akses ditolak. Bukan data sekolah Anda." };
     }
     const full_name = (formData.get("full_name") as string)?.trim();
-    const email = (formData.get("email") as string)?.trim();
+    const email = (formData.get("email") as string)?.trim() || null;
     const nip = (formData.get("nip") as string)?.trim() || null;
     const gender = (formData.get("gender") as string)?.trim() || null;
     const birth_date = (formData.get("birth_date") as string)?.trim() || null;
@@ -34,19 +43,29 @@ export async function createTeacherAction(
     const is_active = formData.get("is_active") !== "false";
     const class_ids = formData.getAll("class_ids") as string[];
 
-    if (!school_id || !full_name || !email || !gender || !birth_date || !village || !district || !regency || !province || !class_ids || class_ids.length === 0) {
-      return { success: false, error: "Sekolah, Nama, Email, Gender, Tanggal Lahir, Wilayah, dan Daftar Kelas wajib diisi." };
+    if (!school_id || !full_name || !gender || !birth_date || !village || !district || !regency || !province || !class_ids || class_ids.length === 0) {
+      return { success: false, error: "Sekolah, Nama, Gender, Tanggal Lahir, Wilayah, dan Daftar Kelas wajib diisi." };
     }
 
     const supabase = createServerClient();
 
-    // Generate unique username from email
-    const baseUsername = email.split("@")[0].replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-    const username = `guru_${baseUsername}_${Math.floor(Math.random() * 1000)}`;
+    const words = full_name.split(/\s+/).map((w: string) => w.replace(/[^a-zA-Z]/g, "").toLowerCase()).filter((w: string) => w.length > 0);
+    const balineseTitles = new Set(["i", "ni", "ida", "aa", "anak", "agung", "tjokorda", "cokorda", "dewa", "desak", "gusti", "ngakan", "bagus", "ayu", "putu", "wayan", "gede", "gde", "iluh", "luh", "made", "kadek", "nengah", "kdk", "md", "nyoman", "komang", "nym", "kmg", "ketut", "kt"]);
+    let validNames = words.filter((word: string) => !balineseTitles.has(word) && word.length > 1);
+    if (validNames.length === 0) validNames = words;
+    let randomNamePart = "guru";
+    if (validNames.length > 0) {
+      randomNamePart = validNames[Math.floor(Math.random() * validNames.length)].slice(0, 10);
+    }
+    const nipDigits = (nip || "").replace(/[^0-9]/g, "");
+    let digitsPart = nipDigits.length >= 3 ? nipDigits.slice(-3) : Math.floor(100 + Math.random() * 900).toString();
+    const username = `${randomNamePart}${digitsPart}`;
     const defaultPassword = "Password123!";
+    
+    const adminEmail = email || `${username}@pemantik.local`;
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
+      email: adminEmail,
       password: defaultPassword,
       email_confirm: true,
       user_metadata: {
@@ -66,7 +85,7 @@ export async function createTeacherAction(
       role: "teacher",
       school_id,
       nip,
-      gender: gender as any,
+      gender: normalizeGender(gender) as any,
       birth_date,
       village,
       district,
@@ -91,7 +110,7 @@ export async function createTeacherAction(
 
     revalidatePath("/super-admin/guru");
     revalidatePath("/komunitas/guru");
-    return { success: true, message: `Guru berhasil ditambahkan. Email: ${email} | Pass: ${defaultPassword}` };
+    return { success: true, message: `Guru berhasil ditambahkan. Username: ${username} | Pass: ${defaultPassword}` };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan: " + (err.message || String(err)) };
   }
@@ -126,19 +145,20 @@ export async function bulkCreateTeachersAction(
     for (let i = 0; i < dataArray.length; i++) {
       const row = dataArray[i];
       const full_name = row.nama_guru || row.Nama_Guru || row.full_name;
-      const email = row.email || row.Email;
+      const nip = row.nip || row.NIP ? String(row.nip || row.NIP).trim() : null;
+      const email = row.email_guru || row.email || row.Email;
       const schoolName = row.nama_sekolah || row.School_ID || row.school_id;
       const gender = row.jenis_kelamin || row.Gender || row.gender;
-      const village = row.kelurahan || null;
+      const village = row.kelurahan_desa || row.kelurahan || null;
       const district = row.kecamatan || null;
       const regency = row.kabupaten || null;
       const province = row.provinsi || null;
       const inputKelas = row.kelas || row.Kelas || "";
       let birth_date = row.tanggal_lahir || row.Tanggal_Lahir || row.birth_date || null;
 
-      if (!schoolName || !full_name || !email || !gender || !birth_date || !village || !district || !regency || !province || !inputKelas) {
+      if (!schoolName || !full_name || !gender || !birth_date || !village || !district || !regency || !province || !inputKelas) {
         failCount++;
-        errors.push(`Baris ${i + 2} gagal: Kolom nama_guru, email, jenis_kelamin, tanggal_lahir, kelurahan, kecamatan, kabupaten, provinsi, nama_sekolah, dan kelas wajib diisi.`);
+        errors.push(`Baris ${i + 2} gagal: Kolom nama_guru, jenis_kelamin, tanggal_lahir, kelurahan_desa, kecamatan, kabupaten, provinsi, nama_sekolah, dan kelas wajib diisi.`);
         continue;
       }
 
@@ -154,11 +174,22 @@ export async function bulkCreateTeachersAction(
         birth_date = jsDate.toISOString().split("T")[0];
       }
 
-      const baseUsername = String(email).split("@")[0].replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-      const username = `guru_${baseUsername}_${Math.floor(Math.random() * 10000)}`;
+      const words = full_name.split(/\s+/).map((w: string) => w.replace(/[^a-zA-Z]/g, "").toLowerCase()).filter((w: string) => w.length > 0);
+      const balineseTitles = new Set(["i", "ni", "ida", "aa", "anak", "agung", "tjokorda", "cokorda", "dewa", "desak", "gusti", "ngakan", "bagus", "ayu", "putu", "wayan", "gede", "gde", "iluh", "luh", "made", "kadek", "nengah", "kdk", "md", "nyoman", "komang", "nym", "kmg", "ketut", "kt"]);
+      let validNames = words.filter((word: string) => !balineseTitles.has(word) && word.length > 1);
+      if (validNames.length === 0) validNames = words;
+      let randomNamePart = "guru";
+      if (validNames.length > 0) {
+        randomNamePart = validNames[Math.floor(Math.random() * validNames.length)].slice(0, 10);
+      }
+      const nipDigits = (nip || "").replace(/[^0-9]/g, "");
+      let digitsPart = nipDigits.length >= 3 ? nipDigits.slice(-3) : Math.floor(100 + Math.random() * 900).toString();
+      const username = `${randomNamePart}${digitsPart}`;
+      
+      const adminEmail = email || `${username}@pemantik.local`;
       
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email,
+        email: adminEmail,
         password: "Password123!",
         email_confirm: true,
         user_metadata: { full_name, role: "teacher" }
@@ -177,7 +208,7 @@ export async function bulkCreateTeachersAction(
         role: "teacher",
         school_id,
         nip: row.nip ? String(row.nip) : null,
-        gender: (String(gender).toUpperCase() === 'L' ? 'L' : 'P') as any,
+        gender: normalizeGender(gender) as any,
         birth_date: birth_date,
         village: village,
         district: district,

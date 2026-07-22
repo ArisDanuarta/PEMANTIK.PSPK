@@ -287,7 +287,7 @@ export default function IntervensiSuperAdminClient({
               fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
             }}
           >
-            📋 Semua Laporan ({filteredInterventions.length})
+            Semua Laporan ({filteredInterventions.length})
           </button>
           <button
             onClick={() => setActiveTab("graph")}
@@ -298,7 +298,7 @@ export default function IntervensiSuperAdminClient({
               fontWeight: 600, cursor: "pointer", transition: "all 0.2s"
             }}
           >
-            🌐 Knowledge Graph & Analysis
+            Knowledge Graph & Analysis
           </button>
           <button
             onClick={() => setActiveTab("ai_chat")}
@@ -311,7 +311,7 @@ export default function IntervensiSuperAdminClient({
               background: activeTab === "ai_chat" ? "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" : "white"
             }}
           >
-            💬 Tanya Jawab AI
+            Tanya Jawab AI
           </button>
         </div>
 
@@ -326,7 +326,7 @@ export default function IntervensiSuperAdminClient({
             />
           )}
           <Button variant="outline" onClick={() => setShowSettings(true)} style={{ borderColor: "#cbd5e1", color: "#475569" }}>
-            ⚙️ Pengaturan AI
+            Set API AI
           </Button>
         </div>
       </div>
@@ -388,7 +388,7 @@ export default function IntervensiSuperAdminClient({
                               {rm.label}
                             </span>
                             <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#102e50" }}>
-                              {isIndependent ? "⭐ Sekolah Independen" : `🏛️ ${item.communities?.name || "Komunitas"}`}
+                              {isIndependent ? "Sekolah Independen" : `${item.communities?.name || "Komunitas"}`}
                             </span>
                           </div>
                         </td>
@@ -771,7 +771,7 @@ export default function IntervensiSuperAdminClient({
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#0874aa" }}>
-                  🏢 {selectedDetail.communities?.name || "Komunitas Pembina"}
+                  {selectedDetail.communities?.name || "Komunitas Pembina"}
                 </span>
                 <h3 style={{ margin: "0.2rem 0 0 0", color: "#102e50", fontSize: "1.3rem" }}>
                   {selectedDetail.schools?.name || "Sekolah"}
