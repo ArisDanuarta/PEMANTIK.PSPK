@@ -261,6 +261,10 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
                   <tr key={row.id}>
                     <td>
                       <div style={{ fontWeight: 600, color: "#102e50" }}>{row.name}</div>
+                      <div style={{ fontSize: "0.8rem", color: "#2563eb", fontWeight: 500 }}>
+                        {row.jenjang_sekolah ? `${row.jenjang_sekolah} ` : ""}
+                        {row.status_sekolah ? `${row.status_sekolah}` : ""} 
+                      </div>
                       <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>Kepsek: {row.principal_name || "-"}</div>
                     </td>
                     <td>
@@ -276,6 +280,7 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
                       {schoolUser ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
                           <div><span style={{ color: "#6c757d" }}>User:</span> <strong>{schoolUser.username}</strong></div>
+                          {row.email && <div><span style={{ color: "#6c757d" }}>Email:</span> {row.email}</div>}
                           <div><span style={{ color: "#6c757d" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code> <span style={{ fontSize: "0.7rem", color: "#adb5bd" }}>(bawaan)</span></div>
                         </div>
                       ) : (

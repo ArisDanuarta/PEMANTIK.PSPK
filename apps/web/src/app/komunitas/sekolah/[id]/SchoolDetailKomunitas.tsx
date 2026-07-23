@@ -495,6 +495,18 @@ export default function SchoolDetailKomunitas({
                 <strong style={{ color: "#111827" }}>{school.npsn || "-"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
+                <span style={{ color: "#6c757d" }}>Email:</span>
+                <strong style={{ color: "#111827" }}>{school.email || "-"}</strong>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
+                <span style={{ color: "#6c757d" }}>Status:</span>
+                <strong style={{ color: "#111827" }}>{school.status_sekolah || "-"}</strong>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
+                <span style={{ color: "#6c757d" }}>Jenjang:</span>
+                <strong style={{ color: "#111827" }}>{school.jenjang_sekolah || "-"}</strong>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
                 <span style={{ color: "#6c757d" }}>Kepala Sekolah:</span>
                 <strong style={{ color: "#111827" }}>{school.principal_name || "-"}</strong>
               </div>

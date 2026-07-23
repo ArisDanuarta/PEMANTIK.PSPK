@@ -58,11 +58,16 @@ export async function createCommunityAction(
     name,
     code,
     address,
+    status_kepemilikan,
+    village,
+    district,
+    city: regency,
+    province,
     contact_name: contactName,
     contact_phone: contactPhone,
     contact_email: contactEmail,
     is_active: isActive,
-    allowed_categories: null, // Default: semua paket ujian diizinkan
+    allowed_categories: null,
   } as any).select().single();
 
   if (error || !newComm) {
@@ -152,6 +157,11 @@ export async function updateCommunityAction(
       .update({
         name,
         address,
+        status_kepemilikan,
+        village,
+        district,
+        city: regency,
+        province,
         contact_name: contactName,
         contact_phone: contactPhone,
         contact_email: contactEmail,
@@ -273,6 +283,11 @@ export async function bulkCreateCommunitiesAction(
         name,
         code,
         address,
+        status_kepemilikan,
+        village,
+        district,
+        city: regency,
+        province,
         contact_name: contactName,
         contact_phone: contactPhone,
         contact_email: contactEmail,

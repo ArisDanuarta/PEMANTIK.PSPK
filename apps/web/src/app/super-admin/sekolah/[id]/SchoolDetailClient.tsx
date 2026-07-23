@@ -21,6 +21,9 @@ interface School {
   district: string | null;
   village: string | null;
   address: string | null;
+  email?: string | null;
+  status_sekolah?: string | null;
+  jenjang_sekolah?: string | null;
   principal_name: string | null;
   contact_phone: string | null;
   import_source: string | null;
@@ -482,6 +485,9 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                 <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#102e50", marginBottom: "1rem" }}>Informasi Sekolah</h3>
                 <InfoRow label="Nama" value={school.name} />
                 <InfoRow label="NPSN" value={school.npsn || "-"} mono />
+                <InfoRow label="Email" value={school.email || "-"} />
+                <InfoRow label="Status" value={school.status_sekolah || "-"} />
+                <InfoRow label="Jenjang" value={school.jenjang_sekolah || "-"} />
                 <InfoRow label="Kepala Sekolah" value={school.principal_name || "-"} />
                 <InfoRow label="Telepon" value={school.contact_phone || "-"} />
                 <InfoRow label="Alamat" value={[school.village, school.district, school.city, school.province].filter(Boolean).join(", ") || "-"} />

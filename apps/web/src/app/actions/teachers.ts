@@ -11,7 +11,6 @@ export interface ActionResponse {
   message?: string;
 }
 
-// Normalisasi gender: menerima L, Laki-laki, laki, pria, male, P, Perempuan, wanita, female, dsb
 function normalizeGender(val: any): "L" | "P" {
   if (!val) return "L";
   const s = String(val).toLowerCase().trim();
@@ -85,6 +84,7 @@ export async function createTeacherAction(
       role: "teacher",
       school_id,
       nip,
+      email: email || null,
       gender: normalizeGender(gender) as any,
       birth_date,
       village,
@@ -99,13 +99,14 @@ export async function createTeacherAction(
       return { success: false, error: "Gagal menyimpan data guru: " + userError.message };
     }
 
-    // Update classes since class_ids is provided and validated
+    // Simpan relasi kelas di class_teachers (many-to-many)
     if (class_ids && class_ids.length > 0) {
-      const { error: classErr } = await supabase
-        .from("classes")
-        .update({ teacher_id: authData.user.id })
-        .in("id", class_ids);
-      if (classErr) console.error("Failed to update classes for teacher:", classErr);
+      // Set wali kelas utama (teacher_id) di kelas pertama
+      await supabase.from("classes").update({ teacher_id: authData.user.id }).eq("id", class_ids[0]);
+      // Simpan semua relasi ke class_teachers
+      const classTeacherRows = class_ids.map((cid: string) => ({ class_id: cid, teacher_id: authData.user.id }));
+      const { error: ctErr } = await (supabase as any).from("class_teachers").insert(classTeacherRows);
+      if (ctErr) console.error("Failed to insert class_teachers:", ctErr);
     }
 
     revalidatePath("/super-admin/guru");
@@ -208,6 +209,7 @@ export async function bulkCreateTeachersAction(
         role: "teacher",
         school_id,
         nip: row.nip ? String(row.nip) : null,
+        email: email || null,
         gender: normalizeGender(gender) as any,
         birth_date: birth_date,
         village: village,
@@ -224,7 +226,7 @@ export async function bulkCreateTeachersAction(
         continue;
       }
 
-      // Process Kelas (Wajib)
+      // Process Kelas - simpan ke class_teachers (many-to-many)
       if (inputKelas) {
         const classNames = String(inputKelas).split(",").map(c => c.trim().toLowerCase());
         const matchedClassIds = (allClasses || [])
@@ -232,9 +234,12 @@ export async function bulkCreateTeachersAction(
            .map(c => c.id);
 
         if (matchedClassIds.length > 0) {
-           await supabase.from("classes").update({ teacher_id: authData.user.id }).in("id", matchedClassIds);
+           // Set wali kelas utama di kelas pertama
+           await supabase.from("classes").update({ teacher_id: authData.user.id }).eq("id", matchedClassIds[0]);
+           // Simpan semua ke class_teachers
+           const classTeacherRows = matchedClassIds.map((cid: string) => ({ class_id: cid, teacher_id: authData.user.id }));
+           await (supabase as any).from("class_teachers").insert(classTeacherRows);
         } else {
-           // Optionally, we could record a warning that classes were not found
            console.warn(`Kelas [${inputKelas}] tidak ditemukan untuk sekolah ID: ${school_id}`);
         }
       }

@@ -24,6 +24,7 @@ interface Community {
   village?: string | null;
   district?: string | null;
   regency?: string | null;
+  city?: string | null;
   province?: string | null;
   contact_name: string | null;
   contact_phone: string | null;
@@ -215,7 +216,12 @@ export default function CommunitiesManager({
       render: (_: any, row: Community) => (
         <div>
           <div style={{ fontWeight: 600, color: "#102e50" }}>{row.name}</div>
-          <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>{row.address || "Tidak ada alamat"}</div>
+          <div style={{ fontSize: "0.8rem", color: "#2563eb", fontWeight: 500 }}>
+            {row.status_kepemilikan ? `${row.status_kepemilikan}` : ""}
+          </div>
+          <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>
+            {[row.village, row.district, row.regency || row.city, row.province].filter(Boolean).join(", ") || row.address || "Tidak ada alamat"}
+          </div>
         </div>
       ),
     },
