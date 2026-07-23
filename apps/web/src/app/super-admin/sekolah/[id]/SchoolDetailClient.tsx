@@ -909,7 +909,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
               <label className="form-label">Kabupaten / Kota *</label>
-              <input name="regency" className="form-input" required defaultValue={editingTeacher?.regency || ""} style={{ width: "100%" }} />
+              <input name="regency" className="form-input" required defaultValue={editingTeacher?.city || ""} style={{ width: "100%" }} />
             </div>
             <div>
               <label className="form-label">Provinsi *</label>
@@ -1153,7 +1153,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
               <label className="form-label">Wali Kelas (Opsional)</label>
-              <select name="teacher_id" className="form-input" defaultValue={editingClass?.teacher_id || ""} style={{ width: "100%" }}>
+              <select name="teacher_id" className="form-input" defaultValue={editingClass?.users?.[0]?.id || editingClass?.teacher_id || ""} style={{ width: "100%" }}>
                 <option value="">-- Pilih Wali Kelas --</option>
                 {teachers.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
               </select>

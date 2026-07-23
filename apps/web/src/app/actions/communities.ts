@@ -260,19 +260,28 @@ export async function bulkCreateCommunitiesAction(
 
     for (let i = 0; i < dataArray.length; i++) {
       const row = dataArray[i];
-      const name = row.nama_komunitas || row.Nama_Komunitas || row.name;
-      const contactEmail = row.email_komunitas || row.Email_Komunitas || row.contact_email || null;
-      const status_kepemilikan = row.status_kepemilikan || row.Status_Kepemilikan || null;
-      const contactName = row.nama_penanggung_jawab || row.Nama_Penanggung_Jawab || null;
-      const contactPhone = row.nomor_telepon || row.Nomor_Telepon || null;
-      const village = row.kelurahan_desa || row.Kelurahan_Desa || null;
-      const district = row.kecamatan || row.Kecamatan || null;
-      const regency = row.kabupaten || row.Kabupaten || null;
-      const province = row.provinsi || row.Provinsi || null;
+      // Key sudah lowercase setelah normalisasi BulkUploadModal
+      const name = String(row.nama_komunitas || "").trim();
+      const contactEmail = String(row.email_komunitas || "").trim() || null;
+      const status_kepemilikan = String(row.status_kepemilikan || "").trim() || null;
+      const contactName = String(row.nama_penanggung_jawab || "").trim() || null;
+      const contactPhone = String(row.nomor_telepon || "").trim() || null;
+      const village = String(row.kelurahan_desa || "").trim();
+      const district = String(row.kecamatan || "").trim();
+      const regency = String(row.kabupaten || "").trim();
+      const province = String(row.provinsi || "").trim();
 
-      if (!name || !status_kepemilikan || !village || !district || !regency || !province) {
+      const missingCols: string[] = [];
+      if (!name) missingCols.push("nama_komunitas");
+      if (!status_kepemilikan) missingCols.push("status_kepemilikan");
+      if (!village) missingCols.push("kelurahan_desa");
+      if (!district) missingCols.push("kecamatan");
+      if (!regency) missingCols.push("kabupaten");
+      if (!province) missingCols.push("provinsi");
+
+      if (missingCols.length > 0) {
         failCount++;
-        errors.push(`Baris ${i + 2} gagal: Kolom nama_komunitas, status_kepemilikan, kelurahan_desa, kecamatan, kabupaten, dan provinsi wajib diisi.`);
+        errors.push(`Baris ${i + 2} gagal: Kolom berikut kosong: ${missingCols.join(", ")}.`);
         continue;
       }
 

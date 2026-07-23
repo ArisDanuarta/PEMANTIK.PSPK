@@ -187,7 +187,15 @@ export default function BulkUploadModal({
         const worksheet = workbook.Sheets[targetSheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
         if (jsonData.length === 0) throw new Error("File Excel / CSV kosong atau format tidak valid.");
-        const plainData = JSON.parse(JSON.stringify(jsonData));
+        const plainData = JSON.parse(JSON.stringify(jsonData)).map((row: any) => {
+          const normalizedRow: any = {};
+          for (const key in row) {
+            if (Object.prototype.hasOwnProperty.call(row, key)) {
+              normalizedRow[key.trim().toLowerCase()] = row[key];
+            }
+          }
+          return normalizedRow;
+        });
         const result = await onUpload(plainData);
         if (!result.success) throw new Error(result.error || result.message || "Gagal mengunggah data.");
       } catch (err: any) {

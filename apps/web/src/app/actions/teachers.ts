@@ -3,6 +3,7 @@
 import { createServerClient } from "@pemantik/supabase";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { parseFlexibleDate, normalizeIdentityNumber, normalizeSearchString, normalizeText } from "@/lib/normalizationUtils";
 import { requireAuth } from "./auth";
 
 export interface ActionResponse {
@@ -89,7 +90,7 @@ export async function createTeacherAction(
       birth_date,
       village,
       district,
-      regency,
+      city: regency,
       province,
       is_active
     } as any);
@@ -134,7 +135,7 @@ export async function bulkCreateTeachersAction(
       query = query.eq("community_id", authCommunityId);
     }
     const { data: schoolsData } = await query;
-    const schoolsMap = new Map((schoolsData || []).map((s: any) => [s.name.toLowerCase().trim(), s.id]));
+    const schoolsMap = new Map((schoolsData || []).map((s: any) => [normalizeSearchString(s.name), s.id]));
 
     // Fetch all classes
     const { data: allClasses } = await supabase.from("classes").select("id, name, school_id");
@@ -145,37 +146,52 @@ export async function bulkCreateTeachersAction(
 
     for (let i = 0; i < dataArray.length; i++) {
       const row = dataArray[i];
-      const full_name = row.nama_guru || row.Nama_Guru || row.full_name;
-      const nip = row.nip || row.NIP ? String(row.nip || row.NIP).trim() : null;
-      const email = row.email_guru || row.email || row.Email;
-      const schoolName = row.nama_sekolah || row.School_ID || row.school_id;
-      const gender = row.jenis_kelamin || row.Gender || row.gender;
-      const village = row.kelurahan_desa || row.kelurahan || null;
-      const district = row.kecamatan || null;
-      const regency = row.kabupaten || null;
-      const province = row.provinsi || null;
-      const inputKelas = row.kelas || row.Kelas || "";
-      let birth_date = row.tanggal_lahir || row.Tanggal_Lahir || row.birth_date || null;
+      // Key sudah lowercase setelah normalisasi BulkUploadModal
+      const full_name = normalizeText(row.nama_guru);
+      const nip = normalizeIdentityNumber(row.nip) || null;
+      const email = normalizeText(row.email_guru) || null;
+      const schoolName = normalizeSearchString(row.nama_sekolah);
+      const gender = String(row.jenis_kelamin || "").trim();
+      const village = normalizeText(row.kelurahan_desa);
+      const district = normalizeText(row.kecamatan);
+      const regency = normalizeText(row.kabupaten);
+      const province = normalizeText(row.provinsi);
+      const inputKelas = normalizeText(row.kelas);
+      let birth_date = row.tanggal_lahir || null;
 
-      if (!schoolName || !full_name || !gender || !birth_date || !village || !district || !regency || !province || !inputKelas) {
+      const missingCols = [];
+      if (!schoolName) missingCols.push("Nama Sekolah");
+      if (!full_name) missingCols.push("Nama Guru");
+      if (!gender) missingCols.push("Jenis Kelamin");
+      if (!birth_date) missingCols.push("Tanggal Lahir");
+      if (!village) missingCols.push("Kelurahan/Desa");
+      if (!district) missingCols.push("Kecamatan");
+      if (!regency) missingCols.push("Kabupaten/Kota");
+      if (!province) missingCols.push("Provinsi");
+      if (!inputKelas) missingCols.push("Kelas");
+
+      if (missingCols.length > 0) {
         failCount++;
-        errors.push(`Baris ${i + 2} gagal: Kolom nama_guru, jenis_kelamin, tanggal_lahir, kelurahan_desa, kecamatan, kabupaten, provinsi, nama_sekolah, dan kelas wajib diisi.`);
+        errors.push(`Baris ${i + 2} gagal: Kolom berikut kosong atau salah format: ${missingCols.join(", ")}.`);
         continue;
       }
 
-      const school_id = schoolsMap.get(String(schoolName).toLowerCase().trim());
+      const school_id = schoolsMap.get(schoolName);
       if (!school_id) {
          failCount++;
          errors.push(`Baris ${i + 2} gagal: Sekolah "${schoolName}" tidak ditemukan atau bukan binaan komunitas Anda.`);
          continue;
       }
 
-      if (birth_date && typeof birth_date === "number") {
-        const jsDate = new Date(Math.round((birth_date - 25569) * 86400 * 1000));
-        birth_date = jsDate.toISOString().split("T")[0];
+      const parsedDate = parseFlexibleDate(birth_date);
+      if (!parsedDate) {
+        failCount++;
+        errors.push(`Baris ${i + 2} gagal: Format tanggal lahir '${birth_date}' tidak dikenali.`);
+        continue;
       }
+      birth_date = parsedDate;
 
-      const words = full_name.split(/\s+/).map((w: string) => w.replace(/[^a-zA-Z]/g, "").toLowerCase()).filter((w: string) => w.length > 0);
+      const words = (full_name as string).split(/\s+/).map((w: string) => w.replace(/[^a-zA-Z]/g, "").toLowerCase()).filter((w: string) => w.length > 0);
       const balineseTitles = new Set(["i", "ni", "ida", "aa", "anak", "agung", "tjokorda", "cokorda", "dewa", "desak", "gusti", "ngakan", "bagus", "ayu", "putu", "wayan", "gede", "gde", "iluh", "luh", "made", "kadek", "nengah", "kdk", "md", "nyoman", "komang", "nym", "kmg", "ketut", "kt"]);
       let validNames = words.filter((word: string) => !balineseTitles.has(word) && word.length > 1);
       if (validNames.length === 0) validNames = words;
@@ -214,7 +230,7 @@ export async function bulkCreateTeachersAction(
         birth_date: birth_date,
         village: village,
         district: district,
-        regency: regency,
+        city: regency,
         province: province,
         is_active: true
       } as any);
@@ -299,7 +315,7 @@ export async function updateTeacherAction(id: string, formData: FormData) {
       birth_date,
       village,
       district,
-      regency,
+      city: regency,
       province,
       is_active
     } as any).eq("id", id);
@@ -310,10 +326,13 @@ export async function updateTeacherAction(id: string, formData: FormData) {
 
     // Reset classes first (remove teacher from all classes)
     await supabase.from("classes").update({ teacher_id: null }).eq("teacher_id", id);
+    await (supabase as any).from("class_teachers").delete().eq("teacher_id", id);
     
     // Assign new classes
     if (class_ids && class_ids.length > 0) {
       await supabase.from("classes").update({ teacher_id: id }).in("id", class_ids);
+      const classTeacherRows = class_ids.map((cid: string) => ({ class_id: cid, teacher_id: id }));
+      await (supabase as any).from("class_teachers").insert(classTeacherRows);
     }
 
     revalidatePath("/super-admin/guru");

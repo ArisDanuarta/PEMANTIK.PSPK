@@ -322,19 +322,31 @@ export async function bulkCreateSchoolsAction(
 
     for (let i = 0; i < dataArray.length; i++) {
       const row = dataArray[i];
-      const name = row.Nama_Sekolah || row.name || row.nama_sekolah;
-      const province = row.provinsi || row.Provinsi || row.province;
-      const city = row.kabupaten || row.Kota || row.city;
-      const district = row.kecamatan || row.Kecamatan || row.district;
-      const village = row.kelurahan_desa || row.Desa || row.Kelurahan || row.village;
-      const classesStr = row.daftar_kelas || row.Daftar_Kelas || row.classes;
-      const status_sekolah = row.status_sekolah ? String(row.status_sekolah).trim().toLowerCase() : null;
-      const jenjang_sekolah = row.jenjang_sekolah || null;
-      const email_sekolah = row.email_sekolah || null;
-      const npsn = row.npsn || row.NPSN ? String(row.npsn || row.NPSN).trim() : null;
+      // Key sudah lowercase setelah normalisasi BulkUploadModal
+      const name = String(row.nama_sekolah || "").trim();
+      const province = String(row.provinsi || "").trim();
+      const city = String(row.kabupaten || "").trim();
+      const district = String(row.kecamatan || "").trim();
+      const village = String(row.kelurahan_desa || "").trim();
+      const classesStr = String(row.daftar_kelas || "").trim();
+      const status_sekolah = String(row.status_sekolah || "").trim().toLowerCase();
+      const jenjang_sekolah = String(row.jenjang_sekolah || "").trim() || null;
+      const email_sekolah = String(row.email_sekolah || "").trim() || null;
+      const npsn = String(row.npsn || "").trim() || null;
+      const kepala_sekolah = String(row.kepala_sekolah || "").trim() || null;
+      const nomor_telepon = String(row.nomor_telepon || "").trim() || null;
 
-      if (!name || !province || !city || !district || !village || !classesStr) {
-        errors.push(`Baris ${i + 2} gagal: Kolom 'nama_sekolah', 'provinsi', 'kabupaten', 'kecamatan', 'kelurahan_desa', dan 'daftar_kelas' wajib diisi.`);
+      const missingCols: string[] = [];
+      if (!name) missingCols.push("nama_sekolah");
+      if (!province) missingCols.push("provinsi");
+      if (!city) missingCols.push("kabupaten");
+      if (!district) missingCols.push("kecamatan");
+      if (!village) missingCols.push("kelurahan_desa");
+      if (!classesStr) missingCols.push("daftar_kelas");
+      if (!status_sekolah) missingCols.push("status_sekolah");
+
+      if (missingCols.length > 0) {
+        errors.push(`Baris ${i + 2} gagal: Kolom berikut kosong: ${missingCols.join(", ")}.`);
         continue;
       }
 
@@ -365,8 +377,8 @@ export async function bulkCreateSchoolsAction(
         city,
         district,
         village,
-        principal_name: row.kepala_sekolah || row.Nama_Kepsek || row.principal_name || null,
-        contact_phone: row.nomor_telepon || row.Telp || row.contact_phone ? String(row.nomor_telepon || row.Telp || row.contact_phone) : null,
+        principal_name: kepala_sekolah,
+        contact_phone: nomor_telepon,
         is_active: true,
         import_source: "manual", 
       } as any).select().single();

@@ -316,7 +316,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                 </div>
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Kabupaten / Kota *</label>
-                  <input type="text" name="regency" required defaultValue={(editingTeacher as any)?.regency ?? ""} className="form-input" style={{ width: "100%" }} />
+                  <input type="text" name="regency" required defaultValue={(editingTeacher as any)?.city ?? ""} className="form-input" style={{ width: "100%" }} />
                 </div>
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Provinsi *</label>

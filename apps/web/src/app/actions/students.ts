@@ -4,6 +4,7 @@ import { createServerClient } from "@pemantik/supabase";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { requireAuth } from "./auth";
+import { parseFlexibleDate, normalizeIdentityNumber, normalizeSearchString, normalizeText, normalizeEducation, normalizeOccupation } from "@/lib/normalizationUtils";
 
 export interface ActionResponse {
   success: boolean;
@@ -174,128 +175,141 @@ export async function bulkCreateStudentsAction(
       return { success: false, error: "Data kosong." };
     }
 
-    if (role === "school") {
-      for (const row of dataArray) {
-        const school_id = row.nama_sekolah || row.School_ID || row.school_id;
-        if (school_id !== authSchoolId) {
-          return { success: false, error: "Akses ditolak. Terdapat data milik sekolah lain." };
-        }
-      }
-    }
-
     const supabase = createServerClient();
     
-    let query = supabase.from("schools").select("id, name, community_id");
+    // Fetch schools for lookup
+    let schoolQuery = supabase.from("schools").select("id, name, community_id");
     if (role === "community" && authCommunityId) {
-      query = query.eq("community_id", authCommunityId);
+      schoolQuery = schoolQuery.eq("community_id", authCommunityId);
     }
-    const { data: schoolsData } = await query;
-    const schoolsMap = new Map((schoolsData || []).map((s: any) => [s.name.toLowerCase().trim(), s.id]));
+    if (role === "school" && authSchoolId) {
+      schoolQuery = schoolQuery.eq("id", authSchoolId);
+    }
+    const { data: schoolsData } = await schoolQuery;
+    const schoolsMap = new Map((schoolsData || []).map((s: any) => [normalizeSearchString(s.name), s.id]));
+
+    // Fetch all classes in one query
+    const schoolIds = (schoolsData || []).map((s: any) => s.id);
+    const { data: allClassesData } = await supabase.from("classes").select("id, name, school_id").in("school_id", schoolIds.length > 0 ? schoolIds : ["_none_"]);
+    const classesData = allClassesData || [];
 
     const [ { data: variables }, { data: thresholds } ] = await Promise.all([
       (supabase as any).from("ses_variables").select("*"),
       (supabase as any).from("ses_thresholds").select("*").limit(1).single()
     ]);
     
-    const rowsToInsert = [];
-    const createdCredentials = [];
+    const rowsToInsert: any[] = [];
 
     for (let i = 0; i < dataArray.length; i++) {
       const row = dataArray[i];
       
-      const full_name = row.nama_siswa || row.Nama_Siswa || row.full_name;
-      const rawGender = row.jenis_kelamin || row.Gender || row.gender;
-      const schoolName = row.nama_sekolah || row.School_ID || row.school_id;
-      const className = row.kelas || row.pilih_kelas || row.kode_kelas || row.Kelas;
-      const village = row.kelurahan_desa || row.kelurahan || row.Kelurahan || null;
-      const district = row.kecamatan || row.Kecamatan || null;
-      const city = row.kabupaten || row.Kabupaten || null;
-      const province = row.provinsi || row.Provinsi || null;
-      const father_edu_text = row.pendidikan_ayah || row.Pendidikan_Ayah;
-      const mother_edu_text = row.pendidikan_ibu || row.Pendidikan_Ibu;
-      const father_job_text = row.pekerjaan_ayah || row.Pekerjaan_Ayah;
-      const mother_job_text = row.pekerjaan_ibu || row.Pekerjaan_Ibu;
-      let birth_date = row.tanggal_lahir || row.Tanggal_Lahir || row.birth_date || null;
+      // Baca semua kolom (key sudah lowercase setelah normalisasi BulkUploadModal)
+      const full_name = normalizeText(row.nama_siswa);
+      const rawGender = String(row.jenis_kelamin || "").trim();
+      const schoolName = normalizeSearchString(row.nama_sekolah);
+      const className = normalizeSearchString(row.kelas);
+      const village = normalizeText(row.kelurahan_desa);
+      const district = normalizeText(row.kecamatan);
+      const city = normalizeText(row.kabupaten);
+      const province = normalizeText(row.provinsi);
+      const father_edu_text = normalizeEducation(row.pendidikan_ayah);
+      const mother_edu_text = normalizeEducation(row.pendidikan_ibu);
+      const father_job_text = normalizeOccupation(row.pekerjaan_ayah);
+      const mother_job_text = normalizeOccupation(row.pekerjaan_ibu);
+      let birth_date = row.tanggal_lahir || null;
       
-      if (!schoolName || !className || !full_name || !rawGender || !birth_date || !father_edu_text || !mother_edu_text || !father_job_text || !mother_job_text || !village || !district || !city || !province) {
-        return { success: false, error: `Baris ${i + 2} gagal: Pastikan semua kolom Wajib telah diisi sesuai petunjuk.` };
+      // NISN & NPSN bersifat opsional
+      const nisn = normalizeIdentityNumber(row.nisn) || null;
+      const npsn = normalizeIdentityNumber(row.npsn) || null;
+      
+      // Validasi kolom wajib
+      const missingColumns = [];
+      if (!full_name) missingColumns.push("nama_siswa");
+      if (!rawGender) missingColumns.push("jenis_kelamin");
+      if (!birth_date) missingColumns.push("tanggal_lahir");
+      if (!schoolName) missingColumns.push("nama_sekolah");
+      if (!className) missingColumns.push("kelas");
+      if (!father_edu_text) missingColumns.push("pendidikan_ayah");
+      if (!mother_edu_text) missingColumns.push("pendidikan_ibu");
+      if (!father_job_text) missingColumns.push("pekerjaan_ayah");
+      if (!mother_job_text) missingColumns.push("pekerjaan_ibu");
+      if (!village) missingColumns.push("kelurahan_desa");
+      if (!district) missingColumns.push("kecamatan");
+      if (!city) missingColumns.push("kabupaten");
+      if (!province) missingColumns.push("provinsi");
+
+      if (missingColumns.length > 0) {
+        return { success: false, error: `Baris ${i + 2} gagal: Kolom berikut kosong atau tidak dikenali: ${missingColumns.join(", ")}.` };
       }
 
-      // Normalisasi gender dengan aman
+      // Normalisasi gender
       const gender = normalizeGenderToEnum(rawGender);
 
-      const school_id = schoolsMap.get(String(schoolName).toLowerCase().trim());
+      // Cari sekolah
+      const school_id = schoolsMap.get(schoolName);
       if (!school_id) {
-         return { success: false, error: `Baris ${i + 2} gagal: Sekolah "${schoolName}" tidak ditemukan atau bukan binaan komunitas Anda.` };
+         return { success: false, error: `Baris ${i + 2} gagal: Sekolah "${row.nama_sekolah}" tidak ditemukan di sistem.` };
       }
 
-      const { data: classesData } = await supabase.from("classes").select("id, name").eq("school_id", school_id);
-      const matchedClass = (classesData || []).find((c: any) => c.name.toLowerCase() === String(className).toLowerCase().trim());
-      
+      // Cari kelas (dari data yang sudah di-fetch sebelumnya)
+      const matchedClass = classesData.find((c: any) => c.school_id === school_id && normalizeSearchString(c.name) === className);
       if (!matchedClass) {
-        return { success: false, error: `Baris ${i + 2} gagal: Kelas "${className}" tidak ditemukan pada sekolah tersebut.` };
+        return { success: false, error: `Baris ${i + 2} gagal: Kelas "${row.kelas}" tidak ditemukan pada sekolah "${row.nama_sekolah}".` };
       }
       const class_id = matchedClass.id;
 
-      if (birth_date && typeof birth_date === "number") {
-        const jsDate = new Date(Math.round((birth_date - 25569) * 86400 * 1000));
-        birth_date = jsDate.toISOString().split("T")[0];
+      // Parse tanggal
+      const parsedDate = parseFlexibleDate(birth_date);
+      if (!parsedDate) {
+        return { success: false, error: `Baris ${i + 2} gagal: Format tanggal lahir '${birth_date}' tidak dikenali. Gunakan format DD-MM-YYYY atau YYYY-MM-DD.` };
       }
+      birth_date = parsedDate;
 
+      // Kalkulasi SES
       let computedSesClass = null;
       let father_education_id = null;
       let mother_education_id = null;
       let father_occupation_id = null;
       let mother_occupation_id = null;
 
-      if (father_edu_text || mother_edu_text || father_job_text || mother_job_text) {
-        if (variables && thresholds) {
-          let score = 0;
-          const mapVariable = (name: string, type: string) => {
-            if (!name) return null;
-            const matchName = String(name).trim().toLowerCase();
-            const v = variables.find((x: any) => x.name.toLowerCase() === matchName && x.type === type);
-            if (v) {
-              score += v.score;
-              return v.id;
-            }
-            return null;
-          };
+      if (variables && thresholds) {
+        let score = 0;
+        const mapVariable = (name: string | null, type: string) => {
+          if (!name) return null;
+          const matchName = String(name).trim().toLowerCase();
+          const v = variables.find((x: any) => normalizeSearchString(x.name) === matchName && x.type === type);
+          if (v) { score += v.score; return v.id; }
+          return null;
+        };
 
-          father_education_id = mapVariable(father_edu_text, "education");
-          mother_education_id = mapVariable(mother_edu_text, "education");
-          father_occupation_id = mapVariable(father_job_text, "occupation");
-          mother_occupation_id = mapVariable(mother_job_text, "occupation");
+        father_education_id = mapVariable(father_edu_text, "education");
+        mother_education_id = mapVariable(mother_edu_text, "education");
+        father_occupation_id = mapVariable(father_job_text, "occupation");
+        mother_occupation_id = mapVariable(mother_job_text, "occupation");
 
-          if (score <= thresholds.low_max) {
-            computedSesClass = "bawah";
-          } else if (score <= thresholds.middle_max) {
-            computedSesClass = "menengah";
-          } else {
-            computedSesClass = "atas";
-          }
-        }
+        if (score <= thresholds.low_max) computedSesClass = "bawah";
+        else if (score <= thresholds.middle_max) computedSesClass = "menengah";
+        else computedSesClass = "atas";
       }
 
+      // Generate credentials
       const pin = generatePin();
       const pin_hash = bcrypt.hashSync(pin, 10);
-      const identifier = row.nisn || row.NISN || row.npsn || row.NPSN || null;
-      const username = generateUsername(full_name, identifier);
-
-      createdCredentials.push({ nama: full_name, username, pin });
+      const identifier = nisn || npsn || null;
+      const username = generateUsername(full_name as string, identifier);
       
       rowsToInsert.push({
         school_id,
         class_id,
-        nisn: row.nisn || null,
+        nisn,
         full_name,
-        gender: gender as any, // Terjamin masuk sebagai L atau P
-        birth_date: birth_date,
+        gender: gender as any,
+        birth_date,
         ses_class: computedSesClass as any,
-        village: village,
-        district: district,
-        city: city,
-        province: province,
+        village,
+        district,
+        city,
+        province,
         father_education_id,
         mother_education_id,
         father_occupation_id,
@@ -314,6 +328,7 @@ export async function bulkCreateStudentsAction(
 
     revalidatePath("/super-admin/siswa");
     revalidatePath("/komunitas/siswa");
+    revalidatePath("/sekolah/siswa");
     return { 
       success: true, 
       message: `Berhasil mengimpor ${rowsToInsert.length} siswa.` 

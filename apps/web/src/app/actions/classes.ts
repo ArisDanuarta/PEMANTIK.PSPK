@@ -40,17 +40,24 @@ export async function createClassAction(formData: FormData): Promise<ActionRespo
       return { success: false, error: `Kelas dengan nama "${name}" sudah ada di sekolah ini.` };
     }
 
-    const { error } = await supabase.from("classes").insert({
+    const { data: newClass, error } = await supabase.from("classes").insert({
       school_id,
       name,
       grade,
       teacher_id,
       academic_year: academic_year || `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
       is_active: true,
-    });
+    }).select("id").single();
 
-    if (error) {
-      return { success: false, error: "Gagal membuat kelas: " + error.message };
+    if (error || !newClass) {
+      return { success: false, error: "Gagal membuat kelas: " + (error?.message || "Unknown error") };
+    }
+
+    if (teacher_id) {
+      await (supabase as any).from("class_teachers").insert({
+        class_id: newClass.id,
+        teacher_id
+      });
     }
 
     revalidatePath("/sekolah/kelas");
@@ -107,6 +114,14 @@ export async function updateClassAction(id: string, formData: FormData): Promise
 
     if (error) {
       return { success: false, error: "Gagal memperbarui kelas: " + error.message };
+    }
+
+    await (supabase as any).from("class_teachers").delete().eq("class_id", id);
+    if (teacher_id) {
+      await (supabase as any).from("class_teachers").insert({
+        class_id: id,
+        teacher_id
+      });
     }
 
     revalidatePath("/sekolah/kelas");

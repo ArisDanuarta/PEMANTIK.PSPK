@@ -16,8 +16,9 @@ interface ClassRow {
   grade: number;
   academic_year: string | null;
   is_active: boolean;
-  users: { id: string; full_name: string } | null;
+  users: { id: string; full_name: string }[] | null;
   students: { count: number }[];
+  teacher_id?: string | null;
 }
 
 interface Teacher {
@@ -51,7 +52,7 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
   const filtered = classes.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      (c.users?.full_name ?? "").toLowerCase().includes(search.toLowerCase())
+      (c.users?.[0]?.full_name ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   const handleOpenAdd = () => { setEditingClass(null); setIsModalOpen(true); };
@@ -202,8 +203,8 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
                     </span>
                   </td>
                   <td>
-                    {cls.users ? (
-                      <div style={{ fontSize: "0.875rem" }}>{cls.users.full_name}</div>
+                    {cls.users && cls.users.length > 0 ? (
+                      <div style={{ fontSize: "0.875rem" }}>{cls.users[0].full_name}</div>
                     ) : (
                       <span style={{ color: "#adb5bd", fontSize: "0.8rem", fontStyle: "italic" }}>Belum ditugaskan</span>
                     )}
@@ -264,7 +265,7 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
                 </div>
                 <div>
                   <label className="form-label">Guru Pengampu</label>
-                  <select name="teacher_id" className="form-input" defaultValue={editingClass?.users?.id ?? ""}>
+                  <select name="teacher_id" className="form-input" defaultValue={editingClass?.users?.[0]?.id || editingClass?.teacher_id || ""}>
                     <option value="">- Pilih Guru (opsional) -</option>
                     {teachers.map((t) => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                   </select>
