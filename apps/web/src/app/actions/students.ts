@@ -10,6 +10,7 @@ export interface ActionResponse {
   success: boolean;
   error?: string;
   message?: string;
+  insertedIds?: string[];
 }
 
 function generatePin(): string {
@@ -320,9 +321,55 @@ export async function bulkCreateStudentsAction(
       });
     }
 
-    const { error } = await supabase.from("students").insert(rowsToInsert as any[]);
+    // CEK DUPLIKASI NISN DI DALAM FILE (BATCH)
+    const nisnSet = new Set<string>();
+    for (let i = 0; i < rowsToInsert.length; i++) {
+      const row = rowsToInsert[i];
+      if (row.nisn) {
+        const key = `${row.school_id}_${row.nisn}`;
+        if (nisnSet.has(key)) {
+          return { success: false, error: `Gagal: NISN "${row.nisn}" (baris ${i + 2}) duplikat dalam file. NISN harus unik per sekolah atau kosongkan jika tidak ada.` };
+        }
+        nisnSet.add(key);
+      }
+    }
+
+    // CEK DAN PERBAIKI DUPLIKASI USERNAME
+    // 1. Pastikan unik di dalam batch itu sendiri
+    const batchUsernames = new Set<string>();
+    for (const row of rowsToInsert) {
+      while (batchUsernames.has(row.username)) {
+        // Jika duplikat di dalam batch, tambahkan angka random
+        row.username = row.username + Math.floor(Math.random() * 10).toString();
+      }
+      batchUsernames.add(row.username);
+    }
+
+    // 2. Pastikan unik terhadap database
+    const usernamesToTry = rowsToInsert.map(r => r.username);
+    const { data: existingUsers } = await supabase
+      .from("students")
+      .select("username")
+      .in("username", usernamesToTry);
+    
+    if (existingUsers && existingUsers.length > 0) {
+      const existingSet = new Set(existingUsers.map(u => u.username));
+      for (const row of rowsToInsert) {
+        while (existingSet.has(row.username)) {
+          // Jika username sudah ada di DB, tambahkan angka random dan cek lagi
+          row.username = row.username + Math.floor(Math.random() * 10).toString();
+        }
+        // Update Set agar row berikutnya tidak bentrok dengan username baru ini
+        existingSet.add(row.username);
+      }
+    }
+
+    const { data, error } = await supabase.from("students").insert(rowsToInsert as any[]).select("id");
 
     if (error) {
+      if (error.message?.includes("idx_students_nisn_school")) {
+        return { success: false, error: "Gagal: Terdapat NISN yang duplikat atau sudah terdaftar di sekolah ini. NISN harus unik per siswa atau kosongkan jika tidak ada." };
+      }
       return { success: false, error: "Gagal memproses bulk insert: " + error.message };
     }
 
@@ -331,7 +378,8 @@ export async function bulkCreateStudentsAction(
     revalidatePath("/sekolah/siswa");
     return { 
       success: true, 
-      message: `Berhasil mengimpor ${rowsToInsert.length} siswa.` 
+      message: `Berhasil mengimpor ${rowsToInsert.length} siswa.`,
+      insertedIds: data?.map(d => d.id) || []
     };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan sistem: " + err.message };
@@ -472,5 +520,23 @@ export async function resetStudentPasswordAction(studentId: string): Promise<Act
     return { success: true, message: `PIN berhasil di-reset menjadi ${pin}` };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan sistem: " + (err.message || String(err)) };
+  }
+}
+
+export async function bulkDeleteStudentsAction(ids: string[]) {
+  const { role } = await requireAuth(["super_admin", "school", "community"]);
+  if (role !== "super_admin" && role !== "school" && role !== "community") {
+    return { success: false, error: "Unauthorized" };
+  }
+  if (!ids || ids.length === 0) return { success: true };
+  
+  try {
+    const supabase = createServerClient();
+    const { error } = await supabase.from("students").delete().in("id", ids);
+    if (error) throw error;
+    
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
 }

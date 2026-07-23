@@ -10,6 +10,7 @@ import {
   deleteStudentAction,
   resetStudentPasswordAction,
   bulkCreateStudentsAction,
+  bulkDeleteStudentsAction,
 } from "@/app/actions/students";
 import { requestRetakeAction } from "@/app/actions/retake-requests";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
@@ -143,6 +144,10 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
     const enriched = rows.map((r) => ({ ...r, school_id: schoolId }));
     const res = await bulkCreateStudentsAction(enriched);
     return res;
+  };
+
+  const handleRollback = async (ids: string[]) => {
+    await bulkDeleteStudentsAction(ids);
   };
 
   const handleOpenRetake = (s: StudentRow) => {
@@ -327,6 +332,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
         <BulkUploadModal
           onClose={() => setIsBulkModalOpen(false)}
           onUpload={handleBulkUpload}
+          onRollback={handleRollback}
           templateHeaders={EXCEL_COLUMNS}
           title="Import Anak via Excel"
           templateFileName="template_siswa_sekolah.xlsx"

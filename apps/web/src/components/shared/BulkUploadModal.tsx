@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@pemantik/ui";
 import * as XLSX from "xlsx";
+import PemantikLogoProgress from "./Unitprogressbar";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -14,7 +15,8 @@ interface BulkUploadModalProps {
   templateHeaders: string[];
   templateData?: any[][];
   onClose: () => void;
-  onUpload: (data: any[]) => Promise<{ success: boolean; message?: string; error?: string }>;
+  onUpload: (data: any[]) => Promise<{ success: boolean; message?: string; error?: string; insertedIds?: string[] }>;
+  onRollback?: (ids: string[]) => Promise<void>;
   onDownloadTemplate?: () => void;
 
   mode?: "generic" | "dapodik";
@@ -86,7 +88,8 @@ export default function BulkUploadModal({
   onDapodikParse,
   onDapodikConfirm,
   onPollStatus,
-  inline,
+  inline = false,
+  onRollback,
   onDownloadTemplate,
 }: BulkUploadModalProps) {
   const [isOpen, setIsOpen] = useState(true);
@@ -99,6 +102,9 @@ export default function BulkUploadModal({
   const [dapodikStep, setDapodikStep] = useState<"upload" | "confirm" | "progress" | "result">("upload");
   const [parseToken, setParseToken] = useState<string | null>(null);
   const [parseSummary, setParseSummary] = useState<DapodikParseResponse["summary"] | null>(null);
+  
+  // State untuk Realtime Progress Generic
+  const [genericProgress, setGenericProgress] = useState<{ current: number, total: number } | null>(null);
   const [schoolChoice, setSchoolChoice] = useState<"new" | "existing">("new");
   const [selectedExistingSchoolId, setSelectedExistingSchoolId] = useState("");
   const [confirmedName, setConfirmedName] = useState("");
@@ -253,14 +259,38 @@ export default function BulkUploadModal({
           }
         }
 
-        const result = await onUpload(plainData);
-        if (!result.success) throw new Error(result.error || result.message || "Gagal mengunggah data.");
+        setGenericProgress({ current: 0, total: plainData.length });
+        
+        const CHUNK_SIZE = 50;
+        let processed = 0;
+        let allInsertedIds: string[] = [];
+        
+        for (let i = 0; i < plainData.length; i += CHUNK_SIZE) {
+          const chunk = plainData.slice(i, i + CHUNK_SIZE);
+          const result = await onUpload(chunk);
+          if (!result.success) {
+            // Jika ada data yang sudah terlanjur masuk, dan onRollback disediakan, hapus kembali
+            if (allInsertedIds.length > 0 && onRollback) {
+              await onRollback(allInsertedIds).catch((e) => console.error("Rollback failed:", e));
+            }
+            throw new Error(result.error || result.message || `Gagal mengunggah data (baris ${i+1}). Seluruh baris sebelumnya dibatalkan.`);
+          }
+          
+          if (result.insertedIds) {
+            allInsertedIds = [...allInsertedIds, ...result.insertedIds];
+          }
+          processed += chunk.length;
+          setGenericProgress({ current: Math.min(processed, plainData.length), total: plainData.length });
+        }
 
-
+        // Jika selesai
+        await new Promise(r => setTimeout(r, 600)); // biarkan animasi selesai
+        onClose();
 
       } catch (err: any) {
         setErrorMsg(err.message || "Terjadi kesalahan saat memproses file.");
         setIsUploading(false);
+        setGenericProgress(null);
       }
     };
     reader.onerror = () => {
@@ -399,32 +429,51 @@ export default function BulkUploadModal({
         <ModalHeader title={title} onClose={onClose} disabled={isUploading} />
         {description && <p style={{ fontSize: "0.9rem", color: "#4b5563", marginBottom: "1.25rem", lineHeight: 1.5 }}>{description}</p>}
 
-        <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0" }}>
-          <span style={{ fontSize: "0.85rem", color: "#334155" }}>Format file harus mengikuti template standar.</span>
-          <Button type="button" onClick={handleDownloadTemplate} variant="outline" size="sm" style={{ backgroundColor: "white", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Download Template
-          </Button>
-        </div>
+        {isUploading && genericProgress ? (
+          <div style={{ textAlign: "center", padding: "2rem 0" }}>
+            <PemantikLogoProgress 
+              value={genericProgress.current} 
+              max={genericProgress.total} 
+              size={120} 
+              showLabel={false} 
+            />
+            <h3 style={{ color: "#102e50", marginTop: "1rem", marginBottom: "0.5rem" }}>
+              Generating Akun {genericProgress.current} to {genericProgress.total}
+            </h3>
+            <p style={{ color: "#6b7280", fontSize: "0.9rem" }}>
+              Mohon tunggu, jangan tutup halaman ini.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "0.85rem", color: "#334155" }}>Format file harus mengikuti template standar.</span>
+              <Button type="button" onClick={handleDownloadTemplate} variant="outline" size="sm" style={{ backgroundColor: "white", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Template
+              </Button>
+            </div>
 
-        <div style={{ marginBottom: "1.5rem" }}>
-          {!file ? (
-            <DropZone onFileSelect={(f) => { setFile(f); setErrorMsg(""); }} onDrop={handleDrop} onDragOver={handleDragOver} fileInputRef={fileInputRef} disabled={isUploading} />
-          ) : (
-            <FilePreview file={file} onRemove={() => setFile(null)} disabled={isUploading} />
-          )}
-        </div>
+            <div style={{ marginBottom: "1.5rem" }}>
+              {!file ? (
+                <DropZone onFileSelect={(f) => { setFile(f); setErrorMsg(""); }} onDrop={handleDrop} onDragOver={handleDragOver} fileInputRef={fileInputRef} disabled={isUploading} />
+              ) : (
+                <FilePreview file={file} onRemove={() => setFile(null)} disabled={isUploading} />
+              )}
+            </div>
 
-        {errorMsg && <ErrorBanner message={errorMsg} />}
+            {errorMsg && <ErrorBanner message={errorMsg} />}
 
-        <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
-          <Button variant="outline" onClick={onClose} disabled={isUploading}>Batal</Button>
-          <Button onClick={handleGenericProcessFile} disabled={isUploading || !file} style={{ backgroundColor: "#102e50", color: "white" }}>
-            {isUploading ? "Memproses..." : "Mulai Upload"}
-          </Button>
-        </div>
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
+              <Button variant="outline" onClick={onClose} disabled={isUploading}>Batal</Button>
+              <Button onClick={handleGenericProcessFile} disabled={isUploading || !file} style={{ backgroundColor: "#102e50", color: "white" }}>
+                {isUploading ? "Memproses..." : "Mulai Upload"}
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -646,9 +695,23 @@ export default function BulkUploadModal({
 
         {dapodikStep === "progress" && (
           <div style={{ textAlign: "center", padding: "2rem 0" }}>
-            <div style={{ width: 56, height: 56, border: "4px solid #e5e7eb", borderTopColor: "#102e50", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 1.5rem" }} />
+            {batchStatus ? (
+              <PemantikLogoProgress 
+                value={(batchStatus.success_count || 0) + (batchStatus.fail_count || 0)} 
+                max={batchStatus.total_rows || 1} 
+                size={120} 
+                showLabel={false} 
+              />
+            ) : (
+              <div style={{ width: 56, height: 56, border: "4px solid #e5e7eb", borderTopColor: "#102e50", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 1.5rem" }} />
+            )}
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            <h3 style={{ color: "#102e50", marginBottom: "0.5rem" }}>Sedang mengimpor data...</h3>
+            
+            <h3 style={{ color: "#102e50", marginTop: "1rem", marginBottom: "0.5rem" }}>
+              {batchStatus 
+                ? `Generating Akun ${(batchStatus.success_count || 0) + (batchStatus.fail_count || 0)} to ${batchStatus.total_rows}` 
+                : "Memulai Proses..."}
+            </h3>
             <p style={{ color: "#6b7280", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
               Jangan tutup halaman ini.
             </p>

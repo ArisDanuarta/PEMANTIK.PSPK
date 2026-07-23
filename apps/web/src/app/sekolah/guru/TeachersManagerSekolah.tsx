@@ -9,6 +9,7 @@ import {
   updateTeacherAction,
   deleteTeacherAction,
   bulkCreateTeachersAction,
+  bulkDeleteTeachersAction,
 } from "@/app/actions/teachers";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 
@@ -113,6 +114,10 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
     const enrichedRows = rows.map((row) => ({ ...row, school_id: schoolId }));
     const res = await bulkCreateTeachersAction(enrichedRows);
     return res;
+  };
+
+  const handleRollback = async (ids: string[]) => {
+    await bulkDeleteTeachersAction(ids);
   };
 
   const handleDownloadTemplate = () => {
@@ -236,6 +241,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
         <BulkUploadModal
           onClose={() => setIsBulkModalOpen(false)}
           onUpload={handleBulkUpload}
+          onRollback={handleRollback}
           templateHeaders={EXCEL_COLUMNS}
           title="Import Guru via Excel"
           templateFileName="template_guru_sekolah.xlsx"

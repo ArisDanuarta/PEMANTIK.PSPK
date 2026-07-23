@@ -10,6 +10,7 @@ export interface ActionResponse {
   success: boolean;
   error?: string;
   message?: string;
+  insertedIds?: string[];
 }
 
 function generateRandomString(length = 5) {
@@ -43,7 +44,7 @@ export async function createSchoolAction(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
-    await requireAuth(["super_admin"]);
+    const { role, communityId: authCommunityId } = await requireAuth(["super_admin", "community"]);
     const community_id = (formData.get("community_id") as string)?.trim();
     const name = (formData.get("name") as string)?.trim();
     const npsn = (formData.get("npsn") as string)?.trim() || null;
@@ -67,8 +68,17 @@ export async function createSchoolAction(
     const supabase = createServerClient();
 
     let finalCommunityId: string | null = community_id as string;
-    if (!finalCommunityId || finalCommunityId === "null" || finalCommunityId === "independent") {
-      finalCommunityId = null;
+    if (role === "community") {
+      // Community role can only create schools under their own community
+      finalCommunityId = authCommunityId || null;
+      if (!finalCommunityId) {
+        return { success: false, error: "Akses ditolak. ID Komunitas tidak valid." };
+      }
+    } else {
+      // Super admin
+      if (!finalCommunityId || finalCommunityId === "null" || finalCommunityId === "independent") {
+        finalCommunityId = null;
+      }
     }
 
     // Check NPSN uniqueness if provided
@@ -179,9 +189,19 @@ export async function updateSchoolAction(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
-    const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school"]);
+    const { role, schoolId: authSchoolId, communityId: authCommunityId } = await requireAuth(["super_admin", "school", "community"]);
+    
     if (role === "school" && authSchoolId !== id) {
-      return { success: false, error: "Akses ditolak." };
+      return { success: false, error: "Akses ditolak. Bukan sekolah Anda." };
+    }
+
+    const supabase = createServerClient();
+
+    if (role === "community") {
+      const { data: schoolCheck } = await supabase.from("schools").select("community_id").eq("id", id).single();
+      if (!schoolCheck || schoolCheck.community_id !== authCommunityId) {
+        return { success: false, error: "Akses ditolak. Sekolah ini bukan bagian dari komunitas Anda." };
+      }
     }
     const community_id = (formData.get("community_id") as string)?.trim();
     const name = (formData.get("name") as string)?.trim();
@@ -203,7 +223,6 @@ export async function updateSchoolAction(
     }
     const address = `${village}, ${district}, ${city}, ${province}`;
 
-    const supabase = createServerClient();
 
     let finalCommunityId: string | null = community_id as string;
     if (!finalCommunityId || finalCommunityId === "null" || finalCommunityId === "independent") {
@@ -272,8 +291,15 @@ export async function updateSchoolAction(
 
 export async function deleteSchoolAction(id: string): Promise<ActionResponse> {
   try {
-    await requireAuth(["super_admin"]);
+    const { role, communityId: authCommunityId } = await requireAuth(["super_admin", "community"]);
     const supabase = createServerClient();
+    
+    if (role === "community") {
+      const { data: schoolCheck } = await supabase.from("schools").select("community_id").eq("id", id).single();
+      if (!schoolCheck || schoolCheck.community_id !== authCommunityId) {
+        return { success: false, error: "Akses ditolak. Sekolah ini bukan bagian dari komunitas Anda." };
+      }
+    }
     
     const { data: usersData } = await supabase
       .from("users")
@@ -319,6 +345,7 @@ export async function bulkCreateSchoolsAction(
 
     const errors: string[] = [];
     let successCount = 0;
+    const insertedIds: string[] = [];
 
     for (let i = 0; i < dataArray.length; i++) {
       const row = dataArray[i];
@@ -445,6 +472,7 @@ export async function bulkCreateSchoolsAction(
         }
       }
 
+      insertedIds.push(newSchool.id);
       successCount++;
     }
 
@@ -455,8 +483,11 @@ export async function bulkCreateSchoolsAction(
        return { success: false, error: "Semua baris gagal diimpor. Detail: " + errors.slice(0, 3).join(" | ") + (errors.length > 3 ? "..." : "") };
     }
 
-    const errText = errors.length > 0 ? " | Detail Gagal: " + errors.slice(0, 3).join(" | ") + (errors.length > 3 ? "..." : "") : "";
-    return { success: true, message: `${successCount} Sekolah dan Akun berhasil ditambahkan.` + errText };
+    if (errors.length > 0) {
+       return { success: true, message: `Berhasil mengimpor ${successCount} sekolah. Namun terdapat ${errors.length} baris gagal. Detail: ` + errors.slice(0,3).join(" | "), insertedIds };
+    }
+    
+    return { success: true, message: `Berhasil mengimpor ${successCount} sekolah.`, insertedIds };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan sistem: " + err.message };
   }
@@ -684,8 +715,8 @@ export async function parseDapodikAction(formData: FormData): Promise<ParseDapod
     let parseResult: DapodikParseResult;
     try {
       parseResult = parseDapodikFile(buffer);
-    } catch (parseErr: any) {
-      return { success: false, error: parseErr.message };
+    } catch (err: any) {
+      return { success: false, error: err.message };
     }
 
     const { data: existingSes } = await supabase
@@ -1142,5 +1173,28 @@ export async function importDapodikAction(
     return { success: true, batch_id: batchId };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan sistem: " + err.message };
+  }
+}
+
+export async function bulkDeleteSchoolsAction(ids: string[]) {
+  const { role } = await requireAuth(["super_admin", "community"]);
+  if (role !== "super_admin" && role !== "community") {
+    return { success: false, error: "Unauthorized" };
+  }
+  if (!ids || ids.length === 0) return { success: true };
+  
+  try {
+    const supabase = createServerClient();
+    const { data: users } = await supabase.from("users").select("id").in("school_id", ids);
+    if (users && users.length > 0) {
+      for (const u of users) {
+        await supabase.auth.admin.deleteUser(u.id);
+      }
+    }
+    await supabase.from("schools").delete().in("id", ids);
+    
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
 }

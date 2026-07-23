@@ -11,6 +11,7 @@ import {
   toggleCommunityActiveAction,
   bulkCreateCommunitiesAction,
   deleteCommunityAction,
+  bulkDeleteCommunitiesAction,
 } from "../../actions/communities";
 import * as XLSX from "xlsx";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
@@ -168,15 +169,11 @@ export default function CommunitiesManager({
   };
 
   const handleBulkUpload = async (data: any[]) => {
-    const result = await bulkCreateCommunitiesAction(data);
-    if (result.success) {
-      showSuccessToast("Impor Selesai", result.message || "");
-      setIsBulkModalOpen(false);
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-    }
-    return result;
+    return await bulkCreateCommunitiesAction(data);
+  };
+
+  const handleRollback = async (ids: string[]) => {
+    await bulkDeleteCommunitiesAction(ids);
   };
 
   const handleDownloadTemplate = () => {
@@ -499,6 +496,7 @@ export default function CommunitiesManager({
           templateHeaders={[]}
           onDownloadTemplate={handleDownloadTemplate}
           onUpload={handleBulkUpload}
+          onRollback={handleRollback}
           onClose={() => setIsBulkModalOpen(false)}
         />
       )}

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { Badge, Button, useToast, useConfirm } from "@pemantik/ui";
-import { createSchoolAction, updateSchoolAction, deleteSchoolAction, bulkCreateSchoolsAction, resetSchoolPasswordAction } from "../../actions/schools";
+import { createSchoolAction, updateSchoolAction, deleteSchoolAction, bulkCreateSchoolsAction, resetSchoolPasswordAction, bulkDeleteSchoolsAction } from "../../actions/schools";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import * as XLSX from "xlsx";
 
@@ -156,6 +156,10 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
       setIsBulkModalOpen(false);
     }
     return result;
+  };
+
+  const handleRollback = async (ids: string[]) => {
+    await bulkDeleteSchoolsAction(ids);
   };
 
   const handleDownloadTemplate = () => {
@@ -420,6 +424,7 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
           templateData={[["Contoh SD 1", "20101010", "Jawa Barat", "Bandung", "Coblong", "Dago", "Budi", "08123", "Jl. ABC", "5A, 5B, 6A"]]}
           onClose={() => setIsBulkModalOpen(false)}
           onUpload={handleBulkUpload}
+          onRollback={handleRollback}
         />
       )}
     </div>

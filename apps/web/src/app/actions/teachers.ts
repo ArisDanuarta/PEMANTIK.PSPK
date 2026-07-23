@@ -10,6 +10,7 @@ export interface ActionResponse {
   success: boolean;
   error?: string;
   message?: string;
+  insertedIds?: string[];
 }
 
 function normalizeGender(val: any): "L" | "P" {
@@ -143,6 +144,7 @@ export async function bulkCreateTeachersAction(
     let successCount = 0;
     let failCount = 0;
     const errors: string[] = [];
+    const insertedIds: string[] = [];
 
     for (let i = 0; i < dataArray.length; i++) {
       const row = dataArray[i];
@@ -260,6 +262,7 @@ export async function bulkCreateTeachersAction(
         }
       }
 
+      insertedIds.push(authData.user.id);
       successCount++;
     }
 
@@ -276,7 +279,8 @@ export async function bulkCreateTeachersAction(
 
     return { 
       success: true, 
-      message: `Berhasil mengimpor ${successCount} guru. Gagal: ${failCount} baris.${errText}` 
+      message: `Berhasil mengimpor ${successCount} guru. Gagal: ${failCount} baris.${errText}`,
+      insertedIds
     };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan sistem: " + err.message };
@@ -387,5 +391,23 @@ export async function deleteTeacherAction(id: string) {
     return { success: true, message: "Guru berhasil dihapus." };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan: " + err.message };
+  }
+}
+
+export async function bulkDeleteTeachersAction(ids: string[]) {
+  const { role } = await requireAuth(["super_admin", "school", "community"]);
+  if (role !== "super_admin" && role !== "school" && role !== "community") {
+    return { success: false, error: "Unauthorized" };
+  }
+  if (!ids || ids.length === 0) return { success: true };
+  
+  try {
+    const supabase = createServerClient();
+    for (const id of ids) {
+      await supabase.auth.admin.deleteUser(id);
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
 }

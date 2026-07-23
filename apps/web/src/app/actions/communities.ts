@@ -8,6 +8,7 @@ export interface ActionResponse {
   success: boolean;
   error?: string;
   message?: string;
+  insertedIds?: string[];
 }
 
 export async function createCommunityAction(
@@ -254,9 +255,10 @@ export async function bulkCreateCommunitiesAction(
     }
 
     const supabase = createServerClient();
-    let successCount = 0;
     let failCount = 0;
     const errors: string[] = [];
+    const insertedIds: string[] = [];
+    let successCount = 0;
 
     for (let i = 0; i < dataArray.length; i++) {
       const row = dataArray[i];
@@ -348,6 +350,7 @@ export async function bulkCreateCommunitiesAction(
         continue;
       }
 
+      insertedIds.push(newComm.id);
       successCount++;
     }
 
@@ -359,7 +362,7 @@ export async function bulkCreateCommunitiesAction(
       return { success: false, error: `Gagal mengimpor komunitas. Terdapat ${failCount} baris bermasalah.${errText}` };
     }
 
-    return { success: true, message: `Berhasil mengimpor ${successCount} komunitas. Gagal: ${failCount} baris.${errText}` };
+    return { success: true, message: `Berhasil mengimpor ${successCount} komunitas. Gagal: ${failCount} baris.${errText}`, insertedIds };
   } catch (err: any) {
     console.error("Exception in bulkCreateCommunitiesAction:", err);
     return { success: false, error: "Terjadi kesalahan sistem: " + (err.message || String(err)) };
@@ -417,5 +420,28 @@ export async function deleteCommunityAction(id: string): Promise<ActionResponse>
   } catch (err: any) {
     console.error("Exception in deleteCommunityAction:", err);
     return { success: false, error: "Terjadi kesalahan sistem: " + (err.message || String(err)) };
+  }
+}
+
+export async function bulkDeleteCommunitiesAction(ids: string[]) {
+  const { role } = await requireAuth(["super_admin"]);
+  if (role !== "super_admin") {
+    return { success: false, error: "Unauthorized" };
+  }
+  if (!ids || ids.length === 0) return { success: true };
+  
+  try {
+    const supabase = createServerClient();
+    const { data: users } = await supabase.from("users").select("id").in("community_id", ids);
+    if (users && users.length > 0) {
+      for (const u of users) {
+        await supabase.auth.admin.deleteUser(u.id);
+      }
+    }
+    await supabase.from("communities").delete().in("id", ids);
+    
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
 }

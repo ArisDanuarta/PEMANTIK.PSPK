@@ -3,7 +3,7 @@
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Table, Button, Modal, Badge, useToast, useConfirm, SesBadge } from "@pemantik/ui";
-import { createStudentAction, bulkCreateStudentsAction, updateStudentAction, deleteStudentAction, resetStudentPasswordAction } from "../../actions/students";
+import { createStudentAction, bulkCreateStudentsAction, updateStudentAction, deleteStudentAction, resetStudentPasswordAction, bulkDeleteStudentsAction } from "../../actions/students";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 import * as XLSX from "xlsx";
@@ -132,13 +132,12 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
     setIsManualModalOpen(true);
   };
 
-  const handleBulkUpload = async (data: any[]) => {
-    const result = await bulkCreateStudentsAction(data);
-    if (result.success) {
-      success("Impor Selesai", result.message || "");
-      setIsBulkModalOpen(false);
-    }
-    return result;
+  const handleBulkUpload = async (rows: any[]) => {
+    return await bulkCreateStudentsAction(rows);
+  };
+
+  const handleRollback = async (ids: string[]) => {
+    await bulkDeleteStudentsAction(ids);
   };
 
   const handleDownloadTemplate = () => {
@@ -425,6 +424,7 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
           ]}
           onClose={() => setIsBulkModalOpen(false)}
           onUpload={handleBulkUpload}
+          onRollback={handleRollback}
         />
       )}
     </div>

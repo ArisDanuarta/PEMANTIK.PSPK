@@ -3,7 +3,7 @@
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Badge, Button, useToast, useConfirm } from "@pemantik/ui";
-import { createTeacherAction, bulkCreateTeachersAction, updateTeacherAction, deleteTeacherAction, resetTeacherPasswordAction } from "../../actions/teachers";
+import { createTeacherAction, updateTeacherAction, deleteTeacherAction, resetTeacherPasswordAction, bulkCreateTeachersAction, bulkDeleteTeachersAction } from "../../actions/teachers";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 import * as XLSX from "xlsx";
@@ -142,6 +142,10 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
       setIsBulkModalOpen(false);
     }
     return result;
+  };
+
+  const handleRollback = async (ids: string[]) => {
+    await bulkDeleteTeachersAction(ids);
   };
 
   const handleDownloadTemplate = () => {
@@ -391,6 +395,7 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
           templateData={schools.slice(0, 3).map(s => ["Budi Santoso", "budi@sekolah.com", "19800101", "L", "1980-01-01", "Menteng", "Menteng", "Jakarta Pusat", "DKI Jakarta", s.name, "5A"])}
           onClose={() => setIsBulkModalOpen(false)}
           onUpload={handleBulkUpload}
+          onRollback={handleRollback}
         />
       )}
     </div>
