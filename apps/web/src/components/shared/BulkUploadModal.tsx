@@ -176,28 +176,88 @@ export default function BulkUploadModal({
       try {
         const data = e.target?.result;
         if (!data) throw new Error("Gagal membaca file");
-        const workbook = XLSX.read(data, { type: "array" });
-        let targetSheetName = workbook.SheetNames.find((name) => {
-          const lName = name.toLowerCase();
-          return lName === "template" || lName === "data";
-        });
-        if (!targetSheetName) {
-          targetSheetName = workbook.SheetNames.length > 1 ? workbook.SheetNames[1] : workbook.SheetNames[0];
+        const workbook = XLSX.read(data, { type: "array", cellDates: true });
+
+        // === SMART SHEET AUTO-DETECT ===
+        // Kata kunci kolom yang dikenali sistem (dari semua template)
+        const KNOWN_COLUMNS = new Set([
+          "nama_siswa", "nama_guru", "nama_sekolah", "nama_komunitas",
+          "nisn", "npsn", "nip", "jenis_kelamin", "tanggal_lahir",
+          "kelas", "daftar_kelas", "pendidikan_ayah", "pendidikan_ibu",
+          "pekerjaan_ayah", "pekerjaan_ibu", "kelurahan_desa", "kecamatan",
+          "kabupaten", "provinsi", "status_kepemilikan", "status_sekolah",
+          "jenjang_sekolah", "email_guru", "email_sekolah", "email_komunitas",
+          "nama_penanggung_jawab", "nomor_telepon", "kepala_sekolah",
+        ]);
+
+        // Fungsi untuk menghitung "skor" sebuah sheet
+        const scoreSheet = (sheetName: string): number => {
+          try {
+            const ws = workbook.Sheets[sheetName];
+            const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "", raw: false });
+            if (rows.length === 0) return 0;
+
+            // Hitung berapa banyak kolom yang dikenali sistem
+            const firstRow = rows[0];
+            const keys = Object.keys(firstRow).map(k =>
+              k.trim().toLowerCase().replace(/[\s\-]+/g, "_")
+            );
+            const knownCount = keys.filter(k => KNOWN_COLUMNS.has(k)).length;
+
+            // Skor = (jumlah kolom dikenali * 10) + jumlah baris data
+            // Sheet "petunjuk" biasanya tidak punya kolom yang dikenali
+            return (knownCount * 10) + rows.length;
+          } catch {
+            return 0;
+          }
+        };
+
+        // Scan semua sheet dan pilih yang skornya tertinggi
+        let bestSheet = workbook.SheetNames[0];
+        let bestScore = -1;
+        for (const sheetName of workbook.SheetNames) {
+          const score = scoreSheet(sheetName);
+          if (score > bestScore) {
+            bestScore = score;
+            bestSheet = sheetName;
+          }
         }
-        const worksheet = workbook.Sheets[targetSheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-        if (jsonData.length === 0) throw new Error("File Excel / CSV kosong atau format tidak valid.");
-        const plainData = JSON.parse(JSON.stringify(jsonData)).map((row: any) => {
+
+        if (process.env.NODE_ENV !== "production") {
+          console.log("[BulkUpload] Semua sheet:", workbook.SheetNames);
+          console.log("[BulkUpload] Sheet terpilih (skor tertinggi):", bestSheet, "| Skor:", bestScore);
+        }
+
+        const worksheet = workbook.Sheets[bestSheet];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "", raw: false, dateNF: "yyyy-mm-dd" });
+        if (jsonData.length === 0) throw new Error("Sheet yang terdeteksi kosong. Pastikan data ada di file Excel Anda.");
+
+        const plainData = (jsonData as any[]).map((row: any) => {
           const normalizedRow: any = {};
           for (const key in row) {
             if (Object.prototype.hasOwnProperty.call(row, key)) {
-              normalizedRow[key.trim().toLowerCase()] = row[key];
+              // Normalisasi key: trim, lowercase, spasi/tanda hubung → underscore
+              const normalizedKey = key.trim().toLowerCase().replace(/[\s\-]+/g, "_");
+              const val = row[key];
+              normalizedRow[normalizedKey] = typeof val === "string" ? val.trim() : val;
             }
           }
           return normalizedRow;
         });
+
+        if (process.env.NODE_ENV !== "production") {
+          console.log("[BulkUpload] Total baris data:", plainData.length);
+          if (plainData.length > 0) {
+            console.log("[BulkUpload] Keys baris 1:", Object.keys(plainData[0]));
+            console.log("[BulkUpload] Data baris 1:", plainData[0]);
+          }
+        }
+
         const result = await onUpload(plainData);
         if (!result.success) throw new Error(result.error || result.message || "Gagal mengunggah data.");
+
+
+
       } catch (err: any) {
         setErrorMsg(err.message || "Terjadi kesalahan saat memproses file.");
         setIsUploading(false);

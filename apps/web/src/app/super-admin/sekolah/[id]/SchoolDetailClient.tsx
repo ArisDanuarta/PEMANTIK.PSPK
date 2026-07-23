@@ -138,6 +138,17 @@ export default function SchoolDetailClient({ school, teachers, students, classes
     }
   });
 
+  // Map class_id → daftar nama guru yang terhubung ke kelas itu
+  const teachersByClass: Record<string, string[]> = {};
+  teachers.forEach((t) => {
+    if (t.classes && t.classes.length > 0) {
+      t.classes.forEach((cls) => {
+        if (!teachersByClass[cls.id]) teachersByClass[cls.id] = [];
+        teachersByClass[cls.id].push(t.full_name);
+      });
+    }
+  });
+
   const sesColorMap: Record<string, string> = {
     Atas: "#22c55e",
     "Menengah Atas": "#3b82f6",
@@ -749,7 +760,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
                 {classes.map((c) => {
                   const studentCount = studentsByClass[c.id] || 0;
-                  const teacherName = (c.users as any)?.full_name;
+                  const classTeachers = teachersByClass[c.id] || [];
                   return (
                     <div key={c.id} style={{ border: "1px solid #e5e7eb", borderRadius: "0.75rem", padding: "1.25rem", background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
@@ -760,8 +771,14 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                         <Badge variant={c.is_active ? "success" : "danger"}>{c.is_active ? "Aktif" : "Nonaktif"}</Badge>
                       </div>
                       <div style={{ fontSize: "0.85rem", color: "#374151", marginBottom: "1rem" }}>
-                        <div>👥 <strong>{studentCount}</strong>anak</div>
-                        <div style={{ marginTop: "0.25rem" }}>👤 {teacherName || <span style={{ color: "#9ca3af" }}>Belum ada guru</span>}</div>
+                        <div>👥 <strong>{studentCount}</strong> anak</div>
+                        <div style={{ marginTop: "0.25rem" }}>
+                          👤 {classTeachers.length > 0
+                            ? classTeachers.map((name, idx) => (
+                                <span key={idx} style={{ display: "inline-block", background: "#eff6ff", color: "#1d4ed8", borderRadius: "0.375rem", padding: "0.1rem 0.4rem", fontSize: "0.78rem", marginRight: "0.25rem", marginTop: "0.15rem" }}>{name}</span>
+                              ))
+                            : <span style={{ color: "#9ca3af" }}>Belum ada guru</span>}
+                        </div>
                       </div>
                       <div style={{ display: "flex", gap: "0.5rem", borderTop: "1px solid #f3f4f6", paddingTop: "0.75rem" }}>
                         <Button variant="outline" size="sm" onClick={() => { setEditingClass(c); setIsClassModalOpen(true); }} style={{ flex: 1 }}>Edit</Button>

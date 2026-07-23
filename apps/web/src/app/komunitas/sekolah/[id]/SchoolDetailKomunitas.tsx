@@ -67,6 +67,17 @@ export default function SchoolDetailKomunitas({
     return acc;
   }, {});
 
+  // Map class_id → daftar nama guru yang terhubung ke kelas itu
+  const teachersByClass: Record<string, string[]> = {};
+  (teachers as any[]).forEach((t) => {
+    if (t.classes && t.classes.length > 0) {
+      t.classes.forEach((cls: any) => {
+        if (!teachersByClass[cls.id]) teachersByClass[cls.id] = [];
+        teachersByClass[cls.id].push(t.full_name);
+      });
+    }
+  });
+
   // ─── CRUD Guru ────────────────────────────────────────────────────────────
   const handleTeacherSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -771,7 +782,7 @@ export default function SchoolDetailKomunitas({
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "1rem" }}>
               {classes.map((c: any) => {
                 const studentCount = studentsByClass[c.id] || students.filter((s: any) => s.class_id === c.id || (s.classes as any)?.name === c.name).length || 0;
-                const teacherName = (c.users as any)?.full_name || teachers.find(t => t.id === c.teacher_id)?.full_name;
+                const classTeachers = teachersByClass[c.id] || [];
                 return (
                   <div key={c.id} style={{ border: "1px solid #e5e7eb", borderRadius: "0.75rem", padding: "1.25rem", background: "#f9fafb", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
@@ -782,8 +793,14 @@ export default function SchoolDetailKomunitas({
                       <Badge variant={c.is_active !== false ? "success" : "danger"}>{c.is_active !== false ? "Aktif" : "Nonaktif"}</Badge>
                     </div>
                     <div style={{ fontSize: "0.85rem", color: "#374151", marginTop: "0.75rem", marginBottom: "1rem" }}>
-                      <div>👥 <strong>{studentCount}</strong>anak</div>
-                      <div style={{ marginTop: "0.25rem" }}>👤 {teacherName || <span style={{ color: "#9ca3af" }}>Belum ada guru</span>}</div>
+                      <div>👥 <strong>{studentCount}</strong> anak</div>
+                      <div style={{ marginTop: "0.25rem" }}>
+                        👤 {classTeachers.length > 0
+                          ? classTeachers.map((name, idx) => (
+                              <span key={idx} style={{ display: "inline-block", background: "#eff6ff", color: "#1d4ed8", borderRadius: "0.375rem", padding: "0.1rem 0.4rem", fontSize: "0.78rem", marginRight: "0.25rem", marginTop: "0.15rem" }}>{name}</span>
+                            ))
+                          : <span style={{ color: "#9ca3af" }}>Belum ada guru</span>}
+                      </div>
                     </div>
                     <div style={{ display: "flex", gap: "0.5rem", borderTop: "1px solid #e5e7eb", paddingTop: "0.75rem" }}>
                       <Button variant="outline" size="sm" onClick={() => { setEditingClass(c); setIsClassModalOpen(true); }} style={{ flex: 1 }}>Edit</Button>
