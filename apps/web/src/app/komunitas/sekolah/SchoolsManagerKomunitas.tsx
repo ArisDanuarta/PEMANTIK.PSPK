@@ -365,7 +365,7 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                 
                 <div style={{ gridColumn: "span 2" }}>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Daftar Kelas (Ikut Asesmen) *</label>
-                  <input type="text" name="classes" required placeholder="Misal: 5A, 5B, 6A (Pisahkan dengan koma)" className="form-input" style={{ width: "100%" }} />
+                  <input type="text" name="classes" required placeholder="Misal: 5A, 5B, 6A (Pisahkan dengan koma)" defaultValue={editingSchool ? (editingSchool.classes || []).map(c => c.name).join(", ") : ""} className="form-input" style={{ width: "100%" }} />
                   <p style={{ fontSize: "0.75rem", color: "#6c757d", marginTop: "0.25rem" }}>
                     Kelas ini nanti akan muncul sebagai pilihan saat Anda membuat akun Guru.
                   </p>

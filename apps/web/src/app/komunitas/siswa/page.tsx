@@ -53,7 +53,7 @@ export default async function SiswaKomunitasPage() {
       ] = await Promise.all([
         supabase
           .from("students")
-          .select("*, schools(name, communities(name)), classes(name, users(full_name))")
+          .select("*, schools(name, communities(name)), classes(name, users!class_teachers(full_name))")
           .in("school_id", schoolIds)
           .order("created_at", { ascending: false }),
         supabase

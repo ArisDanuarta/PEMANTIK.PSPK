@@ -439,7 +439,7 @@ export async function GET(request: Request) {
       const schMap = new Map((schData || []).map((sc: any) => [sc.id, sc]));
 
       const allClsIds = [...new Set(sessData.map((s: any) => s.class_id || (Array.isArray(s.students) ? s.students[0]?.class_id : s.students?.class_id)).filter(Boolean))];
-      const { data: clsData } = await supabase.from("classes").select("id, name, grade, teacher_id, users(id, full_name)").in("id", allClsIds);
+      const { data: clsData } = await supabase.from("classes").select("id, name, grade, teacher_id, users!class_teachers(id, full_name)").in("id", allClsIds);
       const clsMap = new Map((clsData || []).map((cl: any) => [cl.id, cl]));
 
       const allLvlIds = [...new Set(sessData.map((s: any) => s.current_level_id).filter(Boolean))];

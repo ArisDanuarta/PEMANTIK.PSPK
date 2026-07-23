@@ -27,7 +27,7 @@ export default async function SekolahKelasPage() {
         .from("classes")
         .select(`
           id, name, grade, academic_year, is_active,
-          users(id, full_name),
+          users!class_teachers(id, full_name),
           students(count)
         `)
         .eq("school_id", schoolId)

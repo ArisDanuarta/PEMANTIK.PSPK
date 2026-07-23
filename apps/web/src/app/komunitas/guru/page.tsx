@@ -45,7 +45,7 @@ export default async function GuruKomunitasPage() {
       ] = await Promise.all([
         supabase
           .from("users")
-          .select("*, schools(name, communities(name)), classes(name)")
+          .select("*, schools(name, communities(name)), classes!class_teachers(name)")
           .eq("role", "teacher")
           .in("school_id", schoolIds)
           .order("created_at", { ascending: false }),

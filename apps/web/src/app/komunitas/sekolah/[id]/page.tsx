@@ -42,7 +42,7 @@ export default async function SchoolDetailPage({ params }: PageProps) {
   // 2. Fetch teachers specifically for this school
   const { data: teachers = [] } = await supabase
     .from("users")
-    .select("id, username, full_name, role, gender, is_active, created_at, classes(id, name)")
+    .select("id, username, full_name, role, gender, is_active, created_at, classes!class_teachers(id, name)")
     .eq("school_id", schoolId)
     .eq("role", "teacher")
     .order("full_name", { ascending: true });
@@ -94,7 +94,7 @@ export default async function SchoolDetailPage({ params }: PageProps) {
 
       <SchoolDetailKomunitas
         school={school}
-        teachers={teachers || []}
+        teachers={(teachers as any) || []}
         students={students || []}
         classes={school.classes || []}
         stages={stages}

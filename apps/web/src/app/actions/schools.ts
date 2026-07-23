@@ -48,7 +48,7 @@ export async function createSchoolAction(
     const name = (formData.get("name") as string)?.trim();
     const npsn = (formData.get("npsn") as string)?.trim() || null;
     const email = (formData.get("email") as string)?.trim() || null;
-    const status_sekolah = (formData.get("status_sekolah") as string)?.trim() || null;
+    const status_sekolah = ((formData.get("status_sekolah") as string)?.trim() || null)?.toLowerCase();
     const jenjang_sekolah = (formData.get("jenjang_sekolah") as string)?.trim() || null;
     const province = (formData.get("province") as string)?.trim() || null;
     const city = (formData.get("city") as string)?.trim() || null;
@@ -117,7 +117,10 @@ export async function createSchoolAction(
       const classesToInsert = processClassesString(classesStr, newSchool.id);
       if (classesToInsert.length > 0) {
         const { error: classesErr } = await supabase.from("classes").insert(classesToInsert);
-        if (classesErr) console.error("Failed to insert classes:", classesErr);
+        if (classesErr) {
+          console.error("Failed to insert classes:", classesErr);
+          return { success: false, error: "Berhasil membuat sekolah, tetapi gagal membuat kelas: " + classesErr.message };
+        }
       }
     }
 
@@ -184,7 +187,7 @@ export async function updateSchoolAction(
     const name = (formData.get("name") as string)?.trim();
     const npsn = (formData.get("npsn") as string)?.trim() || null;
     const email = (formData.get("email") as string)?.trim() || null;
-    const status_sekolah = (formData.get("status_sekolah") as string)?.trim() || null;
+    const status_sekolah = ((formData.get("status_sekolah") as string)?.trim() || null)?.toLowerCase();
     const jenjang_sekolah = (formData.get("jenjang_sekolah") as string)?.trim() || null;
     const province = (formData.get("province") as string)?.trim() || null;
     const city = (formData.get("city") as string)?.trim() || null;
@@ -251,7 +254,11 @@ export async function updateSchoolAction(
       
       const toInsert = newClasses.filter(c => !existingNames.has(c.name.toLowerCase()));
       if (toInsert.length > 0) {
-        await supabase.from("classes").insert(toInsert);
+        const { error: classesErr } = await supabase.from("classes").insert(toInsert);
+        if (classesErr) {
+          console.error("Failed to insert classes on update:", classesErr);
+          return { success: false, error: "Berhasil memperbarui sekolah, tetapi gagal menambah kelas baru: " + classesErr.message };
+        }
       }
     }
 
@@ -321,7 +328,7 @@ export async function bulkCreateSchoolsAction(
       const district = row.kecamatan || row.Kecamatan || row.district;
       const village = row.kelurahan_desa || row.Desa || row.Kelurahan || row.village;
       const classesStr = row.daftar_kelas || row.Daftar_Kelas || row.classes;
-      const status_sekolah = row.status_sekolah || null;
+      const status_sekolah = row.status_sekolah ? String(row.status_sekolah).trim().toLowerCase() : null;
       const jenjang_sekolah = row.jenjang_sekolah || null;
       const email_sekolah = row.email_sekolah || null;
       const npsn = row.npsn || row.NPSN ? String(row.npsn || row.NPSN).trim() : null;

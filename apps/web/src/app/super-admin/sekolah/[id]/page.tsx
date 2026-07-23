@@ -34,7 +34,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
       .single(),
     (supabase as any)
       .from("users")
-      .select("id, full_name, username, gender, is_active, created_at, classes(id, name)")
+      .select("id, full_name, username, gender, is_active, created_at, classes!class_teachers(id, name)")
       .eq("school_id", id)
       .eq("role", "teacher")
       .order("full_name", { ascending: true }),
@@ -45,7 +45,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
       .order("full_name", { ascending: true }),
     supabase
       .from("classes")
-      .select("id, name, grade, academic_year, teacher_id, is_active, users(id, full_name)")
+      .select("id, name, grade, academic_year, teacher_id, is_active, users!class_teachers(id, full_name)")
       .eq("school_id", id)
       .order("grade", { ascending: true }),
     (supabase as any)
@@ -107,7 +107,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
         school={school as any}
         teachers={teachers as any ?? []}
         students={enrichedStudents as any}
-        classes={classes || []}
+        classes={(classes as any) || []}
         importBatches={importBatches || []}
         communities={communities || []}
         schoolAdmin={schoolAdmin}
