@@ -344,7 +344,7 @@ export default async function KomunitasDashboardPage() {
           </p>
           <StudentSessionsTable 
             sessions={recentSessions} 
-            showResetButton={false} 
+             
           />
         </div>
       </div>

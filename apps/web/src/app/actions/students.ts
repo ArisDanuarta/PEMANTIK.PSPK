@@ -532,11 +532,21 @@ export async function bulkDeleteStudentsAction(ids: string[]) {
   
   try {
     const supabase = createServerClient();
-    const { error } = await supabase.from("students").delete().in("id", ids);
-    if (error) throw error;
+    
+    // Process in chunks to prevent URL length limits (HTTP 400 Bad Request / 414 URI Too Long)
+    const CHUNK_SIZE = 50;
+    for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+      const chunk = ids.slice(i, i + CHUNK_SIZE);
+      const { error } = await supabase.from("students").delete().in("id", chunk);
+      if (error) {
+        console.error(`[bulkDeleteStudentsAction] Supabase error deleting chunk ${i}:`, error);
+        throw error;
+      }
+    }
     
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    console.error("[bulkDeleteStudentsAction] Caught error:", err);
+    return { success: false, error: err.message || String(err) };
   }
 }

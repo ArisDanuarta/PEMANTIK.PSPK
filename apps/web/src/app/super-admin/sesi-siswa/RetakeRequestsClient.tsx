@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useTransition } from "react";
+import React, { useState, useTransition } from "react";
 import { Button, useToast, useConfirm } from "@pemantik/ui";
-import { approveRetakeAction, rejectRetakeAction } from "@/app/actions/retake-requests";
+import { approveRetakeAction, rejectRetakeAction, bulkApproveRetakeAction, bulkRejectRetakeAction } from "@/app/actions/retake-requests";
 
 interface RetakeRequestRow {
   id: string;
@@ -16,12 +16,27 @@ interface RetakeRequestRow {
 
 export default function RetakeRequestsTable({ requests }: { requests: RetakeRequestRow[] }) {
   const [isPending, startTransition] = useTransition();
+  const [selectedRequestIds, setSelectedRequestIds] = useState<string[]>([]);
   const { success, error } = useToast();
   const { confirm } = useConfirm();
 
   if (!requests || requests.length === 0) {
     return null; // Don't show the section if there are no pending requests
   }
+
+  const toggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedRequestIds(requests.map(r => r.id));
+    } else {
+      setSelectedRequestIds([]);
+    }
+  };
+
+  const toggleSelectRequest = (id: string) => {
+    setSelectedRequestIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
 
   const handleApprove = async (req: RetakeRequestRow) => {
     const ok = await confirm({
@@ -62,6 +77,48 @@ export default function RetakeRequestsTable({ requests }: { requests: RetakeRequ
     });
   };
 
+  const handleBulkApprove = async () => {
+    if (selectedRequestIds.length === 0) return;
+    const ok = await confirm({
+      title: "Setujui Ujian Ulang Masal",
+      description: `Menyetujui ${selectedRequestIds.length} permintaan ujian ulang?`,
+      confirmLabel: "Ya, Setujui"
+    });
+    if (!ok) return;
+
+    startTransition(async () => {
+      const selectedReqs = requests.filter(r => selectedRequestIds.includes(r.id)).map(r => ({ id: r.id, sessionId: r.session_id }));
+      const res = await bulkApproveRetakeAction(selectedReqs);
+      if (res.success) {
+        success("Berhasil", res.message ?? "Berhasil disetujui.");
+        setSelectedRequestIds([]);
+      } else {
+        error("Gagal", res.error ?? "Terjadi kesalahan.");
+      }
+    });
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedRequestIds.length === 0) return;
+    const ok = await confirm({
+      title: "Tolak Ujian Ulang Masal",
+      description: `Menolak ${selectedRequestIds.length} permintaan ujian ulang?`,
+      confirmLabel: "Ya, Tolak",
+      variant: "danger"
+    });
+    if (!ok) return;
+
+    startTransition(async () => {
+      const res = await bulkRejectRetakeAction(selectedRequestIds);
+      if (res.success) {
+        success("Berhasil", res.message ?? "Berhasil ditolak.");
+        setSelectedRequestIds([]);
+      } else {
+        error("Gagal", res.error ?? "Terjadi kesalahan.");
+      }
+    });
+  };
+
   return (
     <div className="card" style={{ padding: 0, overflow: "hidden", border: "1px solid #eab308" }}>
       <div style={{ padding: "1.25rem 1.5rem", backgroundColor: "#fefce8", borderBottom: "1px solid #fef08a" }}>
@@ -72,9 +129,30 @@ export default function RetakeRequestsTable({ requests }: { requests: RetakeRequ
           Ada {requests.length} permintaan ujian ulang dari sekolah.
         </p>
       </div>
+
+      {selectedRequestIds.length > 0 && (
+        <div style={{ padding: "0.75rem 1.5rem", backgroundColor: "#fef8c3", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #fef08a" }}>
+          <div style={{ fontSize: "0.95rem", color: "#854d0e", fontWeight: 500 }}>
+            {selectedRequestIds.length} permintaan terpilih
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <Button size="sm" variant="outline" onClick={handleBulkReject} disabled={isPending} style={{ color: "#dc2626", borderColor: "#dc2626" }}>Tolak Terpilih</Button>
+            <Button size="sm" onClick={handleBulkApprove} disabled={isPending} style={{ backgroundColor: "#16a34a", color: "white" }}>Setujui Terpilih</Button>
+          </div>
+        </div>
+      )}
+
       <table className="pemantik-table" style={{ width: "100%" }}>
         <thead>
           <tr>
+            <th style={{ width: "40px", textAlign: "center" }}>
+              <input 
+                type="checkbox" 
+                checked={requests.length > 0 && selectedRequestIds.length === requests.length}
+                onChange={toggleSelectAll}
+                style={{ cursor: "pointer" }}
+              />
+            </th>
             <th>Tanggal Request</th>
             <th>Nama Anak</th>
             <th>Asal Sekolah</th>
@@ -84,7 +162,15 @@ export default function RetakeRequestsTable({ requests }: { requests: RetakeRequ
         </thead>
         <tbody>
           {requests.map((req) => (
-            <tr key={req.id}>
+            <tr key={req.id} style={{ backgroundColor: selectedRequestIds.includes(req.id) ? "#f8fafc" : "" }}>
+              <td style={{ textAlign: "center" }}>
+                <input 
+                  type="checkbox"
+                  checked={selectedRequestIds.includes(req.id)}
+                  onChange={() => toggleSelectRequest(req.id)}
+                  style={{ cursor: "pointer" }}
+                />
+              </td>
               <td style={{ fontSize: "0.85rem", color: "#64748b" }}>
                 {new Date(req.created_at).toLocaleString("id-ID")}
               </td>

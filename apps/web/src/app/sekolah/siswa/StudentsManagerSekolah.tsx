@@ -12,7 +12,7 @@ import {
   bulkCreateStudentsAction,
   bulkDeleteStudentsAction,
 } from "@/app/actions/students";
-import { requestRetakeAction } from "@/app/actions/retake-requests";
+import { requestRetakeAction, bulkRequestRetakeAction } from "@/app/actions/retake-requests";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 
 interface StudentRow {
@@ -57,6 +57,8 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
   const [retakeModalOpen, setRetakeModalOpen] = useState(false);
   const [retakeStudent, setRetakeStudent] = useState<StudentRow | null>(null);
   const [retakeReason, setRetakeReason] = useState("");
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  const [isBulkRetakeModalOpen, setIsBulkRetakeModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<StudentRow | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -168,9 +170,62 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
         showSuccess("Berhasil", res.message ?? "Permintaan dikirim.");
         setRetakeModalOpen(false);
       } else {
-        showError("Gagal", res.error ?? "Gagal mengirim permintaan.");
+        showError("Gagal", res.error ?? "Terjadi kesalahan.");
       }
     });
+  };
+
+  const handleBulkRequestRetake = async () => {
+    if (selectedStudentIds.length === 0 || !retakeReason.trim()) return;
+    startTransition(async () => {
+      const res = await bulkRequestRetakeAction({
+        schoolId,
+        studentIds: selectedStudentIds,
+        reason: retakeReason,
+      });
+      if (res.success) {
+        showSuccess("Berhasil", res.message ?? "Permintaan ujian ulang masal dikirim.");
+        setIsBulkRetakeModalOpen(false);
+        setSelectedStudentIds([]);
+      } else {
+        showError("Gagal", res.error ?? "Terjadi kesalahan.");
+      }
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    const ok = await confirm({
+      title: "Hapus Siswa Terpilih",
+      description: `Anda yakin ingin menghapus ${selectedStudentIds.length} siswa terpilih? Semua data ujian terkait juga akan terhapus secara permanen.`,
+      confirmLabel: "Ya, Hapus",
+      variant: "danger",
+    });
+    if (!ok) return;
+
+    startTransition(async () => {
+      const res = await bulkDeleteStudentsAction(selectedStudentIds);
+      if (res.success) {
+        showSuccess("Berhasil", "Siswa terpilih berhasil dihapus.");
+        setStudents((prev) => prev.filter((x) => !selectedStudentIds.includes(x.id)));
+        setSelectedStudentIds([]);
+      } else {
+        showError("Gagal", res.error ?? "Terjadi kesalahan saat menghapus data.");
+      }
+    });
+  };
+
+  const toggleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedStudentIds(filtered.map(s => s.id));
+    } else {
+      setSelectedStudentIds([]);
+    }
+  };
+
+  const toggleSelectStudent = (id: string) => {
+    setSelectedStudentIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
   };
 
   const handleDownloadTemplate = () => {
@@ -275,11 +330,70 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
         document.body
       )}
 
+      {/* ── Modal Bulk Request Ujian Ulang ── */}
+      {isBulkRetakeModalOpen && createPortal(
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", backdropFilter: "blur(2px)" }} onClick={() => setIsBulkRetakeModalOpen(false)} />
+          <div style={{ position: "relative", backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", width: "100%", maxWidth: "28rem", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" }}>
+            <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.1rem", fontWeight: 600 }}>Request Ujian Ulang ({selectedStudentIds.length} Anak)</h3>
+            <div style={{ marginBottom: "1rem", fontSize: "0.9rem", color: "#475569" }}>
+              Ajukan permintaan ke Superadmin untuk me-reset sesi ujian terakhir <strong>{selectedStudentIds.length} anak</strong>. Alasan ini akan berlaku untuk semuanya.
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", marginBottom: "1.25rem" }}>
+              <label style={{ fontSize: "0.85rem", fontWeight: 500, color: "#1e293b" }}>Alasan Request Masal <span style={{ color: "red" }}>*</span></label>
+              <textarea 
+                className="form-input" 
+                rows={3}
+                placeholder="Misal: Perangkat mati saat ujian, gangguan teknis bersamaan..."
+                value={retakeReason}
+                onChange={e => setRetakeReason(e.target.value)}
+                disabled={isPending}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+              <Button type="button" variant="outline" onClick={() => setIsBulkRetakeModalOpen(false)} disabled={isPending}>Batal</Button>
+              <Button type="button" onClick={handleBulkRequestRetake} disabled={isPending || !retakeReason.trim()} style={{ backgroundColor: "#ca8a04", color: "white" }}>
+                {isPending ? "Mengirim..." : "Kirim Request"}
+              </Button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Floating Action Bar untuk Bulk Selection ── */}
+      {selectedStudentIds.length > 0 && (
+        <div style={{ backgroundColor: "#fefce8", border: "1px solid #fef08a", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ fontSize: "0.95rem", color: "#854d0e", fontWeight: 500 }}>
+            <span style={{ marginRight: "0.5rem" }}>☑️</span>
+            {selectedStudentIds.length} anak terpilih
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <Button size="sm" variant="outline" onClick={handleBulkDelete} style={{ color: "#dc2626", borderColor: "#fca5a5" }}>
+              Hapus Terpilih
+            </Button>
+            <Button size="sm" onClick={() => { setRetakeReason(""); setIsBulkRetakeModalOpen(true); }} style={{ backgroundColor: "#ca8a04", color: "white" }}>
+              Request Ujian Ulang Terpilih
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* ── Tabel ── */}
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <table className="pemantik-table" style={{ width: "100%" }}>
           <thead>
-            <tr><th>Nama Anak</th><th>Akun Akses</th><th>Kelas</th><th>Gender</th><th>SES</th><th>Status</th><th>Aksi</th></tr>
+            <tr>
+              <th style={{ width: "40px", textAlign: "center" }}>
+                <input 
+                  type="checkbox" 
+                  checked={filtered.length > 0 && selectedStudentIds.length === filtered.length}
+                  onChange={toggleSelectAll}
+                  style={{ cursor: "pointer" }}
+                />
+              </th>
+              <th>Nama Anak</th><th>Akun Akses</th><th>Kelas</th><th>Gender</th><th>SES</th><th>Status</th><th>Aksi</th>
+            </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
@@ -288,7 +402,15 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
                 {search || classFilter !== "all" || genderFilter !== "all" ? "Tidak ada anak yang cocok dengan filter." : "Belum ada anak terdaftar."}
               </td></tr>
             ) : filtered.map((s) => (
-              <tr key={s.id}>
+              <tr key={s.id} style={{ backgroundColor: selectedStudentIds.includes(s.id) ? "#f8fafc" : "" }}>
+                <td style={{ textAlign: "center" }}>
+                  <input 
+                    type="checkbox"
+                    checked={selectedStudentIds.includes(s.id)}
+                    onChange={() => toggleSelectStudent(s.id)}
+                    style={{ cursor: "pointer" }}
+                  />
+                </td>
                 <td><div style={{ fontWeight: 600, color: "#102e50" }}>{s.full_name}</div></td>
                 <td>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>

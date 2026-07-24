@@ -41,12 +41,15 @@ export default async function SuperAdminSesiSiswaPage() {
   }
 
   // Fetch all sessions for super admin
+  // Fetch all sessions for super admin
   const { data: sessions, error } = await supabase
     .from("assessment_sessions")
     .select(`
-      id, status, phase, attempt_number, is_void, score, started_at, completed_at,
+      id, status, phase, attempt_number, is_void, score, started_at, completed_at, current_level_id, level_id,
       students ( full_name, nisn ),
-      question_categories ( name, subject_area )
+      schools ( name, communities ( name ) ),
+      question_categories ( name, subject_area ),
+      assessment_retake_requests ( reason, status )
     `)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -55,11 +58,24 @@ export default async function SuperAdminSesiSiswaPage() {
     console.error("Error fetching sessions:", error);
   }
 
-  const formattedSessions = (sessions || []).map(session => ({
-    ...session,
-    students: Array.isArray(session.students) ? session.students[0] : session.students,
-    question_categories: Array.isArray(session.question_categories) ? session.question_categories[0] : session.question_categories
-  }));
+  const formattedSessions = (sessions || []).map(session => {
+    const school = Array.isArray(session.schools) ? session.schools[0] : session.schools;
+    const comm = school?.communities;
+    const community = Array.isArray(comm) ? comm[0] : comm;
+    
+    return {
+      ...session,
+      students: Array.isArray(session.students) ? session.students[0] : session.students,
+      question_categories: Array.isArray(session.question_categories) ? session.question_categories[0] : session.question_categories,
+      schools: {
+        name: school?.name || "-",
+        community_name: community?.name || "-"
+      },
+      assessment_retake_requests: Array.isArray(session.assessment_retake_requests) 
+        ? session.assessment_retake_requests 
+        : (session.assessment_retake_requests ? [session.assessment_retake_requests] : [])
+    };
+  });
 
   return (
     <div className="animate-fade-in">
@@ -77,7 +93,7 @@ export default async function SuperAdminSesiSiswaPage() {
         <RetakeRequestsTable requests={pendingRequests} />
 
         {/* Tabel Seluruh Sesi */}
-        <StudentSessionsTable sessions={formattedSessions as any} showResetButton={true} />
+        <StudentSessionsTable sessions={formattedSessions as any} />
       </div>
     </div>
   );

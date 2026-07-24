@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button, Badge, useConfirm, useToast } from "@pemantik/ui";
-import { resetStudentSession } from "../../app/actions/assessment";
+import React from "react";
+import { Badge } from "@pemantik/ui";
 
 interface Session {
   id: string;
@@ -13,52 +12,33 @@ interface Session {
   score?: number;
   started_at?: string;
   completed_at?: string;
+  current_level_id?: string;
+  level_id?: string;
   students?: {
     full_name: string;
     nisn: string;
   };
-  assessment_packages?: {
+  question_categories?: {
     name: string;
     subject_area: string;
   };
+  schools?: {
+    name: string;
+    community_name: string;
+  };
+  assessment_retake_requests?: {
+    reason: string;
+    status: string;
+  }[];
 }
 
 interface StudentSessionsTableProps {
   sessions: Session[];
-  showResetButton?: boolean;
 }
 
-export default function StudentSessionsTable({ sessions, showResetButton = true }: StudentSessionsTableProps) {
-  const [resettingId, setResettingId] = useState<string | null>(null);
-  const { confirm } = useConfirm();
-  const { toast } = useToast();
+export default function StudentSessionsTable({ sessions }: StudentSessionsTableProps) {
 
-  const handleReset = async (sessionId: string) => {
-    const isConfirmed = await confirm({
-      title: "Reset Ujian Anak?",
-      description: "Apakah Anda yakin ingin me-reset ujian ini karena kendala teknis? Skor saat ini akan hangus dan siswa harus mengulang dari awal.",
-      confirmLabel: "Ya, Reset",
-      cancelLabel: "Batal",
-      variant: "danger",
-    });
-
-    if (!isConfirmed) return;
-
-    setResettingId(sessionId);
-
-    try {
-      const result = await resetStudentSession(sessionId);
-      if (result.success) {
-        toast({ type: "success", title: "Sesi Berhasil Direset", description: "Sesi baru telah dibuat untuk anak." });
-      } else {
-        toast({ type: "error", title: "Gagal Mereset Sesi", description: result.error || "Gagal mereset sesi." });
-      }
-    } catch (err) {
-      toast({ type: "error", title: "Terjadi Kesalahan", description: "Terjadi kesalahan internal." });
-    } finally {
-      setResettingId(null);
-    }
-  };
+  // Reset button logic removed as this is now purely a history table
 
   if (!sessions || sessions.length === 0) {
     return (
@@ -87,27 +67,36 @@ export default function StudentSessionsTable({ sessions, showResetButton = true 
           <thead>
             <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left", color: "#4b5563", backgroundColor: "#f9fafb" }}>
               <th style={{ padding: "1rem" }}>Anak</th>
+              <th style={{ padding: "1rem" }}>Asal Sekolah/Komunitas</th>
               <th style={{ padding: "1rem" }}>Paket Ujian</th>
-              <th style={{ padding: "1rem" }}>Fase (Attempt)</th>
+              <th style={{ padding: "1rem" }}>Fase & Level</th>
               <th style={{ padding: "1rem" }}>Status</th>
               <th style={{ padding: "1rem" }}>Skor</th>
-              <th style={{ padding: "1rem", textAlign: "right" }}>Aksi</th>
+              <th style={{ padding: "1rem" }}>Keterangan</th>
             </tr>
           </thead>
           <tbody>
-            {sessions.map((session) => (
-              <tr key={session.id} style={{ borderBottom: "1px solid #f3f4f6", opacity: session.is_void ? 0.6 : 1 }}>
+            {sessions.map((session) => {
+              const retakeReason = session.assessment_retake_requests?.find(r => r.status === 'approved')?.reason;
+              return (
+              <tr key={session.id} style={{ borderBottom: "1px solid #f3f4f6", opacity: session.is_void ? 0.7 : 1 }}>
                 <td style={{ padding: "1rem" }}>
                   <div style={{ fontWeight: 600, color: "#102e50" }}>{session.students?.full_name || "Unknown"}</div>
                   <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>NISN: {session.students?.nisn || "-"}</div>
                 </td>
                 <td style={{ padding: "1rem" }}>
-                  <div>{session.assessment_packages?.name || "-"}</div>
-                  <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>{session.assessment_packages?.subject_area?.toUpperCase()}</div>
+                  <div style={{ fontWeight: 500, color: "#374151" }}>{session.schools?.name || "-"}</div>
+                  <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>{session.schools?.community_name || "-"}</div>
                 </td>
                 <td style={{ padding: "1rem" }}>
-                  <div>{session.phase || "Tahap 1"}</div>
-                  <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>Percobaan ke-{session.attempt_number}</div>
+                  <div>{session.question_categories?.name || "-"}</div>
+                  <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>{session.question_categories?.subject_area?.toUpperCase()}</div>
+                </td>
+                <td style={{ padding: "1rem" }}>
+                  <div>{session.phase || "Tahap 1"} (Attempt {session.attempt_number})</div>
+                  <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+                    {session.current_level_id ? "Selesai di suatu level" : "Belum selesai"} 
+                  </div>
                 </td>
                 <td style={{ padding: "1rem" }}>
                   {getStatusBadge(session.status, session.is_void)}
@@ -115,21 +104,19 @@ export default function StudentSessionsTable({ sessions, showResetButton = true 
                 <td style={{ padding: "1rem", fontWeight: 600 }}>
                   {session.score !== undefined && session.score !== null ? session.score : "-"}
                 </td>
-                <td style={{ padding: "1rem", textAlign: "right" }}>
-                  {showResetButton && !session.is_void && session.status !== "completed" && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleReset(session.id)}
-                      disabled={resettingId === session.id}
-                      style={{ color: "#b91c1c", borderColor: "#fca5a5" }}
-                    >
-                      {resettingId === session.id ? "Loading..." : "Reset Ujian"}
-                    </Button>
+                <td style={{ padding: "1rem", fontSize: "0.85rem", color: "#6b7280", maxWidth: "200px" }}>
+                  {session.is_void && retakeReason ? (
+                    <div>
+                      <span style={{ color: "#ca8a04", fontWeight: 600 }}>Retake:</span> {retakeReason}
+                    </div>
+                  ) : session.is_void ? (
+                    "Dibatalkan tanpa keterangan retake."
+                  ) : (
+                    "-"
                   )}
                 </td>
               </tr>
-            ))}
+            )})}
           </tbody>
         </table>
       </div>

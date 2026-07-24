@@ -253,7 +253,7 @@ export default async function SekolahDashboard() {
             Lihat semua →
           </a>
         </div>
-        <StudentSessionsTable sessions={recentSessions} showResetButton={false} />
+        <StudentSessionsTable sessions={recentSessions}  />
       </div>
     </div>
   );

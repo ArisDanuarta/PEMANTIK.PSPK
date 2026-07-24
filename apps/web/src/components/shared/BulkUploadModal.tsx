@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Button } from "@pemantik/ui";
 import * as XLSX from "xlsx";
 import PemantikLogoProgress from "./Unitprogressbar";
+import { useTickingProgress } from "../../lib/useTickingProgress";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ interface DapodikImportPayload {
   confirmed_city?: string;
   confirmed_district?: string;
   confirmed_village?: string;
-  academic_year?: string; 
+  academic_year?: string;
 }
 
 interface DapodikBatchStatus {
@@ -102,7 +103,7 @@ export default function BulkUploadModal({
   const [dapodikStep, setDapodikStep] = useState<"upload" | "confirm" | "progress" | "result">("upload");
   const [parseToken, setParseToken] = useState<string | null>(null);
   const [parseSummary, setParseSummary] = useState<DapodikParseResponse["summary"] | null>(null);
-  
+
   // State untuk Realtime Progress Generic
   const [genericProgress, setGenericProgress] = useState<{ current: number, total: number } | null>(null);
   const [schoolChoice, setSchoolChoice] = useState<"new" | "existing">("new");
@@ -113,11 +114,11 @@ export default function BulkUploadModal({
   const [confirmedCity, setConfirmedCity] = useState("");
   const [confirmedDistrict, setConfirmedDistrict] = useState("");
   const [confirmedVillage, setConfirmedVillage] = useState("");
-  
+
   const detectAcademicYear = () => {
     const now = new Date();
     const year = now.getFullYear();
-    const month = now.getMonth() + 1; 
+    const month = now.getMonth() + 1;
     const startYear = month >= 7 ? year : year - 1;
     return `${startYear}/${startYear + 1}`;
   };
@@ -125,6 +126,22 @@ export default function BulkUploadModal({
   const [batchId, setBatchId] = useState<string | null>(null);
   const [batchStatus, setBatchStatus] = useState<DapodikBatchStatus | null>(null);
   const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
+
+  // Angka yang "menghitung" halus, dipakai hanya untuk tampilan —
+  // bukan sumber kebenaran progress. Ini yang bikin animasi 1,2,3,4,5...
+  // bukan loncat 0 -> 50 sekali sentak.
+  const smoothGenericCurrent = useTickingProgress(
+    genericProgress?.current ?? 0,
+    genericProgress?.total || 1,
+    { expectedIntervalMs: 1500 } // perkiraan durasi 1 chunk upload (CHUNK_SIZE = 50)
+  );
+
+  const dapodikDoneRaw = (batchStatus?.success_count ?? 0) + (batchStatus?.fail_count ?? 0);
+  const smoothDapodikDone = useTickingProgress(
+    dapodikDoneRaw,
+    batchStatus?.total_rows || 1,
+    { expectedIntervalMs: 2000 } // sesuai interval polling di bawah (2000ms)
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -260,11 +277,11 @@ export default function BulkUploadModal({
         }
 
         setGenericProgress({ current: 0, total: plainData.length });
-        
+
         const CHUNK_SIZE = 50;
         let processed = 0;
         let allInsertedIds: string[] = [];
-        
+
         for (let i = 0; i < plainData.length; i += CHUNK_SIZE) {
           const chunk = plainData.slice(i, i + CHUNK_SIZE);
           const result = await onUpload(chunk);
@@ -273,9 +290,9 @@ export default function BulkUploadModal({
             if (allInsertedIds.length > 0 && onRollback) {
               await onRollback(allInsertedIds).catch((e) => console.error("Rollback failed:", e));
             }
-            throw new Error(result.error || result.message || `Gagal mengunggah data (baris ${i+1}). Seluruh baris sebelumnya dibatalkan.`);
+            throw new Error(result.error || result.message || `Gagal mengunggah data (baris ${i + 1}). Seluruh baris sebelumnya dibatalkan.`);
           }
-          
+
           if (result.insertedIds) {
             allInsertedIds = [...allInsertedIds, ...result.insertedIds];
           }
@@ -357,7 +374,7 @@ export default function BulkUploadModal({
         confirmed_city: confirmedCity,
         confirmed_district: confirmedDistrict,
         confirmed_village: confirmedVillage,
-        academic_year: academicYear, 
+        academic_year: academicYear,
       };
 
       const result = await onDapodikConfirm(payload);
@@ -431,14 +448,16 @@ export default function BulkUploadModal({
 
         {isUploading && genericProgress ? (
           <div style={{ textAlign: "center", padding: "2rem 0" }}>
-            <PemantikLogoProgress 
-              value={genericProgress.current} 
-              max={genericProgress.total} 
-              size={120} 
-              showLabel={false} 
+            <PemantikLogoProgress
+              value={smoothGenericCurrent}
+              max={genericProgress.total}
+              size={120}
+              showLabel={false}
+              durationMs={150}
+              waveAmplitude={22}
             />
             <h3 style={{ color: "#102e50", marginTop: "1rem", marginBottom: "0.5rem" }}>
-              Generating Akun {genericProgress.current} to {genericProgress.total}
+              Generating Akun {smoothGenericCurrent} to {genericProgress.total}
             </h3>
             <p style={{ color: "#6b7280", fontSize: "0.9rem" }}>
               Mohon tunggu, jangan tutup halaman ini.
@@ -479,9 +498,8 @@ export default function BulkUploadModal({
   }
 
   function renderDapodikModal() {
-    const totalRows = parseSummary?.row_count ?? 0;
-    const doneCount = batchStatus?.success_count ?? 0;
-    const progressPct = totalRows > 0 ? Math.round((doneCount / totalRows) * 100) : 0;
+    const totalRows = batchStatus?.total_rows ?? parseSummary?.row_count ?? 0;
+    const progressPct = totalRows > 0 ? Math.round((smoothDapodikDone / totalRows) * 100) : 0;
 
     return (
       <div style={modalBoxStyle(dapodikStep === "confirm" ? "680px" : "560px", inline)}>
@@ -696,20 +714,22 @@ export default function BulkUploadModal({
         {dapodikStep === "progress" && (
           <div style={{ textAlign: "center", padding: "2rem 0" }}>
             {batchStatus ? (
-              <PemantikLogoProgress 
-                value={(batchStatus.success_count || 0) + (batchStatus.fail_count || 0)} 
-                max={batchStatus.total_rows || 1} 
-                size={120} 
-                showLabel={false} 
+              <PemantikLogoProgress
+                value={smoothDapodikDone}
+                max={totalRows || 1}
+                size={120}
+                showLabel={false}
+                durationMs={150}
+                waveAmplitude={22}
               />
             ) : (
               <div style={{ width: 56, height: 56, border: "4px solid #e5e7eb", borderTopColor: "#102e50", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 1.5rem" }} />
             )}
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            
+
             <h3 style={{ color: "#102e50", marginTop: "1rem", marginBottom: "0.5rem" }}>
-              {batchStatus 
-                ? `Generating Akun ${(batchStatus.success_count || 0) + (batchStatus.fail_count || 0)} to ${batchStatus.total_rows}` 
+              {batchStatus
+                ? <span>Generating Akun {smoothDapodikDone} to {totalRows}</span>
                 : "Memulai Proses..."}
             </h3>
             <p style={{ color: "#6b7280", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
@@ -718,7 +738,7 @@ export default function BulkUploadModal({
             {batchStatus && (
               <div style={{ maxWidth: 320, margin: "0 auto" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", fontSize: "0.85rem", color: "#374151" }}>
-                  <span>{batchStatus.success_count} dari {batchStatus.total_rows} siswa</span>
+                  <span>{smoothDapodikDone} dari {totalRows} siswa</span>
                   <span>{progressPct}%</span>
                 </div>
                 <div style={{ height: 10, background: "#e5e7eb", borderRadius: 999, overflow: "hidden" }}>
