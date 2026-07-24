@@ -278,7 +278,11 @@ export default function BulkUploadModal({
 
         setGenericProgress({ current: 0, total: plainData.length });
 
-        const CHUNK_SIZE = 50;
+        // Chunk size adaptif: untuk data sedikit (mis. 25 baris), dipaksa
+        // terbagi jadi ~10 langkah supaya ada beberapa update progress di
+        // tengah proses (bukan cuma 0 -> selesai sekali lompat). Untuk data
+        // besar, tetap dibatasi maksimal 50 baris per request seperti semula.
+        const CHUNK_SIZE = Math.min(50, Math.max(3, Math.ceil(plainData.length / 10)));
         let processed = 0;
         let allInsertedIds: string[] = [];
 
@@ -451,7 +455,7 @@ export default function BulkUploadModal({
             <PemantikLogoProgress
               value={smoothGenericCurrent}
               max={genericProgress.total}
-              size={120}
+              size={180}
               showLabel={false}
               durationMs={150}
               waveAmplitude={22}
@@ -717,7 +721,7 @@ export default function BulkUploadModal({
               <PemantikLogoProgress
                 value={smoothDapodikDone}
                 max={totalRows || 1}
-                size={120}
+                size={180}
                 showLabel={false}
                 durationMs={150}
                 waveAmplitude={22}

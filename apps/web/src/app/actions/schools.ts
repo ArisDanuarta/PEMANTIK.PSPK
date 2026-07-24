@@ -308,8 +308,14 @@ export async function deleteSchoolAction(id: string): Promise<ActionResponse> {
 
     if (usersData && usersData.length > 0) {
       for (const u of usersData) {
-        await supabase.auth.admin.deleteUser(u.id);
+        const { error: delErr } = await supabase.auth.admin.deleteUser(u.id);
+        if (delErr) {
+          console.error(`[deleteSchoolAction] Failed to delete auth user ${u.id}:`, delErr);
+        }
       }
+      // Explicitly delete from public.users to prevent 'chk_school_has_school' check constraint trigger
+      // when schools are deleted and users.school_id tries to set to NULL.
+      await supabase.from("users").delete().eq("school_id", id);
     }
 
     // Explicitly delete records with RESTRICT foreign keys to allow school deletion
@@ -578,27 +584,23 @@ function generateStudentUsername(fullName: string, npsn?: string | null, nisn?: 
     "ketut", "kt"
   ]);
 
-  let firstName = "siswa";
-  for (const word of words) {
-    if (!balineseTitles.has(word) && word.length > 1) {
-      firstName = word.slice(0, 10);
-      break;
-    }
-  }
-  
-  if (firstName === "siswa" && words.length > 0) {
-    firstName = words[0].slice(0, 10);
+  let validNames = words.filter(word => !balineseTitles.has(word) && word.length > 1);
+  if (validNames.length === 0) validNames = words;
+
+  let randomNamePart = "siswa";
+  if (validNames.length > 0) {
+    randomNamePart = validNames[Math.floor(Math.random() * validNames.length)].slice(0, 10);
   }
 
-  const identifier = (nisn || nipd || "").replace(/[^0-9]/g, "");
+  const identifier = (nisn || npsn || nipd || "").replace(/[^0-9]/g, "");
   let digits = "";
-  if (identifier.length >= 4) {
-    digits = identifier.slice(-4);
+  if (identifier.length >= 3) {
+    digits = identifier.slice(-3);
   } else {
-    digits = Math.floor(1000 + Math.random() * 9000).toString();
+    digits = Math.floor(100 + Math.random() * 900).toString();
   }
 
-  return `${firstName}${digits}`;
+  return `${randomNamePart}${digits}`;
 }
 
 async function resolveOrCreateSesVariable(
@@ -1185,16 +1187,38 @@ export async function bulkDeleteSchoolsAction(ids: string[]) {
   
   try {
     const supabase = createServerClient();
-    const { data: users } = await supabase.from("users").select("id").in("school_id", ids);
-    if (users && users.length > 0) {
-      for (const u of users) {
-        await supabase.auth.admin.deleteUser(u.id);
+    
+    // Chunk array to prevent URI Too Long / Bad Request
+    const CHUNK_SIZE = 50;
+    for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+      const chunk = ids.slice(i, i + CHUNK_SIZE);
+      
+      const { data: users } = await supabase.from("users").select("id").in("school_id", chunk);
+      if (users && users.length > 0) {
+        for (const u of users) {
+          const { error: delErr } = await supabase.auth.admin.deleteUser(u.id);
+          if (delErr) {
+            console.error(`[bulkDeleteSchoolsAction] Failed to delete auth user ${u.id}:`, delErr);
+          }
+        }
+        // Explicitly delete public users to prevent chk_school_has_school failure
+        await supabase.from("users").delete().in("school_id", chunk);
+      }
+      
+      // Explicitly delete records with RESTRICT foreign keys to allow school deletion
+      await supabase.from("assessment_sessions").delete().in("school_id", chunk);
+      await supabase.from("students").delete().in("school_id", chunk);
+      
+      const { error } = await supabase.from("schools").delete().in("id", chunk);
+      if (error) {
+        console.error(`[bulkDeleteSchoolsAction] Failed to delete school chunk ${i}:`, error);
+        throw error;
       }
     }
-    await supabase.from("schools").delete().in("id", ids);
     
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    console.error("[bulkDeleteSchoolsAction] Caught error:", err);
+    return { success: false, error: err.message || String(err) };
   }
 }

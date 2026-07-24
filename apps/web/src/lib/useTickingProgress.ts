@@ -7,6 +7,15 @@ interface TickingProgressOptions {
   expectedIntervalMs?: number;
   /** Kecepatan hitung minimum (unit/detik) supaya angka tidak diam total sebelum update pertama datang. */
   minStepsPerSec?: number;
+  /**
+   * Durasi minimum (ms) untuk "menghitung" dari nilai lama ke nilai baru,
+   * walaupun update asli dari server datangnya sangat cepat atau langsung
+   * loncat jauh (mis. batch kecil yang selesai dalam sekali polling).
+   * Tanpa ini, kalau server balas lebih cepat dari expectedIntervalMs,
+   * animasi bisa "kepencet" ke angka akhir dan kelihatan seperti loncat
+   * tiba-tiba alih-alih menghitung pelan-pelan.
+   */
+  minDurationMs?: number;
 }
 
 /**
@@ -15,16 +24,21 @@ interface TickingProgressOptions {
  * sesekali (per-chunk upload, atau per-poll tiap beberapa detik).
  *
  * Cara kerja: setiap kali nilai asli berubah, hook menghitung kecepatan
- * dari jarak waktu sejak update sebelumnya (delta / waktu berlalu).
- * Kecepatan itu lalu dipakai untuk terus menghitung naik di antara dua
- * update asli, sehingga tidak ada momen "diam lalu meloncat".
+ * dari jarak waktu sejak update sebelumnya (delta / waktu berlalu), lalu
+ * kecepatan itu DIBATASI supaya proses menghitung tidak lebih cepat dari
+ * `minDurationMs` — ini mencegah kasus "0 tiba-tiba jadi selesai" saat
+ * server ternyata memproses lebih cepat dari perkiraan.
  */
 export function useTickingProgress(
   realValue: number,
   max: number,
   options: TickingProgressOptions = {}
 ) {
-  const { expectedIntervalMs = 1500, minStepsPerSec = 3 } = options;
+  const {
+    expectedIntervalMs = 1500,
+    minStepsPerSec = 3,
+    minDurationMs = 900,
+  } = options;
   const [display, setDisplay] = useState(realValue);
 
   const ref = useRef({
@@ -42,14 +56,20 @@ export function useTickingProgress(
     const delta = realValue - s.prevReal;
 
     if (delta > 0) {
-      s.velocity = delta / Math.max(dtSinceLastReal, expectedIntervalMs * 0.4);
+      const estimatedVelocity = delta / Math.max(dtSinceLastReal, expectedIntervalMs * 0.4);
+      // Batas atas kecepatan: jangan sampai proses menghitung dari
+      // display saat ini ke realValue lebih cepat dari minDurationMs,
+      // walaupun server sebenarnya sudah selesai jauh lebih cepat.
+      const remaining = Math.max(0, realValue - s.display);
+      const maxVelocityForMinDuration = remaining / minDurationMs;
+      s.velocity = Math.min(estimatedVelocity, maxVelocityForMinDuration || estimatedVelocity);
     } else if (delta < 0) {
       // nilai turun (mis. reset progress) -> ikuti langsung, tanpa animasi mundur
       s.display = realValue;
     }
     s.prevReal = realValue;
     s.lastUpdateAt = now;
-  }, [realValue, expectedIntervalMs]);
+  }, [realValue, expectedIntervalMs, minDurationMs]);
 
   // Loop animasi: terus mendekati realValue tiap frame
   useEffect(() => {
