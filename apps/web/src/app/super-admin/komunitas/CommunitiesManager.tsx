@@ -15,6 +15,8 @@ import {
 } from "../../actions/communities";
 import * as XLSX from "xlsx";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
+import Pagination from "@/components/shared/Pagination";
+import { usePagination } from "@/lib/usePagination";
 
 interface Community {
   id: string;
@@ -58,6 +60,16 @@ export default function CommunitiesManager({
       c.code.toLowerCase().includes(search.toLowerCase()) ||
       (c.contact_name?.toLowerCase() || "").includes(search.toLowerCase())
   );
+
+  const {
+    paginatedData: paginatedCommunities,
+    currentPage,
+    totalPages,
+    totalItems,
+    setCurrentPage,
+    startIndex,
+    endIndex,
+  } = usePagination(filteredCommunities, 20);
 
   const handleOpenAddModal = () => {
     setEditingComm(null);
@@ -319,7 +331,16 @@ export default function CommunitiesManager({
       </div>
 
       <div className="card">
-        <Table columns={columns} data={filteredCommunities} emptyMessage="Tidak ada komunitas terdaftar" />
+        <Table columns={columns} data={paginatedCommunities} emptyMessage="Tidak ada komunitas terdaftar" />
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={totalItems}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          className="px-4 pb-4"
+        />
       </div>
 
       {/* Add / Edit Community Modal */}

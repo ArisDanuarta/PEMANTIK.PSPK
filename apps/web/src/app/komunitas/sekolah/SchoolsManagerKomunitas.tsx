@@ -7,6 +7,8 @@ import { createPortal } from "react-dom";
 import { Badge, Button, useToast, useConfirm } from "@pemantik/ui";
 import { createSchoolAction, updateSchoolAction, deleteSchoolAction, bulkCreateSchoolsAction, resetSchoolPasswordAction, bulkDeleteSchoolsAction } from "../../actions/schools";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
+import Pagination from "@/components/shared/Pagination";
+import { usePagination } from "@/lib/usePagination";
 import * as XLSX from "xlsx";
 
 interface School {
@@ -66,6 +68,16 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
       s.name.toLowerCase().includes(search.toLowerCase()) ||
       (s.npsn?.toLowerCase() || "").includes(search.toLowerCase())
   );
+
+  const {
+    paginatedData: paginatedSchools,
+    currentPage,
+    totalPages,
+    totalItems,
+    setCurrentPage,
+    startIndex,
+    endIndex,
+  } = usePagination(filteredSchools, 20);
 
   const handleOpenAddModal = () => {
     setEditingSchool(null);
@@ -239,7 +251,7 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                 </td>
               </tr>
             ) : (
-              filteredSchools.map((row) => {
+              paginatedSchools.map((row) => {
                 const schoolUser = row.users?.find(u => u.role === 'school');
                 return (
                   <tr key={row.id}>
@@ -306,6 +318,15 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={totalItems}
+        startIndex={startIndex}
+        endIndex={endIndex}
+      />
 
       {/* MANUAL MODAL (ADD & EDIT) */}
       {isModalOpen && mounted && createPortal(

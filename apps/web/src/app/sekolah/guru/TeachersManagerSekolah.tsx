@@ -12,6 +12,8 @@ import {
   bulkDeleteTeachersAction,
 } from "@/app/actions/teachers";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
+import Pagination from "@/components/shared/Pagination";
+import { usePagination } from "@/lib/usePagination";
 
 interface TeacherRow {
   id: string;
@@ -67,6 +69,16 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
       (t.nip ?? "").toLowerCase().includes(search.toLowerCase());
     return matchSearch;
   });
+
+  const {
+    paginatedData: paginatedTeachers,
+    currentPage,
+    totalPages,
+    totalItems,
+    setCurrentPage,
+    startIndex,
+    endIndex,
+  } = usePagination(filtered, 20);
 
   const handleOpenAdd = () => { setEditingTeacher(null); setIsManualModalOpen(true); };
   const handleOpenEdit = (t: TeacherRow) => { setEditingTeacher(t); setIsManualModalOpen(true); };
@@ -198,7 +210,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                 <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>👨‍🏫</div>
                 {search ? "Tidak ada guru yang cocok." : "Belum ada guru terdaftar di sekolah ini."}
               </td></tr>
-            ) : filtered.map((t) => (
+            ) : paginatedTeachers.map((t) => (
               <tr key={t.id}>
                 <td><div style={{ fontWeight: 600, color: "#102e50" }}>{t.full_name}</div></td>
                 <td>
@@ -229,11 +241,15 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
             ))}
           </tbody>
         </table>
-        {filtered.length > 0 && (
-          <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid #f1f3f5", fontSize: "0.8rem", color: "#6c757d" }}>
-            Menampilkan <strong>{filtered.length}</strong> dari <strong>{teachers.length}</strong> guru
-          </div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={totalItems}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          className="px-4 pb-4"
+        />
       </div>
 
       {/* ── Bulk Upload ── */}

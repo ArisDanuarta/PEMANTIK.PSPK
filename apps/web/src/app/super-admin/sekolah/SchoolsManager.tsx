@@ -6,6 +6,8 @@ import { Badge, Button, useToast, useConfirm } from "@pemantik/ui";
 import { createSchoolAction, updateSchoolAction, deleteSchoolAction, bulkCreateSchoolsAction, resetSchoolPasswordAction, parseDapodikAction, importDapodikAction, bulkDeleteSchoolsAction } from "../../actions/schools";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
+import Pagination from "@/components/shared/Pagination";
+import { usePagination } from "@/lib/usePagination";
 import * as XLSX from "xlsx";
 
 interface School {
@@ -62,6 +64,16 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
       (s.npsn?.toLowerCase() || "").includes(search.toLowerCase()) ||
       (s.communities?.name?.toLowerCase() || "").includes(search.toLowerCase())
   );
+
+  const {
+    paginatedData: paginatedSchools,
+    currentPage,
+    totalPages,
+    totalItems,
+    setCurrentPage,
+    startIndex,
+    endIndex,
+  } = usePagination(filteredSchools, 20);
 
   const handleOpenAddModal = () => {
     setEditingSchool(null);
@@ -255,7 +267,7 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
                 </td>
               </tr>
             ) : (
-              filteredSchools.map((row) => {
+              paginatedSchools.map((row) => {
                 const schoolUser = row.users?.find(u => u.role === 'school');
                 return (
                   <tr key={row.id}>
@@ -322,6 +334,15 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={totalItems}
+        startIndex={startIndex}
+        endIndex={endIndex}
+      />
       </>
       )}
 

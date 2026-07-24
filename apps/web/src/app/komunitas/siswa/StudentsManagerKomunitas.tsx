@@ -6,6 +6,8 @@ import { Table, Button, Modal, Badge, useToast, useConfirm, SesBadge } from "@pe
 import { createStudentAction, bulkCreateStudentsAction, updateStudentAction, deleteStudentAction, resetStudentPasswordAction, bulkDeleteStudentsAction } from "../../actions/students";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
+import Pagination from "@/components/shared/Pagination";
+import { usePagination } from "@/lib/usePagination";
 import * as XLSX from "xlsx";
 
 interface Student {
@@ -76,6 +78,16 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
       (s.nisn?.toLowerCase() || "").includes(search.toLowerCase()) ||
       (s.schools?.name?.toLowerCase() || "").includes(search.toLowerCase())
   );
+
+  const {
+    paginatedData: paginatedStudents,
+    currentPage,
+    totalPages,
+    totalItems,
+    setCurrentPage,
+    startIndex,
+    endIndex,
+  } = usePagination(filteredStudents, 25);
 
   const handleManualSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -238,7 +250,7 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
               </td>
             </tr>
           ) : (
-            filteredStudents.map((row) => (
+            paginatedStudents.map((row) => (
               <tr key={row.id}>
                 <td><strong>{row.full_name}</strong></td>
                 <td>
@@ -280,6 +292,15 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
           )}
         </tbody>
       </table>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={totalItems}
+        startIndex={startIndex}
+        endIndex={endIndex}
+      />
 
       {/* MANUAL MODAL */}
       {isManualModalOpen && mounted && createPortal(

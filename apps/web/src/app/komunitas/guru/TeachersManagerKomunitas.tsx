@@ -6,6 +6,8 @@ import { Badge, Button, useToast, useConfirm } from "@pemantik/ui";
 import { createTeacherAction, updateTeacherAction, deleteTeacherAction, resetTeacherPasswordAction, bulkCreateTeachersAction, bulkDeleteTeachersAction } from "../../actions/teachers";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
+import Pagination from "@/components/shared/Pagination";
+import { usePagination } from "@/lib/usePagination";
 import * as XLSX from "xlsx";
 
 interface Teacher {
@@ -69,6 +71,16 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
       t.username.toLowerCase().includes(search.toLowerCase()) ||
       (t.schools?.name?.toLowerCase() || "").includes(search.toLowerCase())
   );
+
+  const {
+    paginatedData: paginatedTeachers,
+    currentPage,
+    totalPages,
+    totalItems,
+    setCurrentPage,
+    startIndex,
+    endIndex,
+  } = usePagination(filteredTeachers, 25);
 
   const handleManualSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -230,7 +242,7 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
               </td>
             </tr>
           ) : (
-            filteredTeachers.map((row) => (
+            paginatedTeachers.map((row) => (
               <tr key={row.id}>
                 <td><strong>{row.full_name}</strong></td>
                 <td>
@@ -268,6 +280,15 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
           )}
         </tbody>
       </table>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={totalItems}
+        startIndex={startIndex}
+        endIndex={endIndex}
+      />
 
       {/* MANUAL MODAL */}
       {isManualModalOpen && mounted && createPortal(

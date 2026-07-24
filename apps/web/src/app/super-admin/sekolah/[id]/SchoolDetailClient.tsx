@@ -9,6 +9,8 @@ import { createStudentAction, updateStudentAction, deleteStudentAction, resetStu
 import { createClassAction, updateClassAction, deleteClassAction } from "../../../actions/classes";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import { useRouter } from "next/navigation";
+import Pagination from "@/components/shared/Pagination";
+import { usePagination } from "@/lib/usePagination";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -130,6 +132,28 @@ export default function SchoolDetailClient({ school, teachers, students, classes
       (s.nisn?.toLowerCase() || "").includes(searchSiswa.toLowerCase());
     return matchKelas && matchSearch;
   });
+
+  // Pagination for student tab
+  const {
+    paginatedData: paginatedStudents,
+    currentPage: studentPage,
+    totalPages: studentTotalPages,
+    totalItems: studentTotalItems,
+    setCurrentPage: setStudentPage,
+    startIndex: studentStart,
+    endIndex: studentEnd,
+  } = usePagination(filteredStudents, 15);
+
+  // Pagination for teacher tab
+  const {
+    paginatedData: paginatedTeachers,
+    currentPage: teacherPage,
+    totalPages: teacherTotalPages,
+    totalItems: teacherTotalItems,
+    setCurrentPage: setTeacherPage,
+    startIndex: teacherStart,
+    endIndex: teacherEnd,
+  } = usePagination(teachers, 15);
 
   const studentsByClass: Record<string, number> = {};
   students.forEach((s) => {
@@ -606,8 +630,8 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                     </tr>
                   </thead>
                   <tbody>
-                    {teachers.map((t, i) => (
-                      <tr key={t.id} style={{ borderBottom: i < teachers.length - 1 ? "1px solid #f3f4f6" : "none" }}>
+                    {paginatedTeachers.map((t, i) => (
+                      <tr key={t.id} style={{ borderBottom: i < paginatedTeachers.length - 1 ? "1px solid #f3f4f6" : "none" }}>
                         <td style={{ padding: "0.875rem 1rem", fontWeight: 500 }}>{t.full_name}</td>
                         <td style={{ padding: "0.875rem 1rem", fontFamily: "monospace", fontSize: "0.85rem", color: "#6b7280" }}>{t.username}</td>
                         <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>
@@ -629,6 +653,17 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                   </tbody>
                 </table>
               </div>
+            )}
+            {teachers.length > 0 && (
+              <Pagination
+                currentPage={teacherPage}
+                totalPages={teacherTotalPages}
+                onPageChange={setTeacherPage}
+                totalItems={teacherTotalItems}
+                startIndex={teacherStart}
+                endIndex={teacherEnd}
+                className="pt-4 pb-4"
+              />
             )}
           </div>
         )}
@@ -691,8 +726,8 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredStudents.map((s, i) => (
-                      <tr key={s.id} style={{ borderBottom: i < filteredStudents.length - 1 ? "1px solid #f3f4f6" : "none" }}>
+                    {paginatedStudents.map((s, i) => (
+                      <tr key={s.id} style={{ borderBottom: i < paginatedStudents.length - 1 ? "1px solid #f3f4f6" : "none" }}>
                         <td style={{ padding: "0.875rem 1rem", fontWeight: 500 }}>
                           {s.full_name}
                           {s.birth_date_parse_error && (
@@ -728,6 +763,17 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                   </tbody>
                 </table>
               </div>
+            )}
+            {filteredStudents.length > 0 && (
+              <Pagination
+                currentPage={studentPage}
+                totalPages={studentTotalPages}
+                onPageChange={setStudentPage}
+                totalItems={studentTotalItems}
+                startIndex={studentStart}
+                endIndex={studentEnd}
+                className="pt-4 pb-4"
+              />
             )}
           </div>
         )}

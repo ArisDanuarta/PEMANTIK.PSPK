@@ -4,6 +4,8 @@ import React, { useState, useTransition, useEffect, useMemo } from "react";
 import { Button, Badge, useToast, useConfirm } from "@pemantik/ui";
 import { resetStudentPasswordAction } from "@/app/actions/students";
 import Link from "next/link";
+import Pagination from "@/components/shared/Pagination";
+import { usePagination } from "@/lib/usePagination";
 
 interface StudentRow {
   id: string;
@@ -50,6 +52,16 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
       return matchSearch && matchClass && matchGender;
     });
   }, [students, search, classFilter, genderFilter]);
+
+  const {
+    paginatedData: paginatedStudents,
+    currentPage,
+    totalPages,
+    totalItems,
+    setCurrentPage,
+    startIndex,
+    endIndex,
+  } = usePagination(filtered, 20);
 
   const handleResetPassword = async (s: StudentRow) => {
     const ok = await confirm({
@@ -131,7 +143,7 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
                   </td>
                 </tr>
               ) : (
-                filtered.map((s) => (
+                paginatedStudents.map((s) => (
                   <tr key={s.id}>
                     <td>
                       <div style={{ fontWeight: 600, color: "#1e293b", marginBottom: "0.2rem" }}>{s.full_name}</div>
@@ -188,9 +200,15 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
             </tbody>
           </table>
         </div>
-        <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc", fontSize: "0.85rem", color: "#64748b" }}>
-          Menampilkan {filtered.length} dari total {students.length} siswa. PIN Default setelah reset adalah <strong>123456</strong>.
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={totalItems}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          className="px-4 pb-4"
+        />
       </div>
     </div>
   );

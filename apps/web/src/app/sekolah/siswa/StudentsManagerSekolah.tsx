@@ -14,6 +14,8 @@ import {
 } from "@/app/actions/students";
 import { requestRetakeAction, bulkRequestRetakeAction } from "@/app/actions/retake-requests";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
+import Pagination from "@/components/shared/Pagination";
+import { usePagination } from "@/lib/usePagination";
 
 interface StudentRow {
   id: string;
@@ -82,6 +84,16 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
       return matchSearch && matchClass && matchGender;
     });
   }, [students, search, classFilter, genderFilter]);
+
+  const {
+    paginatedData: paginatedStudents,
+    currentPage,
+    totalPages,
+    totalItems,
+    setCurrentPage,
+    startIndex,
+    endIndex,
+  } = usePagination(filtered, 20);
 
   const handleOpenAdd = () => { setEditingStudent(null); setIsManualModalOpen(true); };
   const handleOpenEdit = (s: StudentRow) => { setEditingStudent(s); setIsManualModalOpen(true); };
@@ -401,7 +413,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
                 <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🧑‍🎓</div>
                 {search || classFilter !== "all" || genderFilter !== "all" ? "Tidak ada anak yang cocok dengan filter." : "Belum ada anak terdaftar."}
               </td></tr>
-            ) : filtered.map((s) => (
+            ) : paginatedStudents.map((s) => (
               <tr key={s.id} style={{ backgroundColor: selectedStudentIds.includes(s.id) ? "#f8fafc" : "" }}>
                 <td style={{ textAlign: "center" }}>
                   <input 
@@ -443,10 +455,15 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
             ))}
           </tbody>
         </table>
-        {filtered.length > 0 && (
-          <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid #f1f3f5", fontSize: "0.8rem", color: "#6c757d" }}>
-            Menampilkan <strong>{filtered.length}</strong> dari <strong>{students.length}</strong>anak</div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={totalItems}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          className="px-4 pb-4"
+        />
       </div>
 
       {/* ── Bulk Upload ── */}
