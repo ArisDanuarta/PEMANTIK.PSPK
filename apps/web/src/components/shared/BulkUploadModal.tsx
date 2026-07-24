@@ -15,7 +15,7 @@ interface BulkUploadModalProps {
   templateFileName: string;
   templateHeaders: string[];
   templateData?: any[][];
-  onClose: () => void;
+  onClose: (success?: boolean) => void;
   onUpload: (data: any[]) => Promise<{ success: boolean; message?: string; error?: string; insertedIds?: string[] }>;
   onRollback?: (ids: string[]) => Promise<void>;
   onDownloadTemplate?: () => void;
@@ -133,7 +133,7 @@ export default function BulkUploadModal({
   const smoothGenericCurrent = useTickingProgress(
     genericProgress?.current ?? 0,
     genericProgress?.total || 1,
-    { expectedIntervalMs: 1500 } // perkiraan durasi 1 chunk upload (CHUNK_SIZE = 50)
+    { expectedIntervalMs: 800, minDurationMs: 600 } 
   );
 
   const dapodikDoneRaw = (batchStatus?.success_count ?? 0) + (batchStatus?.fail_count ?? 0);
@@ -143,12 +143,36 @@ export default function BulkUploadModal({
     { expectedIntervalMs: 2000 } // sesuai interval polling di bawah (2000ms)
   );
 
+  const [isGenericUploadDone, setIsGenericUploadDone] = useState(false);
+
   useEffect(() => {
     setMounted(true);
     return () => {
       if (pollingInterval) clearInterval(pollingInterval);
     };
-  }, []);
+  }, [pollingInterval]);
+
+  // Decouple: Tunggu animasi generic selesai mengejar total sebelum ditutup
+  useEffect(() => {
+    if (isGenericUploadDone && genericProgress && smoothGenericCurrent >= genericProgress.total) {
+      const t = setTimeout(() => onClose(true), 400); // beri jeda tipis setelah mentok
+      return () => clearTimeout(t);
+    }
+  }, [isGenericUploadDone, smoothGenericCurrent, genericProgress, onClose]);
+
+  // Decouple: Tunggu animasi dapodik selesai mengejar total sebelum pindah step
+  useEffect(() => {
+    if (batchStatus?.is_done && dapodikStep === "progress") {
+      const totalRows = batchStatus?.total_rows ?? parseSummary?.row_count ?? 0;
+      if (smoothDapodikDone >= totalRows) {
+        const t = setTimeout(() => {
+          setDapodikStep("result");
+          setIsUploading(false);
+        }, 400);
+        return () => clearTimeout(t);
+      }
+    }
+  }, [batchStatus?.is_done, dapodikStep, smoothDapodikDone, batchStatus?.total_rows, parseSummary?.row_count]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -304,9 +328,8 @@ export default function BulkUploadModal({
           setGenericProgress({ current: Math.min(processed, plainData.length), total: plainData.length });
         }
 
-        // Jika selesai
-        await new Promise(r => setTimeout(r, 600)); // biarkan animasi selesai
-        onClose();
+        // Jika selesai, tandai flag done, biarkan useEffect yang menutup setelah animasi visual mentok
+        setIsGenericUploadDone(true);
 
       } catch (err: any) {
         setErrorMsg(err.message || "Terjadi kesalahan saat memproses file.");
@@ -396,8 +419,7 @@ export default function BulkUploadModal({
             if (status.is_done) {
               clearInterval(interval);
               setPollingInterval(null);
-              setDapodikStep("result");
-              setIsUploading(false);
+              // Transisi ke step "result" ditangani oleh useEffect setelah animasi visual selesai
             }
           } catch {
           }
@@ -447,7 +469,7 @@ export default function BulkUploadModal({
   function renderGenericModal() {
     return (
       <div style={modalBoxStyle("500px", inline)}>
-        <ModalHeader title={title} onClose={onClose} disabled={isUploading} />
+        <ModalHeader title={title} onClose={() => onClose()} disabled={isUploading} />
         {description && <p style={{ fontSize: "0.9rem", color: "#4b5563", marginBottom: "1.25rem", lineHeight: 1.5 }}>{description}</p>}
 
         {isUploading && genericProgress ? (
@@ -490,7 +512,7 @@ export default function BulkUploadModal({
             {errorMsg && <ErrorBanner message={errorMsg} />}
 
             <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
-              <Button variant="outline" onClick={onClose} disabled={isUploading}>Batal</Button>
+              <Button variant="outline" onClick={() => onClose()} disabled={isUploading}>Batal</Button>
               <Button onClick={handleGenericProcessFile} disabled={isUploading || !file} style={{ backgroundColor: "#102e50", color: "white" }}>
                 {isUploading ? "Memproses..." : "Mulai Upload"}
               </Button>
@@ -537,7 +559,7 @@ export default function BulkUploadModal({
             dapodikStep === "progress" ? "Import Dapodik - Sedang Memproses..." :
             "Import Dapodik - Selesai"
           }
-          onClose={onClose}
+          onClose={() => onClose()}
           disabled={isUploading}
         />
 
@@ -553,7 +575,7 @@ export default function BulkUploadModal({
             )}
             {errorMsg && <div style={{ marginTop: "1rem" }}><ErrorBanner message={errorMsg} /></div>}
             <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "1.5rem", borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
-              <Button variant="outline" onClick={onClose} style={{ borderColor: "#102e50", color: "#102e50" }}>Batal</Button>
+              <Button variant="outline" onClick={() => onClose()} style={{ borderColor: "#102e50", color: "#102e50" }}>Batal</Button>
               <Button onClick={handleDapodikUpload} disabled={isUploading || !file} style={{ backgroundColor: "#102e50", color: "white" }}>
                 {isUploading ? "Memproses File..." : "Analisis File →"}
               </Button>
@@ -807,7 +829,7 @@ export default function BulkUploadModal({
             )}
 
             <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
-              <Button variant="outline" onClick={onClose}>Tutup</Button>
+              <Button variant="outline" onClick={() => onClose(true)}>Tutup</Button>
               {batchStatus.school_id && (
                 <a href={`/super-admin/sekolah/${batchStatus.school_id}`} style={{ textDecoration: "none" }}>
                   <Button style={{ backgroundColor: "#102e50", color: "white" }}>Buka Detail Sekolah →</Button>
@@ -826,7 +848,7 @@ function ModalHeader({ title, onClose, disabled }: { title: string; onClose: () 
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
       <h2 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#102e50", margin: 0 }}>{title}</h2>
       <button
-        onClick={onClose}
+        onClick={() => onClose()}
         disabled={disabled}
         style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280", padding: "0.25rem" }}
         aria-label="Tutup modal"

@@ -267,13 +267,6 @@ export default function SchoolDetailKomunitas({
 
   const handleBulkUploadStudent = async (data: any[]) => {
     const result = await bulkCreateStudentsAction(data);
-    if (result.success) {
-      showSuccessToast("Berhasil", result.message || "Data anak berhasil diimport");
-      setIsStudentBulkModalOpen(false);
-      router.refresh();
-    } else {
-      showErrorToast("Gagal", result.error || "Gagal mengimport data anak");
-    }
     return result;
   };
 
@@ -1008,12 +1001,18 @@ export default function SchoolDetailKomunitas({
       {/* MODAL BULK IMPORT ANAK */}
       {isStudentBulkModalOpen && (
         <BulkUploadModal
-          title="Import Data Anak"
+          title="Import Anak via Excel"
           description={`Upload file Excel sesuai template. Sistem akan otomatis men-generate username dan PIN anak berdasarkan NISN. Pastikan field SES diisi sama persis dengan opsi di sistem.`}
           templateFileName={`Template_Anak_${school.name.replace(/[^a-zA-Z0-9]/g, "_")}`}
           templateHeaders={[]}
           onDownloadTemplate={handleDownloadStudentTemplate}
-          onClose={() => setIsStudentBulkModalOpen(false)}
+          onClose={(success) => {
+            setIsStudentBulkModalOpen(false);
+            if (success) {
+              showSuccessToast("Berhasil", "Data anak berhasil diimpor.");
+              router.refresh();
+            }
+          }}
           onUpload={handleBulkUploadStudent}
         />
       )}

@@ -61,7 +61,12 @@ export function useTickingProgress(
       // display saat ini ke realValue lebih cepat dari minDurationMs,
       // walaupun server sebenarnya sudah selesai jauh lebih cepat.
       const remaining = Math.max(0, realValue - s.display);
-      const maxVelocityForMinDuration = remaining / minDurationMs;
+      // Force minimum duration per tick to ensure smooth visual
+      const actualMinDuration = Math.max(minDurationMs, expectedIntervalMs * 0.5);
+      const maxVelocityForMinDuration = remaining / actualMinDuration;
+      
+      // We want to go at the estimated velocity, but no faster than maxVelocityForMinDuration
+      // to ensure the user actually SEES the animation.
       s.velocity = Math.min(estimatedVelocity, maxVelocityForMinDuration || estimatedVelocity);
     } else if (delta < 0) {
       // nilai turun (mis. reset progress) -> ikuti langsung, tanpa animasi mundur

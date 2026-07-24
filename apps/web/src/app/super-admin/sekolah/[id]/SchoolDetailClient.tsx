@@ -202,11 +202,6 @@ export default function SchoolDetailClient({ school, teachers, students, classes
 
   const handleBulkUploadGuru = async (data: any[]) => {
     const result = await bulkCreateTeachersAction(data);
-    if (result.success) {
-      showSuccess("Impor Guru Selesai", result.message || "");
-      setIsTeacherBulkModalOpen(false);
-      setTimeout(() => window.location.reload(), 1500);
-    }
     return result;
   };
 
@@ -353,13 +348,6 @@ export default function SchoolDetailClient({ school, teachers, students, classes
 
   const handleBulkUploadStudent = async (data: any[]) => {
     const result = await bulkCreateStudentsAction(data);
-    if (result.success) {
-      showSuccess("Berhasil", result.message || "Data anak berhasil diimport");
-      setIsStudentBulkModalOpen(false);
-      setTimeout(() => window.location.reload(), 2000);
-    } else {
-      showError("Gagal", result.error || "Gagal mengimport data anak");
-    }
     return result;
   };
 
@@ -836,9 +824,15 @@ export default function SchoolDetailClient({ school, teachers, students, classes
         <BulkUploadModal
           mode="dapodik"
           title="Import Dapodik"
+          onClose={(success) => {
+            setIsDapodikModalOpen(false);
+            if (success) {
+              showSuccess("Selesai", "Proses sinkronisasi Dapodik selesai.");
+              setTimeout(() => window.location.reload(), 1500);
+            }
+          }}
           templateFileName="template_dapodik"
           templateHeaders={[]}
-          onClose={() => setIsDapodikModalOpen(false)}
           onUpload={async () => ({ success: false, error: "Gunakan mode dapodik." })}
           existingSchools={[{ id: school.id, name: school.name, npsn: school.npsn }]}
           onDapodikParse={async (formData) => {
@@ -861,12 +855,18 @@ export default function SchoolDetailClient({ school, teachers, students, classes
       {/* MODAL BULK IMPORT GURU */}
       {isTeacherBulkModalOpen && (
         <BulkUploadModal
-          title="Import Data Guru"
+          title="Import Guru via Excel"
           description={`Upload file Excel sesuai template. Sistem akan membuat username (nama+NIP) dan password default (Password123!) untuk setiap guru. Pastikan kolom nama_sekolah diisi dengan: "${school.name}".`}
           templateFileName={`Template_Guru_${school.name.replace(/[^a-zA-Z0-9]/g, "_")}`}
           templateHeaders={[]}
           onDownloadTemplate={handleDownloadGuruTemplate}
-          onClose={() => setIsTeacherBulkModalOpen(false)}
+          onClose={(success) => {
+            setIsTeacherBulkModalOpen(false);
+            if (success) {
+              showSuccess("Berhasil", "Data guru berhasil diimpor.");
+              setTimeout(() => window.location.reload(), 1500);
+            }
+          }}
           onUpload={handleBulkUploadGuru}
         />
       )}
@@ -988,12 +988,18 @@ export default function SchoolDetailClient({ school, teachers, students, classes
       {/* MODAL BULK IMPORT ANAK */}
       {isStudentBulkModalOpen && (
         <BulkUploadModal
-          title="Import Data Anak"
+          title="Import Anak via Excel"
           description={`Upload file Excel sesuai template. Sistem akan otomatis men-generate username dan PIN anak berdasarkan NISN. Pastikan field SES diisi sama persis dengan opsi di sistem.`}
           templateFileName={`Template_Anak_${school.name.replace(/[^a-zA-Z0-9]/g, "_")}`}
           templateHeaders={[]}
           onDownloadTemplate={handleDownloadStudentTemplate}
-          onClose={() => setIsStudentBulkModalOpen(false)}
+          onClose={(success) => {
+            setIsStudentBulkModalOpen(false);
+            if (success) {
+              showSuccess("Berhasil", "Data anak berhasil diimpor.");
+              setTimeout(() => window.location.reload(), 1500);
+            }
+          }}
           onUpload={handleBulkUploadStudent}
         />
       )}

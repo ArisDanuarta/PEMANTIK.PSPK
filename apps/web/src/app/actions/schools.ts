@@ -22,6 +22,16 @@ function generateRandomString(length = 5) {
   return result;
 }
 
+function generateSchoolUsername(name: string, npsn?: string | null): string {
+  // Abaikan kata "negeri"
+  const nameWithoutNegeri = name.replace(/\bnegeri\b/gi, "");
+  // Ambil hanya huruf dan angka, ubah ke huruf kecil, tanpa membatasi panjangnya
+  const schoolNamePart = nameWithoutNegeri.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  
+  const npsnPart = npsn ? npsn.slice(-4) : Math.floor(1000 + Math.random() * 9000).toString();
+  return `${schoolNamePart}${npsnPart}`;
+}
+
 function processClassesString(classesStr: string, schoolId: string) {
   if (!classesStr) return [];
   const classNames = classesStr.split(",").map(c => c.trim()).filter(c => c.length > 0);
@@ -135,10 +145,7 @@ export async function createSchoolAction(
     }
 
     const defaultPassword = "Password123!";
-    let schoolNamePart = name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-    if (schoolNamePart.length > 10) schoolNamePart = schoolNamePart.slice(0, 10);
-    let npsnPart = npsn ? npsn.slice(-4) : Math.floor(1000 + Math.random() * 9000).toString();
-    const username = `${schoolNamePart}${npsnPart}`;
+    const username = generateSchoolUsername(name, npsn);
     const adminEmail = email || `${username}@pemantik.local`;
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -431,10 +438,7 @@ export async function bulkCreateSchoolsAction(
       }
 
       const defaultPassword = "Password123!";
-      let schoolNamePart = name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-      if (schoolNamePart.length > 10) schoolNamePart = schoolNamePart.slice(0, 10);
-      let npsnPart = npsn ? npsn.slice(-4) : Math.floor(1000 + Math.random() * 9000).toString();
-      const username = `${schoolNamePart}${npsnPart}`;
+      const username = generateSchoolUsername(name, npsn);
       
       const adminEmail = email_sekolah || `${username}@pemantik.local`;
 
@@ -875,7 +879,7 @@ export async function importDapodikAction(
         current_stage: "persiapan_akun",
       });
 
-      const username = `sch_${npsn || generateRandomString(5)}`;
+      const username = generateSchoolUsername(schoolName, npsn);
       const adminEmail = `${username}@pemantik.local`;
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: adminEmail,
@@ -918,7 +922,7 @@ export async function importDapodikAction(
     if (!existingUser) {
       const { data: schoolData } = await supabase.from("schools").select("npsn, name").eq("id", schoolId).single();
       if (schoolData) {
-        const username = `sch_${schoolData.npsn || generateRandomString(5)}`;
+        const username = generateSchoolUsername(schoolData.name, schoolData.npsn);
         const adminEmail = `${username}@pemantik.local`;
         const { data: authData, error: authError } = await supabase.auth.admin.createUser({
           email: adminEmail,
@@ -1003,7 +1007,15 @@ export async function importDapodikAction(
       const newSesVariables: any[] = [];
       let successCount = 0;
 
-      await (supabase as any).from("dapodik_import_batches").update({ status: "processing" }).eq("id", batchId);
+      // Gunakan admin client untuk background task agar tidak terpengaruh siklus request Next.js 
+      // yang akan menutup context (cookies/headers) sesaat setelah respose dikembalikan.
+      const { createClient } = require("@supabase/supabase-js");
+      const adminSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+
+      await adminSupabase.from("dapodik_import_batches").update({ status: "processing" }).eq("id", batchId);
 
       const sesVariablesCache = new Map<string, string>();
 
@@ -1034,12 +1046,12 @@ export async function importDapodikAction(
             });
           }
 
-          const sesData = await resolveSesIds(supabase, row, sesVariablesCache);
+          const sesData = await resolveSesIds(adminSupabase, row, sesVariablesCache);
           if (sesData.new_ses_names.length > 0) {
             newSesVariables.push(...sesData.new_ses_names);
           }
 
-          const { data: thresholds } = await supabase.from("ses_thresholds").select("*");
+          const { data: thresholds } = await adminSupabase.from("ses_thresholds").select("*");
           let ses_class: string | null = null;
           if (sesData.ses_score !== null && thresholds && thresholds.length > 0) {
             const sorted = [...thresholds].sort((a: any, b: any) => a.min_score - b.min_score);
@@ -1050,7 +1062,7 @@ export async function importDapodikAction(
           let existingStudentId: string | null = null;
 
           if (row.nisn) {
-            const { data: existing } = await (supabase as any)
+            const { data: existing } = await adminSupabase
               .from("students")
               .select("id")
               .eq("nisn", row.nisn)
@@ -1060,7 +1072,7 @@ export async function importDapodikAction(
           }
 
           if (!existingStudentId && row.nipd) {
-            const { data: existing } = await (supabase as any)
+            const { data: existing } = await adminSupabase
               .from("students")
               .select("id")
               .eq("nipd", row.nipd)
@@ -1098,7 +1110,7 @@ export async function importDapodikAction(
           };
 
           if (existingStudentId) {
-            const { error: updateErr } = await supabase
+            const { error: updateErr } = await adminSupabase
               .from("students")
               .update(studentPayload)
               .eq("id", existingStudentId);
@@ -1107,7 +1119,7 @@ export async function importDapodikAction(
             const pin_hash = bcrypt.hashSync("123456", 10);
             const schoolNpsn = payload.confirmed_npsn || payload.existing_school_id?.slice(-4) || null;
             const username = generateStudentUsername(row.full_name, schoolNpsn, row.nisn, row.nipd);
-            const { error: insertErr } = await supabase.from("students").insert({
+            const { error: insertErr } = await adminSupabase.from("students").insert({
               ...studentPayload,
               username,
               pin_hash,
@@ -1137,7 +1149,7 @@ export async function importDapodikAction(
         return { type, name };
       });
 
-      await (supabase as any).from("dapodik_import_batches").update({
+      await adminSupabase.from("dapodik_import_batches").update({
         status: finalStatus,
         success_count: successCount,
         fail_count: errors.length,
@@ -1148,7 +1160,7 @@ export async function importDapodikAction(
       }).eq("id", batchId);
 
       if (uniqueNewSes.length > 0) {
-        const { data: superAdmins } = await supabase
+        const { data: superAdmins } = await adminSupabase
           .from("users")
           .select("id")
           .eq("role", "super_admin")
