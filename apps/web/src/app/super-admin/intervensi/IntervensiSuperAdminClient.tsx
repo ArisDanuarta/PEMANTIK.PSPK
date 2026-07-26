@@ -3,6 +3,7 @@
 import React, { useState, useTransition, useRef, useEffect } from "react";
 import { Badge, Button, useToast } from "@pemantik/ui";
 import InterventionGraph from "@/components/shared/InterventionGraph";
+import RawInterventionGraph from "@/components/shared/RawInterventionGraph";
 import ReactMarkdown from "react-markdown";
 import { 
   saveGeminiApiKeyAction, 
@@ -11,6 +12,7 @@ import {
   addManualKnowledgeNodeAction,
   addManualKnowledgeEdgeAction
 } from "@/app/actions/geminiGraph";
+import { getGlobalInterventionGraph } from "@/app/actions/interventions";
 
 interface IntervensiSuperAdminClientProps {
   initialInterventions: any[];
@@ -38,9 +40,26 @@ export default function IntervensiSuperAdminClient({
   aiGraph,
   hasGeminiKey,
 }: IntervensiSuperAdminClientProps) {
-  const [activeTab, setActiveTab] = useState<"list" | "graph" | "ai_chat">("list");
+  const [activeTab, setActiveTab] = useState<"list" | "graph" | "ai_chat">("graph");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
+  
+  const [globalNodes, setGlobalNodes] = useState<any[]>(graphNodes || []);
+  const [globalEdges, setGlobalEdges] = useState<any[]>(graphEdges || []);
+  const [isLoadingGraph, setIsLoadingGraph] = useState(false);
+
+  const handleTabClick = async (tab: "list" | "graph" | "ai_chat") => {
+    setActiveTab(tab);
+    if ((tab === "graph" || tab === "ai_chat") && globalNodes.length === 0 && !isLoadingGraph) {
+      setIsLoadingGraph(true);
+      const res = await getGlobalInterventionGraph();
+      if (res.success) {
+        setGlobalNodes(res.nodes || []);
+        setGlobalEdges(res.edges || []);
+      }
+      setIsLoadingGraph(false);
+    }
+  };
   
   // AI Settings State
   const [showSettings, setShowSettings] = useState(false);
@@ -279,7 +298,7 @@ export default function IntervensiSuperAdminClient({
       }}>
         <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
           <button
-            onClick={() => setActiveTab("list")}
+            onClick={() => handleTabClick("list")}
             style={{
               padding: "0.6rem 1.25rem", borderRadius: "0.5rem", border: "none",
               backgroundColor: activeTab === "list" ? "#102e50" : "transparent",
@@ -290,7 +309,7 @@ export default function IntervensiSuperAdminClient({
             Semua Laporan ({filteredInterventions.length})
           </button>
           <button
-            onClick={() => setActiveTab("graph")}
+            onClick={() => handleTabClick("graph")}
             style={{
               padding: "0.6rem 1.25rem", borderRadius: "0.5rem", border: "none",
               backgroundColor: activeTab === "graph" ? "#102e50" : "transparent",
@@ -301,7 +320,7 @@ export default function IntervensiSuperAdminClient({
             Knowledge Graph & Analysis
           </button>
           <button
-            onClick={() => setActiveTab("ai_chat")}
+            onClick={() => handleTabClick("ai_chat")}
             style={{
               padding: "0.6rem 1.25rem", borderRadius: "0.5rem", border: activeTab === "ai_chat" ? "none" : "1px solid #e2e8f0",
               backgroundColor: activeTab === "ai_chat" ? "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" : "transparent",
@@ -433,72 +452,10 @@ export default function IntervensiSuperAdminClient({
         </div>
       )}
 
-      {/* Tab 2: Hybrid Analysis Dashboard (Graph + Sidebar) */}
+      {/* Tab 2: Hybrid Analysis Dashboard (Graph Only) */}
       {activeTab === "graph" && (
-        <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
-          {/* Kiri: Raw Knowledge Graph */}
-          <div style={{ flex: 3, minWidth: "600px", backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5", height: "780px" }}>
-            <InterventionGraph
-              initialNodes={graphNodes}
-              initialEdges={graphEdges}
-              title="Peta Knowledge Graph Nasional (Data Mentah)"
-              description="Interkoneksi antar komunitas pembina, sekolah, laporan intervensi, serta tag kata kunci permasalahan."
-            />
-          </div>
-
-          {/* Kanan: AI Insights & Analysis Sidebar */}
-          <div style={{ flex: 1, minWidth: "350px", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            
-            {/* Section A: Macro Insights & AI Generator */}
-            <div style={{ backgroundColor: "white", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #f1f3f5", display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <div>
-                <h3 style={{ margin: "0 0 0.25rem 0", color: "#1e293b", fontSize: "1.1rem" }}>✨ Macro Insights AI</h3>
-                <p style={{ margin: 0, color: "#64748b", fontSize: "0.85rem", lineHeight: 1.4 }}>
-                  Gunakan fitur ini secara berkala untuk membedah ratusan narasi dan menemukan pola makro tersembunyi.
-                </p>
-              </div>
-
-              <div style={{ fontSize: "0.85rem", color: "#475569", backgroundColor: "#f8fafc", padding: "0.75rem", borderRadius: "0.5rem" }}>
-                Status Analisis: {aiGraph?.job?.status === "completed" ? (
-                  <strong style={{ color: "#16a34a" }}>Berhasil ({formatDate(aiGraph.job.completed_at)})</strong>
-                ) : aiGraph?.job?.status === "failed" ? (
-                  <strong style={{ color: "#dc2626" }}>Gagal</strong>
-                ) : (
-                  "Belum pernah"
-                )}
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                <Button 
-                  onClick={handleGenerateAi} 
-                  disabled={isGenerating || initialInterventions.length === 0}
-                  style={{ width: "100%", background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)", border: "none", color: "white" }}
-                >
-                  {isGenerating ? "⏳ Menganalisis..." : "Generate AI Graph Ulang"}
-                </Button>
-                
-                {aiGraph?.nodes?.length > 0 && (
-                  <Button variant="outline" onClick={() => setShowAiGraphModal(true)} style={{ width: "100%", borderColor: "#cbd5e1" }}>
-                    Lihat Graf Makro AI
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Section B: Generate Report (Export) */}
-            <div style={{ backgroundColor: "white", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #f1f3f5", display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <div>
-                <h3 style={{ margin: "0 0 0.25rem 0", color: "#1e293b", fontSize: "1.1rem" }}>📥 Export Laporan</h3>
-                <p style={{ margin: 0, color: "#64748b", fontSize: "0.85rem", lineHeight: 1.4 }}>
-                  Unduh seluruh data intervensi secara global ke format CSV untuk keperluan pelaporan eksternal.
-                </p>
-              </div>
-              <Button onClick={handleExportCSV} style={{ width: "100%", backgroundColor: "#102e50", color: "white" }}>
-                Export Comprehensive CSV
-              </Button>
-            </div>
-
-          </div>
+        <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5", minHeight: "780px" }}>
+          <InterventionGraph />
         </div>
       )}
 
@@ -511,7 +468,7 @@ export default function IntervensiSuperAdminClient({
                 AI Report Q&A
               </h2>
               <p style={{ margin: 0, color: "#64748b", fontSize: "0.95rem", lineHeight: 1.5 }}>
-                Tanyakan wawasan tersembunyi, ringkasan, atau korelasi khusus dari data intervensi secara langsung. Gemini AI hanya akan menggunakan informasi yang tertanam di dalam {graphNodes.length} node graf Anda.
+                Tanyakan wawasan tersembunyi, ringkasan, atau korelasi khusus dari data intervensi secara langsung. Gemini AI hanya akan menggunakan informasi yang tertanam di dalam {isLoadingGraph ? "..." : globalNodes.length} node graf Anda.
               </p>
             </div>
             {chatMessages.length > 0 && (
@@ -615,7 +572,7 @@ export default function IntervensiSuperAdminClient({
                   <p>Klik tombol Generate AI Graph di panel sebelumnya untuk membuat.</p>
                 </div>
               ) : (
-                <InterventionGraph
+                <RawInterventionGraph
                   initialNodes={aiGraph.nodes.map((n: any) => ({
                     id: n.id,
                     position: { x: Math.random() * 600, y: Math.random() * 400 },

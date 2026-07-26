@@ -131,6 +131,10 @@ export default async function KomunitasIntervensiPage() {
 
   const stagesInInterventionOnly = (unlockedStages || []).filter((s: any) => s.current_stage === "intervensi");
 
+  const resGraph = await getInterventionGraph();
+  const nodes = resGraph.success ? (resGraph.nodes || []) : [];
+  const edges = resGraph.success ? (resGraph.edges || []) : [];
+
   return (
     <div className="animate-fade-in">
       <div className="page-header">
@@ -146,8 +150,8 @@ export default async function KomunitasIntervensiPage() {
 
       <IntervensiKomunitasClient
         initialInterventions={interventions}
-        graphNodes={[]}
-        graphEdges={[]}
+        graphNodes={nodes}
+        graphEdges={edges}
         activeStages={stagesInInterventionOnly}
       />
     </div>

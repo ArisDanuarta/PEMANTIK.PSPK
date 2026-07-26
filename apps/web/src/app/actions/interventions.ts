@@ -658,3 +658,296 @@ export async function getSchoolInterventionGraph(schoolId: string): Promise<{
     return { success: false, error: err.message };
   }
 }
+
+// ─── Types untuk Cluster Overview (OECD-style) ─────────────────────────────
+
+export interface TagCluster {
+  tagId: string;
+  tagName: string;
+  count: number;
+  /** Hanya sample untuk render dot di blob, bukan full payload narasi */
+  sampleInterventionIds: string[];
+}
+
+export interface CrossTagLink {
+  tagIdA: string;
+  tagIdB: string;
+  /** Berapa banyak intervensi yang share kedua tag ini (ketebalan garis dashed) */
+  sharedCount: number;
+}
+
+// ─── getInterventionTagOverview ─────────────────────────────────────────────
+/**
+ * Ambil data AGREGAT saja (bukan payload penuh) untuk membangun Level-0
+ * "blob overview" ala OECD Education GPS.
+ *
+ * Query ini HANYA menyentuh intervention_tag_links (tabel junction ringan),
+ * tidak menarik kolom narasi (kondisi_awal, upaya_dilakukan, dst) yang berat.
+ *
+ * Scope mengikuti role pemanggil:
+ * - super_admin -> semua data (global)
+ * - community   -> hanya intervensi milik komunitas tsb
+ * - school/teacher -> hanya intervensi milik sekolah tsb
+ */
+export async function getInterventionTagOverview(): Promise<{
+  success: boolean;
+  clusters?: TagCluster[];
+  crossLinks?: CrossTagLink[];
+  totalInterventions?: number;
+  error?: string;
+}> {
+  try {
+    const headersList = await headers();
+    const userRole = headersList.get("x-user-role");
+    const communityId = headersList.get("x-community-id");
+    const schoolId = headersList.get("x-school-id");
+
+    const supabase = await createServerClient();
+
+    // Base query: tag_links join ke interventions (untuk filter scope)
+    // dan join ke intervention_tags (untuk nama tag).
+    let query = (supabase as any)
+      .from("intervention_tag_links")
+      .select(
+        `
+        intervention_id,
+        intervention_tags(id, name),
+        interventions!inner(id, school_id, community_id)
+      `,
+      );
+
+    if (userRole === "community" && communityId) {
+      query = query.eq("interventions.community_id", communityId);
+    } else if ((userRole === "school" || userRole === "teacher") && schoolId) {
+      query = query.eq("interventions.school_id", schoolId);
+    }
+    // super_admin: tanpa filter tambahan (global)
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const byTag = new Map<string, TagCluster>();
+    const byIntervention = new Map<string, Set<string>>(); // interventionId -> Set<tagId>
+    const allInterventionIds = new Set<string>();
+
+    for (const row of data || []) {
+      const tag = row.intervention_tags;
+      const interventionId = row.intervention_id;
+      if (!tag) continue;
+
+      allInterventionIds.add(interventionId);
+
+      if (!byTag.has(tag.id)) {
+        byTag.set(tag.id, {
+          tagId: tag.id,
+          tagName: tag.name,
+          count: 0,
+          sampleInterventionIds: [],
+        });
+      }
+      const cluster = byTag.get(tag.id)!;
+      cluster.count++;
+      if (cluster.sampleInterventionIds.length < 40) {
+        cluster.sampleInterventionIds.push(interventionId);
+      }
+
+      if (!byIntervention.has(interventionId)) {
+        byIntervention.set(interventionId, new Set());
+      }
+      byIntervention.get(interventionId)!.add(tag.id);
+    }
+
+    // Bangun cross-tag links: intervensi dengan 2+ tag menghasilkan garis
+    // dashed antar hub tag (persis pola dashed line di OECD Education GPS).
+    const crossLinkMap = new Map<string, CrossTagLink>();
+    for (const tagIds of byIntervention.values()) {
+      const arr = [...tagIds];
+      for (let i = 0; i < arr.length; i++) {
+        for (let j = i + 1; j < arr.length; j++) {
+          const [a, b] = [arr[i], arr[j]].sort();
+          const key = `${a}__${b}`;
+          if (!crossLinkMap.has(key)) {
+            crossLinkMap.set(key, { tagIdA: a, tagIdB: b, sharedCount: 0 });
+          }
+          crossLinkMap.get(key)!.sharedCount++;
+        }
+      }
+    }
+
+    return {
+      success: true,
+      clusters: [...byTag.values()].sort((a, b) => b.count - a.count),
+      crossLinks: [...crossLinkMap.values()],
+      totalInterventions: allInterventionIds.size,
+    };
+  } catch (err: any) {
+    console.error("[getInterventionTagOverview]", err);
+    return { success: false, error: err.message };
+  }
+}
+
+// ─── getInterventionGraphByTag ──────────────────────────────────────────────
+/**
+ * Level-1 drilldown: subgraph LENGKAP (dengan narasi) tapi HANYA untuk
+ * intervensi yang membawa 1 tag tertentu. Ini yang dipanggil saat user
+ * klik satu blob di overview - bukan saat page pertama load.
+ *
+ * Reuse struktur GraphNode/GraphEdge yang sama dengan getGlobalInterventionGraph
+ * supaya bisa langsung dirender lewat komponen InterventionGraph.tsx yang
+ * sudah ada (React Flow + d3-force), tanpa perlu komponen render baru.
+ */
+export async function getInterventionGraphByTag(tagId: string): Promise<{
+  success: boolean;
+  nodes?: GraphNode[];
+  edges?: GraphEdge[];
+  error?: string;
+}> {
+  try {
+    if (!tagId) return { success: false, error: "tagId wajib diisi." };
+
+    const headersList = await headers();
+    const userRole = headersList.get("x-user-role");
+    const communityId = headersList.get("x-community-id");
+    const schoolId = headersList.get("x-school-id");
+
+    const supabase = await createServerClient();
+
+    let query = (supabase as any)
+      .from("interventions")
+      .select(
+        `
+        id, school_id, community_id, phase, stage_id,
+        kondisi_awal, upaya_dilakukan, perubahan_signifikan, alasan_bermakna,
+        submitted_by, created_at,
+        schools(name, npsn),
+        communities(name),
+        users!interventions_submitted_by_fkey(id, role),
+        intervention_tag_links!inner(tag_id, intervention_tags(id, name))
+      `,
+      )
+      .eq("intervention_tag_links.tag_id", tagId)
+      .order("created_at", { ascending: false });
+
+    if (userRole === "community" && communityId) {
+      query = query.eq("community_id", communityId);
+    } else if ((userRole === "school" || userRole === "teacher") && schoolId) {
+      query = query.eq("school_id", schoolId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    // NOTE: karena filter di atas hanya menjamin tag_id = tagId untuk baris
+    // intervention_tag_links yang dipakai join, kita perlu ambil SEMUA tag
+    // milik tiap intervensi (bukan cuma tagId) supaya node tag lain yang
+    // relevan tetap muncul di subgraph. Query kedua yang ringan:
+    const interventionIds = (data || []).map((iv: any) => iv.id);
+    let allTagLinksByIntervention = new Map<string, { id: string; name: string }[]>();
+
+    if (interventionIds.length > 0) {
+      const { data: allLinks } = await (supabase as any)
+        .from("intervention_tag_links")
+        .select("intervention_id, intervention_tags(id, name)")
+        .in("intervention_id", interventionIds);
+
+      for (const link of allLinks || []) {
+        const arr = allTagLinksByIntervention.get(link.intervention_id) || [];
+        arr.push(link.intervention_tags);
+        allTagLinksByIntervention.set(link.intervention_id, arr);
+      }
+    }
+
+    const nodes: GraphNode[] = [];
+    const edges: GraphEdge[] = [];
+    const seenSchools = new Set<string>();
+    const seenCommunities = new Set<string>();
+    const seenTags = new Set<string>();
+
+    for (const intervention of data || []) {
+      if (intervention.community_id && !seenCommunities.has(intervention.community_id)) {
+        nodes.push({
+          id: `comm_${intervention.community_id}`,
+          type: "community",
+          label: intervention.communities?.name || "Komunitas",
+          data: { community_id: intervention.community_id },
+        });
+        seenCommunities.add(intervention.community_id);
+      }
+
+      if (!seenSchools.has(intervention.school_id)) {
+        nodes.push({
+          id: `school_${intervention.school_id}`,
+          type: "school",
+          label: intervention.schools?.name ?? intervention.school_id,
+          data: { school_id: intervention.school_id, npsn: intervention.schools?.npsn },
+        });
+        seenSchools.add(intervention.school_id);
+
+        if (intervention.community_id) {
+          edges.push({
+            id: `e_comm_school_${intervention.community_id}_${intervention.school_id}`,
+            source: `comm_${intervention.community_id}`,
+            target: `school_${intervention.school_id}`,
+          });
+        }
+      }
+
+      const submitterRole = intervention.users?.role ?? "unknown";
+      const isCommunitySubmitter = ["community", "super_admin"].includes(submitterRole);
+
+      nodes.push({
+        id: `intervention_${intervention.id}`,
+        type: "intervention",
+        label: `${intervention.phase} - ${intervention.schools?.name ?? ""}`,
+        data: {
+          phase: intervention.phase,
+          created_at: intervention.created_at,
+          kondisi_awal: intervention.kondisi_awal,
+          upaya_dilakukan: intervention.upaya_dilakukan,
+          perubahan_signifikan: intervention.perubahan_signifikan,
+          alasan_bermakna: intervention.alasan_bermakna,
+          submitter_role: submitterRole,
+        },
+      });
+
+      if (isCommunitySubmitter && intervention.community_id) {
+        edges.push({
+          id: `e_comm_intervention_${intervention.id}`,
+          source: `comm_${intervention.community_id}`,
+          target: `intervention_${intervention.id}`,
+        });
+      } else {
+        edges.push({
+          id: `e_school_intervention_${intervention.id}`,
+          source: `school_${intervention.school_id}`,
+          target: `intervention_${intervention.id}`,
+        });
+      }
+
+      // Semua tag milik intervensi ini (bukan cuma tagId yang di-drilldown)
+      const tagsForThisIntervention = allTagLinksByIntervention.get(intervention.id) || [];
+      for (const tag of tagsForThisIntervention) {
+        if (!tag) continue;
+        if (!seenTags.has(tag.id)) {
+          nodes.push({
+            id: `tag_${tag.id}`,
+            type: "tag",
+            label: tag.name,
+            data: { tag_id: tag.id },
+          });
+          seenTags.add(tag.id);
+        }
+        edges.push({
+          id: `e_intervention_tag_${intervention.id}_${tag.id}`,
+          source: `intervention_${intervention.id}`,
+          target: `tag_${tag.id}`,
+        });
+      }
+    }
+
+    return { success: true, nodes, edges };
+  } catch (err: any) {
+    console.error("[getInterventionGraphByTag]", err);
+    return { success: false, error: err.message };
+  }
+}

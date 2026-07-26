@@ -16,9 +16,8 @@ export default async function SuperAdminIntervensiPage() {
   const resList = await getAllInterventionsGlobal();
   const interventions = resList.success ? (resList.data || []) : [];
 
-  const resGraph = await getGlobalInterventionGraph();
-  const nodes = resGraph.success ? (resGraph.nodes || []) : [];
-  const edges = resGraph.success ? (resGraph.edges || []) : [];
+  const nodes: any[] = [];
+  const edges: any[] = [];
 
   const aiGraphRes = await getLatestAiKnowledgeGraph();
   
