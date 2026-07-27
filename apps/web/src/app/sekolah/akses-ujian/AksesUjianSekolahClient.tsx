@@ -398,7 +398,8 @@ export default function AksesUjianSekolahClient({
             </p>
           </div>
         ) : (
-          <table className="pemantik-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div style={{ overflowX: "auto" }}>
+          <table className="pemantik-table" style={{ width: "100%", borderCollapse: "collapse", minWidth: "750px" }}>
             <thead>
               <tr style={{ borderBottom: "2px solid #e2e8f0", backgroundColor: "white", textAlign: "left", color: "#475569", fontSize: "0.85rem" }}>
                 <th style={{ padding: "1rem 1.5rem" }}>Nama Fase</th>
@@ -485,6 +486,7 @@ export default function AksesUjianSekolahClient({
                 ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

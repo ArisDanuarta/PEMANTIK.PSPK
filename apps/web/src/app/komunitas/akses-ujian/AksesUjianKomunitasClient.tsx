@@ -304,6 +304,7 @@ export default function AksesUjianKomunitasClient({
           <table
             style={{
               width: "100%",
+              minWidth: "700px",
               borderCollapse: "collapse",
               fontSize: "0.9rem",
             }}
@@ -555,7 +556,7 @@ export default function AksesUjianKomunitasClient({
                     </span>
                   </div>
                   <div style={{ overflowX: "auto", backgroundColor: "white" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+                    <table style={{ width: "100%", minWidth: "700px", borderCollapse: "collapse", fontSize: "0.9rem" }}>
                       <thead>
                         <tr
                           style={{

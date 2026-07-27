@@ -142,6 +142,7 @@ export default function RetakeRequestsTable({ requests }: { requests: RetakeRequ
         </div>
       )}
 
+      <div style={{ overflowX: "auto" }}>
       <table className="pemantik-table" style={{ width: "100%" }}>
         <thead>
           <tr>
@@ -194,6 +195,7 @@ export default function RetakeRequestsTable({ requests }: { requests: RetakeRequ
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { getQuestionStats } from "@/app/actions/questions";
 import { createServerClient } from "@pemantik/supabase";
 import Link from "next/link";
 import React from "react";
+import { StatGrid } from "@/components/ui/responsive/StatGrid";
 
 export const metadata: Metadata = {
   title: "Dashboard Admin Soal | Pemantik",
@@ -76,7 +77,7 @@ export default async function Dashboard() {
       </div>
 
       {/* Stat Cards */}
-      <div className="stats-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+      <StatGrid columns={{ base: 2, md: 3, lg: 5 }}>
         <div className="stat-card">
           <div className="stat-card-accent biru" />
           <div className="stat-card-label">Total Soal</div>
@@ -107,10 +108,10 @@ export default async function Dashboard() {
           <div className="stat-card-value">{stats.totalDraft}</div>
           <div className="stat-card-sub">Perlu ditinjau / dilengkapi</div>
         </div>
-      </div>
+      </StatGrid>
 
       {/* Content Row */}
-      <div className="content-grid-2" style={{ marginTop: "1.5rem", alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem", marginTop: "1.5rem", alignItems: "start" }}>
 
         {/* Breakdown Tipe Soal */}
         <div className="card">

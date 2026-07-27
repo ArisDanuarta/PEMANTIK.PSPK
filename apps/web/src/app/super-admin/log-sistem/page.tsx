@@ -3,6 +3,7 @@ import { createServerClient } from "@pemantik/supabase";
 import React from "react";
 import SystemLogViewer from "./SystemLogViewer";
 import { getSystemLogStats } from "@/app/actions/logs";
+import { StatGrid } from "@/components/ui/responsive/StatGrid";
 
 export const metadata: Metadata = {
   title: "Log Sistem & Error",
@@ -47,7 +48,7 @@ export default async function LogSistemPage() {
         </div>
       </div>
 
-      <div className="stats-grid" style={{ marginBottom: "1.5rem" }}>
+      <StatGrid columns={{ base: 1, md: 3, lg: 3 }} className="mb-6">
         <div className="stat-card">
           <div className="stat-card-accent merah" />
           <div className="stat-card-label">Error Hari Ini</div>
@@ -68,7 +69,7 @@ export default async function LogSistemPage() {
             Active
           </div>
         </div>
-      </div>
+      </StatGrid>
 
       <SystemLogViewer initialLogs={initialLogs} />
     </div>

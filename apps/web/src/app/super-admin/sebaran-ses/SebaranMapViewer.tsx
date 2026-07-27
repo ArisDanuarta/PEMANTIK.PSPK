@@ -64,11 +64,12 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
     .sort((a, b) => cityStats[b].count - cityStats[a].count);
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative", display: "flex", backgroundColor: "#f8fafc" }}>
+    <div style={{ width: "100%", height: "100%", position: "relative", display: "flex", flexWrap: "wrap", backgroundColor: "#f8fafc" }}>
       
       {/* LEFT SIDEBAR: Agenda Kabupaten */}
       <div style={{
-        width: 280,
+        flex: "1 1 280px",
+        maxWidth: "100%",
         background: "white",
         borderRight: "1px solid #e2e8f0",
         boxShadow: "4px 0 15px rgba(0,0,0,0.02)",
@@ -133,7 +134,7 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
         </div>
       </div>
 
-      <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+      <div style={{ flex: "2 1 400px", position: "relative", overflow: "hidden", minHeight: "400px" }}>
         <ComposableMap
         projection="geoMercator"
         projectionConfig={{

@@ -7,6 +7,7 @@ import { checkAndAutoTransitionStages, getActiveStagesForCommunity, type SchoolA
 import CommunityInteractiveTimeline, { type SchoolSummaryForTimeline } from "@/components/shared/CommunityInteractiveTimeline";
 import DemographicsSection, { type StudentDemographicRow } from "@/components/shared/DemographicsSection";
 import PhaseComparisonChart from "@/components/shared/PhaseComparisonChart";
+import { StatGrid } from "@/components/ui/responsive/StatGrid";
 
 export const metadata = {
   title: "Dashboard Komunitas | Pemantik",
@@ -211,12 +212,7 @@ export default async function KomunitasDashboardPage() {
       </div>
 
       {/* SECTION 2: 4 STATISTIK CARDS (PSPK ACCENTS: Navy, Gold, Jingga, Teal) */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: "1.25rem",
-        marginBottom: "2rem"
-      }}>
+      <StatGrid columns={{ base: 1, md: 2, lg: 4 }} className="gap-5 mb-8">
         {/* Sekolah Binaan (#102e50 Navy) */}
         <div className="stat-card" style={{ borderTop: "4px solid #102e50" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -280,7 +276,7 @@ export default async function KomunitasDashboardPage() {
             Jumlah rombongan belajar/kelas di seluruh sekolah
           </div>
         </div>
-      </div>
+      </StatGrid>
 
       {/* SECTION 3: DEMOGRAFI ANAK & LATAR BELAKANG */}
       <div style={{ marginBottom: "2rem" }}>

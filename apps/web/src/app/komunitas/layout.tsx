@@ -12,8 +12,19 @@ export default async function KomunitasLayout({ children }: { children: React.Re
   const communityId = headersList.get("x-community-id");
 
   let hasReachedIntervention = false;
+  let userName = "Komunitas";
 
   if (communityId) {
+    // Ambil nama komunitas
+    const { data: commData } = await (supabase as any)
+      .from("communities")
+      .select("name")
+      .eq("id", communityId)
+      .maybeSingle();
+    
+    if (commData?.name) {
+      userName = commData.name;
+    }
     // Cek apakah ada sekolah binaan yang sudah berada di tahap intervensi / selesai
     const { data: stages } = await (supabase as any)
       .from("school_assessment_stages")
@@ -75,6 +86,7 @@ export default async function KomunitasLayout({ children }: { children: React.Re
       roleName="Komunitas"
       roleChipClass="community"
       roleLabel="Komunitas"
+      userName={userName}
       sections={komunitasNav}
     >
       {children}

@@ -157,7 +157,7 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
       </div>
 
       {/* ── Stats Summary ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem" }}>
         {[
           { label: "Total Kelas", value: classes.length, color: "#102e50" },
           { label: "Kelas Aktif", value: classes.filter(c => c.is_active).length, color: "#2d9e5f" },
@@ -172,7 +172,8 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
 
       {/* ── Tabel ── */}
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-        <table className="pemantik-table" style={{ width: "100%" }}>
+        <div style={{ overflowX: "auto" }}>
+          <table className="pemantik-table" style={{ width: "100%", minWidth: "800px" }}>
           <thead>
             <tr>
               <th>Nama Kelas</th>
@@ -231,6 +232,7 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
             })}
           </tbody>
         </table>
+        </div>
         {filtered.length > 0 && (
           <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid #f1f3f5", fontSize: "0.8rem", color: "#6c757d" }}>
             Menampilkan <strong>{filtered.length}</strong> dari <strong>{classes.length}</strong> kelas

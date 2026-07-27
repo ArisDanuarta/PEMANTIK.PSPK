@@ -125,7 +125,7 @@ export default function IntervensiSekolahClient({
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table className="pemantik-table">
+            <table className="pemantik-table" style={{ minWidth: "850px" }}>
               <thead>
                 <tr>
                   <th>Fase &amp; Pembina</th>

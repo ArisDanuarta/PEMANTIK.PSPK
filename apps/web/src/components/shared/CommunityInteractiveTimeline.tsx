@@ -314,12 +314,14 @@ export default function CommunityInteractiveTimeline({
       </div>
 
       {/* Horizontal Stepper Timeline */}
-      <div style={{ position: "relative", padding: "1rem 0" }}>
+      <div style={{ position: "relative", padding: "1rem 0", overflowX: "auto", overflowY: "hidden" }}>
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(5, 1fr)",
+          minWidth: "600px",
           position: "relative",
-          zIndex: 2
+          zIndex: 2,
+          paddingBottom: "10px"
         }}>
           {TIMELINE_STEPS.map((step, idx) => {
             const isSelected = selectedStepIndex === idx;
@@ -485,7 +487,7 @@ export default function CommunityInteractiveTimeline({
                 Belum ada sekolah binaan terdaftar. Silakan tambah data sekolah di menu Manajemen → Sekolah.
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1rem" }}>
                 {schoolsSummary.map((sc) => {
                   const isReady = sc.current_stage === "persiapan_akun";
                   return (
@@ -501,7 +503,7 @@ export default function CommunityInteractiveTimeline({
                         gap: "0.85rem"
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem" }}>
                         <div>
                           <div style={{ fontWeight: 700, color: "#102e50", fontSize: "1rem" }}>
                             {sc.name}
@@ -516,7 +518,7 @@ export default function CommunityInteractiveTimeline({
                       </div>
 
                       {/* Info Dapodik Sekolah: Jumlah Anak, Guru, Admin, Kelas */}
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.4rem", backgroundColor: "#f8fafc", padding: "0.6rem", borderRadius: "0.5rem", textAlign: "center", fontSize: "0.8rem" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(70px, 1fr))", gap: "0.4rem", backgroundColor: "#f8fafc", padding: "0.6rem", borderRadius: "0.5rem", textAlign: "center", fontSize: "0.8rem" }}>
                         <div>
                           <div style={{ fontWeight: 700, color: "#df632f" }}>{sc.studentsCount}</div>
                           <div style={{ color: "#64748b", fontSize: "0.72rem" }}>Anak (Anak)</div>
@@ -556,10 +558,10 @@ export default function CommunityInteractiveTimeline({
                 Saat ini tidak ada sekolah yang menunggu persetujuan pengajuan asesmen.
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))", gap: "0.85rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "0.85rem" }}>
                 {schoolsInCurrentStep.map((stRow) => (
                   <div key={stRow.id} style={{ backgroundColor: "white", padding: "1rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
                       <div>
                         <div style={{ fontWeight: 700, color: "#102e50", fontSize: "0.95rem" }}>{stRow.schools?.name}</div>
                         <div style={{ fontSize: "0.78rem", color: "#64748b" }}>NPSN: {stRow.schools?.npsn || "-"} • Fase: {stRow.phase}</div>
@@ -595,10 +597,10 @@ export default function CommunityInteractiveTimeline({
                 Saat ini tidak ada sekolah yang sedang dalam rentang pelaksanaan asesmen aktif.
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))", gap: "0.85rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "0.85rem" }}>
                 {schoolsInCurrentStep.map((stRow) => (
                   <div key={stRow.id} style={{ backgroundColor: "white", padding: "1rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
                       <div>
                         <div style={{ fontWeight: 700, color: "#102e50", fontSize: "0.95rem" }}>{stRow.schools?.name}</div>
                         <div style={{ fontSize: "0.78rem", color: "#64748b" }}>NPSN: {stRow.schools?.npsn || "-"} • Fase: {stRow.phase}</div>
@@ -628,12 +630,12 @@ export default function CommunityInteractiveTimeline({
               </span>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1rem" }}>
               {schoolsSummary.map((sc) => {
                 const isInIntervensiStage = sc.current_stage === "intervensi";
                 return (
                   <div key={sc.school_id} style={{ backgroundColor: "white", padding: "1.1rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem" }}>
                       <div>
                         <div style={{ fontWeight: 700, color: "#102e50", fontSize: "1rem" }}>{sc.name}</div>
                         <div style={{ fontSize: "0.78rem", color: "#64748b" }}>NPSN: {sc.npsn || "-"} • Fase: {sc.phase}</div>
@@ -685,10 +687,10 @@ export default function CommunityInteractiveTimeline({
                 Saat ini belum ada sekolah yang menyelesaikan seluruh tahapan siklus fase ini.
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))", gap: "0.85rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "0.85rem" }}>
                 {schoolsInCurrentStep.map((stRow) => (
                   <div key={stRow.id} style={{ backgroundColor: "white", padding: "1rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
                       <div>
                         <div style={{ fontWeight: 700, color: "#102e50", fontSize: "0.95rem" }}>{stRow.schools?.name}</div>
                         <div style={{ fontSize: "0.78rem", color: "#64748b" }}>NPSN: {stRow.schools?.npsn || "-"} • Tuntas di: {stRow.phase}</div>

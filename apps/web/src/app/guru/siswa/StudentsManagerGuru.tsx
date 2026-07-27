@@ -87,20 +87,20 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
       {/* ── Controls ── */}
       <div className="card" style={{ padding: "1.25rem 1.5rem" }}>
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", flex: "1 1 100%" }}>
             <input 
               type="text" 
               className="form-input" 
               placeholder="Cari nama atau NISN..." 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
-              style={{ flex: 1, minWidth: "200px", maxWidth: "300px" }} 
+              style={{ flex: "1 1 200px" }} 
             />
-            <select className="form-input" value={classFilter} onChange={(e) => setClassFilter(e.target.value)} style={{ width: "180px" }}>
+            <select className="form-input" value={classFilter} onChange={(e) => setClassFilter(e.target.value)} style={{ flex: "1 1 120px" }}>
               <option value="all">Semua Kelas</option>
               {classes.map((c) => <option key={c.id} value={c.id}>Kelas {c.grade} - {c.name}</option>)}
             </select>
-            <select className="form-input" value={genderFilter} onChange={(e) => setGenderFilter(e.target.value)} style={{ width: "150px" }}>
+            <select className="form-input" value={genderFilter} onChange={(e) => setGenderFilter(e.target.value)} style={{ flex: "1 1 120px" }}>
               <option value="all">Semua Gender</option>
               <option value="L">Laki-laki</option>
               <option value="P">Perempuan</option>
@@ -125,7 +125,7 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
           </div>
         </div>
         <div style={{ overflowX: "auto" }}>
-          <table className="pemantik-table">
+          <table className="pemantik-table" style={{ width: "100%", minWidth: "750px" }}>
             <thead>
               <tr>
                 <th>Nama Lengkap</th>

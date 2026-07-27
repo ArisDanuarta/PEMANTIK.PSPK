@@ -498,10 +498,11 @@ export default function PreviewPageClient({
       style={{
         display: "flex",
         alignItems: "stretch", // Biar tingginya sama kiri dan kanan
+        flexWrap: "wrap",
         gap: "1.25rem",
         flex: 1,
         minHeight: 0,
-        overflow: "hidden",
+        overflow: "auto",
         margin: 0,
       }}
     >
@@ -510,7 +511,7 @@ export default function PreviewPageClient({
           ═══════════════════════════════════════════════════════════════ */}
       <div
         style={{
-          flex: "1 1 0",
+          flex: "1 1 300px",
           minWidth: 0,
           display: "flex",
           flexDirection: "column",
@@ -526,6 +527,7 @@ export default function PreviewPageClient({
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
+            flexWrap: "wrap",
             gap: "0.75rem",
           }}
         >
@@ -693,7 +695,8 @@ export default function PreviewPageClient({
       <div
         className="card"
         style={{
-          width: 300,
+          flex: "1 1 300px",
+          maxWidth: "100%",
           flexShrink: 0,
           display: "flex",
           flexDirection: "column",

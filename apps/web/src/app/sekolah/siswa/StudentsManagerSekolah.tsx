@@ -284,18 +284,20 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
       {/* ── Controls ── */}
       <div className="card" style={{ padding: "1.25rem 1.5rem" }}>
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
-          <input type="text" className="form-input" placeholder="Cari nama, NISN, atau username..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ flex: 1, minWidth: "200px", maxWidth: "300px" }} />
-          <select className="form-input" value={classFilter} onChange={(e) => setClassFilter(e.target.value)} style={{ width: "180px" }}>
-            <option value="all">Semua Kelas</option>
-            {classes.map((c) => <option key={c.id} value={c.id}>Kelas {c.grade} - {c.name}</option>)}
-          </select>
-          <select className="form-input" value={genderFilter} onChange={(e) => setGenderFilter(e.target.value)} style={{ width: "150px" }}>
-            <option value="all">Semua Gender</option>
-            <option value="L">Laki-laki</option>
-            <option value="P">Perempuan</option>
-          </select>
-          <div style={{ display: "flex", gap: "0.5rem", marginLeft: "auto", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", flex: "1 1 100%" }}>
+            <input type="text" className="form-input" placeholder="Cari nama, NISN, atau username..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ flex: "1 1 200px" }} />
+            <select className="form-input" value={classFilter} onChange={(e) => setClassFilter(e.target.value)} style={{ flex: "1 1 120px" }}>
+              <option value="all">Semua Kelas</option>
+              {classes.map((c) => <option key={c.id} value={c.id}>Kelas {c.grade} - {c.name}</option>)}
+            </select>
+            <select className="form-input" value={genderFilter} onChange={(e) => setGenderFilter(e.target.value)} style={{ flex: "1 1 120px" }}>
+              <option value="all">Semua Gender</option>
+              <option value="L">Laki-laki</option>
+              <option value="P">Perempuan</option>
+            </select>
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
             <Button variant="outline" onClick={handleDownloadTemplate} style={{ color: "#0874aa", borderColor: "#0874aa" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "0.35rem" }}>
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
@@ -393,7 +395,8 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
 
       {/* ── Tabel ── */}
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-        <table className="pemantik-table" style={{ width: "100%" }}>
+        <div style={{ overflowX: "auto" }}>
+          <table className="pemantik-table" style={{ width: "100%", minWidth: "900px" }}>
           <thead>
             <tr>
               <th style={{ width: "40px", textAlign: "center" }}>
@@ -455,6 +458,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
             ))}
           </tbody>
         </table>
+        </div>
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}

@@ -1,6 +1,7 @@
-import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
+import { createServerClient } from "@pemantik/supabase";
 import type { NavSection } from "@/components/layout/Sidebar";
+import { headers } from "next/headers";
 
 const guruNav: NavSection[] = [
   {
@@ -23,13 +24,31 @@ const guruNav: NavSection[] = [
   },
 ];
 
-export default function GuruLayout({ children }: { children: React.ReactNode }) {
+export default async function GuruLayout({ children }: { children: React.ReactNode }) {
+  const headersList = await headers();
+  const userId = headersList.get("x-user-id");
+
+  let userName = "Guru";
+
+  if (userId) {
+    const supabase = createServerClient();
+    const { data: userRecord } = await (supabase as any)
+      .from("users")
+      .select("full_name")
+      .eq("id", userId)
+      .maybeSingle();
+    if (userRecord?.full_name) {
+      userName = userRecord.full_name;
+    }
+  }
+
   return (
     <AppLayout
       role="teacher"
       roleName="Guru"
       roleChipClass="teacher"
       roleLabel="Guru"
+      userName={userName}
       sections={guruNav}
     >
       {children}

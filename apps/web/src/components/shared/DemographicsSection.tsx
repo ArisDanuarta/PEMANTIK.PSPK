@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+
 
 export interface StudentDemographicRow {
   gender?: string | null;
@@ -88,17 +89,18 @@ export default function DemographicsSection({
         {/* Gender Donut Chart */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <h4 style={{ fontSize: "0.95rem", color: "#374151", marginBottom: "1rem", fontWeight: 600 }}>Komposisi Gender</h4>
-          <div style={{ width: "100%", height: 220 }}>
-            <ResponsiveContainer>
+          <div style={{ width: "100%", height: 250 }}>
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={genderData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={55}
-                  outerRadius={80}
+                  innerRadius={60}
+                  outerRadius={90}
                   paddingAngle={4}
                   dataKey="value"
+                  isAnimationActive={false}
                 >
                   {genderData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={GENDER_COLORS[index % GENDER_COLORS.length]} />
@@ -121,14 +123,20 @@ export default function DemographicsSection({
         {/* SES Bar Chart */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <h4 style={{ fontSize: "0.95rem", color: "#374151", marginBottom: "1rem", fontWeight: 600 }}>Status Sosial Ekonomi (SES)</h4>
-          <div style={{ width: "100%", height: 220 }}>
-            <ResponsiveContainer>
-              <BarChart data={sesData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+          <div style={{ width: "100%", height: 280 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={sesData} margin={{ top: 10, right: 10, left: -20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#6b7280" }} interval={0} />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 11, fill: "#6b7280" }} 
+                  interval={0} 
+                  angle={-35}
+                  textAnchor="end"
+                />
                 <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} allowDecimals={false} />
                 <Tooltip formatter={(value: any) => [`${value} Anak`, "Jumlah"]} />
-                <Bar dataKey="count" fill="#2d9e5f" radius={[4, 4, 0, 0]} barSize={36}>
+                <Bar dataKey="count" fill="#2d9e5f" radius={[4, 4, 0, 0]} barSize={36} isAnimationActive={false}>
                   {sesData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={SES_COLORS[index % SES_COLORS.length]} />
                   ))}

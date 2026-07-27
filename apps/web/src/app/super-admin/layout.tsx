@@ -1,5 +1,5 @@
-import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
+import { createServerClient } from "@pemantik/supabase";
 import type { NavSection } from "@/components/layout/Sidebar";
 
 const superAdminNav: NavSection[] = [
@@ -45,17 +45,33 @@ const superAdminNav: NavSection[] = [
   },
 ];
 
-export default function SuperAdminLayout({
+export default async function SuperAdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = createServerClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  let userName = "Super Admin";
+
+  if (session?.user?.id) {
+    const { data: userRecord } = await (supabase as any)
+      .from("users")
+      .select("full_name")
+      .eq("id", session.user.id)
+      .maybeSingle();
+    if (userRecord?.full_name) {
+      userName = userRecord.full_name;
+    }
+  }
+
   return (
     <AppLayout
       role="super_admin"
       roleName="Super Admin"
       roleChipClass="super-admin"
       roleLabel="Super Admin"
+      userName={userName}
       sections={superAdminNav}
     >
       {children}

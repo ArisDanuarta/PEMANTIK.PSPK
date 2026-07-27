@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Badge } from "@pemantik/ui";
+import { StatGrid } from "@/components/ui/responsive/StatGrid";
+import { ResponsiveTable, Column } from "@/components/ui/responsive/ResponsiveTable";
 
 interface GuruDashboardClientProps {
   stats: {
@@ -56,7 +58,7 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
     <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "2rem", paddingBottom: "2rem" }}>
       
       {/* KPI CARDS */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem" }}>
+      <StatGrid columns={{ base: 1, md: 2, lg: 4 }} className="gap-6">
         <div className="card" style={{ padding: "1.5rem", borderLeft: "4px solid #102e50" }}>
           <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Kelas Saya</p>
           <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#102e50", margin: "0.5rem 0", fontFamily: "var(--font-lora)" }}>
@@ -81,7 +83,7 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
             {stats.avgScore}
           </h2>
         </div>
-      </div>
+      </StatGrid>
 
       {/* CHARTS */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
@@ -164,35 +166,56 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
             Belum ada aktivitas ujian yang diselesaikan.
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="table" style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.9rem" }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid #e5e7eb", color: "#374151" }}>
-                  <th style={{ padding: "1rem" }}>Tanggal</th>
-                  <th style={{ padding: "1rem" }}>Nama Anak</th>
-                  <th style={{ padding: "1rem" }}>Kelas</th>
-                  <th style={{ padding: "1rem" }}>Kategori Ujian</th>
-                  <th style={{ padding: "1rem" }}>Skor</th>
-                  <th style={{ padding: "1rem" }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentSessions.map((s) => (
-                  <tr key={s.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-                    <td style={{ padding: "1rem" }}>{new Date(s.completed_at).toLocaleDateString("id-ID")}</td>
-                    <td style={{ padding: "1rem", fontWeight: 500, color: "#102e50" }}>{s.student_name}</td>
-                    <td style={{ padding: "1rem" }}>{s.class_name}</td>
-                    <td style={{ padding: "1rem" }}>{s.package_name}</td>
-                    <td style={{ padding: "1rem", fontWeight: 600, color: s.score >= 70 ? "#10b981" : (s.score >= 50 ? "#f2af3e" : "#ef4444") }}>
+          <div className="mt-4">
+            <ResponsiveTable 
+              data={recentSessions}
+              keyField="id"
+              mode="card"
+              columns={[
+                {
+                  key: "date",
+                  header: "Tanggal",
+                  render: (s) => <span>{new Date(s.completed_at).toLocaleDateString("id-ID")}</span>,
+                  priority: 2
+                },
+                {
+                  key: "name",
+                  header: "Nama Anak",
+                  render: (s) => <span className="font-medium text-[#102e50]">{s.student_name}</span>,
+                  priority: 3
+                },
+                {
+                  key: "class",
+                  header: "Kelas",
+                  render: (s) => <span>{s.class_name}</span>,
+                  hideBelow: "md",
+                  priority: 1
+                },
+                {
+                  key: "category",
+                  header: "Kategori Ujian",
+                  render: (s) => <span>{s.package_name}</span>,
+                  hideBelow: "md",
+                  priority: 1
+                },
+                {
+                  key: "score",
+                  header: "Skor",
+                  render: (s) => (
+                    <span className="font-semibold" style={{ color: s.score >= 70 ? "#10b981" : (s.score >= 50 ? "#f2af3e" : "#ef4444") }}>
                       {s.score !== null ? s.score : "-"}
-                    </td>
-                    <td style={{ padding: "1rem" }}>
-                      <Badge variant="success">Selesai</Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </span>
+                  ),
+                  priority: 2
+                },
+                {
+                  key: "status",
+                  header: "Status",
+                  render: () => <Badge variant="success">Selesai</Badge>,
+                  priority: 0
+                }
+              ]}
+            />
           </div>
         )}
       </div>

@@ -113,7 +113,7 @@ export default function PersetujuanSuperAdminClient({
         border: "1px solid #f1f3f5", boxShadow: "0 2px 4px rgba(0,0,0,0.03)",
         display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem"
       }}>
-        <div style={{ display: "flex", gap: "0.5rem", borderBottom: "2px solid transparent" }}>
+        <div style={{ display: "flex", gap: "0.5rem", borderBottom: "2px solid transparent", flexWrap: "wrap" }}>
           <button
             onClick={() => setActiveTab("pending")}
             style={{
@@ -143,7 +143,7 @@ export default function PersetujuanSuperAdminClient({
           placeholder="Cari komunitas, kategori, atau fase..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ padding: "0.55rem 1rem", borderRadius: "0.5rem", border: "1px solid #d1d5db", fontSize: "0.88rem", width: "300px" }}
+          style={{ padding: "0.55rem 1rem", borderRadius: "0.5rem", border: "1px solid #d1d5db", fontSize: "0.88rem", flex: "1 1 200px", maxWidth: "400px" }}
         />
       </div>
 

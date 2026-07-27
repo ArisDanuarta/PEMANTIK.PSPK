@@ -10,6 +10,7 @@ import {
   advanceStageToNewPhaseAction,
   type SchoolAssessmentStageRow
 } from "@/app/actions/stages";
+import { StatGrid } from "@/components/ui/responsive/StatGrid";
 
 interface SchoolInteractiveTimelineProps {
   stages: SchoolAssessmentStageRow[];
@@ -215,10 +216,13 @@ export default function SchoolInteractiveTimeline({
     <div style={{
       backgroundColor: "white",
       borderRadius: "1.25rem",
-      padding: "2rem",
+      padding: "clamp(1rem, 4vw, 2rem)",
       boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
       border: "1px solid #e2e8f0",
       fontFamily: "var(--font-sans, system-ui, sans-serif)",
+      width: "100%",
+      minWidth: 0,
+      overflow: "hidden",
     }}>
       {/* Header Info Status Sekolah */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.75rem", flexWrap: "wrap", gap: "1rem" }}>
@@ -238,12 +242,13 @@ export default function SchoolInteractiveTimeline({
       </div>
 
       {/* Horizontal Stepper Timeline */}
-      <div style={{ position: "relative", padding: "1rem 0", marginBottom: "2rem" }}>
+      <div style={{ position: "relative", padding: "1rem 0", marginBottom: "2rem", overflowX: "auto", overflowY: "hidden" }}>
         <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(5, 1fr)",
           position: "relative",
-          zIndex: 2
+          zIndex: 2,
+          minWidth: "600px"
         }}>
           {TIMELINE_STEPS.map((step, idx) => {
             const isSelected = selectedStepIndex === idx;
@@ -521,7 +526,7 @@ export default function SchoolInteractiveTimeline({
         <h4 style={{ margin: "0 0 1rem 0", fontSize: "1rem", fontWeight: 700, color: "#1e293b" }}>
           Ringkasan Data Sekolah Anda ({schoolName})
         </h4>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
+        <StatGrid columns={{ base: 1, md: 3 }} className="gap-4">
           <div style={{ backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", padding: "1.2rem 1rem", borderRadius: "1rem", textAlign: "center" }}>
             <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#f2af3e" }}>{totalTeachers}</div>
             <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#64748b", marginTop: "0.2rem" }}>Total Guru</div>
@@ -534,7 +539,7 @@ export default function SchoolInteractiveTimeline({
             <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0874aa" }}>{totalClasses}</div>
             <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#64748b", marginTop: "0.2rem" }}>Total Kelas Aktif</div>
           </div>
-        </div>
+        </StatGrid>
       </div>
     </div>
   );

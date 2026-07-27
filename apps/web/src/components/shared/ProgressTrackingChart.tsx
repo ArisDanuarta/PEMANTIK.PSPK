@@ -79,7 +79,7 @@ export default function ProgressTrackingChart({
               contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
             />
             <Legend wrapperStyle={{ paddingTop: "20px" }} />
-            <Bar dataKey="Rata-rata Nilai" fill="#f2af3e" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="Rata-rata Nilai" fill="#f2af3e" radius={[4, 4, 0, 0]} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
       </div>

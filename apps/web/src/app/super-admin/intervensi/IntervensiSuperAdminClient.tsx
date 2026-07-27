@@ -334,14 +334,14 @@ export default function IntervensiSuperAdminClient({
           </button>
         </div>
 
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
           {activeTab === "list" && (
             <input
               type="text"
               placeholder="🔍 Cari laporan..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ padding: "0.55rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.88rem", width: "240px" }}
+              style={{ padding: "0.55rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.88rem", flex: "1 1 150px", maxWidth: "300px" }}
             />
           )}
           <Button variant="outline" onClick={() => setShowSettings(true)} style={{ borderColor: "#cbd5e1", color: "#475569" }}>

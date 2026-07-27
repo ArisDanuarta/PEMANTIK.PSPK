@@ -127,7 +127,7 @@ export default function IntervensiGuruClient({
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table className="pemantik-table">
+            <table className="pemantik-table" style={{ width: "100%", minWidth: "850px" }}>
               <thead>
                 <tr>
                   <th>Fase &amp; Pembina</th>

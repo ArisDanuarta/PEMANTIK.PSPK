@@ -194,16 +194,16 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
 
   return (
     <div className="card" style={{ marginTop: "1rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.5rem", borderBottom: "1px solid #e5e7eb" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.5rem", borderBottom: "1px solid #e5e7eb", flexWrap: "wrap", gap: "1rem" }}>
         <input
           type="text"
           placeholder="Cari nama, NISN, username, atau sekolah..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="form-input"
-          style={{ maxWidth: "350px" }}
+          style={{ flex: "1 1 200px", maxWidth: "400px" }}
         />
-        <div style={{ display: "flex", gap: "0.75rem" }}>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
           <Button variant="outline" onClick={handleDownloadTemplate} style={{ color: "#0874aa", borderColor: "#0874aa" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "0.5rem", display: "inline-block", verticalAlign: "middle" }}>
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
@@ -224,7 +224,8 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
         </span>
       </div>
 
-      <table className="pemantik-table">
+      <div style={{ overflowX: "auto" }}>
+        <table className="pemantik-table">
         <thead>
           <tr>
             <th>Nama Anak</th>
@@ -287,6 +288,7 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
           )}
         </tbody>
       </table>
+      </div>
 
       <Pagination
         currentPage={currentPage}

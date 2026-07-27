@@ -107,6 +107,7 @@ export default function SuperAdminPengaturan() {
           <div
           style={{
             display: "flex",
+            flexWrap: "wrap",
             borderBottom: "2px solid #e5e7eb",
             gap: "1.5rem",
             paddingBottom: "1px",

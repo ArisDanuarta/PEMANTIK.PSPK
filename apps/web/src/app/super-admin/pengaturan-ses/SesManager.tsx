@@ -113,8 +113,8 @@ export default function SesManager({ initialThresholds, initialVariables }: { in
           </p>
         </div>
         
-        <div style={{ padding: "1rem 2rem 2rem 2rem" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}>
+        <div style={{ padding: "1rem", overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem", minWidth: "500px" }}>
             <thead>
               <tr>
                 <th style={{ textAlign: "left", padding: "1rem", color: "#4b5563", fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "2px solid #e5e7eb" }}>Klasifikasi SES</th>
@@ -258,7 +258,7 @@ export default function SesManager({ initialThresholds, initialVariables }: { in
           </button>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "2rem", padding: "0 2rem 2rem 2rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "2rem", padding: "0 2rem 2rem 2rem" }}>
           
           {/* TABEL PENDIDIKAN */}
           <div style={{ background: "#f8fafc", borderRadius: "12px", border: "1px solid #e2e8f0", overflow: "hidden" }}>

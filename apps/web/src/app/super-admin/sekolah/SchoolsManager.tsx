@@ -225,16 +225,16 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
 
       {activeTab === "list" && (
         <>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.5rem", borderBottom: "1px solid #e5e7eb" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.5rem", borderBottom: "1px solid #e5e7eb", flexWrap: "wrap", gap: "1rem" }}>
             <input
               type="text"
               placeholder="Cari nama, NPSN, atau komunitas..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="form-input"
-              style={{ maxWidth: "300px" }}
+              style={{ flex: "1 1 200px", maxWidth: "400px" }}
             />
-            <div style={{ display: "flex", gap: "0.75rem" }}>
+            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
               <Button variant="outline" onClick={handleDownloadTemplate} style={{ color: "#2563eb", borderColor: "#2563eb" }}>
                 Download Template
               </Button>

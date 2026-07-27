@@ -9,14 +9,20 @@ export default async function SekolahLayout({ children }: { children: React.Reac
   const schoolId = headersList.get("x-school-id");
 
   let isIndependent = false;
+  let userName = "Sekolah";
+
   if (schoolId) {
     try {
       const supabase = createServerClient();
       const { data: school } = await (supabase as any)
         .from("schools")
-        .select("community_id")
+        .select("name, community_id")
         .eq("id", schoolId)
         .maybeSingle();
+      
+      if (school?.name) {
+        userName = school.name;
+      }
       
       // Jika community_id null atau kosong, berarti sekolah independen (tanpa induk)
       isIndependent = !school?.community_id;
@@ -64,6 +70,7 @@ export default async function SekolahLayout({ children }: { children: React.Reac
       roleName="Sekolah"
       roleChipClass="school"
       roleLabel="Sekolah"
+      userName={userName}
       sections={sekolahNav}
     >
       {children}

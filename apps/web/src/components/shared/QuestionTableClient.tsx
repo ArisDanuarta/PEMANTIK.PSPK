@@ -100,7 +100,7 @@ export default function QuestionTableClient({
   return (
     <div>
       {/* Scrollable table wrapper */}
-      <div className="table-wrapper" style={{ border: "none", borderRadius: 0 }}>
+      <div className="table-wrapper" style={{ border: "none", borderRadius: 0, overflowX: "auto" }}>
         <table className="pemantik-table">
           <thead>
             <tr>

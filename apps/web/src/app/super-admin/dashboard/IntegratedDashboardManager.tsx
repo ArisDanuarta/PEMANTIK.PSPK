@@ -4,6 +4,8 @@ import React, { useState, useMemo } from "react";
 import DashboardCharts from "./DashboardCharts";
 import { Badge, Button } from "@pemantik/ui";
 import ExportDataModal from "./ExportDataModal";
+import { StatGrid } from "@/components/ui/responsive/StatGrid";
+import { ResponsiveTable, Column } from "@/components/ui/responsive/ResponsiveTable";
 
 interface IntegratedDashboardManagerProps {
   communities: any[];
@@ -170,7 +172,7 @@ export default function IntegratedDashboardManager({
       </div>
 
       {/* KPI CARDS */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem" }}>
+      <StatGrid columns={{ base: 1, md: 2, lg: 4 }} className="gap-6">
         <div className="card" style={{ padding: "1.5rem", borderLeft: "4px solid #102e50" }}>
           <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Mitra</p>
           <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#102e50", margin: "0.5rem 0", fontFamily: "var(--font-lora)" }}>
@@ -195,7 +197,7 @@ export default function IntegratedDashboardManager({
             {students.length}
           </h2>
         </div>
-      </div>
+      </StatGrid>
 
       {/* CHARTS */}
       <DashboardCharts genderData={genderData} assessmentData={assessmentData} ageData={ageData} />
@@ -219,51 +221,63 @@ export default function IntegratedDashboardManager({
             Belum ada data komunitas terdaftar di sistem.
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="table" style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.9rem" }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid #e5e7eb", color: "#374151" }}>
-                  <th style={{ padding: "1rem" }}>No</th>
-                  <th style={{ padding: "1rem" }}>Nama Komunitas / Mitra</th>
-                  <th style={{ padding: "1rem" }}>Kode</th>
-                  <th style={{ padding: "1rem", textAlign: "center" }}>Jumlah Sekolah</th>
-                  <th style={{ padding: "1rem", textAlign: "center" }}>Jumlah Guru</th>
-                  <th style={{ padding: "1rem", textAlign: "center" }}>Jumlah Anak</th>
-                  <th style={{ padding: "1rem", textAlign: "center" }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {communityStats.map((c, index) => (
-                  <tr key={c.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-                    <td style={{ padding: "1rem", color: "#64748b" }}>{index + 1}</td>
-                    <td style={{ padding: "1rem", fontWeight: 600, color: "#102e50" }}>
-                      {c.name}
-                    </td>
-                    <td style={{ padding: "1rem" }}>
-                      <code style={{ backgroundColor: "#f1f5f9", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", color: "#0874aa", fontSize: "0.82rem" }}>
-                        {c.code}
-                      </code>
-                    </td>
-                    <td style={{ padding: "1rem", textAlign: "center", fontWeight: 600, color: "#1e293b" }}>
-                      {c.schoolsCount.toLocaleString("id-ID")}
-                    </td>
-                    <td style={{ padding: "1rem", textAlign: "center", fontWeight: 600, color: "#1e293b" }}>
-                      {c.teachersCount.toLocaleString("id-ID")}
-                    </td>
-                    <td style={{ padding: "1rem", textAlign: "center", fontWeight: 600, color: "#0874aa" }}>
-                      {c.studentsCount.toLocaleString("id-ID")}
-                    </td>
-                    <td style={{ padding: "1rem", textAlign: "center" }}>
-                      <div style={{ display: "inline-block" }}>
-                        <Badge variant={c.is_active ? "success" : "default"}>
-                          {c.is_active ? "Aktif" : "Non-Aktif"}
-                        </Badge>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mt-4">
+            <ResponsiveTable 
+              data={communityStats}
+              keyField="id"
+              mode="card"
+              columns={[
+                {
+                  key: "no",
+                  header: "No",
+                  render: (_, index) => <span className="text-gray-500">{communityStats.indexOf(_) + 1}</span>,
+                  hideBelow: "md",
+                  priority: 0
+                },
+                {
+                  key: "name",
+                  header: "Nama Komunitas / Mitra",
+                  render: (c) => <span className="font-semibold text-[#102e50]">{c.name}</span>,
+                  priority: 3
+                },
+                {
+                  key: "code",
+                  header: "Kode",
+                  render: (c) => <code className="bg-slate-100 px-2 py-1 rounded text-[#0874aa] text-xs">{c.code}</code>,
+                  priority: 2
+                },
+                {
+                  key: "schools",
+                  header: "Jumlah Sekolah",
+                  render: (c) => <span className="font-semibold text-slate-800">{c.schoolsCount.toLocaleString("id-ID")}</span>,
+                  priority: 1
+                },
+                {
+                  key: "teachers",
+                  header: "Jumlah Guru",
+                  render: (c) => <span className="font-semibold text-slate-800">{c.teachersCount.toLocaleString("id-ID")}</span>,
+                  hideBelow: "md",
+                  priority: 0
+                },
+                {
+                  key: "students",
+                  header: "Jumlah Anak",
+                  render: (c) => <span className="font-semibold text-[#0874aa]">{c.studentsCount.toLocaleString("id-ID")}</span>,
+                  hideBelow: "md",
+                  priority: 0
+                },
+                {
+                  key: "status",
+                  header: "Status",
+                  render: (c) => (
+                    <Badge variant={c.is_active ? "success" : "default"}>
+                      {c.is_active ? "Aktif" : "Non-Aktif"}
+                    </Badge>
+                  ),
+                  priority: 2
+                }
+              ]}
+            />
             {communities.length > 10 && (
               <div style={{ textAlign: "center", padding: "1rem", color: "#6b7280", fontSize: "0.85rem" }}>
                 Menampilkan 10 dari total {communities.length} komunitas. Kunjungi menu <a href="/super-admin/komunitas" style={{ color: "#0874aa", fontWeight: 600 }}>Komunitas &amp; Mitra</a> untuk melihat seluruh daftar.

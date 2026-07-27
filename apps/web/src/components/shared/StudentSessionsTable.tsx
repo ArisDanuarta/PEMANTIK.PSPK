@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Badge } from "@pemantik/ui";
+import { ResponsiveTable, Column } from "@/components/ui/responsive/ResponsiveTable";
 
 interface Session {
   id: string;
@@ -62,64 +63,94 @@ export default function StudentSessionsTable({ sessions }: StudentSessionsTableP
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <div style={{ backgroundColor: "white", borderRadius: "0.75rem", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
-          <thead>
-            <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left", color: "#4b5563", backgroundColor: "#f9fafb" }}>
-              <th style={{ padding: "1rem" }}>Anak</th>
-              <th style={{ padding: "1rem" }}>Asal Sekolah/Komunitas</th>
-              <th style={{ padding: "1rem" }}>Paket Ujian</th>
-              <th style={{ padding: "1rem" }}>Fase & Level</th>
-              <th style={{ padding: "1rem" }}>Status</th>
-              <th style={{ padding: "1rem" }}>Skor</th>
-              <th style={{ padding: "1rem" }}>Keterangan</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sessions.map((session) => {
-              const retakeReason = session.assessment_retake_requests?.find(r => r.status === 'approved')?.reason;
-              return (
-              <tr key={session.id} style={{ borderBottom: "1px solid #f3f4f6", opacity: session.is_void ? 0.7 : 1 }}>
-                <td style={{ padding: "1rem" }}>
-                  <div style={{ fontWeight: 600, color: "#102e50" }}>{session.students?.full_name || "Unknown"}</div>
-                  <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>NISN: {session.students?.nisn || "-"}</div>
-                </td>
-                <td style={{ padding: "1rem" }}>
-                  <div style={{ fontWeight: 500, color: "#374151" }}>{session.schools?.name || "-"}</div>
-                  <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>{session.schools?.community_name || "-"}</div>
-                </td>
-                <td style={{ padding: "1rem" }}>
-                  <div>{session.question_categories?.name || "-"}</div>
-                  <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>{session.question_categories?.subject_area?.toUpperCase()}</div>
-                </td>
-                <td style={{ padding: "1rem" }}>
-                  <div>{session.phase || "Tahap 1"} (Attempt {session.attempt_number})</div>
-                  <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>
-                    {session.current_level_id ? "Selesai di suatu level" : "Belum selesai"} 
-                  </div>
-                </td>
-                <td style={{ padding: "1rem" }}>
-                  {getStatusBadge(session.status, session.is_void)}
-                </td>
-                <td style={{ padding: "1rem", fontWeight: 600 }}>
-                  {session.score !== undefined && session.score !== null ? session.score : "-"}
-                </td>
-                <td style={{ padding: "1rem", fontSize: "0.85rem", color: "#6b7280", maxWidth: "200px" }}>
-                  {session.is_void && retakeReason ? (
-                    <div>
-                      <span style={{ color: "#ca8a04", fontWeight: 600 }}>Retake:</span> {retakeReason}
-                    </div>
-                  ) : session.is_void ? (
-                    "Dibatalkan tanpa keterangan retake."
-                  ) : (
-                    "-"
-                  )}
-                </td>
-              </tr>
-            )})}
-          </tbody>
-        </table>
-      </div>
+      <ResponsiveTable
+        data={sessions}
+        keyField="id"
+        mode="card"
+        columns={[
+          {
+            key: "student",
+            header: "Anak",
+            priority: 4,
+            render: (s) => (
+              <div>
+                <div style={{ fontWeight: 600, color: "#102e50" }}>{s.students?.full_name || "Unknown"}</div>
+                <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>NISN: {s.students?.nisn || "-"}</div>
+              </div>
+            )
+          },
+          {
+            key: "school",
+            header: "Asal Sekolah/Komunitas",
+            priority: 3,
+            hideBelow: "md",
+            render: (s) => (
+              <div>
+                <div style={{ fontWeight: 500, color: "#374151" }}>{s.schools?.name || "-"}</div>
+                <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>{s.schools?.community_name || "-"}</div>
+              </div>
+            )
+          },
+          {
+            key: "package",
+            header: "Paket Ujian",
+            priority: 2,
+            hideBelow: "md",
+            render: (s) => (
+              <div>
+                <div>{s.question_categories?.name || "-"}</div>
+                <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>{s.question_categories?.subject_area?.toUpperCase()}</div>
+              </div>
+            )
+          },
+          {
+            key: "phase",
+            header: "Fase & Level",
+            priority: 1,
+            hideBelow: "md",
+            render: (s) => (
+              <div>
+                <div>{s.phase || "Tahap 1"} (Attempt {s.attempt_number})</div>
+                <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+                  {s.current_level_id ? "Selesai di suatu level" : "Belum selesai"} 
+                </div>
+              </div>
+            )
+          },
+          {
+            key: "status",
+            header: "Status",
+            priority: 3,
+            render: (s) => getStatusBadge(s.status, s.is_void)
+          },
+          {
+            key: "score",
+            header: "Skor",
+            priority: 2,
+            render: (s) => (
+              <span style={{ fontWeight: 600 }}>
+                {s.score !== undefined && s.score !== null ? s.score : "-"}
+              </span>
+            )
+          },
+          {
+            key: "info",
+            header: "Keterangan",
+            priority: 0,
+            hideBelow: "lg",
+            render: (s) => {
+              const retakeReason = s.assessment_retake_requests?.find(r => r.status === 'approved')?.reason;
+              if (s.is_void && retakeReason) {
+                return <div><span style={{ color: "#ca8a04", fontWeight: 600 }}>Retake:</span> {retakeReason}</div>;
+              }
+              if (s.is_void) {
+                return <span style={{ fontSize: "0.85rem", color: "#6b7280" }}>Dibatalkan tanpa keterangan retake.</span>;
+              }
+              return <span style={{ fontSize: "0.85rem", color: "#6b7280" }}>-</span>;
+            }
+          }
+        ]}
+      />
     </div>
   );
 }

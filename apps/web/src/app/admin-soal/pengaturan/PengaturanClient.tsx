@@ -358,7 +358,7 @@ export default function PengaturanClient() {
         </button>
       </div>
 
-      <div className="content-grid-2" style={{ alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem", alignItems: "start" }}>
 
         {/* ── KOLOM KIRI: KATEGORI ── */}
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
@@ -481,7 +481,7 @@ export default function PengaturanClient() {
               {/* Add Level form */}
               <div style={{ padding: "1rem", background: "#f8f9fa", borderRadius: "var(--radius-md)", border: "1px solid #e9ecef", marginBottom: "1.5rem" }}>
                 <h3 style={{ margin: "0 0 0.75rem", fontSize: "0.9rem", fontWeight: 700, color: "var(--clr-biru)" }}>+ Tambah Level Baru</h3>
-                <form onSubmit={handleCreateLevel} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                <form onSubmit={handleCreateLevel} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "0.75rem" }}>
                   <div className="form-group">
                     <label className="form-label">Nomor Level</label>
                     <input type="number" min="0" className="form-input" value={newLevelNumber} onChange={(e) => setNewLevelNumber(e.target.value ? Number(e.target.value) : "")} required />
@@ -535,7 +535,7 @@ export default function PengaturanClient() {
                       <div key={l.id} style={{ border: "1px solid #e9ecef", borderRadius: "var(--radius-md)", overflow: "hidden" }}>
                         {isEditing ? (
                           <div style={{ padding: "1rem" }}>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.5rem", marginBottom: "0.75rem" }}>
                               <div className="form-group">
                                 <label className="form-label">Nomor Level</label>
                                 <input type="number" className="form-input" value={editLevel.levelNumber}

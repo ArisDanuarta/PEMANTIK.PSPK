@@ -209,14 +209,14 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
 
   return (
     <div className="card" style={{ marginTop: "1rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.5rem", borderBottom: "1px solid #e5e7eb" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "space-between", alignItems: "center", padding: "1.5rem", borderBottom: "1px solid #e5e7eb" }}>
         <input
           type="text"
           placeholder="Cari nama atau NPSN..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="form-input"
-          style={{ maxWidth: "300px" }}
+          style={{ flex: "1 1 250px", minWidth: 0 }}
         />
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
           <Button variant="outline" onClick={handleDownloadTemplate} style={{ color: "#2563eb", borderColor: "#2563eb" }}>
@@ -232,7 +232,7 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
       </div>
 
       <div style={{ overflowX: "auto" }}>
-        <table className="pemantik-table">
+        <table className="pemantik-table" style={{ minWidth: "900px" }}>
           <thead>
             <tr>
               <th>Nama Sekolah</th>

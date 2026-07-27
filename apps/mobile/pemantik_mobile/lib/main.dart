@@ -64,6 +64,18 @@ class _PemantikAppState extends ConsumerState<PemantikApp> {
       title: 'Pemantik Asesmen',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return Container(
+          color: const Color(0xFFF1F3F5),
+          alignment: Alignment.center,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: ClipRect(
+              child: child ?? const SizedBox.shrink(),
+            ),
+          ),
+        );
+      },
       // FIX 3: Ganti initialRoute + onGenerateRoute dengan home + onGenerateRoute.
       // initialRoute bukan '/' dengan onGenerateRoute menyebabkan Flutter push
       // '/' dulu (tidak ada di router) → blank white screen.

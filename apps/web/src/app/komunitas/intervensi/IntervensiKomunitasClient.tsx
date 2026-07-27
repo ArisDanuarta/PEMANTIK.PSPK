@@ -127,55 +127,57 @@ export default function IntervensiKomunitasClient({
               Belum ada laporan intervensi yang pernah disubmit oleh komunitas Anda.
             </div>
           ) : (
-            <table className="pemantik-table">
-              <thead>
-                <tr>
-                  <th>Sekolah &amp; Fase</th>
-                  <th>1. Kondisi Awal</th>
-                  <th>2. Upaya Dilakukan</th>
-                  <th>Tag Topik</th>
-                  <th>Tanggal</th>
-                  <th style={{ textAlign: "center" }}>Detail</th>
-                </tr>
-              </thead>
-              <tbody>
-                {initialInterventions.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <div style={{ fontWeight: 700, color: "#102e50" }}>{item.schools?.name || "Sekolah"}</div>
-                      <div style={{ marginTop: "0.2rem" }}><Badge variant="info">{item.phase}</Badge></div>
-                    </td>
-                    <td style={{ maxWidth: "200px" }}>
-                      <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                        {item.kondisi_awal}
-                      </div>
-                    </td>
-                    <td style={{ maxWidth: "220px" }}>
-                      <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                        {item.upaya_dilakukan}
-                      </div>
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
-                        {(item.intervention_tag_links || []).map((lnk: any) => (
-                          <span key={lnk.intervention_tags?.id} style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 600 }}>
-                            #{lnk.intervention_tags?.name}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td style={{ fontSize: "0.82rem", color: "#64748b" }}>
-                      {formatDate(item.created_at)}
-                    </td>
-                    <td style={{ textAlign: "center" }}>
-                      <Button size="sm" variant="outline" onClick={() => setSelectedInterventionDetail(item)}>
-                        Lihat Detail
-                      </Button>
-                    </td>
+            <div style={{ overflowX: "auto" }}>
+              <table className="pemantik-table" style={{ minWidth: "900px" }}>
+                <thead>
+                  <tr>
+                    <th>Sekolah &amp; Fase</th>
+                    <th>1. Kondisi Awal</th>
+                    <th>2. Upaya Dilakukan</th>
+                    <th>Tag Topik</th>
+                    <th>Tanggal</th>
+                    <th style={{ textAlign: "center" }}>Detail</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {initialInterventions.map((item) => (
+                    <tr key={item.id}>
+                      <td>
+                        <div style={{ fontWeight: 700, color: "#102e50" }}>{item.schools?.name || "Sekolah"}</div>
+                        <div style={{ marginTop: "0.2rem" }}><Badge variant="info">{item.phase}</Badge></div>
+                      </td>
+                      <td style={{ maxWidth: "200px" }}>
+                        <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                          {item.kondisi_awal}
+                        </div>
+                      </td>
+                      <td style={{ maxWidth: "220px" }}>
+                        <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                          {item.upaya_dilakukan}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
+                          {(item.intervention_tag_links || []).map((lnk: any) => (
+                            <span key={lnk.intervention_tags?.id} style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 600 }}>
+                              #{lnk.intervention_tags?.name}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td style={{ fontSize: "0.82rem", color: "#64748b" }}>
+                        {formatDate(item.created_at)}
+                      </td>
+                      <td style={{ textAlign: "center" }}>
+                        <Button size="sm" variant="outline" onClick={() => setSelectedInterventionDetail(item)}>
+                          Lihat Detail
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

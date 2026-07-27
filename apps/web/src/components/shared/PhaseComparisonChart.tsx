@@ -9,8 +9,8 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
 } from "recharts";
+import { ResponsiveContainer } from "recharts";
 
 interface SessionChartItem {
   id?: string;
@@ -196,35 +196,38 @@ export default function PhaseComparisonChart({
       </div>
 
       <div style={{ width: "100%", height: 340 }}>
-        <ResponsiveContainer>
-          <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-            <XAxis dataKey="phase" stroke="#64748b" fontSize={13} fontWeight={600} tickLine={false} />
-            <YAxis stroke="#64748b" fontSize={13} tickLine={false} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ paddingTop: "1rem", fontSize: "0.88rem", fontWeight: 600 }} />
-            <Bar
-              name="Partisipasi Anak (Anak Ikut Asesmen)"
-              dataKey="peserta"
-              fill="#0874aa"
-              radius={[6, 6, 0, 0]}
-              barSize={32}
-            />
-            <Bar
-              name="Rata-Rata Capaian Literasi (%)"
-              dataKey="avgLiterasi"
-              fill="#10b981"
-              radius={[6, 6, 0, 0]}
-              barSize={32}
-            />
-            <Bar
-              name="Rata-Rata Capaian Numerasi (%)"
-              dataKey="avgNumerasi"
-              fill="#f2af3e"
-              radius={[6, 6, 0, 0]}
-              barSize={32}
-            />
-          </BarChart>
+        <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 25 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis dataKey="phase" stroke="#64748b" fontSize={13} fontWeight={600} tickLine={false} />
+              <YAxis stroke="#64748b" fontSize={13} tickLine={false} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: "1.5rem", fontSize: "0.85rem", fontWeight: 600, paddingBottom: "10px" }} />
+              <Bar
+                name="Partisipasi Anak (Anak Ikut Asesmen)"
+                dataKey="peserta"
+                fill="#0874aa"
+                radius={[6, 6, 0, 0]}
+                barSize={32}
+                isAnimationActive={false}
+              />
+              <Bar
+                name="Rata-Rata Capaian Literasi (%)"
+                dataKey="avgLiterasi"
+                fill="#10b981"
+                radius={[6, 6, 0, 0]}
+                barSize={32}
+                isAnimationActive={false}
+              />
+              <Bar
+                name="Rata-Rata Capaian Numerasi (%)"
+                dataKey="avgNumerasi"
+                fill="#f2af3e"
+                radius={[6, 6, 0, 0]}
+                barSize={32}
+                isAnimationActive={false}
+              />
+            </BarChart>
         </ResponsiveContainer>
       </div>
 

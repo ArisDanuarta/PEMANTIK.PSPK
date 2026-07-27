@@ -61,10 +61,11 @@ export default function SystemLogViewer({ initialLogs }: { initialLogs: any[] })
 
   return (
     <div className="card">
-      <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--color-gray-200)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--color-gray-200)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
         <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 600 }}>Log Aktivitas & Error Terakhir</h3>
         <Badge variant="info">Mendengarkan Pembaruan...</Badge>
       </div>
+      <div style={{ overflowX: "auto" }}>
       <table className="pemantik-table">
         <thead>
           <tr>
@@ -138,6 +139,7 @@ export default function SystemLogViewer({ initialLogs }: { initialLogs: any[] })
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

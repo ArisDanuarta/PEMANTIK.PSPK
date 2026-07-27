@@ -810,19 +810,17 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
     <div style={{
       display: "flex",
       gap: "2rem",
-      // PENDEKATAN BENAR untuk admin layout yang punya fixed header + sidebar:
-      // Container ini mengambil seluruh tinggi area konten yang tersisa.
-      // overflow: hidden → scroll dikontrol per-kolom, bukan oleh halaman.
+      flexWrap: "wrap",
       height: "100%",
       minHeight: 0,
-      overflow: "hidden",
+      overflow: "auto",
     }}>
 
       {/* ── Kolom kiri: HANYA ini yang scroll ── */}
       {/* overflowY: auto → scroll bar muncul di dalam kolom kiri saja.         */}
       {/* Header dan preview (kolom kanan) tidak bergerak sama sekali.           */}
       <div style={{
-        flex: 1,
+        flex: "1 1 300px",
         minWidth: 0,
         overflowY: "auto",
         paddingRight: "0.5rem",
@@ -947,8 +945,10 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
       {/* dari area - tapi normalnya preview (461px) < tinggi area konten.       */}
       {isMounted && (
         <div style={{
-          width: "260px",
-          flexShrink: 0,
+          flex: "1 1 260px",
+          maxWidth: "400px",
+          position: "relative",
+          zIndex: 5,
           overflowY: "auto",
           paddingBottom: "1.5rem",
           paddingTop: "0",

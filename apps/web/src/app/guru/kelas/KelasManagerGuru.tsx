@@ -34,7 +34,7 @@ export default function KelasManagerGuru({ classes }: Props) {
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table className="pemantik-table" style={{ width: "100%" }}>
+            <table className="pemantik-table" style={{ width: "100%", minWidth: "600px" }}>
               <thead>
                 <tr>
                   <th>Nama Kelas</th>

@@ -6,6 +6,7 @@ import React from "react";
 import Image from "next/image";
 import { logoutAction } from "@/app/actions/auth";
 import NotificationBell from "@/components/shared/NotificationBell";
+import { useSidebar } from "./SidebarProvider";
 
 export interface NavItem {
   label: string;
@@ -142,20 +143,45 @@ const IconMap: Record<string, React.ComponentType> = {
 
 export function Sidebar({ role, roleName, userName, sections }: SidebarProps) {
   const pathname = usePathname();
+  const { isOpen, isMobile } = useSidebar();
+  
+  // Jika mobile, render apa adanya (karena collapsed artinya off-canvas/drawer hilang)
+  // Jika desktop, isCollapsed = !isOpen
+  const isCollapsed = !isMobile && !isOpen;
 
   return (
     <aside className="layout-sidebar" id="sidebar-nav" aria-label="Navigasi utama">
       {/* Logo */}
-      <div className="sidebar-logo">
-        {/* Bagian teks yang diubah menjadi Image */}
-        <div style={{ display: "flex", alignItems: "center" }}>
+      <div 
+        className={`sidebar-logo ${isCollapsed ? "justify-center" : ""}`}
+        style={{ padding: isCollapsed ? '1.25rem 0' : '1.25rem 1.5rem' }}
+      >
+        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: 64 }}>
           <Image
             src="/images/LOGO_PEMANTIK_PUTIH_KUNING.png"
             alt="Logo Pemantik PSPK"
-            width={250}
-            height={100}
+            fill
+            sizes="200px"
             priority
-            style={{ objectFit: "contain",height:"auto" }}
+            style={{ 
+              objectFit: "contain",
+              opacity: isCollapsed ? 0 : 1,
+              transition: "opacity 200ms ease",
+              pointerEvents: isCollapsed ? "none" : "auto",
+            }}
+          />
+          <Image
+            src="/images/SIDEBAR_MINI.PNG"
+            alt="Logo PSPK Mini"
+            fill
+            sizes="64px"
+            priority
+            style={{ 
+              objectFit: "contain",
+              opacity: isCollapsed ? 1 : 0,
+              transition: "opacity 200ms ease",
+              pointerEvents: isCollapsed ? "auto" : "none",
+            }}
           />
         </div>
       </div>
@@ -163,9 +189,25 @@ export function Sidebar({ role, roleName, userName, sections }: SidebarProps) {
       {/* Navigation */}
       <nav className="sidebar-nav" aria-label="Menu navigasi" role="navigation">
         {sections.map((section, si) => (
-          <div key={si}>
+          <div key={si} className={isCollapsed ? "mt-4" : ""}>
             {section.label && (
-              <div className="sidebar-section-label">{section.label}</div>
+              <div 
+                className="sidebar-section-label"
+                style={{
+                  opacity: isCollapsed ? 0 : 1,
+                  maxHeight: isCollapsed ? 0 : 40,
+                  overflow: "hidden",
+                  transition: "opacity 200ms ease, max-height 300ms ease",
+                  marginBottom: isCollapsed ? 0 : undefined,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {section.label}
+              </div>
+            )}
+            {/* Pada mode collapsed, kalau mau kita bisa tampilkan divider tipis antar section */}
+            {section.label && isCollapsed && si > 0 && (
+              <div className="mx-4 my-2 border-t border-white/10" />
             )}
             {section.items.map((item) => {
               const exactMatch = sections.some(s => s.items.some(i => i.href === pathname));
@@ -177,8 +219,9 @@ export function Sidebar({ role, roleName, userName, sections }: SidebarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`sidebar-item ${isActive ? "active" : ""}`}
+                  className={`sidebar-item ${isActive ? "active" : ""} ${isCollapsed ? "justify-center px-0" : ""}`}
                   aria-current={isActive ? "page" : undefined}
+                  title={isCollapsed ? item.label : undefined} // Tooltip pada hover
                 >
                   {item.icon && (
                     <span className="sidebar-item-icon" aria-hidden="true">
@@ -189,25 +232,38 @@ export function Sidebar({ role, roleName, userName, sections }: SidebarProps) {
                       )}
                     </span>
                   )}
-                  <span style={{ flex: 1 }}>{item.label}</span>
-                  {item.badge != null && (
-                    <span
-                      style={{
-                        background: isActive
-                          ? "rgba(242,175,62,0.3)"
-                          : "rgba(255,255,255,0.15)",
-                        color: isActive ? "var(--clr-kuning)" : "rgba(255,255,255,0.7)",
-                        fontSize: "0.65rem",
-                        fontWeight: 700,
-                        padding: "0.1rem 0.4rem",
-                        borderRadius: 999,
-                        minWidth: 18,
-                        textAlign: "center",
-                      }}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      flex: 1,
+                      opacity: isCollapsed ? 0 : 1,
+                      maxWidth: isCollapsed ? 0 : 200,
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      transition: "opacity 200ms ease, max-width 300ms ease",
+                    }}
+                  >
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {item.badge != null && (
+                      <span
+                        style={{
+                          background: isActive
+                            ? "rgba(242,175,62,0.3)"
+                            : "rgba(255,255,255,0.15)",
+                          color: isActive ? "var(--clr-kuning)" : "rgba(255,255,255,0.7)",
+                          fontSize: "0.65rem",
+                          fontWeight: 700,
+                          padding: "0.1rem 0.4rem",
+                          borderRadius: 999,
+                          minWidth: 18,
+                          textAlign: "center",
+                        }}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
                 </Link>
               );
             })}
@@ -216,13 +272,15 @@ export function Sidebar({ role, roleName, userName, sections }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="sidebar-footer">
+      <div className={`sidebar-footer ${isCollapsed ? "flex flex-col items-center px-2" : ""}`}>
         <div
           style={{
             display: "flex",
             alignItems: "center",
             gap: "0.75rem",
             marginBottom: "0.75rem",
+            justifyContent: isCollapsed ? "center" : "flex-start",
+            flexDirection: isCollapsed ? "column" : "row"
           }}
         >
           <div
@@ -242,32 +300,57 @@ export function Sidebar({ role, roleName, userName, sections }: SidebarProps) {
               {(userName ?? roleName).charAt(0).toUpperCase()}
             </span>
           </div>
-          <div style={{ flex: 1, overflow: "hidden" }}>
+          <div
+            style={{
+              flex: 1,
+              opacity: isCollapsed ? 0 : 1,
+              maxWidth: isCollapsed ? 0 : 150,
+              overflow: "hidden",
+              transition: "opacity 200ms ease, max-width 300ms ease",
+            }}
+          >
             <div
               style={{
                 color: "#fff",
                 fontSize: "0.8rem",
                 fontWeight: 600,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                wordBreak: "break-word",
+                lineHeight: "1.2",
+                paddingBottom: "2px",
               }}
             >
               {userName ?? "Pengguna"}
             </div>
-            <div style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.65rem" }}>
+            <div style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.65rem", whiteSpace: "nowrap" }}>
               {roleName}
             </div>
           </div>
-          {/* Notification Bell */}
-          <NotificationBell />
+          {/* Notification Bell - Hide label if inside it has one, but it is just a bell icon */}
+          <div style={{
+            opacity: isCollapsed ? 0 : 1,
+            maxWidth: isCollapsed ? 0 : 32,
+            overflow: "hidden",
+            transition: "opacity 200ms ease, max-width 300ms ease",
+          }}>
+            <NotificationBell />
+          </div>
         </div>
         <form action={logoutAction} style={{ width: "100%" }}>
-          <button type="submit" className="sidebar-item" style={{ borderRadius: "var(--radius-md)", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+          <button type="submit" className={`sidebar-item ${isCollapsed ? "justify-center px-0" : ""}`} style={{ borderRadius: "var(--radius-md)", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: isCollapsed ? "center" : "left" }} title={isCollapsed ? "Keluar" : undefined}>
             <span className="sidebar-item-icon" aria-hidden="true">
               <Icons.Logout />
             </span>
-            Keluar
+            <span
+              style={{
+                opacity: isCollapsed ? 0 : 1,
+                maxWidth: isCollapsed ? 0 : 100,
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                transition: "opacity 200ms ease, max-width 300ms ease",
+              }}
+            >
+              Keluar
+            </span>
           </button>
         </form>
       </div>

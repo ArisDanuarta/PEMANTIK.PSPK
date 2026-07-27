@@ -197,7 +197,8 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
 
       {/* ── Tabel ── */}
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-        <table className="pemantik-table" style={{ width: "100%" }}>
+        <div style={{ overflowX: "auto" }}>
+          <table className="pemantik-table" style={{ width: "100%", minWidth: "800px" }}>
           <thead>
             <tr>
               <th>Nama Guru</th><th>Akun Akses</th><th>Kelas Diajar</th>
@@ -241,6 +242,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
             ))}
           </tbody>
         </table>
+        </div>
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}

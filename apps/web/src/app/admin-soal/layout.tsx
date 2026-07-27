@@ -1,5 +1,5 @@
-import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
+import { createServerClient } from "@pemantik/supabase";
 import type { NavSection } from "@/components/layout/Sidebar";
 
 const adminSoalNav: NavSection[] = [
@@ -24,13 +24,29 @@ const adminSoalNav: NavSection[] = [
   },
 ];
 
-export default function AdminSoalLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminSoalLayout({ children }: { children: React.ReactNode }) {
+  const supabase = createServerClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  let userName = "Admin Soal";
+
+  if (session?.user?.id) {
+    const { data: userRecord } = await (supabase as any)
+      .from("users")
+      .select("full_name")
+      .eq("id", session.user.id)
+      .maybeSingle();
+    if (userRecord?.full_name) {
+      userName = userRecord.full_name;
+    }
+  }
+
   return (
     <AppLayout
       role="question_admin"
       roleName="Admin Soal"
       roleChipClass="question-admin"
       roleLabel="Admin Soal"
+      userName={userName}
       sections={adminSoalNav}
     >
       {children}
