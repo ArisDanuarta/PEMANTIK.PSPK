@@ -534,41 +534,59 @@ export type Database = {
         Row: {
           address: string | null
           allowed_categories: string[] | null
+          city: string | null
           code: string
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
           created_at: string
+          district: string | null
           id: string
           is_active: boolean
+          is_sandbox: boolean
           name: string
+          province: string | null
+          status_kepemilikan: string | null
           updated_at: string
+          village: string | null
         }
         Insert: {
           address?: string | null
           allowed_categories?: string[] | null
+          city?: string | null
           code: string
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          district?: string | null
           id?: string
           is_active?: boolean
+          is_sandbox?: boolean
           name: string
+          province?: string | null
+          status_kepemilikan?: string | null
           updated_at?: string
+          village?: string | null
         }
         Update: {
           address?: string | null
           allowed_categories?: string[] | null
+          city?: string | null
           code?: string
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          district?: string | null
           id?: string
           is_active?: boolean
+          is_sandbox?: boolean
           name?: string
+          province?: string | null
+          status_kepemilikan?: string | null
           updated_at?: string
+          village?: string | null
         }
         Relationships: []
       }
@@ -1709,6 +1727,18 @@ export type Database = {
         Returns: Json
       }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      insert_sandbox_school_data: {
+        Args: {
+          p_community_id: string
+          p_school_id: string
+          p_school_name: string
+          p_category_id: string
+          p_granted_by: string
+          p_users: Json
+          p_students: Json
+        }
+        Returns: Json
+      }
       is_assessment_access_valid: {
         Args: { p_category_id: string; p_phase: string; p_student_id: string }
         Returns: boolean

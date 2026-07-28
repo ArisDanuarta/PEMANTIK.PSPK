@@ -27,6 +27,7 @@ export async function createCommunityAction(
   const contactPhone = (formData.get("contact_phone") as string)?.trim() || null;
   const contactEmail = (formData.get("contact_email") as string)?.trim() || null;
   const isActive = formData.get("is_active") === "true";
+  const isSandbox = formData.get("is_sandbox") === "true";
 
   if (!name || !code) {
     return { success: false, error: "Nama dan Kode Komunitas wajib diisi." };
@@ -68,6 +69,7 @@ export async function createCommunityAction(
     contact_phone: contactPhone,
     contact_email: contactEmail,
     is_active: isActive,
+    is_sandbox: isSandbox,
     allowed_categories: null,
   } as any).select().single();
 
@@ -144,6 +146,7 @@ export async function updateCommunityAction(
     const contactPhone = (formData.get("contact_phone") as string)?.trim() || null;
     const contactEmail = (formData.get("contact_email") as string)?.trim() || null;
     const isActive = formData.get("is_active") === "true";
+    const isSandbox = formData.get("is_sandbox") === "true";
 
     if (!name) {
       return { success: false, error: "Nama Komunitas wajib diisi." };
@@ -167,6 +170,7 @@ export async function updateCommunityAction(
         contact_phone: contactPhone,
         contact_email: contactEmail,
         is_active: isActive,
+        is_sandbox: isSandbox,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);

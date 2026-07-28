@@ -32,6 +32,7 @@ interface Community {
   contact_phone: string | null;
   contact_email: string | null;
   is_active: boolean;
+  is_sandbox?: boolean;
   created_at: string;
   allowed_categories?: string[] | null;
 }
@@ -260,10 +261,17 @@ export default function CommunitiesManager({
     {
       key: "is_active",
       label: "Status",
-      render: (val: any) => (
-        <Badge variant={val ? "success" : "danger"}>
-          {val ? "Aktif" : "Nonaktif"}
-        </Badge>
+      render: (val: any, row: Community) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", alignItems: "flex-start" }}>
+          <Badge variant={val ? "success" : "danger"}>
+            {val ? "Aktif" : "Nonaktif"}
+          </Badge>
+          {row.is_sandbox && (
+            <span style={{ backgroundColor: "#ffc107", color: "#000", padding: "0.15rem 0.45rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, display: "inline-block" }}>
+              Sandbox
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -479,6 +487,20 @@ export default function CommunitiesManager({
             />
             <label htmlFor="comm-is-active" style={{ fontSize: "0.9rem", fontWeight: 600, cursor: "pointer" }}>
               Aktifkan komunitas ini langsung
+            </label>
+          </div>
+
+          <div className="form-group" style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.5rem" }}>
+            <input
+              id="comm-is-sandbox"
+              name="is_sandbox"
+              type="checkbox"
+              value="true"
+              defaultChecked={editingComm ? editingComm.is_sandbox : false}
+              style={{ width: "16px", height: "16px", cursor: "pointer" }}
+            />
+            <label htmlFor="comm-is-sandbox" style={{ fontSize: "0.9rem", fontWeight: 600, cursor: "pointer", color: "#a8281c" }}>
+              Mode Sandbox (Komunitas Uji Coba)
             </label>
           </div>
           

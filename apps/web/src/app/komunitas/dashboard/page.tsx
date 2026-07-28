@@ -8,6 +8,7 @@ import CommunityInteractiveTimeline, { type SchoolSummaryForTimeline } from "@/c
 import DemographicsSection, { type StudentDemographicRow } from "@/components/shared/DemographicsSection";
 import PhaseComparisonChart from "@/components/shared/PhaseComparisonChart";
 import { StatGrid } from "@/components/ui/responsive/StatGrid";
+import GenerateSekolahTrialModal from "@/components/shared/GenerateSekolahTrialModal";
 
 export const metadata = {
   title: "Dashboard Komunitas | Pemantik",
@@ -35,8 +36,18 @@ export default async function KomunitasDashboardPage() {
   let stagesData: SchoolAssessmentStageRow[] = [];
   let studentsDemographic: StudentDemographicRow[] = [];
   let schoolsSummary: SchoolSummaryForTimeline[] = [];
+  let isSandbox = false;
+  let categories: any[] = [];
 
   if (communityId) {
+    const { data: commData } = await supabase.from("communities").select("is_sandbox").eq("id", communityId).maybeSingle();
+    isSandbox = commData?.is_sandbox || false;
+    
+    if (isSandbox) {
+      const { data: catData } = await supabase.from("question_categories").select("id, name, subject_area");
+      categories = catData || [];
+    }
+
     // 0. Cek & auto-transition tahap proses_asesmen yang masa berlakunya sudah habis
     await checkAndAutoTransitionStages(communityId);
     
@@ -200,6 +211,14 @@ export default async function KomunitasDashboardPage() {
             <span>Progress &amp; Statistik</span>
           </div>
         </div>
+        {isSandbox && (
+          <div className="page-header-right" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ backgroundColor: "#ffedd5", color: "#c2410c", padding: "0.25rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: "bold" }}>
+              MODE SANDBOX AKTIF
+            </div>
+            <GenerateSekolahTrialModal communityId={communityId} categories={categories} />
+          </div>
+        )}
       </div>
       
       {/* SECTION 1: TIMELINE & TRACK PROGRESS ASESMEN (PALING ATAS) */}

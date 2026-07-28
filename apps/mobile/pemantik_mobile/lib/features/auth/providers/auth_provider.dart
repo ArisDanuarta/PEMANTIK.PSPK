@@ -164,10 +164,28 @@ class Auth extends _$Auth {
     } catch (e) {
       if (!_mounted) return;
       log('=== [Auth] ERROR LOGIN: $e ===');
-      state = AuthState(
-        error:
-            'Terjadi kesalahan jaringan. Pastikan perangkat terhubung internet.',
-      );
+      
+      String errorMsg = 'Terjadi kesalahan jaringan. Pastikan perangkat terhubung internet.';
+      
+      // Tangkap pesan error dari Supabase Edge Function (misal 401 Unauthorized)
+      if (e.toString().contains('FunctionException') || e.toString().contains('error')) {
+        // Coba ekstrak pesan error dari body response jika tersedia
+        try {
+          final errorStr = e.toString();
+          if (errorStr.contains('Nama pengguna tidak ditemukan') || errorStr.contains('tidak aktif')) {
+            errorMsg = 'Username tidak terdaftar atau akun dinonaktifkan.';
+          } else if (errorStr.contains('PIN yang dimasukkan salah')) {
+            errorMsg = 'PIN salah. Silakan coba lagi.';
+          } else if (errorStr.contains('Username dan PIN wajib diisi')) {
+            errorMsg = 'Mohon lengkapi username dan PIN.';
+          } else {
+             // Fallback yang lebih spesifik daripada "Kesalahan Jaringan" jika kita tahu ini respon server
+             errorMsg = 'Login ditolak oleh server. Periksa kembali data Anda.';
+          }
+        } catch (_) {}
+      }
+
+      state = AuthState(error: errorMsg);
     }
   }
 
