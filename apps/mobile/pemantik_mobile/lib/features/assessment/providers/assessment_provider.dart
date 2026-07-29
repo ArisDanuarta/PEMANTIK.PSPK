@@ -132,9 +132,12 @@ class AssessmentController extends _$AssessmentController {
 
   @override
   Future<AssessmentState> build(String sessionId) async {
+    PageController? pageCtrl;
     ref.onDispose(() {
       _countdownTimer?.cancel();
+      pageCtrl?.dispose();
     });
+    
     final db = ref.read(databaseProvider);
     final session = await db.sessionDao.getSessionById(sessionId);
     if (session == null) throw Exception('Sesi tidak valid atau belum dibuat');
@@ -179,11 +182,13 @@ class AssessmentController extends _$AssessmentController {
       );
     }).toList();
 
+    pageCtrl = PageController(initialPage: session.currentQuestionIndex);
+
     return AssessmentState(
       questions: questions,
       currentIndex: session.currentQuestionIndex,
       answers: {},
-      pageController: PageController(initialPage: session.currentQuestionIndex),
+      pageController: pageCtrl,
     );
   }
 

@@ -82,6 +82,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
   // ── Meta state ──────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [questionCode, setQuestionCode] = useState(initialData?.question_code || "");
   const [subjectArea, setSubjectArea] = useState(initialData?.subject_area || "literasi");
   const [questionType, setQuestionType] = useState(initialData?.question_type || "multiple_choice");
   const [categoryId, setCategoryId] = useState("");
@@ -283,10 +284,12 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
   // ─── Submit ────────────────────────────────────────────────────────────────
 
   const handleSubmit = async (isPublished: boolean) => {
+    if (!questionCode.trim()) return error("Validasi", "Kode Soal wajib diisi.");
     if (!levelId) return error("Validasi", "Silakan pilih Jenis Soal dan Level terlebih dahulu.");
     setLoading(true);
 
     const payload: any = {
+      question_code: questionCode.trim(),
       subject_area: subjectArea,
       question_type: questionType,
       level_id: levelId,
@@ -549,12 +552,12 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               </div>
             )}
             {mediaUrl && questionType === "audio_question" && (
-              <audio src={mediaUrl} controls style={{ width: "100%", display: "block" }} />
+              <audio key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", marginBottom: "0.5rem" }} />
             )}
             {mediaUrl && questionType === "video_question" && (
               ytId
-                ? <iframe width="100%" height="140" src={`https://www.youtube.com/embed/${ytId}`} title="yt" frameBorder="0" allowFullScreen style={{ display: "block", borderRadius: "8px" }} />
-                : <video src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px" }} />
+                ? <iframe key={mediaUrl} width="100%" height="140" src={`https://www.youtube.com/embed/${ytId}`} title="yt" frameBorder="0" allowFullScreen style={{ display: "block", borderRadius: "8px", marginBottom: "0.5rem" }} />
+                : <video key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px", marginBottom: "0.5rem" }} />
             )}
             {renderPreviewAnswers()}
           </div>
@@ -807,19 +810,17 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
     <div style={{
       display: "flex",
       gap: "2rem",
-      // PENDEKATAN BENAR untuk admin layout yang punya fixed header + sidebar:
-      // Container ini mengambil seluruh tinggi area konten yang tersisa.
-      // overflow: hidden → scroll dikontrol per-kolom, bukan oleh halaman.
+      flexWrap: "wrap",
       height: "100%",
       minHeight: 0,
-      overflow: "hidden",
+      overflow: "auto",
     }}>
 
       {/* ── Kolom kiri: HANYA ini yang scroll ── */}
       {/* overflowY: auto → scroll bar muncul di dalam kolom kiri saja.         */}
       {/* Header dan preview (kolom kanan) tidak bergerak sama sekali.           */}
       <div style={{
-        flex: 1,
+        flex: "1 1 300px",
         minWidth: 0,
         overflowY: "auto",
         paddingRight: "0.5rem",
@@ -832,6 +833,10 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             1. Klasifikasi Soal
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <label className="form-label" style={{ fontWeight: 600 }}>Kode Soal <span style={{ color: "var(--color-danger)" }}>*</span></label>
+              <input type="text" className="form-input" placeholder="Misal: LIT-01" value={questionCode} onChange={e => setQuestionCode(e.target.value)} required />
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
               <label className="form-label" style={{ fontWeight: 600 }}>Mata Pelajaran</label>
               <select className="form-input" value={subjectArea} onChange={e => setSubjectArea(e.target.value)}>
@@ -940,8 +945,10 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
       {/* dari area - tapi normalnya preview (461px) < tinggi area konten.       */}
       {isMounted && (
         <div style={{
-          width: "260px",
-          flexShrink: 0,
+          flex: "1 1 260px",
+          maxWidth: "400px",
+          position: "relative",
+          zIndex: 5,
           overflowY: "auto",
           paddingBottom: "1.5rem",
           paddingTop: "0",
