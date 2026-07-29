@@ -37,9 +37,23 @@ export const metadata: Metadata = {
     "pemantik",
   ],
   authors: [{ name: "PSPK" }],
+  openGraph: {
+    title: "PEMANTIK.PSPK",
+    description: "Sistem manajemen ujian berjenjang untuk asesmen literasi dan numerasi.",
+    siteName: "PEMANTIK.PSPK",
+    locale: "id_ID",
+    type: "website",
+  },
   robots: {
-    index: false,
-    follow: false,
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
