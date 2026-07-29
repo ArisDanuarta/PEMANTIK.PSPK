@@ -18,6 +18,18 @@ export default async function RilisPage() {
 
   return (
     <div className="animate-fade-in">
+      <style>{`
+        .rilis-grid {
+          display: grid;
+          gap: 2rem;
+          grid-template-columns: 1fr;
+        }
+        @media (min-width: 1024px) {
+          .rilis-grid {
+            grid-template-columns: 1fr 2fr; /* Form lebih sempit, tabel lebih lebar */
+          }
+        }
+      `}</style>
       <div className="page-header">
         <div className="page-header-left">
           <h1 className="page-title">Rilis Aplikasi Mobile</h1>
@@ -31,18 +43,18 @@ export default async function RilisPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: "2rem", gridTemplateColumns: "1fr 2fr" }}>
+      <div className="rilis-grid">
         {/* Form Upload */}
-        <div>
+        <div style={{ maxWidth: "100%" }}>
           <RilisFormClient />
         </div>
 
         {/* Tabel Riwayat Rilis */}
-        <div className="card">
+        <div className="card" style={{ maxWidth: "100%", overflowX: "auto" }}>
           <h2 style={{ marginBottom: "1rem" }}>Riwayat Rilis</h2>
           {releases && releases.length > 0 ? (
             <div className="table-responsive">
-              <table className="table">
+              <table className="pemantik-table" style={{ width: "100%", minWidth: "600px" }}>
                 <thead>
                   <tr>
                     <th>Versi</th>
@@ -70,7 +82,7 @@ export default async function RilisPage() {
                           href={r.download_url} 
                           target="_blank" 
                           rel="noreferrer" 
-                          style={{ color: "var(--clr-biru)", textDecoration: "underline", fontSize: "0.85rem" }}
+                          style={{ color: "var(--clr-biru)", textDecoration: "underline", fontSize: "0.85rem", whiteSpace: "nowrap" }}
                         >
                           Download APK
                         </a>

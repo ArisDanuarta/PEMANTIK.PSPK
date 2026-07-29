@@ -54,3 +54,29 @@ export async function uploadApkRelease(formData: FormData) {
 
   return { success: true, downloadUrl: publicUrlData.publicUrl };
 }
+
+export async function createExternalRelease(data: {
+  versionName: string;
+  versionCode: number;
+  releaseNotes: string;
+  isMandatory: boolean;
+  downloadUrl: string;
+}) {
+  const supabase = createServerClient();
+
+  const { error: dbError } = await supabase.from("app_releases" as any).insert({
+    version_name: data.versionName,
+    version_code: data.versionCode,
+    release_notes: data.releaseNotes || null,
+    download_url: data.downloadUrl,
+    is_mandatory: data.isMandatory,
+    is_active: true,
+  });
+
+  if (dbError) {
+    console.error("DB error:", dbError);
+    return { error: dbError.message };
+  }
+
+  return { success: true };
+}
