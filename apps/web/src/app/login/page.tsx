@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [isPending, startTransition] = useTransition();
 
   const [maintenanceData, setMaintenanceData] = useState<{ active: boolean; message: string } | null>(null);
+  const [apkUrl, setApkUrl] = useState<string | null>(null);
 
   React.useEffect(() => {
     // We import getSystemSettings dynamically to avoid issues if it requires server context in some setups,
@@ -25,6 +26,21 @@ export default function LoginPage() {
           });
         }
       });
+    });
+
+    // Fetch link APK terbaru
+    import("@pemantik/supabase/client").then(({ createBrowserClient }) => {
+      const supabase = createBrowserClient();
+      supabase
+        .from("app_releases" as any)
+        .select("download_url")
+        .eq("is_active", true)
+        .order("version_code", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) setApkUrl((data as any).download_url);
+        });
     });
   }, []);
 
@@ -68,10 +84,38 @@ export default function LoginPage() {
             Literasi &amp;<br />
             <em>Numerasi</em>
           </h1>
-          <p className="login-hero-desc">
+          <p className="login-hero-desc" style={{ marginBottom: "2rem" }}>
             Sistem manajemen ujian berjenjang yang mendukung seluruh
             ekosistem pendidikan dari komunitas hingga ke setiap siswa.
           </p>
+
+          {apkUrl && (
+            <div style={{ position: "relative", zIndex: 2 }}>
+              <a 
+                href={apkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-outline"
+                style={{ 
+                  color: "#fff", 
+                  borderColor: "rgba(255,255,255,0.4)", 
+                  display: "inline-flex", 
+                  alignItems: "center", 
+                  gap: "0.5rem" 
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download Aplikasi Siswa
+              </a>
+              <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)", marginTop: "0.5rem" }}>
+                Untuk Tablet / Android
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer branding */}

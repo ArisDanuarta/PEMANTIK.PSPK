@@ -41,6 +41,7 @@ const superAdminNav: NavSection[] = [
       { label: "Log Sistem & Error", href: "/super-admin/log-sistem", icon: "activity" },
       { label: "Pengaturan SES", href: "/super-admin/pengaturan-ses", icon: "settings" },
       { label: "Pengaturan Platform", href: "/super-admin/pengaturan", icon: "settings" },
+      { label: "Rilis Aplikasi", href: "/super-admin/pengaturan/rilis", icon: "smartphone" },
     ],
   },
 ];

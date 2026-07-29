@@ -7,6 +7,7 @@ import 'core/theme/app_theme.dart';
 import 'core/supabase/supabase_client.dart';
 import 'core/router/app_router.dart';
 import 'core/sync/sync_service.dart';
+import 'core/update/update_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -102,6 +103,17 @@ class _AppEntryState extends ConsumerState<_AppEntry> {
   }
 
   Future<void> _checkAuth() async {
+    // 1. Cek pembaruan aplikasi
+    final updateService = ref.read(updateServiceProvider);
+    final update = await updateService.checkForUpdates();
+    if (update != null) {
+      if (!mounted) return;
+      await updateService.showUpdateDialog(context, update);
+      // Jika pembaruan diwajibkan, hentikan inisialisasi agar pengguna tidak bisa melewati layar loading
+      if (update.isMandatory) return;
+    }
+
+    // 2. Jika aman, lanjut cek auth
     String? token;
     String? hasSeenOnboarding;
 
