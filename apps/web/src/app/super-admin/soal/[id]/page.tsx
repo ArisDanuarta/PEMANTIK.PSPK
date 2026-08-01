@@ -58,10 +58,30 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
 
         {(q.question_image_url || q.question_audio_url || q.question_video_url) && (
           <div style={{ borderTop: "1px solid #eee", paddingTop: "1.5rem" }}>
-            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-gray-500)", marginBottom: "0.5rem", textTransform: "uppercase" }}>Media Stimulus</div>
-            <div style={{ padding: "1rem", background: "#f8f9fa", borderRadius: "8px", wordBreak: "break-all", fontSize: "0.9rem", color: "var(--clr-biru)" }}>
-              <a href={q.question_image_url || q.question_audio_url || q.question_video_url} target="_blank" rel="noreferrer">
-                {q.question_image_url || q.question_audio_url || q.question_video_url}
+            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-gray-500)", marginBottom: "0.75rem", textTransform: "uppercase" }}>Media Stimulus</div>
+            {q.question_video_url && (
+              q.question_video_url.includes("youtube.com") || q.question_video_url.includes("youtu.be") ? (
+                <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: "8px", overflow: "hidden", background: "#000" }}>
+                  <iframe
+                    src={`https://www.youtube.com/embed/${q.question_video_url.match(/(?:youtu\.be\/|watch\?v=)([^#&?]{11})/)?.[1] ?? ""}`}
+                    title="YouTube Preview"
+                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <video src={q.question_video_url} controls style={{ width: "100%", maxHeight: "300px", borderRadius: "8px", background: "#000", display: "block" }} />
+              )
+            )}
+            {q.question_audio_url && (
+              <audio src={q.question_audio_url} controls style={{ width: "100%", display: "block" }} />
+            )}
+            {q.question_image_url && (
+              <img src={q.question_image_url} alt="Media Soal" style={{ maxWidth: "100%", maxHeight: "300px", borderRadius: "8px", objectFit: "contain", display: "block" }} />
+            )}
+            <div style={{ marginTop: "0.5rem", fontSize: "0.78rem", color: "var(--color-gray-500)", wordBreak: "break-all" }}>
+              <a href={q.question_video_url || q.question_audio_url || q.question_image_url} target="_blank" rel="noreferrer" style={{ color: "var(--clr-biru)" }}>
+                {q.question_video_url || q.question_audio_url || q.question_image_url}
               </a>
             </div>
           </div>

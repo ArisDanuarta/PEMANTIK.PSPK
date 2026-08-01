@@ -349,7 +349,7 @@ export default function SchoolDetailKomunitas({
           Peran: "Anak",
           Nama: s.full_name,
           Username: s.users?.username || s.username || "-",
-          Password_Default: "Password123!",
+          PIN_Default: "123456",
           Info_Tambahan: (s.classes as any)?.name ? `Kelas: ${(s.classes as any).name}` : "-"
         }));
         const wsStudent = XLSX.utils.json_to_sheet(studentData);

@@ -37,7 +37,7 @@ interface MatchPair {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-/** Reusable upload-or-url field */
+/** Reusable upload-or-url field with preview for image / audio / video */
 function MediaField({
   label, hint, value, onChange, accept, onUpload, uploading,
 }: {
@@ -45,6 +45,27 @@ function MediaField({
   onChange: (v: string) => void;
   accept: string; onUpload: (f: File) => void; uploading: boolean;
 }) {
+  // Deteksi tipe berdasarkan accept atau ekstensi URL
+  const isVideoAccept = accept.includes("video");
+  const isAudioAccept = accept.includes("audio") && !accept.includes("video");
+  const isImageAccept = accept.startsWith("image");
+
+  // Jika accept campuran (image/*,audio/*,video/*), tebak dari URL
+  const lowerUrl = value?.toLowerCase() || "";
+  const isVideoUrl = lowerUrl.match(/\.(mp4|webm|ogg|mov|avi|mkv)(\?|$)/);
+  const isAudioUrl = lowerUrl.match(/\.(mp3|wav|ogg|aac|m4a|flac)(\?|$)/);
+  const isYouTube = lowerUrl.includes("youtube.com") || lowerUrl.includes("youtu.be");
+  const getYtId = (u: string) => {
+    const m = u.match(/(?:youtu\.be\/|watch\?v=|embed\/)([^#&?]{11})/);
+    return m ? m[1] : null;
+  };
+  const ytId = value ? getYtId(value) : null;
+
+  const showVideoPreview = value && !uploading && (isVideoAccept || isVideoUrl) && !isYouTube;
+  const showAudioPreview = value && !uploading && (isAudioAccept || (isAudioUrl && !isVideoAccept));
+  const showImagePreview = value && !uploading && (isImageAccept && !isVideoAccept && !isAudioAccept && !isVideoUrl && !isAudioUrl);
+  const showYouTubePreview = value && !uploading && ytId;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
       <label className="form-label" style={{ fontWeight: 600 }}>{label}</label>
@@ -62,8 +83,35 @@ function MediaField({
         </label>
       </div>
       {hint && <small style={{ color: "var(--color-gray-500)" }}>{hint}</small>}
-      {value && accept.startsWith("image") && (
-        <img src={value} alt="preview" style={{ maxHeight: "80px", borderRadius: "6px", objectFit: "cover", marginTop: "0.25rem" }} />
+      {/* Preview berdasarkan tipe */}
+      {showYouTubePreview && (
+        <div style={{ borderRadius: "8px", overflow: "hidden", background: "#000", position: "relative", paddingBottom: "56.25%", height: 0 }}>
+          <iframe
+            src={`https://www.youtube.com/embed/${ytId}`}
+            title="YouTube Preview"
+            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+            allowFullScreen
+          />
+        </div>
+      )}
+      {showVideoPreview && (
+        <video
+          key={value}
+          src={value}
+          controls
+          style={{ width: "100%", maxHeight: "220px", borderRadius: "8px", background: "#000", display: "block", marginTop: "0.25rem" }}
+        />
+      )}
+      {showAudioPreview && (
+        <audio
+          key={value}
+          src={value}
+          controls
+          style={{ width: "100%", display: "block", marginTop: "0.25rem" }}
+        />
+      )}
+      {showImagePreview && (
+        <img src={value} alt="preview" style={{ maxHeight: "120px", borderRadius: "6px", objectFit: "cover", marginTop: "0.25rem" }} />
       )}
     </div>
   );

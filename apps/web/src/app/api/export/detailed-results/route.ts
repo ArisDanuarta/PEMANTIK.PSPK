@@ -5,6 +5,29 @@ import * as XLSX from "xlsx";
 
 export const dynamic = "force-dynamic";
 
+function formatExportAnswer(data: any): string {
+  if (data === null || data === undefined) return "-";
+  if (typeof data !== "object") return String(data);
+
+  if (data.selected) {
+    return data.selectedText ? `${data.selected}. ${data.selectedText}` : data.selected;
+  }
+  if (data.answer) return data.answer;
+  if (data.value) {
+    if (typeof data.value === "string") return data.value;
+    if (Array.isArray(data.value)) return data.value.join(", ");
+    return JSON.stringify(data.value);
+  }
+  if (data.pairs && Array.isArray(data.pairs)) {
+    return data.pairs.map((p: any) => `${p.left_id} = ${p.right_id}`).join(" | ");
+  }
+  if (data.text) return data.text;
+  if (Array.isArray(data)) {
+    if (data.length > 0 && typeof data[0] === "string") return data.join(", ");
+  }
+  return JSON.stringify(data);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: group baris view per sekolah untuk Sheet 1 - Ringkasan Sekolah
 // ─────────────────────────────────────────────────────────────────────────────
@@ -209,24 +232,19 @@ function buildRawSheetCommunity(
     allQuestions.forEach((q, idx) => {
       const num = idx + 1;
       const ansObj = answerBySessionQuestion.get(`${row.session_id}_${q.id}`);
-      let ansText = "-";
+      // 1 = benar, 0 = salah, kosong (-) = tidak dijawab
+      let scoreVal: number | string = "-";
       if (ansObj) {
-        if (ansObj.answer_data) {
-          if (typeof ansObj.answer_data === "object") {
-            ansText = ansObj.answer_data.selected || ansObj.answer_data.answer || JSON.stringify(ansObj.answer_data);
-          } else {
-            ansText = String(ansObj.answer_data);
-          }
-        } else if (ansObj.is_correct !== null && ansObj.is_correct !== undefined) {
-          ansText = ansObj.is_correct ? "1 (Benar)" : "0 (Salah)";
+        if (ansObj.is_correct !== null && ansObj.is_correct !== undefined) {
+          scoreVal = ansObj.is_correct ? 1 : 0;
+        } else if (ansObj.answer_data) {
+          // Ada jawaban tapi belum dinilai — tampilkan jawaban sebagai teks
+          scoreVal = formatExportAnswer(ansObj.answer_data);
         }
       }
-      baseRow[`Answer ${num}`] = ansText;
-    });
-
-    allQuestions.forEach((q, idx) => {
-      const num = idx + 1;
-      baseRow[`Pilihan ${num}`] = q.question_text ?? "-";
+      
+      const headerCode = q.question_code || `Soal-${num}`;
+      baseRow[headerCode] = scoreVal;
     });
 
     baseRow["umur_siswa"]          = umurSiswa;
@@ -519,7 +537,7 @@ export async function GET(request: Request) {
         is_correct, score, answer_data, time_spent_sec, answered_at,
         recording_url,
         questions (
-          id, question_text, question_type, subject_area, level_id,
+          id, question_code, question_text, question_type, subject_area, level_id,
           order_index,
           question_levels ( level_number )
         )
@@ -583,7 +601,7 @@ export async function GET(request: Request) {
     if (levelIds.length > 0) {
       const { data: qData } = await supabase
         .from("questions")
-        .select("id, level_id, order_index, created_at, question_text, question_type")
+        .select("id, level_id, order_index, created_at, question_code, question_text, question_type")
         .in("level_id", levelIds);
 
       allQuestions = (qData ?? []).sort((a, b) => {
@@ -620,7 +638,7 @@ export async function GET(request: Request) {
     const ln = levelMap.get(q.level_id) ?? 0;
     levelCounts[ln] = (levelCounts[ln] ?? 0) + 1;
     questionIndexMap.set(q.id, questionHeaders.length);
-    questionHeaders.push(`[Level ${ln}] Soal ${levelCounts[ln]}`);
+    questionHeaders.push(q.question_code || `[Level ${ln}] Soal ${levelCounts[ln]}`);
   });
 
   // Map jawaban per sesi dan soal (1 = benar, 0 = salah) untuk matriks di Sheet 2
@@ -643,7 +661,7 @@ export async function GET(request: Request) {
       rawData = [{
         id: "-", id_user: "-", category: "-", type_soal: "-", attempt: 1, level: "-",
         nama_siswa: "Belum Ada Data Sesi Asesmen", gender: "-", kelas: "-",
-        "Answer 1": "-", "Pilihan 1": "-",
+        "Jawaban": "-",
         umur_siswa: "-", tgl_lahir_siswa: "-", asal_provinsi: "-", asal_kabupaten_kota: "-",
         pekerjaan_ayah: "-", pekerjaan_ibu: "-", pendidikan_ayah: "-", pendidikan_ibu: "-",
         SES: "-", asal_sekolah: "-", komunitas_user: "-", "Waktu Mulai": "-", "Durasi Pengerjaan": "0 detik"
@@ -763,10 +781,11 @@ export async function GET(request: Request) {
         "Nama Anak":          studentBySession.get(ans.session_id) ?? "-",
         Level:                 lvlNum,
         "Urutan Soal (Admin)": ordIdx,
+        "Kode Soal":           qObj?.question_code ?? "-",
         Soal:                  qObj?.question_text ?? "-",
         "Tipe Soal":           qObj?.question_type ?? "-",
-        Jawaban:               ans.answer_data ? JSON.stringify(ans.answer_data) : "-",
-        Benar:                 ans.is_correct ? "Ya" : "Tidak",
+        Jawaban:               formatExportAnswer(ans.answer_data),
+        Benar:                 ans.is_correct ? 1 : 0,
         Skor:                  ans.score ?? 0,
         "Waktu (Detik)":       ans.time_spent_sec ?? 0,
         "Ada Rekaman":         ans.recording_url ? "Ya" : "Tidak",

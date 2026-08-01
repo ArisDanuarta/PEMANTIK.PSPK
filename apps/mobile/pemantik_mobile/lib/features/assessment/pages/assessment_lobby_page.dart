@@ -13,6 +13,7 @@ import '../../../shared/widgets/pspk_dialog.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/supabase/supabase_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/sync/media_download_service.dart';
 
 class AssessmentLobbyPage extends ConsumerStatefulWidget {
   final String categoryId;
@@ -47,6 +48,18 @@ class AssessmentLobbyPage extends ConsumerStatefulWidget {
 
 class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
   final _accessCodeController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Mulai download media di background segera saat lobby dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final dlState = ref.read(mediaDownloadServiceProvider);
+      if (!dlState.isDownloading && !dlState.isDone) {
+        ref.read(mediaDownloadServiceProvider.notifier).downloadAllMedia();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -316,67 +329,74 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
                     // --- BAGIAN BAWAH ---
                     Padding(
                       padding: const EdgeInsets.only(top: 24.0),
-                      child: PspkButton(
-                        label: 'Mulai Sekarang',
-                        fullWidth: true,
-                        onPressed: () async {
-                          final db = ref.read(databaseProvider);
-                          final cats =
-                              await (db.select(db.localCategories)..where(
-                                    (t) => t.id.equals(widget.categoryId),
-                                  ))
-                                  .get();
-                          if (cats.isNotEmpty) {
-                            final cat = cats.first;
-                            final now = DateTime.now();
-                            if (cat.validUntil != null &&
-                                now.isAfter(cat.validUntil!)) {
-                              if (context.mounted) {
-                                showPspkDialog(
-                                  context,
-                                  title: 'Akses Berakhir',
-                                  message:
-                                      'Maaf, waktu pengerjaan untuk asesmen ini sudah berakhir.',
-                                  isError: true,
-                                  confirmText: 'Kembali',
-                                  onConfirm: () => Navigator.pop(context),
-                                );
+                      child: Column(
+                        children: [
+                          // Widget status download media
+                          _MediaDownloadStatusWidget(),
+                          const SizedBox(height: 16),
+                          PspkButton(
+                            label: 'Mulai Sekarang',
+                            fullWidth: true,
+                            onPressed: () async {
+                              final db = ref.read(databaseProvider);
+                              final cats =
+                                  await (db.select(db.localCategories)..where(
+                                        (t) => t.id.equals(widget.categoryId),
+                                      ))
+                                      .get();
+                              if (cats.isNotEmpty) {
+                                final cat = cats.first;
+                                final now = DateTime.now();
+                                if (cat.validUntil != null &&
+                                    now.isAfter(cat.validUntil!)) {
+                                  if (context.mounted) {
+                                    showPspkDialog(
+                                      context,
+                                      title: 'Akses Berakhir',
+                                      message:
+                                          'Maaf, waktu pengerjaan untuk asesmen ini sudah berakhir.',
+                                      isError: true,
+                                      confirmText: 'Kembali',
+                                      onConfirm: () => Navigator.pop(context),
+                                    );
+                                  }
+                                  return;
+                                }
+                                if (cat.validFrom != null &&
+                                    now.isBefore(cat.validFrom!)) {
+                                  if (context.mounted) {
+                                    showPspkDialog(
+                                      context,
+                                      title: 'Belum Mulai',
+                                      message:
+                                          'Asesmen ini belum bisa dimulai sekarang.',
+                                      isError: true,
+                                      confirmText: 'Kembali',
+                                      onConfirm: () => Navigator.pop(context),
+                                    );
+                                  }
+                                  return;
+                                }
                               }
-                              return;
-                            }
-                            if (cat.validFrom != null &&
-                                now.isBefore(cat.validFrom!)) {
-                              if (context.mounted) {
-                                showPspkDialog(
-                                  context,
-                                  title: 'Belum Mulai',
-                                  message:
-                                      'Asesmen ini belum bisa dimulai sekarang.',
-                                  isError: true,
-                                  confirmText: 'Kembali',
-                                  onConfirm: () => Navigator.pop(context),
-                                );
-                              }
-                              return;
-                            }
-                          }
 
-                          if (widget.accessCode != null &&
-                              widget.accessCode!.isNotEmpty) {
-                            if (context.mounted) _promptAccessCode();
-                          } else {
-                            if (context.mounted) {
-                              showPspkDialog(
-                                context,
-                                title: 'Mulai Asesmen?',
-                                message:
-                                    'Waktu akan berjalan dan tidak bisa dijeda. Pastikan kamu sudah siap ya.',
-                                confirmText: 'Ya, Mulai',
-                                onConfirm: () => _startSession(),
-                              );
-                            }
-                          }
-                        },
+                              if (widget.accessCode != null &&
+                                  widget.accessCode!.isNotEmpty) {
+                                if (context.mounted) _promptAccessCode();
+                              } else {
+                                if (context.mounted) {
+                                  showPspkDialog(
+                                    context,
+                                    title: 'Mulai Asesmen?',
+                                    message:
+                                        'Waktu akan berjalan dan tidak bisa dijeda. Pastikan kamu sudah siap ya.',
+                                    confirmText: 'Ya, Mulai',
+                                    onConfirm: () => _startSession(),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -408,5 +428,140 @@ class _InfoRow extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Widget yang menampilkan status download aset soal di halaman lobby
+class _MediaDownloadStatusWidget extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dl = ref.watch(mediaDownloadServiceProvider);
+
+    // Jika tidak ada aset yang perlu di-download, sembunyikan widget ini
+    if (!dl.isDownloading && !dl.isDone) return const SizedBox.shrink();
+    if (dl.isDone && dl.totalFiles == 0) return const SizedBox.shrink();
+
+    // === Sedang mengunduh ===
+    if (dl.isDownloading) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.birNavyMuda,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.birTeal.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.birTeal,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Menyiapkan soal... (${dl.downloadedFiles}/${dl.totalFiles})',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.birNavy,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: dl.progress,
+                      minHeight: 4,
+                      backgroundColor: AppColors.birNavy.withValues(alpha: 0.15),
+                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.birTeal),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // === Selesai — ada file yang gagal ===
+    if (dl.isDone && dl.hasFailures) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.orange.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.shade300),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.warning_amber_rounded,
+                    color: Colors.orange.shade700, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${dl.failedUrls.length} file gagal diunduh. '
+                    'Soal tetap bisa dikerjakan, namun media mungkin perlu koneksi internet.',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: Colors.orange.shade800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () =>
+                  ref.read(mediaDownloadServiceProvider.notifier).retryFailed(),
+              child: Text(
+                'Coba Unduh Ulang',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.birNavy,
+                  fontWeight: FontWeight.bold,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // === Selesai — semua berhasil ===
+    if (dl.isDone && !dl.hasFailures && dl.totalFiles > 0) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.green.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green.shade300),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.check_circle_outline_rounded,
+                color: Colors.green.shade600, size: 20),
+            const SizedBox(width: 10),
+            Text(
+              'Semua aset soal siap. Kamu bisa mulai!',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: Colors.green.shade700,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }

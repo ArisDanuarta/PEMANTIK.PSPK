@@ -28,6 +28,8 @@ class _VideoQuestionWidgetState extends ConsumerState<VideoQuestionWidget> {
   YoutubePlayerController? _youtubeController;
   bool _isYoutube = false;
   bool _isInitialized = false;
+  bool _hasError = false;
+  String _errorMessage = '';
 
   @override
   void initState() {
@@ -36,7 +38,6 @@ class _VideoQuestionWidgetState extends ConsumerState<VideoQuestionWidget> {
   }
 
   Future<void> _initializePlayer() async {
-    // Gunakan videoUrl dari kolom database native (bukan options JSON)
     final url =
         widget.question.videoUrl ??
         widget.question.options['videoUrl']?.toString();
@@ -55,14 +56,9 @@ class _VideoQuestionWidgetState extends ConsumerState<VideoQuestionWidget> {
             showFullscreenButton: true,
           ),
         );
-        if (mounted) {
-          setState(() {
-            _isInitialized = true;
-          });
-        }
+        if (mounted) setState(() => _isInitialized = true);
       }
     } else {
-      // Setup Video Lokal/Direct Link
       try {
         final fileInfo = await DefaultCacheManager().getFileFromCache(url);
         if (fileInfo != null) {
@@ -72,22 +68,20 @@ class _VideoQuestionWidgetState extends ConsumerState<VideoQuestionWidget> {
             Uri.parse(url),
           );
         }
+        await _videoPlayerController!.initialize();
+        if (mounted) {
+          setState(() => _isInitialized = true);
+          _videoPlayerController!.addListener(() {
+            if (mounted) setState(() {});
+          });
+        }
       } catch (e) {
-        _videoPlayerController = VideoPlayerController.networkUrl(
-          Uri.parse(url),
-        );
-      }
-
-      await _videoPlayerController!.initialize();
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
-        _videoPlayerController!.addListener(() {
-          if (mounted) {
-            setState(() {});
-          }
-        });
+        if (mounted) {
+          setState(() {
+            _hasError = true;
+            _errorMessage = 'Video tidak dapat diputar. Periksa koneksi internet.';
+          });
+        }
       }
     }
   }
@@ -131,7 +125,7 @@ class _VideoQuestionWidgetState extends ConsumerState<VideoQuestionWidget> {
                       alignment: Alignment.center,
                       children: [
                         VideoPlayer(_videoPlayerController!),
-                        // Simple Play/Pause Overlay untuk video lokal
+                        // Play/Pause overlay
                         GestureDetector(
                           onTap: () {
                             setState(() {
@@ -140,22 +134,46 @@ class _VideoQuestionWidgetState extends ConsumerState<VideoQuestionWidget> {
                                   : _videoPlayerController!.play();
                             });
                           },
-                          child: _videoPlayerController!.value.isPlaying
-                              ? Container(color: Colors.transparent)
-                              : Container(
-                                  color: Colors.black26,
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.play_circle_outline,
-                                      color: Colors.white,
-                                      size: 64,
-                                    ),
-                                  ),
+                          child: AnimatedOpacity(
+                            opacity: _videoPlayerController!.value.isPlaying ? 0.0 : 1.0,
+                            duration: const Duration(milliseconds: 300),
+                            child: Container(
+                              color: Colors.black38,
+                              child: const Center(
+                                child: Icon(
+                                  Icons.play_circle_outline_rounded,
+                                  color: Colors.white,
+                                  size: 72,
                                 ),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     )
                   : const SizedBox.shrink(),
+            ),
+          )
+        else if (_hasError)
+          Container(
+            height: 200,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.videocam_off_rounded, color: Colors.red.shade400, size: 40),
+                const SizedBox(height: 8),
+                Text(
+                  _errorMessage,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodyMedium.copyWith(color: Colors.red.shade700),
+                ),
+              ],
             ),
           )
         else
@@ -170,6 +188,35 @@ class _VideoQuestionWidgetState extends ConsumerState<VideoQuestionWidget> {
               child: CircularProgressIndicator(color: AppColors.kuningEmas),
             ),
           ),
+
+        // Progress bar hanya untuk video lokal (bukan YouTube)
+        if (_isInitialized && !_isYoutube && _videoPlayerController != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 3.0,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6.0),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 12.0),
+                activeTrackColor: AppColors.birNavy,
+                inactiveTrackColor: AppColors.birNavy.withValues(alpha: 0.25),
+                thumbColor: AppColors.birNavy,
+              ),
+              child: Slider(
+                min: 0.0,
+                max: _videoPlayerController!.value.duration.inMilliseconds.toDouble().clamp(1.0, double.infinity),
+                value: _videoPlayerController!.value.position.inMilliseconds.toDouble().clamp(
+                  0.0,
+                  _videoPlayerController!.value.duration.inMilliseconds.toDouble().clamp(1.0, double.infinity),
+                ),
+                onChanged: (value) {
+                  _videoPlayerController!.seekTo(Duration(milliseconds: value.toInt()));
+                },
+              ),
+            ),
+          ),
+        ],
 
         const SizedBox(height: 24),
 
