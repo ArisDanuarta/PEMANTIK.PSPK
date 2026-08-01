@@ -6,6 +6,13 @@ import { headers } from "next/headers";
 import { getSystemSettings } from "./actions/settings";
 import FeedbackFAB from "@/components/shared/FeedbackFAB";
 
+// Force all routes using this root layout to be dynamically rendered (SSR).
+// This is required because RootLayout calls headers() from next/headers.
+// Without this, Next.js will attempt to statically pre-render pages at build
+// time and throw DYNAMIC_SERVER_USAGE errors.
+// See: https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config#dynamic
+export const dynamic = "force-dynamic";
+
 const lora = Lora({
   subsets: ["latin"],
   variable: "--font-lora",
