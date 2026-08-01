@@ -43,6 +43,10 @@ export const metadata: Metadata = {
   // Without this, Next.js will show a warning and images won't render properly when shared.
   // Ref: https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
   metadataBase: new URL(getBaseUrl()),
+  
+  verification: {
+    google: "YxPpuVS3AlmNs0ZRi47tzcyx2jU_YwrXlh9bN1dfERg",
+  },
 
   title: {
     default: "Pemantik – Platform Asesmen Literasi & Numerasi",
