@@ -21,9 +21,24 @@ const inter = Inter({
   weight: ["300", "400", "500", "600", "700", "800"],
 });
 
+// Resolves the canonical base URL:
+// - On Vercel: VERCEL_URL is automatically injected (e.g. "my-app.vercel.app")
+// - In development: falls back to localhost:3000
+// See: https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+const getBaseUrl = () => {
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  return "http://localhost:3000";
+};
+
 export const metadata: Metadata = {
+  // metadataBase is REQUIRED for absolute URLs in og:image, twitter:image, and canonical links.
+  // Without this, Next.js will show a warning and images won't render properly when shared.
+  // Ref: https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  metadataBase: new URL(getBaseUrl()),
+
   title: {
-    default: "Pemantik_Platform Asesmen Literasi & Numerasi",
+    default: "Pemantik – Platform Asesmen Literasi & Numerasi",
     template: "%s | Pemantik PSPK",
   },
   description:
@@ -35,14 +50,37 @@ export const metadata: Metadata = {
     "PSPK",
     "pendidikan",
     "pemantik",
+    "ujian",
+    "sekolah",
   ],
   authors: [{ name: "PSPK" }],
+  // Canonical URL — tells Google the authoritative URL for this page
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "PEMANTIK.PSPK",
+    title: "Pemantik – Platform Asesmen Literasi & Numerasi",
     description: "Sistem manajemen ujian berjenjang untuk asesmen literasi dan numerasi.",
-    siteName: "PEMANTIK.PSPK",
+    siteName: "Pemantik PSPK",
     locale: "id_ID",
     type: "website",
+    // og:image — gambar yang muncul saat link dibagikan di WhatsApp, Twitter, dll.
+    // Path relatif dari metadataBase secara otomatis akan menjadi URL absolut.
+    images: [
+      {
+        url: "/images/LOGO_PEMANTIK_BERWARNA.png",
+        width: 1200,
+        height: 630,
+        alt: "Logo Pemantik PSPK – Platform Asesmen Literasi & Numerasi",
+      },
+    ],
+  },
+  // twitter:card metadata for Twitter/X sharing
+  twitter: {
+    card: "summary_large_image",
+    title: "Pemantik – Platform Asesmen Literasi & Numerasi",
+    description: "Sistem manajemen ujian berjenjang untuk asesmen literasi dan numerasi.",
+    images: ["/images/LOGO_PEMANTIK_BERWARNA.png"],
   },
   robots: {
     index: true,
@@ -50,9 +88,9 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
 };
