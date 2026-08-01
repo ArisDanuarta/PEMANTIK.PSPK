@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<body>
+<div id="scroll" style="overflow: auto; height: 200px; display: flex; align-items: flex-start;">
+   <div style="height: 800px; width: 200px; background: red;">Tall content</div>
+   <div id="sticky" style="height: 100px; width: 200px; position: sticky; top: 0; background: blue;">Sticky</div>
+</div>
+<script>
+  const scroll = document.getElementById('scroll');
+  scroll.scrollTop = 100;
+  // Let's see if sticky element moved visually (in Puppeteer we'd check bounding box)
+</script>
+</body>
+</html>

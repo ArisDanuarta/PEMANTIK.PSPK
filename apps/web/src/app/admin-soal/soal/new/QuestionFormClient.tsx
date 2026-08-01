@@ -136,6 +136,8 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
   const [categoryId, setCategoryId] = useState("");
   const [levelId, setLevelId] = useState(initialData?.level_id || "");
   const [questionText, setQuestionText] = useState(initialData?.question_text || "");
+  // Instruksi yang muncul DI ATAS media (contoh: "Dengarkan suara berikut")
+  const [questionInstruction, setQuestionInstruction] = useState(initialData?.question_instruction || "");
 
   // ── FIX: use question_image_url from DB schema, not media_url ──────────────
   const [mediaUrl, setMediaUrl] = useState(
@@ -353,6 +355,8 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
     } else {
       payload.question_image_url = mediaUrl;
     }
+    // Selalu simpan question_instruction (bisa null/kosong)
+    payload.question_instruction = questionInstruction || null;
 
     switch (questionType) {
       case "multiple_choice":
@@ -417,19 +421,17 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
     }
   };
 
-  // ─── Mobile Preview ────────────────────────────────────────────────────────
-  // FIX: Skala diturunkan ke 0.72 agar phone (320×640) muat dalam kolom 260px
-  // tanpa terpotong. Rumus: PHONE_W * SCALE = 320 * 0.72 = 230px < 260px ✓
-  // PHONE_H * SCALE = 640 * 0.72 = 461px - jauh lebih kecil dari viewport.
+  // ─── Mobile Preview ──────────────────────────────────────────────────────────
   const renderMobilePreview = () => {
-    const ytId = getYouTubeId(mediaUrl);
-    const selectedLevel = levels.find(l => l.id === levelId);
-
-    const SCALE = 0.82;
     const PHONE_W = 320;
-    const PHONE_H = 640;
-    const accent = subjectArea === "literasi" ? "#0874aa" : "#102e50";
-    const accentBg = subjectArea === "literasi" ? "#eef8ff" : "#eef2ff";
+    const PHONE_H = 570;
+    const SCALE = 0.82;
+    const accent = subjectArea === "literasi" ? "#102e50" : "#7B3F00";
+    const accentBg = subjectArea === "literasi" ? "rgba(16,46,80,0.07)" : "rgba(123,63,0,0.07)";
+    const selectedLevel = levels.find(l => l.id === levelId);
+    const ytId = mediaUrl ? getYouTubeId(mediaUrl) : null;
+    const isAudio = questionType === "audio_question";
+    const isVideo = questionType === "video_question";
 
     const renderPreviewAnswers = () => {
       switch (questionType) {
@@ -439,50 +441,29 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               {mcOptions.map((opt, i) => (
                 <div key={i} style={{ padding: "0.625rem 0.875rem", border: `2px solid ${i === mcCorrectIndex ? accent : "#e0e0e0"}`, borderRadius: "10px", backgroundColor: i === mcCorrectIndex ? accentBg : "#fff", display: "flex", alignItems: "center", gap: "0.625rem" }}>
                   <div style={{ width: "18px", height: "18px", borderRadius: "50%", border: i === mcCorrectIndex ? `5px solid ${accent}` : "2px solid #ccc", flexShrink: 0 }} />
-                  <span style={{ fontSize: "0.8rem", fontWeight: i === mcCorrectIndex ? 600 : 400, color: i === mcCorrectIndex ? accent : "#333" }}>{opt || `Opsi ${i + 1}`}</span>
+                  <span style={{ fontSize: "0.8rem", fontWeight: i === mcCorrectIndex ? 600 : 400 }}>{opt || `Opsi ${i + 1}`}</span>
                 </div>
               ))}
             </div>
           );
-
         case "image_choice":
           return (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
               {imgOptions.map((opt, i) => (
-                <div key={i} style={{ border: `2px solid ${i === imgCorrectIndex ? accent : "#e0e0e0"}`, borderRadius: "10px", overflow: "hidden", backgroundColor: i === imgCorrectIndex ? accentBg : "#f8f9fa" }}>
-                  {opt.url
-                    ? <img src={opt.url} alt={opt.label || `Opsi ${i+1}`} style={{ width: "100%", height: "60px", objectFit: "cover", display: "block" }} />
-                    : <div style={{ height: "60px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", color: "#adb5bd" }}>Gambar {i+1}</div>}
-                  {opt.label && <div style={{ fontSize: "0.65rem", textAlign: "center", padding: "0.25rem", fontWeight: i === imgCorrectIndex ? 600 : 400 }}>{opt.label}</div>}
+                <div key={i} style={{ border: `2px solid ${i === imgCorrectIndex ? accent : "#e0e0e0"}`, borderRadius: "8px", overflow: "hidden", background: i === imgCorrectIndex ? accentBg : "#f8f9fa", position: "relative" }}>
+                  {opt.url ? <img src={opt.url} alt={opt.label} style={{ width: "100%", height: "60px", objectFit: "cover", display: "block" }} /> : <div style={{ height: "60px", background: "#e9ecef", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", color: "#adb5bd" }}>Gambar {i + 1}</div>}
+                  {opt.label && <div style={{ padding: "0.25rem", fontSize: "0.65rem", textAlign: "center", color: accent, fontWeight: 500 }}>{opt.label}</div>}
                 </div>
               ))}
             </div>
           );
-
         case "audio_question":
-          return (
-            <>
-              <div style={{ background: "#f0f0f0", borderRadius: "8px", padding: "0.5rem", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{ fontSize: "1rem" }}>🎵</span>
-                <span style={{ fontSize: "0.7rem", color: "#555" }}>Dengarkan audio, lalu pilih jawaban</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {avOptions.map((opt, i) => (
-                  <div key={i} style={{ padding: "0.625rem 0.875rem", border: `2px solid ${i === avCorrectIndex ? accent : "#e0e0e0"}`, borderRadius: "10px", backgroundColor: i === avCorrectIndex ? accentBg : "#fff", display: "flex", alignItems: "center", gap: "0.625rem" }}>
-                    <div style={{ width: "18px", height: "18px", borderRadius: "50%", border: i === avCorrectIndex ? `5px solid ${accent}` : "2px solid #ccc", flexShrink: 0 }} />
-                    <span style={{ fontSize: "0.8rem", fontWeight: i === avCorrectIndex ? 600 : 400 }}>{opt || `Opsi ${i + 1}`}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          );
-
         case "video_question":
           return (
             <>
               <div style={{ background: "#f0f0f0", borderRadius: "8px", padding: "0.5rem", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{ fontSize: "1rem" }}>🎬</span>
-                <span style={{ fontSize: "0.7rem", color: "#555" }}>Tonton video, lalu pilih jawaban</span>
+                <span style={{ fontSize: "1rem" }}>{isAudio ? "🔊" : "🎬"}</span>
+                <span style={{ fontSize: "0.7rem", color: "#555" }}>{isAudio ? "Dengarkan audio, lalu pilih jawaban" : "Tonton video, lalu pilih jawaban"}</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {avOptions.map((opt, i) => (
@@ -494,7 +475,6 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               </div>
             </>
           );
-
         case "drag_drop":
           if (dragSubtype === "fill_blank") return (
             <div>
@@ -518,7 +498,6 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
                   <span style={{ fontSize: "0.75rem" }}>{s.text || `Item ${i + 1}`}</span>
                 </div>
               ))}
-              <div style={{ fontSize: "0.65rem", color: "#adb5bd", textAlign: "center", marginTop: "0.25rem" }}>Anak akan mengurutkan item di atas</div>
             </div>
           );
           return (
@@ -532,7 +511,6 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               ))}
             </div>
           );
-
         case "voice_recording":
           return (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", padding: "0.5rem 0" }}>
@@ -544,16 +522,12 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               <div style={{ fontSize: "0.65rem", color: "#adb5bd" }}>Toleransi kemiripan: {vrThreshold}%</div>
             </div>
           );
-
         default:
           return null;
       }
     };
 
     return (
-      // FIX: wrapper memakai dimensi yang sudah discale agar tidak ada ruang kosong
-      // dan overflow tidak terpotong. transformOrigin "top center" memastikan phone
-      // terpusat secara horizontal di dalam kolom preview.
       <div style={{
         width: `${PHONE_W * SCALE}px`,
         height: `${PHONE_H * SCALE}px`,
@@ -583,15 +557,21 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
           <div style={{ backgroundColor: accent, color: "white", padding: "2rem 1rem 0.875rem", textAlign: "center", fontWeight: 700, fontSize: "0.95rem", flexShrink: 0 }}>
             {subjectArea === "literasi" ? "Latihan Literasi" : "Latihan Numerasi"}
           </div>
-          {/* Body */}
-          <div style={{ padding: "1rem", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          {/* Body — urutan: instruksi atas → media → pertanyaan/instruksi bawah → jawaban */}
+          <div style={{ padding: "1rem", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "0.65rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", padding: "0.2rem 0.6rem", borderRadius: "999px", background: "#e9ecef", color: "#495057" }}>Level {selectedLevel?.level_number ?? "0"}</span>
               {selectedLevel?.time_limit_sec && <span style={{ fontSize: "0.72rem", color: "#6c757d" }}>{selectedLevel.time_limit_sec} dtk</span>}
             </div>
-            <p style={{ fontSize: "0.9rem", fontWeight: 600, lineHeight: 1.55, color: "#1a1a1a", wordBreak: "break-word", whiteSpace: "pre-wrap", margin: 0 }}>
-              {questionText || "Teks pertanyaan akan muncul di sini..."}
-            </p>
+
+            {/* 1. INSTRUKSI ATAS (sebelum media) */}
+            {questionInstruction && (
+              <p style={{ fontSize: "0.85rem", fontWeight: 500, lineHeight: 1.5, color: "#555", wordBreak: "break-word", whiteSpace: "pre-wrap", margin: 0, fontStyle: "italic" }}>
+                {questionInstruction}
+              </p>
+            )}
+
+            {/* 2. MEDIA */}
             {mediaUrl && questionType !== "audio_question" && questionType !== "video_question" && (
               <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0" }}>
                 {ytId
@@ -858,22 +838,20 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
     <div style={{
       display: "flex",
       gap: "2rem",
-      flexWrap: "wrap",
-      height: "100%",
+      alignItems: "flex-start",
       minHeight: 0,
+      flex: 1,
       overflow: "auto",
+      paddingBottom: "2rem"
     }}>
 
-      {/* ── Kolom kiri: HANYA ini yang scroll ── */}
-      {/* overflowY: auto → scroll bar muncul di dalam kolom kiri saja.         */}
-      {/* Header dan preview (kolom kanan) tidak bergerak sama sekali.           */}
+      {/* ── Kolom kiri: form — HANYA ini yang scroll ── */}
       <div style={{
-        flex: "1 1 300px",
+        flex: "1 1 420px",
         minWidth: 0,
-        overflowY: "auto",
         paddingRight: "0.5rem",
-        paddingBottom: "2rem",
-      }} className="pemantik-scrollbar">
+        paddingBottom: "3rem",
+      }}>
 
         {/* SECTION 1: Klasifikasi */}
         <div className="card" style={{ padding: "2rem", marginBottom: "2rem" }}>
@@ -932,8 +910,18 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
           </h2>
 
           <div style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <label className="form-label" style={{ fontWeight: 600 }}>Teks Pertanyaan</label>
-            <textarea className="form-input" style={{ width: "100%", minHeight: "120px", resize: "vertical" }} rows={4}
+            <label className="form-label" style={{ fontWeight: 600 }}
+            >Instruksi Atas <span style={{ color: "var(--color-gray-500)", fontWeight: 400, fontSize: "0.75rem" }}>— muncul SEBELUM media (contoh: "Dengarkan suara berikut")</span></label>
+            <textarea className="form-input" style={{ width: "100%", minHeight: "60px", resize: "vertical" }} rows={2}
+              placeholder="Contoh: Dengarkan suara berikut ini dengan seksama."
+              value={questionInstruction}
+              onChange={e => setQuestionInstruction(e.target.value)} />
+          </div>
+
+          <div style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <label className="form-label" style={{ fontWeight: 600 }}
+            >Teks Pertanyaan <span style={{ color: "var(--color-gray-500)", fontWeight: 400, fontSize: "0.75rem" }}>— muncul SETELAH media (contoh: "Pilihlah suara yang kamu dengar")</span></label>
+            <textarea className="form-input" style={{ width: "100%", minHeight: "100px", resize: "vertical" }} rows={4}
               placeholder="Tuliskan pertanyaan di sini..." value={questionText} onChange={e => setQuestionText(e.target.value)} />
           </div>
 
@@ -986,21 +974,17 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
         </div>
       </div>
 
-      {/* ── Kolom kanan: preview - TIDAK scroll, tetap di tempat ── */}
-      {/* Karena parent pakai overflow: hidden + height: 100%, kolom ini         */}
-      {/* otomatis tingginya sama dengan kolom kiri (area konten).               */}
-      {/* overflowY: auto hanya sebagai fallback jika preview lebih tinggi       */}
-      {/* dari area - tapi normalnya preview (461px) < tinggi area konten.       */}
+      {/* ── Kolom kanan: Preview STICKY — tidak ikut scroll ── */}
       {isMounted && (
         <div style={{
-          flex: "1 1 260px",
-          maxWidth: "400px",
-          position: "relative",
+          flex: "0 0 auto",
+          width: "295px",
+          position: "sticky",
+          top: "1rem",
+          alignSelf: "flex-start",
           zIndex: 5,
-          overflowY: "auto",
           paddingBottom: "1.5rem",
-          paddingTop: "0",
-        }} className="pemantik-scrollbar">
+        }}>
           <div style={{
             marginBottom: "0.75rem",
             textAlign: "center",

@@ -120,6 +120,7 @@ class SyncService {
               subjectArea: Value(qRow['subject_area']),
               questionType: Value(qRow['question_type']),
               questionText: Value(qRow['question_text']),
+              questionInstruction: Value(qRow['question_instruction']),
               questionAudioUrl: Value(qRow['question_audio_url']),
               questionVideoUrl: Value(qRow['question_video_url']),
               questionImageUrl: Value(qRow['question_image_url']),

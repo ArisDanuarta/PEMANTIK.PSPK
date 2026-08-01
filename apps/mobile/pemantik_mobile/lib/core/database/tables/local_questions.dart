@@ -7,6 +7,7 @@ class LocalQuestions extends Table {
   TextColumn get subjectArea => text()();
   TextColumn get questionType => text()();
   TextColumn get questionText => text().nullable()();
+  TextColumn get questionInstruction => text().nullable()();
   TextColumn get questionAudioUrl => text().nullable()();
   TextColumn get questionVideoUrl => text().nullable()();
   TextColumn get questionImageUrl => text().nullable()();

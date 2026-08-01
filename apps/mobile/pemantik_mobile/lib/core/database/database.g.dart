@@ -1147,6 +1147,17 @@ class $LocalQuestionsTable extends LocalQuestions
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _questionInstructionMeta =
+      const VerificationMeta('questionInstruction');
+  @override
+  late final GeneratedColumn<String> questionInstruction =
+      GeneratedColumn<String>(
+        'question_instruction',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _questionAudioUrlMeta = const VerificationMeta(
     'questionAudioUrl',
   );
@@ -1257,6 +1268,7 @@ class $LocalQuestionsTable extends LocalQuestions
     subjectArea,
     questionType,
     questionText,
+    questionInstruction,
     questionAudioUrl,
     questionVideoUrl,
     questionImageUrl,
@@ -1328,6 +1340,15 @@ class $LocalQuestionsTable extends LocalQuestions
         questionText.isAcceptableOrUnknown(
           data['question_text']!,
           _questionTextMeta,
+        ),
+      );
+    }
+    if (data.containsKey('question_instruction')) {
+      context.handle(
+        _questionInstructionMeta,
+        questionInstruction.isAcceptableOrUnknown(
+          data['question_instruction']!,
+          _questionInstructionMeta,
         ),
       );
     }
@@ -1440,6 +1461,10 @@ class $LocalQuestionsTable extends LocalQuestions
         DriftSqlType.string,
         data['${effectivePrefix}question_text'],
       ),
+      questionInstruction: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}question_instruction'],
+      ),
       questionAudioUrl: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}question_audio_url'],
@@ -1492,6 +1517,7 @@ class LocalQuestion extends DataClass implements Insertable<LocalQuestion> {
   final String subjectArea;
   final String questionType;
   final String? questionText;
+  final String? questionInstruction;
   final String? questionAudioUrl;
   final String? questionVideoUrl;
   final String? questionImageUrl;
@@ -1508,6 +1534,7 @@ class LocalQuestion extends DataClass implements Insertable<LocalQuestion> {
     required this.subjectArea,
     required this.questionType,
     this.questionText,
+    this.questionInstruction,
     this.questionAudioUrl,
     this.questionVideoUrl,
     this.questionImageUrl,
@@ -1528,6 +1555,9 @@ class LocalQuestion extends DataClass implements Insertable<LocalQuestion> {
     map['question_type'] = Variable<String>(questionType);
     if (!nullToAbsent || questionText != null) {
       map['question_text'] = Variable<String>(questionText);
+    }
+    if (!nullToAbsent || questionInstruction != null) {
+      map['question_instruction'] = Variable<String>(questionInstruction);
     }
     if (!nullToAbsent || questionAudioUrl != null) {
       map['question_audio_url'] = Variable<String>(questionAudioUrl);
@@ -1561,6 +1591,9 @@ class LocalQuestion extends DataClass implements Insertable<LocalQuestion> {
       questionText: questionText == null && nullToAbsent
           ? const Value.absent()
           : Value(questionText),
+      questionInstruction: questionInstruction == null && nullToAbsent
+          ? const Value.absent()
+          : Value(questionInstruction),
       questionAudioUrl: questionAudioUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(questionAudioUrl),
@@ -1595,6 +1628,9 @@ class LocalQuestion extends DataClass implements Insertable<LocalQuestion> {
       subjectArea: serializer.fromJson<String>(json['subjectArea']),
       questionType: serializer.fromJson<String>(json['questionType']),
       questionText: serializer.fromJson<String?>(json['questionText']),
+      questionInstruction: serializer.fromJson<String?>(
+        json['questionInstruction'],
+      ),
       questionAudioUrl: serializer.fromJson<String?>(json['questionAudioUrl']),
       questionVideoUrl: serializer.fromJson<String?>(json['questionVideoUrl']),
       questionImageUrl: serializer.fromJson<String?>(json['questionImageUrl']),
@@ -1616,6 +1652,7 @@ class LocalQuestion extends DataClass implements Insertable<LocalQuestion> {
       'subjectArea': serializer.toJson<String>(subjectArea),
       'questionType': serializer.toJson<String>(questionType),
       'questionText': serializer.toJson<String?>(questionText),
+      'questionInstruction': serializer.toJson<String?>(questionInstruction),
       'questionAudioUrl': serializer.toJson<String?>(questionAudioUrl),
       'questionVideoUrl': serializer.toJson<String?>(questionVideoUrl),
       'questionImageUrl': serializer.toJson<String?>(questionImageUrl),
@@ -1635,6 +1672,7 @@ class LocalQuestion extends DataClass implements Insertable<LocalQuestion> {
     String? subjectArea,
     String? questionType,
     Value<String?> questionText = const Value.absent(),
+    Value<String?> questionInstruction = const Value.absent(),
     Value<String?> questionAudioUrl = const Value.absent(),
     Value<String?> questionVideoUrl = const Value.absent(),
     Value<String?> questionImageUrl = const Value.absent(),
@@ -1651,6 +1689,9 @@ class LocalQuestion extends DataClass implements Insertable<LocalQuestion> {
     subjectArea: subjectArea ?? this.subjectArea,
     questionType: questionType ?? this.questionType,
     questionText: questionText.present ? questionText.value : this.questionText,
+    questionInstruction: questionInstruction.present
+        ? questionInstruction.value
+        : this.questionInstruction,
     questionAudioUrl: questionAudioUrl.present
         ? questionAudioUrl.value
         : this.questionAudioUrl,
@@ -1683,6 +1724,9 @@ class LocalQuestion extends DataClass implements Insertable<LocalQuestion> {
       questionText: data.questionText.present
           ? data.questionText.value
           : this.questionText,
+      questionInstruction: data.questionInstruction.present
+          ? data.questionInstruction.value
+          : this.questionInstruction,
       questionAudioUrl: data.questionAudioUrl.present
           ? data.questionAudioUrl.value
           : this.questionAudioUrl,
@@ -1718,6 +1762,7 @@ class LocalQuestion extends DataClass implements Insertable<LocalQuestion> {
           ..write('subjectArea: $subjectArea, ')
           ..write('questionType: $questionType, ')
           ..write('questionText: $questionText, ')
+          ..write('questionInstruction: $questionInstruction, ')
           ..write('questionAudioUrl: $questionAudioUrl, ')
           ..write('questionVideoUrl: $questionVideoUrl, ')
           ..write('questionImageUrl: $questionImageUrl, ')
@@ -1739,6 +1784,7 @@ class LocalQuestion extends DataClass implements Insertable<LocalQuestion> {
     subjectArea,
     questionType,
     questionText,
+    questionInstruction,
     questionAudioUrl,
     questionVideoUrl,
     questionImageUrl,
@@ -1759,6 +1805,7 @@ class LocalQuestion extends DataClass implements Insertable<LocalQuestion> {
           other.subjectArea == this.subjectArea &&
           other.questionType == this.questionType &&
           other.questionText == this.questionText &&
+          other.questionInstruction == this.questionInstruction &&
           other.questionAudioUrl == this.questionAudioUrl &&
           other.questionVideoUrl == this.questionVideoUrl &&
           other.questionImageUrl == this.questionImageUrl &&
@@ -1777,6 +1824,7 @@ class LocalQuestionsCompanion extends UpdateCompanion<LocalQuestion> {
   final Value<String> subjectArea;
   final Value<String> questionType;
   final Value<String?> questionText;
+  final Value<String?> questionInstruction;
   final Value<String?> questionAudioUrl;
   final Value<String?> questionVideoUrl;
   final Value<String?> questionImageUrl;
@@ -1794,6 +1842,7 @@ class LocalQuestionsCompanion extends UpdateCompanion<LocalQuestion> {
     this.subjectArea = const Value.absent(),
     this.questionType = const Value.absent(),
     this.questionText = const Value.absent(),
+    this.questionInstruction = const Value.absent(),
     this.questionAudioUrl = const Value.absent(),
     this.questionVideoUrl = const Value.absent(),
     this.questionImageUrl = const Value.absent(),
@@ -1812,6 +1861,7 @@ class LocalQuestionsCompanion extends UpdateCompanion<LocalQuestion> {
     required String subjectArea,
     required String questionType,
     this.questionText = const Value.absent(),
+    this.questionInstruction = const Value.absent(),
     this.questionAudioUrl = const Value.absent(),
     this.questionVideoUrl = const Value.absent(),
     this.questionImageUrl = const Value.absent(),
@@ -1836,6 +1886,7 @@ class LocalQuestionsCompanion extends UpdateCompanion<LocalQuestion> {
     Expression<String>? subjectArea,
     Expression<String>? questionType,
     Expression<String>? questionText,
+    Expression<String>? questionInstruction,
     Expression<String>? questionAudioUrl,
     Expression<String>? questionVideoUrl,
     Expression<String>? questionImageUrl,
@@ -1854,6 +1905,8 @@ class LocalQuestionsCompanion extends UpdateCompanion<LocalQuestion> {
       if (subjectArea != null) 'subject_area': subjectArea,
       if (questionType != null) 'question_type': questionType,
       if (questionText != null) 'question_text': questionText,
+      if (questionInstruction != null)
+        'question_instruction': questionInstruction,
       if (questionAudioUrl != null) 'question_audio_url': questionAudioUrl,
       if (questionVideoUrl != null) 'question_video_url': questionVideoUrl,
       if (questionImageUrl != null) 'question_image_url': questionImageUrl,
@@ -1874,6 +1927,7 @@ class LocalQuestionsCompanion extends UpdateCompanion<LocalQuestion> {
     Value<String>? subjectArea,
     Value<String>? questionType,
     Value<String?>? questionText,
+    Value<String?>? questionInstruction,
     Value<String?>? questionAudioUrl,
     Value<String?>? questionVideoUrl,
     Value<String?>? questionImageUrl,
@@ -1892,6 +1946,7 @@ class LocalQuestionsCompanion extends UpdateCompanion<LocalQuestion> {
       subjectArea: subjectArea ?? this.subjectArea,
       questionType: questionType ?? this.questionType,
       questionText: questionText ?? this.questionText,
+      questionInstruction: questionInstruction ?? this.questionInstruction,
       questionAudioUrl: questionAudioUrl ?? this.questionAudioUrl,
       questionVideoUrl: questionVideoUrl ?? this.questionVideoUrl,
       questionImageUrl: questionImageUrl ?? this.questionImageUrl,
@@ -1925,6 +1980,9 @@ class LocalQuestionsCompanion extends UpdateCompanion<LocalQuestion> {
     }
     if (questionText.present) {
       map['question_text'] = Variable<String>(questionText.value);
+    }
+    if (questionInstruction.present) {
+      map['question_instruction'] = Variable<String>(questionInstruction.value);
     }
     if (questionAudioUrl.present) {
       map['question_audio_url'] = Variable<String>(questionAudioUrl.value);
@@ -1968,6 +2026,7 @@ class LocalQuestionsCompanion extends UpdateCompanion<LocalQuestion> {
           ..write('subjectArea: $subjectArea, ')
           ..write('questionType: $questionType, ')
           ..write('questionText: $questionText, ')
+          ..write('questionInstruction: $questionInstruction, ')
           ..write('questionAudioUrl: $questionAudioUrl, ')
           ..write('questionVideoUrl: $questionVideoUrl, ')
           ..write('questionImageUrl: $questionImageUrl, ')
@@ -4315,6 +4374,7 @@ typedef $$LocalQuestionsTableCreateCompanionBuilder =
       required String subjectArea,
       required String questionType,
       Value<String?> questionText,
+      Value<String?> questionInstruction,
       Value<String?> questionAudioUrl,
       Value<String?> questionVideoUrl,
       Value<String?> questionImageUrl,
@@ -4334,6 +4394,7 @@ typedef $$LocalQuestionsTableUpdateCompanionBuilder =
       Value<String> subjectArea,
       Value<String> questionType,
       Value<String?> questionText,
+      Value<String?> questionInstruction,
       Value<String?> questionAudioUrl,
       Value<String?> questionVideoUrl,
       Value<String?> questionImageUrl,
@@ -4382,6 +4443,11 @@ class $$LocalQuestionsTableFilterComposer
 
   ColumnFilters<String> get questionText => $composableBuilder(
     column: $table.questionText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get questionInstruction => $composableBuilder(
+    column: $table.questionInstruction,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4470,6 +4536,11 @@ class $$LocalQuestionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get questionInstruction => $composableBuilder(
+    column: $table.questionInstruction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get questionAudioUrl => $composableBuilder(
     column: $table.questionAudioUrl,
     builder: (column) => ColumnOrderings(column),
@@ -4548,6 +4619,11 @@ class $$LocalQuestionsTableAnnotationComposer
 
   GeneratedColumn<String> get questionText => $composableBuilder(
     column: $table.questionText,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get questionInstruction => $composableBuilder(
+    column: $table.questionInstruction,
     builder: (column) => column,
   );
 
@@ -4632,6 +4708,7 @@ class $$LocalQuestionsTableTableManager
                 Value<String> subjectArea = const Value.absent(),
                 Value<String> questionType = const Value.absent(),
                 Value<String?> questionText = const Value.absent(),
+                Value<String?> questionInstruction = const Value.absent(),
                 Value<String?> questionAudioUrl = const Value.absent(),
                 Value<String?> questionVideoUrl = const Value.absent(),
                 Value<String?> questionImageUrl = const Value.absent(),
@@ -4649,6 +4726,7 @@ class $$LocalQuestionsTableTableManager
                 subjectArea: subjectArea,
                 questionType: questionType,
                 questionText: questionText,
+                questionInstruction: questionInstruction,
                 questionAudioUrl: questionAudioUrl,
                 questionVideoUrl: questionVideoUrl,
                 questionImageUrl: questionImageUrl,
@@ -4668,6 +4746,7 @@ class $$LocalQuestionsTableTableManager
                 required String subjectArea,
                 required String questionType,
                 Value<String?> questionText = const Value.absent(),
+                Value<String?> questionInstruction = const Value.absent(),
                 Value<String?> questionAudioUrl = const Value.absent(),
                 Value<String?> questionVideoUrl = const Value.absent(),
                 Value<String?> questionImageUrl = const Value.absent(),
@@ -4685,6 +4764,7 @@ class $$LocalQuestionsTableTableManager
                 subjectArea: subjectArea,
                 questionType: questionType,
                 questionText: questionText,
+                questionInstruction: questionInstruction,
                 questionAudioUrl: questionAudioUrl,
                 questionVideoUrl: questionVideoUrl,
                 questionImageUrl: questionImageUrl,

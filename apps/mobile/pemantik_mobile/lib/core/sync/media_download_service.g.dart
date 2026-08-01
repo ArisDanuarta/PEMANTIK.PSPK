@@ -42,7 +42,7 @@ final class MediaDownloadServiceProvider
 }
 
 String _$mediaDownloadServiceHash() =>
-    r'f8b6dc386d0e0762eb4777df33c970b828028485';
+    r'c94aa88d637eccfe4b2bc1f85878d5fdd16fd883';
 
 abstract class _$MediaDownloadService extends $Notifier<MediaDownloadState> {
   MediaDownloadState build();

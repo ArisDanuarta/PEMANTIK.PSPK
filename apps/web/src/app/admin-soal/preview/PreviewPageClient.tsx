@@ -143,41 +143,66 @@ function MobilePreview({
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "0.75rem" }}>
-          {question.question_image_url && (
-            <div style={{ marginBottom: "0.65rem", borderRadius: 8, overflow: "hidden" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={question.question_image_url}
-                alt="Stimulus"
-                style={{ width: "100%", objectFit: "cover", maxHeight: 105, display: "block" }}
-              />
-            </div>
-          )}
-          {ytId && (
+          {question.question_instruction && (
             <div
               style={{
+                fontSize: "0.78rem",
+                fontWeight: 500,
+                color: "#555",
+                lineHeight: 1.5,
                 marginBottom: "0.65rem",
-                borderRadius: 8,
-                overflow: "hidden",
-                background: "#000",
-                height: 105,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                fontStyle: "italic",
               }}
             >
-              <div style={{ color: "#fff", fontSize: "0.68rem", textAlign: "center" }}>
-                <div style={{ fontSize: "1.4rem", marginBottom: "0.2rem" }}>▶</div>
-                YouTube Video
-              </div>
+              {question.question_instruction}
             </div>
           )}
-          {question.question_type === "audio_question" && mediaUrl && !ytId && (
-            <audio key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", marginBottom: "0.65rem" }} />
-          )}
-          {question.question_type === "video_question" && mediaUrl && !ytId && (
-            <video key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px", marginBottom: "0.65rem" }} />
-          )}
+
+          {(() => {
+            const isVideo = mediaUrl && !ytId && (mediaUrl.includes('.mp4') || mediaUrl.includes('.webm') || mediaUrl.includes('.ogg') || question.question_type === "video_question");
+            const isAudio = mediaUrl && !ytId && (mediaUrl.includes('.mp3') || mediaUrl.includes('.wav') || question.question_type === "audio_question");
+            const isImage = mediaUrl && !ytId && !isVideo && !isAudio && question.question_image_url;
+
+            return (
+              <>
+                {isImage && (
+                  <div style={{ marginBottom: "0.65rem", borderRadius: 8, overflow: "hidden" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={question.question_image_url}
+                      alt="Stimulus"
+                      style={{ width: "100%", objectFit: "cover", maxHeight: 105, display: "block" }}
+                    />
+                  </div>
+                )}
+                {ytId && (
+                  <div
+                    style={{
+                      marginBottom: "0.65rem",
+                      borderRadius: 8,
+                      overflow: "hidden",
+                      background: "#000",
+                      height: 105,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <div style={{ color: "#fff", fontSize: "0.68rem", textAlign: "center" }}>
+                      <div style={{ fontSize: "1.4rem", marginBottom: "0.2rem" }}>▶</div>
+                      YouTube Video
+                    </div>
+                  </div>
+                )}
+                {isAudio && (
+                  <audio key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", marginBottom: "0.65rem" }} />
+                )}
+                {isVideo && (
+                  <video key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px", marginBottom: "0.65rem" }} />
+                )}
+              </>
+            );
+          })()}
 
           <div
             style={{

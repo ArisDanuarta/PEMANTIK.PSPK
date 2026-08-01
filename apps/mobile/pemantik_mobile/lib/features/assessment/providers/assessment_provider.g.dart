@@ -51,7 +51,7 @@ final class AssessmentControllerProvider
 }
 
 String _$assessmentControllerHash() =>
-    r'0c3701f11e1a53a469dbcfa86a7a70f5e4731ab0';
+    r'44143fab685a94ea960b0379b0210050f3742c24';
 
 final class AssessmentControllerFamily extends $Family
     with

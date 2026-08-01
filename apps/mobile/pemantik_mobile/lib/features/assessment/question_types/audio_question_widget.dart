@@ -133,9 +133,16 @@ class _AudioQuestionWidgetState extends ConsumerState<AudioQuestionWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.question.text.isNotEmpty) ...[
-          Text(widget.question.text, style: AppTextStyles.questionText),
-          const SizedBox(height: 20),
+        if (widget.question.instruction != null && widget.question.instruction!.isNotEmpty) ...[
+          Text(
+            widget.question.instruction!,
+            style: AppTextStyles.questionText.copyWith(
+              fontStyle: FontStyle.italic,
+              color: AppColors.textMuted,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 16),
         ],
 
         // Tombol Pemutar Audio dan Progress Bar
@@ -210,7 +217,12 @@ class _AudioQuestionWidgetState extends ConsumerState<AudioQuestionWidget> {
           ),
         ),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 24),
+
+        if (widget.question.text.isNotEmpty) ...[
+          Text(widget.question.text, style: AppTextStyles.questionText),
+          const SizedBox(height: 20),
+        ],
 
         // Pilihan Ganda Text di bawahnya - safe-parse setiap format choice
         ListView.separated(

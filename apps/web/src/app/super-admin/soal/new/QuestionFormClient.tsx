@@ -43,7 +43,7 @@ function MediaField({
 }: {
   label: string; hint?: string; value: string;
   onChange: (v: string) =>
-  void;
+    void;
   accept: string; onUpload: (f: File) => void; uploading: boolean;
 }) {
   // Deteksi tipe berdasarkan accept atau ekstensi URL
@@ -137,6 +137,8 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
   const [categoryId, setCategoryId] = useState("");
   const [levelId, setLevelId] = useState(initialData?.level_id || "");
   const [questionText, setQuestionText] = useState(initialData?.question_text || "");
+  // Instruksi yang muncul DI ATAS media (contoh: "Dengarkan suara berikut")
+  const [questionInstruction, setQuestionInstruction] = useState(initialData?.question_instruction || "");
 
   // ── FIX: use question_image_url from DB schema, not media_url ──────────────
   const [mediaUrl, setMediaUrl] = useState(
@@ -354,6 +356,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
     } else {
       payload.question_image_url = mediaUrl;
     }
+    payload.question_instruction = questionInstruction || null;
 
     switch (questionType) {
       case "multiple_choice":
@@ -419,7 +422,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
   };
 
   // ─── Mobile Preview ────────────────────────────────────────────────────────
-  // FIX: Skala diturunkan ke 0.72 agar phone (320×640) muat dalam kolom 260px
+  // FIX: Skala diturunkan ke 0.82 agar phone (320×640) muat dalam kolom 260px
   // tanpa terpotong. Rumus: PHONE_W * SCALE = 320 * 0.72 = 230px < 260px ✓
   // PHONE_H * SCALE = 640 * 0.72 = 461px - jauh lebih kecil dari viewport.
   const renderMobilePreview = () => {
@@ -452,8 +455,8 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               {imgOptions.map((opt, i) => (
                 <div key={i} style={{ border: `2px solid ${i === imgCorrectIndex ? accent : "#e0e0e0"}`, borderRadius: "10px", overflow: "hidden", backgroundColor: i === imgCorrectIndex ? accentBg : "#f8f9fa" }}>
                   {opt.url
-                    ? <img src={opt.url} alt={opt.label || `Opsi ${i+1}`} style={{ width: "100%", height: "60px", objectFit: "cover", display: "block" }} />
-                    : <div style={{ height: "60px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", color: "#adb5bd" }}>Gambar {i+1}</div>}
+                    ? <img src={opt.url} alt={opt.label || `Opsi ${i + 1}`} style={{ width: "100%", height: "60px", objectFit: "cover", display: "block" }} />
+                    : <div style={{ height: "60px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", color: "#adb5bd" }}>Gambar {i + 1}</div>}
                   {opt.label && <div style={{ fontSize: "0.65rem", textAlign: "center", padding: "0.25rem", fontWeight: i === imgCorrectIndex ? 600 : 400 }}>{opt.label}</div>}
                 </div>
               ))}
@@ -526,9 +529,9 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
               {matchPairs.map((p, i) => (
                 <div key={p.id} style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "0.25rem", alignItems: "center" }}>
-                  <div style={{ fontSize: "0.72rem", padding: "0.375rem 0.5rem", background: "#f8f9fa", border: "1.5px solid #dee2e6", borderRadius: "6px", textAlign: "center" }}>{p.left || `Kiri ${i+1}`}</div>
+                  <div style={{ fontSize: "0.72rem", padding: "0.375rem 0.5rem", background: "#f8f9fa", border: "1.5px solid #dee2e6", borderRadius: "6px", textAlign: "center" }}>{p.left || `Kiri ${i + 1}`}</div>
                   <span style={{ fontSize: "0.7rem", color: "#adb5bd" }}>↔</span>
-                  <div style={{ fontSize: "0.72rem", padding: "0.375rem 0.5rem", background: accentBg, border: `1.5px solid ${accent}`, borderRadius: "6px", textAlign: "center", color: accent }}>{p.right || `Kanan ${i+1}`}</div>
+                  <div style={{ fontSize: "0.72rem", padding: "0.375rem 0.5rem", background: accentBg, border: `1.5px solid ${accent}`, borderRadius: "6px", textAlign: "center", color: accent }}>{p.right || `Kanan ${i + 1}`}</div>
                 </div>
               ))}
             </div>
@@ -584,15 +587,21 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
           <div style={{ backgroundColor: accent, color: "white", padding: "2rem 1rem 0.875rem", textAlign: "center", fontWeight: 700, fontSize: "0.95rem", flexShrink: 0 }}>
             {subjectArea === "literasi" ? "Latihan Literasi" : "Latihan Numerasi"}
           </div>
-          {/* Body */}
-          <div style={{ padding: "1rem", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          {/* Body — urutan: instruksi atas → media → pertanyaan/instruksi bawah → jawaban */}
+          <div style={{ padding: "1rem", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "0.65rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", padding: "0.2rem 0.6rem", borderRadius: "999px", background: "#e9ecef", color: "#495057" }}>Level {selectedLevel?.level_number ?? "0"}</span>
               {selectedLevel?.time_limit_sec && <span style={{ fontSize: "0.72rem", color: "#6c757d" }}>{selectedLevel.time_limit_sec} dtk</span>}
             </div>
-            <p style={{ fontSize: "0.9rem", fontWeight: 600, lineHeight: 1.55, color: "#1a1a1a", wordBreak: "break-word", whiteSpace: "pre-wrap", margin: 0 }}>
-              {questionText || "Teks pertanyaan akan muncul di sini..."}
-            </p>
+
+            {/* 1. INSTRUKSI ATAS */}
+            {questionInstruction && (
+              <p style={{ fontSize: "0.85rem", fontWeight: 500, lineHeight: 1.5, color: "#555", wordBreak: "break-word", whiteSpace: "pre-wrap", margin: 0, fontStyle: "italic" }}>
+                {questionInstruction}
+              </p>
+            )}
+
+            {/* 2. MEDIA */}
             {mediaUrl && questionType !== "audio_question" && questionType !== "video_question" && (
               <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0" }}>
                 {ytId
@@ -601,13 +610,25 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               </div>
             )}
             {mediaUrl && questionType === "audio_question" && (
-              <audio key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", marginBottom: "0.5rem" }} />
+              <audio key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block" }} />
             )}
             {mediaUrl && questionType === "video_question" && (
               ytId
-                ? <iframe key={mediaUrl} width="100%" height="140" src={`https://www.youtube.com/embed/${ytId}`} title="yt" frameBorder="0" allowFullScreen style={{ display: "block", borderRadius: "8px", marginBottom: "0.5rem" }} />
-                : <video key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px", marginBottom: "0.5rem" }} />
+                ? <iframe key={mediaUrl} width="100%" height="140" src={`https://www.youtube.com/embed/${ytId}`} title="yt" frameBorder="0" allowFullScreen style={{ display: "block", borderRadius: "8px" }} />
+                : <video key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px" }} />
             )}
+
+            {/* 3. TEKS PERTANYAAN (setelah media) */}
+            {questionText && (
+              <p style={{ fontSize: "0.9rem", fontWeight: 600, lineHeight: 1.55, color: "#1a1a1a", wordBreak: "break-word", whiteSpace: "pre-wrap", margin: 0 }}>
+                {questionText}
+              </p>
+            )}
+            {!questionInstruction && !questionText && (
+              <p style={{ fontSize: "0.9rem", color: "#adb5bd", fontStyle: "italic", margin: 0 }}>Teks instruksi/pertanyaan akan muncul di sini...</p>
+            )}
+
+            {/* 4. JAWABAN */}
             {renderPreviewAnswers()}
           </div>
         </div>
@@ -621,10 +642,12 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
     const cardStyle = { padding: "1rem", backgroundColor: "#f8f9fa", borderRadius: "8px", border: "1px solid #e9ecef" };
     const subtypeBtn = (t: DragDropSubtype, label: string) => (
       <button type="button" onClick={() => setDragSubtype(t)}
-        style={{ padding: "0.375rem 0.875rem", borderRadius: "6px", border: "1.5px solid", cursor: "pointer", fontSize: "0.8rem", fontWeight: 500,
+        style={{
+          padding: "0.375rem 0.875rem", borderRadius: "6px", border: "1.5px solid", cursor: "pointer", fontSize: "0.8rem", fontWeight: 500,
           borderColor: dragSubtype === t ? "var(--clr-biru)" : "#dee2e6",
           backgroundColor: dragSubtype === t ? "rgba(16,46,80,0.08)" : "#fff",
-          color: dragSubtype === t ? "var(--clr-biru)" : "#6c757d" }}>
+          color: dragSubtype === t ? "var(--clr-biru)" : "#6c757d"
+        }}>
         {label}
       </button>
     );
@@ -836,10 +859,12 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
                 {[60, 70, 75, 80, 85, 90].map(v => (
                   <button key={v} type="button" onClick={() => setVrThreshold(v)}
-                    style={{ padding: "0.2rem 0.5rem", fontSize: "0.72rem", borderRadius: "4px", border: "1px solid", cursor: "pointer",
+                    style={{
+                      padding: "0.2rem 0.5rem", fontSize: "0.72rem", borderRadius: "4px", border: "1px solid", cursor: "pointer",
                       borderColor: vrThreshold === v ? "var(--clr-biru)" : "#dee2e6",
                       backgroundColor: vrThreshold === v ? "rgba(16,46,80,0.08)" : "#fff",
-                      color: vrThreshold === v ? "var(--clr-biru)" : "#6c757d", fontWeight: vrThreshold === v ? 600 : 400 }}>
+                      color: vrThreshold === v ? "var(--clr-biru)" : "#6c757d", fontWeight: vrThreshold === v ? 600 : 400
+                    }}>
                     {v}%
                   </button>
                 ))}
@@ -859,22 +884,20 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
     <div style={{
       display: "flex",
       gap: "2rem",
-      flexWrap: "wrap",
-      height: "100%",
+      alignItems: "flex-start",
       minHeight: 0,
+      flex: 1,
       overflow: "auto",
+      paddingBottom: "2rem"
     }}>
 
-      {/* ── Kolom kiri: HANYA ini yang scroll ── */}
-      {/* overflowY: auto → scroll bar muncul di dalam kolom kiri saja.         */}
-      {/* Header dan preview (kolom kanan) tidak bergerak sama sekali.           */}
+      {/* ── Kolom kiri: form — scroll normal ── */}
       <div style={{
-        flex: "1 1 300px",
+        flex: "1 1 420px",
         minWidth: 0,
-        overflowY: "auto",
         paddingRight: "0.5rem",
-        paddingBottom: "2rem",
-      }} className="pemantik-scrollbar">
+        paddingBottom: "3rem",
+      }}>
 
         {/* SECTION 1: Klasifikasi */}
         <div className="card" style={{ padding: "2rem", marginBottom: "2rem" }}>
@@ -933,28 +956,36 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
           </h2>
 
           <div style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <label className="form-label" style={{ fontWeight: 600 }}>Teks Pertanyaan</label>
-            <textarea className="form-input" style={{ width: "100%", minHeight: "120px", resize: "vertical" }} rows={4}
+            <label className="form-label" style={{ fontWeight: 600 }}>Instruksi Atas <span style={{ color: "var(--color-gray-500)", fontWeight: 400, fontSize: "0.75rem" }}>— muncul SEBELUM media (contoh: "Dengarkan suara berikut")</span></label>
+            <textarea className="form-input" style={{ width: "100%", minHeight: "60px", resize: "vertical" }} rows={2}
+              placeholder="Contoh: Dengarkan suara berikut ini dengan seksama."
+              value={questionInstruction}
+              onChange={e => setQuestionInstruction(e.target.value)} />
+          </div>
+
+          <div style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <label className="form-label" style={{ fontWeight: 600 }}>Teks Pertanyaan <span style={{ color: "var(--color-gray-500)", fontWeight: 400, fontSize: "0.75rem" }}>— muncul SETELAH media (contoh: "Pilihlah suara yang kamu dengar")</span></label>
+            <textarea className="form-input" style={{ width: "100%", minHeight: "100px", resize: "vertical" }} rows={4}
               placeholder="Tuliskan pertanyaan di sini..." value={questionText} onChange={e => setQuestionText(e.target.value)} />
           </div>
 
           <MediaField
             label={
               questionType === "audio_question" ? "File Audio Soal (wajib)"
-              : questionType === "video_question" ? "File Video Soal (URL YouTube atau upload)"
-              : "Media Stimulus (URL YouTube, gambar, audio, video - opsional)"
+                : questionType === "video_question" ? "File Video Soal (URL YouTube atau upload)"
+                  : "Media Stimulus (URL YouTube, gambar, audio, video - opsional)"
             }
             hint={
               questionType === "audio_question" ? "Anak akan mendengarkan audio ini sebagai soal utama."
-              : questionType === "video_question" ? "Anak akan menonton video ini sebagai soal utama."
-              : "Gunakan upload jika media belum ada di internet. Tersimpan di Supabase Storage."
+                : questionType === "video_question" ? "Anak akan menonton video ini sebagai soal utama."
+                  : "Gunakan upload jika media belum ada di internet. Tersimpan di Supabase Storage."
             }
             value={mediaUrl}
             onChange={setMediaUrl}
             accept={
               questionType === "audio_question" ? "audio/*"
-              : questionType === "video_question" ? "video/*"
-              : "image/*,audio/*,video/*"
+                : questionType === "video_question" ? "video/*"
+                  : "image/*,audio/*,video/*"
             }
             onUpload={handleMainMediaUpload}
             uploading={uploading}
@@ -987,21 +1018,17 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
         </div>
       </div>
 
-      {/* ── Kolom kanan: preview - TIDAK scroll, tetap di tempat ── */}
-      {/* Karena parent pakai overflow: hidden + height: 100%, kolom ini         */}
-      {/* otomatis tingginya sama dengan kolom kiri (area konten).               */}
-      {/* overflowY: auto hanya sebagai fallback jika preview lebih tinggi       */}
-      {/* dari area - tapi normalnya preview (461px) < tinggi area konten.       */}
+      {/* ── Kolom kanan: Preview STICKY — tidak ikut scroll ── */}
       {isMounted && (
         <div style={{
-          flex: "1 1 260px",
-          maxWidth: "400px",
-          position: "relative",
+          flex: "0 0 auto",
+          width: "295px",
+          position: "sticky",
+          top: "1rem",
+          alignSelf: "flex-start",
           zIndex: 5,
-          overflowY: "auto",
           paddingBottom: "1.5rem",
-          paddingTop: "0",
-        }} className="pemantik-scrollbar">
+        }}>
           <div style={{
             marginBottom: "0.75rem",
             textAlign: "center",

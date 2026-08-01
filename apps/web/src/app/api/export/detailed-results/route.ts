@@ -5,27 +5,51 @@ import * as XLSX from "xlsx";
 
 export const dynamic = "force-dynamic";
 
-function formatExportAnswer(data: any): string {
-  if (data === null || data === undefined) return "-";
-  if (typeof data !== "object") return String(data);
+function formatExportAnswer(data: any, isCorrect?: boolean | null): string {
+  let answerText = "";
 
-  if (data.selected) {
-    return data.selectedText ? `${data.selected}. ${data.selectedText}` : data.selected;
+  if (data === null || data === undefined) {
+    answerText = "-";
+  } else if (typeof data !== "object") {
+    answerText = String(data);
+  } else if (data.selected) {
+    // Pilihan Ganda: Hanya tampilkan opsi yang dipilih, misal "A", "B"
+    answerText = data.selected;
+  } else if (data.answer) {
+    answerText = data.answer;
+  } else if (data.value) {
+    if (typeof data.value === "string") answerText = data.value;
+    else if (Array.isArray(data.value)) answerText = data.value.join(", ");
+    else answerText = "Terjawab";
+  } else if (data.pairs && Array.isArray(data.pairs)) {
+    // Menjodohkan: Jika terlalu panjang, cukup berikan status saja (karena bentuknya rumit)
+    answerText = "Menjodohkan";
+  } else if (data.text) {
+    answerText = data.text;
+  } else if (Array.isArray(data)) {
+    if (data.length > 0 && typeof data[0] === "string") answerText = data.join(", ");
+    else answerText = "Terjawab";
+  } else {
+    answerText = "Terjawab";
   }
-  if (data.answer) return data.answer;
-  if (data.value) {
-    if (typeof data.value === "string") return data.value;
-    if (Array.isArray(data.value)) return data.value.join(", ");
-    return JSON.stringify(data.value);
+
+  // Jika tidak dijawab
+  if (answerText === "-") {
+    return "-";
   }
-  if (data.pairs && Array.isArray(data.pairs)) {
-    return data.pairs.map((p: any) => `${p.left_id} = ${p.right_id}`).join(" | ");
+  
+  // Format Final: "A (Benar)" atau "Teks Jawaban (Salah)"
+  // Untuk data yang hanya butuh benar/salah, tampilkan "1 (Benar)" atau "0 (Salah)"
+  if (isCorrect === true) {
+    if (answerText === "Menjodohkan" || answerText === "Terjawab") return "1 (Benar)";
+    return `${answerText} (Benar)`;
   }
-  if (data.text) return data.text;
-  if (Array.isArray(data)) {
-    if (data.length > 0 && typeof data[0] === "string") return data.join(", ");
+  if (isCorrect === false) {
+    if (answerText === "Menjodohkan" || answerText === "Terjawab") return "0 (Salah)";
+    return `${answerText} (Salah)`;
   }
-  return JSON.stringify(data);
+  
+  return answerText;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -232,14 +256,10 @@ function buildRawSheetCommunity(
     allQuestions.forEach((q, idx) => {
       const num = idx + 1;
       const ansObj = answerBySessionQuestion.get(`${row.session_id}_${q.id}`);
-      // 1 = benar, 0 = salah, kosong (-) = tidak dijawab
-      let scoreVal: number | string = "-";
+      let scoreVal: string | number = "-";
       if (ansObj) {
-        if (ansObj.is_correct !== null && ansObj.is_correct !== undefined) {
-          scoreVal = ansObj.is_correct ? 1 : 0;
-        } else if (ansObj.answer_data) {
-          // Ada jawaban tapi belum dinilai — tampilkan jawaban sebagai teks
-          scoreVal = formatExportAnswer(ansObj.answer_data);
+        if (ansObj.answer_data || ansObj.is_correct !== null) {
+          scoreVal = formatExportAnswer(ansObj.answer_data, ansObj.is_correct);
         }
       }
       
@@ -642,11 +662,11 @@ export async function GET(request: Request) {
   });
 
   // Map jawaban per sesi dan soal (1 = benar, 0 = salah) untuk matriks di Sheet 2
-  const answerMatrixMap = new Map<string, Map<string, number>>();
+  const answerMatrixMap = new Map<string, Map<string, string>>();
   answers.forEach((ans) => {
     if (!ans.session_id || !ans.question_id) return;
     if (!answerMatrixMap.has(ans.session_id)) answerMatrixMap.set(ans.session_id, new Map());
-    const val = ans.is_correct ? 1 : 0;
+    const val = formatExportAnswer(ans.answer_data, ans.is_correct);
     answerMatrixMap.get(ans.session_id)!.set(ans.question_id, val);
   });
 
@@ -730,7 +750,7 @@ export async function GET(request: Request) {
       const sessMatrix = answerMatrixMap.get(row.session_id);
       allQuestions.forEach((q, idx) => {
         const headerName = questionHeaders[idx];
-        baseRow[headerName] = sessMatrix && sessMatrix.has(q.id) ? sessMatrix.get(q.id) : 0;
+        baseRow[headerName] = sessMatrix && sessMatrix.has(q.id) ? sessMatrix.get(q.id) : "-";
       });
 
       return baseRow;
@@ -784,7 +804,7 @@ export async function GET(request: Request) {
         "Kode Soal":           qObj?.question_code ?? "-",
         Soal:                  qObj?.question_text ?? "-",
         "Tipe Soal":           qObj?.question_type ?? "-",
-        Jawaban:               formatExportAnswer(ans.answer_data),
+        Jawaban:               formatExportAnswer(ans.answer_data, ans.is_correct),
         Benar:                 ans.is_correct ? 1 : 0,
         Skor:                  ans.score ?? 0,
         "Waktu (Detik)":       ans.time_spent_sec ?? 0,

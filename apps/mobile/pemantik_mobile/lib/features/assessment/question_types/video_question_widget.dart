@@ -107,8 +107,15 @@ class _VideoQuestionWidgetState extends ConsumerState<VideoQuestionWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.question.text.isNotEmpty) ...[
-          Text(widget.question.text, style: AppTextStyles.questionText),
+        if (widget.question.instruction != null && widget.question.instruction!.isNotEmpty) ...[
+          Text(
+            widget.question.instruction!,
+            style: AppTextStyles.questionText.copyWith(
+              fontStyle: FontStyle.italic,
+              color: AppColors.textMuted,
+              fontSize: 14,
+            ),
+          ),
           const SizedBox(height: 16),
         ],
 
@@ -219,6 +226,11 @@ class _VideoQuestionWidgetState extends ConsumerState<VideoQuestionWidget> {
         ],
 
         const SizedBox(height: 24),
+
+        if (widget.question.text.isNotEmpty) ...[
+          Text(widget.question.text, style: AppTextStyles.questionText),
+          const SizedBox(height: 16),
+        ],
 
         // Grid Pilihan Ganda
         ListView.separated(

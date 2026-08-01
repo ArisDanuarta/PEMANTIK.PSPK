@@ -866,7 +866,7 @@ export default function SchoolDetailKomunitas({
           <div style={{ padding: "1.5rem", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "0.5rem", marginBottom: "1.5rem" }}>
             <h4 style={{ margin: "0 0 0.5rem 0", color: "#166534" }}>Panduan Distribusi Akun</h4>
             <p style={{ margin: 0, fontSize: "0.85rem", color: "#15803d", lineHeight: "1.5" }}>
-              Anda dapat mengunduh daftar lengkap username dan password default (<code>Password123!</code>) untuk Admin Sekolah, Guru, dan Anak di sekolah ini.
+              Anda dapat mengunduh daftar lengkap username, password default (<code>Password123!</code>) untuk Admin Sekolah dan Guru, serta PIN default (<code>123456</code>) untuk Anak di sekolah ini.
               Data Excel tersebut memiliki 3 sheet (Akun Sekolah, Akun Guru, dan Akun Anak) yang dapat dipilah dan didistribusikan kepada pihak sekolah atau wali kelas.
             </p>
           </div>

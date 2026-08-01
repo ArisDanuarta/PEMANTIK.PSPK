@@ -17,6 +17,7 @@ class QuestionData {
   final String id;
   final String type;
   final String text;
+  final String? instruction; // Teks instruksi DI ATAS media
   final Map<String, dynamic> options;
   final Map<String, dynamic> correctAnswer;
   final int version;
@@ -31,6 +32,7 @@ class QuestionData {
     required this.id,
     required this.type,
     required this.text,
+    this.instruction,
     required this.options,
     required this.correctAnswer,
     this.version = 1,
@@ -170,6 +172,7 @@ class AssessmentController extends _$AssessmentController {
         id: q.id,
         type: q.questionType,
         text: q.questionText ?? '',
+        instruction: q.questionInstruction,
         options: parseJsonMap(q.optionsJson, 'choices'),
         correctAnswer: parseJsonMap(q.correctAnswerJson, 'answers'),
         version: q.version,
