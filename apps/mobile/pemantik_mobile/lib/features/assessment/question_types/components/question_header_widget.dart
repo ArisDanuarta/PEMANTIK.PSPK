@@ -42,9 +42,48 @@ class _QuestionHeaderWidgetState extends ConsumerState<QuestionHeaderWidget> {
     _initializeMedia();
   }
 
+  Map<String, String?> _getParsedMediaUrls() {
+    final rawAudioUrl = widget.question.audioUrl ?? widget.question.options['audioUrl']?.toString();
+    final rawVideoUrl = widget.question.videoUrl ?? widget.question.options['videoUrl']?.toString();
+    final rawImageUrl = widget.question.imageUrl ?? widget.question.options['imageUrl']?.toString();
+
+    String? audioUrl;
+    String? videoUrl;
+    String? imageUrl;
+
+    final mediaUrl = [rawAudioUrl, rawVideoUrl, rawImageUrl]
+        .firstWhere((url) => url != null && url.isNotEmpty, orElse: () => null);
+
+    if (mediaUrl != null) {
+      final urlLower = mediaUrl.toLowerCase();
+      if (urlLower.contains('youtube.com') || urlLower.contains('youtu.be')) {
+        videoUrl = mediaUrl;
+      } else if (urlLower.contains('.mp3') || urlLower.contains('.wav') || urlLower.contains('.m4a') || urlLower.contains('.ogg') || urlLower.contains('.aac')) {
+        audioUrl = mediaUrl;
+      } else if (urlLower.contains('.mp4') || urlLower.contains('.webm') || urlLower.contains('.mov') || urlLower.contains('.avi')) {
+        videoUrl = mediaUrl;
+      } else {
+        if (mediaUrl == rawAudioUrl) {
+          audioUrl = mediaUrl;
+        } else if (mediaUrl == rawVideoUrl) {
+          videoUrl = mediaUrl;
+        } else {
+          imageUrl = mediaUrl;
+        }
+      }
+    }
+    
+    return {
+      'audioUrl': audioUrl,
+      'videoUrl': videoUrl,
+      'imageUrl': imageUrl,
+    };
+  }
+
   void _initializeMedia() {
-    final audioUrl = widget.question.audioUrl ?? widget.question.options['audioUrl']?.toString();
-    final videoUrl = widget.question.videoUrl ?? widget.question.options['videoUrl']?.toString();
+    final urls = _getParsedMediaUrls();
+    final audioUrl = urls['audioUrl'];
+    final videoUrl = urls['videoUrl'];
 
     if (videoUrl != null && videoUrl.isNotEmpty) {
       _initVideo(videoUrl);
@@ -163,9 +202,10 @@ class _QuestionHeaderWidgetState extends ConsumerState<QuestionHeaderWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final audioUrl = widget.question.audioUrl ?? widget.question.options['audioUrl']?.toString();
-    final videoUrl = widget.question.videoUrl ?? widget.question.options['videoUrl']?.toString();
-    final imageUrl = widget.question.imageUrl ?? widget.question.options['imageUrl']?.toString();
+    final urls = _getParsedMediaUrls();
+    final audioUrl = urls['audioUrl'];
+    final videoUrl = urls['videoUrl'];
+    final imageUrl = urls['imageUrl'];
 
     final hasInstruction = widget.question.instruction != null && widget.question.instruction!.isNotEmpty;
     final hasText = widget.question.text.isNotEmpty;
