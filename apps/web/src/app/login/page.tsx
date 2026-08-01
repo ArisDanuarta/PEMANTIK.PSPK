@@ -28,7 +28,6 @@ export default function LoginPage() {
       });
     });
 
-    // Fetch link APK terbaru
     import("@pemantik/supabase/client").then(({ createBrowserClient }) => {
       const supabase = createBrowserClient();
       supabase
@@ -39,7 +38,17 @@ export default function LoginPage() {
         .limit(1)
         .maybeSingle()
         .then(({ data }) => {
-          if (data) setApkUrl((data as any).download_url);
+          if (data) {
+            let url = (data as any).download_url;
+            // Convert Google Drive /view link to direct download link
+            if (url && url.includes("drive.google.com/file/d/")) {
+              const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+              if (match && match[1]) {
+                url = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+              }
+            }
+            setApkUrl(url);
+          }
         });
     });
   }, []);
