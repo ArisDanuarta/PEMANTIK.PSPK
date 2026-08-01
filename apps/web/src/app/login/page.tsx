@@ -99,29 +99,59 @@ export default function LoginPage() {
           </p>
 
           {apkUrl && (
-            <div style={{ position: "relative", zIndex: 2 }}>
+            <div style={{ position: "relative", zIndex: 2, marginTop: "1rem" }}>
               <a 
                 href={apkUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-outline"
                 style={{ 
-                  color: "#fff", 
-                  borderColor: "rgba(255,255,255,0.4)", 
+                  backgroundColor: "#f59e0b",
+                  color: "#0f172a", 
+                  fontWeight: "700",
+                  fontSize: "1rem",
+                  padding: "0.875rem 1.75rem",
+                  borderRadius: "9999px",
                   display: "inline-flex", 
                   alignItems: "center", 
-                  gap: "0.5rem" 
+                  gap: "0.75rem",
+                  textDecoration: "none",
+                  boxShadow: "0 4px 20px rgba(245, 158, 11, 0.4)",
+                  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                  border: "none",
+                  cursor: "pointer"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-3px)";
+                  e.currentTarget.style.boxShadow = "0 8px 25px rgba(245, 158, 11, 0.6)";
+                  e.currentTarget.style.backgroundColor = "#fbbf24";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 20px rgba(245, 158, 11, 0.4)";
+                  e.currentTarget.style.backgroundColor = "#f59e0b";
                 }}
               >
-                <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                   <polyline points="7 10 12 15 17 10"></polyline>
                   <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
                 Download Aplikasi Siswa
               </a>
-              <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)", marginTop: "0.5rem" }}>
-                Untuk Tablet / Android
+              <p style={{ 
+                fontSize: "0.85rem", 
+                color: "rgba(255,255,255,0.7)", 
+                marginTop: "0.75rem",
+                marginLeft: "0.75rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem"
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                  <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                </svg>
+                Tersedia untuk Android & Tablet
               </p>
             </div>
           )}
