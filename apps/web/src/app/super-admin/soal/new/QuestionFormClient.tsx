@@ -602,21 +602,35 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             )}
 
             {/* 2. MEDIA */}
-            {mediaUrl && questionType !== "audio_question" && questionType !== "video_question" && (
-              <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0" }}>
-                {ytId
-                  ? <iframe width="100%" height="140" src={`https://www.youtube.com/embed/${ytId}`} title="yt" frameBorder="0" allowFullScreen style={{ display: "block" }} />
-                  : <img src={mediaUrl} alt="media" style={{ width: "100%", display: "block", maxHeight: "120px", objectFit: "cover" }} />}
-              </div>
-            )}
-            {mediaUrl && questionType === "audio_question" && (
-              <audio key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block" }} />
-            )}
-            {mediaUrl && questionType === "video_question" && (
-              ytId
-                ? <iframe key={mediaUrl} width="100%" height="140" src={`https://www.youtube.com/embed/${ytId}`} title="yt" frameBorder="0" allowFullScreen style={{ display: "block", borderRadius: "8px" }} />
-                : <video key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px" }} />
-            )}
+            {(() => {
+              if (!mediaUrl) return null;
+              
+              const isAudio = !ytId && (mediaUrl.includes('.mp3') || mediaUrl.includes('.wav') || questionType === "audio_question");
+              const isVideo = !ytId && !isAudio && (mediaUrl.includes('.mp4') || mediaUrl.includes('.webm') || mediaUrl.includes('.ogg') || questionType === "video_question");
+              const isImage = !ytId && !isVideo && !isAudio;
+
+              return (
+                <>
+                  {isImage && (
+                    <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={mediaUrl} alt="media" style={{ width: "100%", display: "block", maxHeight: "120px", objectFit: "cover" }} />
+                    </div>
+                  )}
+                  {ytId && (
+                    <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0" }}>
+                      <iframe width="100%" height="140" src={`https://www.youtube.com/embed/${ytId}`} title="yt" frameBorder="0" allowFullScreen style={{ display: "block" }} />
+                    </div>
+                  )}
+                  {isAudio && (
+                    <audio key={`audio-${mediaUrl}`} src={mediaUrl} controls style={{ width: "100%", display: "block" }} />
+                  )}
+                  {isVideo && (
+                    <video key={`video-${mediaUrl}`} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px" }} />
+                  )}
+                </>
+              );
+            })()}
 
             {/* 3. TEKS PERTANYAAN (setelah media) */}
             {questionText && (

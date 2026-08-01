@@ -572,21 +572,46 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             )}
 
             {/* 2. MEDIA */}
-            {mediaUrl && questionType !== "audio_question" && questionType !== "video_question" && (
-              <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0" }}>
-                {ytId
-                  ? <iframe width="100%" height="140" src={`https://www.youtube.com/embed/${ytId}`} title="yt" frameBorder="0" allowFullScreen style={{ display: "block" }} />
-                  : <img src={mediaUrl} alt="media" style={{ width: "100%", display: "block", maxHeight: "120px", objectFit: "cover" }} />}
-              </div>
+            {(() => {
+              if (!mediaUrl) return null;
+              
+              const isAudio = !ytId && (mediaUrl.includes('.mp3') || mediaUrl.includes('.wav') || questionType === "audio_question");
+              const isVideo = !ytId && !isAudio && (mediaUrl.includes('.mp4') || mediaUrl.includes('.webm') || mediaUrl.includes('.ogg') || questionType === "video_question");
+              const isImage = !ytId && !isVideo && !isAudio;
+
+              return (
+                <>
+                  {isImage && (
+                    <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={mediaUrl} alt="media" style={{ width: "100%", display: "block", maxHeight: "120px", objectFit: "cover" }} />
+                    </div>
+                  )}
+                  {ytId && (
+                    <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0" }}>
+                      <iframe width="100%" height="140" src={`https://www.youtube.com/embed/${ytId}`} title="yt" frameBorder="0" allowFullScreen style={{ display: "block" }} />
+                    </div>
+                  )}
+                  {isAudio && (
+                    <audio key={`audio-${mediaUrl}`} src={mediaUrl} controls style={{ width: "100%", display: "block", marginBottom: "0.5rem" }} />
+                  )}
+                  {isVideo && (
+                    <video key={`video-${mediaUrl}`} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px", marginBottom: "0.5rem" }} />
+                  )}
+                </>
+              );
+            })()}
+
+            {/* 3. TEKS PERTANYAAN (setelah media) */}
+            {questionText && (
+              <p style={{ fontSize: "0.9rem", fontWeight: 600, lineHeight: 1.55, color: "#1a1a1a", wordBreak: "break-word", whiteSpace: "pre-wrap", margin: 0 }}>
+                {questionText}
+              </p>
             )}
-            {mediaUrl && questionType === "audio_question" && (
-              <audio key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", marginBottom: "0.5rem" }} />
+            {!questionInstruction && !questionText && (
+              <p style={{ fontSize: "0.9rem", color: "#adb5bd", fontStyle: "italic", margin: 0 }}>Teks instruksi/pertanyaan akan muncul di sini...</p>
             )}
-            {mediaUrl && questionType === "video_question" && (
-              ytId
-                ? <iframe key={mediaUrl} width="100%" height="140" src={`https://www.youtube.com/embed/${ytId}`} title="yt" frameBorder="0" allowFullScreen style={{ display: "block", borderRadius: "8px", marginBottom: "0.5rem" }} />
-                : <video key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px", marginBottom: "0.5rem" }} />
-            )}
+
             {renderPreviewAnswers()}
           </div>
         </div>

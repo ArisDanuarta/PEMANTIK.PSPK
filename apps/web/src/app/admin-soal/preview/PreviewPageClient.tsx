@@ -159,8 +159,8 @@ function MobilePreview({
           )}
 
           {(() => {
-            const isVideo = mediaUrl && !ytId && (mediaUrl.includes('.mp4') || mediaUrl.includes('.webm') || mediaUrl.includes('.ogg') || question.question_type === "video_question");
             const isAudio = mediaUrl && !ytId && (mediaUrl.includes('.mp3') || mediaUrl.includes('.wav') || question.question_type === "audio_question");
+            const isVideo = mediaUrl && !ytId && !isAudio && (mediaUrl.includes('.mp4') || mediaUrl.includes('.webm') || mediaUrl.includes('.ogg') || question.question_type === "video_question");
             const isImage = mediaUrl && !ytId && !isVideo && !isAudio && question.question_image_url;
 
             return (
@@ -195,10 +195,10 @@ function MobilePreview({
                   </div>
                 )}
                 {isAudio && (
-                  <audio key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", marginBottom: "0.65rem" }} />
+                  <audio key={`audio-${mediaUrl}`} src={mediaUrl} controls style={{ width: "100%", display: "block", marginBottom: "0.65rem" }} />
                 )}
                 {isVideo && (
-                  <video key={mediaUrl} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px", marginBottom: "0.65rem" }} />
+                  <video key={`video-${mediaUrl}`} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px", marginBottom: "0.65rem" }} />
                 )}
               </>
             );
@@ -522,13 +522,13 @@ export default function PreviewPageClient({
     <div
       style={{
         display: "flex",
-        alignItems: "stretch", // Biar tingginya sama kiri dan kanan
-        flexWrap: "wrap",
-        gap: "1.25rem",
+        alignItems: "flex-start", // Sama seperti di form
+        gap: "2rem", // Samakan gap dengan form
         flex: 1,
         minHeight: 0,
         overflow: "auto",
         margin: 0,
+        paddingBottom: "2rem",
       }}
     >
       {/* ═══════════════════════════════════════════════════════════════
@@ -536,12 +536,11 @@ export default function PreviewPageClient({
           ═══════════════════════════════════════════════════════════════ */}
       <div
         style={{
-          flex: "1 1 300px",
+          flex: "1 1 420px", // Sama seperti form
           minWidth: 0,
           display: "flex",
           flexDirection: "column",
           gap: "1rem", // Jarak antara box Filter dan box List Soal
-          overflow: "hidden", // Agar isi list bisa discroll dengan aman
         }}
       >
         {/* FILTER BAR (Sekarang lebarnya mengikuti kolom kiri) */}
@@ -612,8 +611,6 @@ export default function PreviewPageClient({
           style={{
             display: "flex",
             flexDirection: "column",
-            overflow: "hidden",
-            flex: 1, // Mengisi sisa tinggi di kolom kiri
           }}
         >
           <div
@@ -629,7 +626,7 @@ export default function PreviewPageClient({
             {questions.length} Soal Tersedia
           </div>
 
-          <div style={{ overflowY: "auto", flex: 1, minHeight: 0 }} className="pemantik-scrollbar">
+          <div style={{ display: "flex", flexDirection: "column" }}>
             {questions.length === 0 ? (
               <div
                 style={{
@@ -718,38 +715,33 @@ export default function PreviewPageClient({
           KOLOM KANAN (Hanya Preview Mobile)
           ═══════════════════════════════════════════════════════════════ */}
       <div
-        className="card"
         style={{
-          flex: "1 1 300px",
-          maxWidth: "100%",
-          flexShrink: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "0.6rem",
-          overflow: "hidden",
-          padding: "1rem",
+          flex: "0 0 auto",
+          width: "295px",
+          position: "sticky",
+          top: "1rem",
+          alignSelf: "flex-start",
+          zIndex: 5,
+          paddingBottom: "1.5rem",
         }}
       >
         {selectedQuestion ? (
           <>
-            <div
-              style={{
-                fontSize: "0.7rem",
-                color: "#adb5bd",
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-                flexShrink: 0,
-              }}
-            >
-              Pratinjau Mobile
+            <div style={{
+              marginBottom: "0.75rem",
+              textAlign: "center",
+              fontWeight: 600,
+              color: "var(--color-gray-500)",
+              textTransform: "uppercase",
+              fontSize: "0.75rem",
+              letterSpacing: "1px",
+            }}>
+              Live Preview (Mobile)
             </div>
 
             <MobilePreview question={selectedQuestion} accent={accent} accentBg={accentBg} />
 
-            <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", marginTop: "1rem" }}>
               <Link href={`/admin-soal/soal/${selectedQuestion.id}`} className="btn btn-outline btn-sm">
                 Detail
               </Link>
@@ -762,7 +754,15 @@ export default function PreviewPageClient({
             </div>
           </>
         ) : (
-          <div style={{ padding: "2rem", color: "#adb5bd", textAlign: "center", fontSize: "0.875rem" }}>
+          <div style={{ 
+            padding: "2rem", 
+            color: "#adb5bd", 
+            textAlign: "center", 
+            fontSize: "0.875rem",
+            backgroundColor: "#fff",
+            borderRadius: "12px",
+            border: "1px solid #eee",
+          }}>
             Pilih soal untuk melihat preview
           </div>
         )}

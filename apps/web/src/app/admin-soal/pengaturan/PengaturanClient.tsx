@@ -133,8 +133,15 @@ function ReorderModal({ level, onClose }: { level: any, onClose: () => void }) {
                     {idx + 1}
                   </div>
                   <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                    <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} dangerouslySetInnerHTML={{ __html: q.question_text || '<i>Soal media/kosong</i>' }} />
-                    <div style={{ fontSize: '0.75rem', color: '#198754', marginTop: '0.25rem', fontWeight: 600 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                      {q.question_code && (
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, backgroundColor: '#e9ecef', color: '#495057', padding: '0.15rem 0.4rem', borderRadius: '4px', flexShrink: 0 }}>
+                          {q.question_code}
+                        </span>
+                      )}
+                      <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }} dangerouslySetInnerHTML={{ __html: q.question_text || '<i>Soal media/kosong</i>' }} />
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#198754', fontWeight: 600 }}>
                       Kunci: {formatAnswer(q)}
                     </div>
                   </div>
