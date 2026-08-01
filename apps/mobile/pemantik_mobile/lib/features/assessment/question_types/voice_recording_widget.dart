@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/levenshtein.dart';
 import '../providers/assessment_provider.dart';
+import 'components/question_header_widget.dart';
 
 enum RecordState { idle, recording, analyzing, done }
 
@@ -151,11 +152,7 @@ class _VoiceRecordingWidgetState extends ConsumerState<VoiceRecordingWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          widget.question.text,
-          style: AppTextStyles.questionText,
-          textAlign: TextAlign.center,
-        ),
+        QuestionHeaderWidget(question: widget.question),
         const SizedBox(height: 32),
 
         // Teks Target (Apa yang harus dibaca anak)

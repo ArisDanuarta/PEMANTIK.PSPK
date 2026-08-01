@@ -6,7 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../providers/assessment_provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
+import 'components/question_header_widget.dart';
 
 /// DragDropWidget mendukung 3 subtype yang dibuat di Admin Soal:
 /// 1. fill_blank  - seret kata ke dalam kalimat rumpang
@@ -143,24 +144,7 @@ class _DragDropWidgetState extends ConsumerState<DragDropWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.question.text, style: AppTextStyles.questionText),
-        if (widget.question.imageUrl != null &&
-            widget.question.imageUrl!.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: CachedNetworkImage(
-              imageUrl: widget.question.imageUrl!,
-              width: double.infinity,
-              fit: BoxFit.contain,
-              placeholder: (context, url) =>
-                  const Center(child: CircularProgressIndicator()),
-              errorWidget: (context, url, error) => const Center(
-                child: Icon(Icons.broken_image, size: 48, color: Colors.grey),
-              ),
-            ),
-          ),
-        ],
+        QuestionHeaderWidget(question: widget.question),
         const SizedBox(height: 24),
 
         // Kalimat dengan slot drop
@@ -326,24 +310,7 @@ class _DragDropWidgetState extends ConsumerState<DragDropWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.question.text, style: AppTextStyles.questionText),
-        if (widget.question.imageUrl != null &&
-            widget.question.imageUrl!.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: CachedNetworkImage(
-              imageUrl: widget.question.imageUrl!,
-              width: double.infinity,
-              fit: BoxFit.contain,
-              placeholder: (context, url) =>
-                  const Center(child: CircularProgressIndicator()),
-              errorWidget: (context, url, error) => const Center(
-                child: Icon(Icons.broken_image, size: 48, color: Colors.grey),
-              ),
-            ),
-          ),
-        ],
+        QuestionHeaderWidget(question: widget.question),
         const SizedBox(height: 8),
         Text(
           'Urutkan dari yang paling sesuai',
@@ -525,24 +492,7 @@ class _DragDropWidgetState extends ConsumerState<DragDropWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.question.text, style: AppTextStyles.questionText),
-        if (widget.question.imageUrl != null &&
-            widget.question.imageUrl!.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: CachedNetworkImage(
-              imageUrl: widget.question.imageUrl!,
-              width: double.infinity,
-              fit: BoxFit.contain,
-              placeholder: (context, url) =>
-                  const Center(child: CircularProgressIndicator()),
-              errorWidget: (context, url, error) => const Center(
-                child: Icon(Icons.broken_image, size: 48, color: Colors.grey),
-              ),
-            ),
-          ),
-        ],
+        QuestionHeaderWidget(question: widget.question),
         const SizedBox(height: 8),
         Text(
           'Pasangkan setiap item di kiri dengan yang tepat di kanan',

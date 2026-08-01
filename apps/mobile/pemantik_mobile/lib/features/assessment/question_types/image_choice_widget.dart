@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../providers/assessment_provider.dart';
+import 'components/question_header_widget.dart';
 
 class ImageChoiceWidget extends ConsumerWidget {
   final QuestionData question;
@@ -34,23 +35,7 @@ class ImageChoiceWidget extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(question.text, style: AppTextStyles.questionText),
-        if (question.imageUrl != null && question.imageUrl!.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: CachedNetworkImage(
-              imageUrl: question.imageUrl!,
-              width: double.infinity,
-              fit: BoxFit.contain,
-              placeholder: (context, url) =>
-                  const Center(child: CircularProgressIndicator()),
-              errorWidget: (context, url, error) => const Center(
-                child: Icon(Icons.broken_image, size: 48, color: Colors.grey),
-              ),
-            ),
-          ),
-        ],
+        QuestionHeaderWidget(question: question),
         const SizedBox(height: 24),
         GridView.builder(
           shrinkWrap: true,
