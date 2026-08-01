@@ -9,7 +9,7 @@ const ROLE_ROUTES: Record<string, string> = {
   teacher: "/guru",
 };
 
-const PUBLIC_PATHS = ["/login", "/_next", "/api/auth", "/favicon.ico", "/images", "/icons"];
+const PUBLIC_PATHS = ["/login", "/_next", "/api/auth", "/favicon.ico", "/images", "/icons", "/robots.txt", "/sitemap.xml"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname.startsWith(p));
