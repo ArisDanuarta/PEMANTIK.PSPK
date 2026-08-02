@@ -214,15 +214,44 @@ class _QuestionHeaderWidgetState extends ConsumerState<QuestionHeaderWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (hasInstruction) ...[
-          Text(
-            widget.question.instruction!,
-            style: AppTextStyles.questionText.copyWith(
-              fontStyle: FontStyle.italic,
-              color: AppColors.textMuted,
-              fontSize: 14,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.birNavy.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.birNavy.withValues(alpha: 0.1)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 18, color: AppColors.birNavy),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Instruksi',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.birNavy,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  widget.question.instruction!,
+                  style: AppTextStyles.questionText.copyWith(
+                    fontStyle: FontStyle.italic,
+                    color: AppColors.textPrimary,
+                    fontSize: 15,
+                    height: 1.5,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
         ],
 
         if (videoUrl != null && videoUrl.isNotEmpty) ...[

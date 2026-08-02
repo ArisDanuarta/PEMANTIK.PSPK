@@ -612,21 +612,21 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               return (
                 <>
                   {isImage && (
-                    <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0" }}>
+                    <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0", flexShrink: 0 }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={mediaUrl} alt="media" style={{ width: "100%", display: "block", maxHeight: "120px", objectFit: "cover" }} />
                     </div>
                   )}
                   {ytId && (
-                    <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0" }}>
+                    <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0", flexShrink: 0 }}>
                       <iframe width="100%" height="140" src={`https://www.youtube.com/embed/${ytId}`} title="yt" frameBorder="0" allowFullScreen style={{ display: "block" }} />
                     </div>
                   )}
                   {isAudio && (
-                    <audio key={`audio-${mediaUrl}`} src={mediaUrl} controls style={{ width: "100%", display: "block" }} />
+                    <audio key={`audio-${mediaUrl}`} src={mediaUrl} controls style={{ width: "100%", display: "block", marginBottom: "0.5rem", flexShrink: 0 }} />
                   )}
                   {isVideo && (
-                    <video key={`video-${mediaUrl}`} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px" }} />
+                    <video key={`video-${mediaUrl}`} src={mediaUrl} controls style={{ width: "100%", display: "block", borderRadius: "8px", marginBottom: "0.5rem", flexShrink: 0 }} />
                   )}
                 </>
               );
@@ -1023,10 +1023,10 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
 
         {/* Actions */}
         <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
-          <button type="button" className="btn btn-outline" onClick={() => handleSubmit(false)} disabled={loading}>
+          <button type="button" className="btn btn-outline btn-md" onClick={() => handleSubmit(false)} disabled={loading}>
             {loading ? "Menyimpan..." : "Simpan sbg Draft"}
           </button>
-          <button type="button" className="btn btn-primary" onClick={() => handleSubmit(true)} disabled={loading}>
+          <button type="button" className="btn btn-primary btn-md" onClick={() => handleSubmit(true)} disabled={loading}>
             {loading ? "Mempublikasi..." : "Simpan & Publish"}
           </button>
         </div>

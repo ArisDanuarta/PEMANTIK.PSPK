@@ -172,28 +172,63 @@ export default function IntegratedDashboardManager({
       </div>
 
       {/* KPI CARDS */}
-      <StatGrid columns={{ base: 1, md: 2, lg: 4 }} className="gap-6">
-        <div className="card" style={{ padding: "1.5rem", borderLeft: "4px solid #102e50" }}>
-          <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Mitra</p>
-          <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#102e50", margin: "0.5rem 0", fontFamily: "var(--font-lora)" }}>
+      <StatGrid columns={{ base: 1, md: 2, lg: 4 }} className="gap-6 mt-4 mb-8">
+        {/* Total Mitra */}
+        <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", borderLeft: "5px solid #102e50", padding: "1.5rem", position: "relative", overflow: "hidden" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+            <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+              Total Mitra
+            </p>
+            <div style={{ padding: "0.6rem", borderRadius: "0.75rem", backgroundColor: "rgba(16, 46, 80, 0.08)", color: "#102e50", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+          </div>
+          <h2 style={{ fontSize: "2.5rem", fontWeight: 700, color: "#102e50", margin: "auto 0 0 0", fontFamily: "var(--font-lora)", lineHeight: 1 }}>
             {communities.length}
           </h2>
         </div>
-        <div className="card" style={{ padding: "1.5rem", borderLeft: "4px solid #f2af3e" }}>
-          <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Sekolah</p>
-          <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#102e50", margin: "0.5rem 0", fontFamily: "var(--font-lora)" }}>
+
+        {/* Total Sekolah */}
+        <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", borderLeft: "5px solid #f2af3e", padding: "1.5rem", position: "relative", overflow: "hidden" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+            <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+              Total Sekolah
+            </p>
+            <div style={{ padding: "0.6rem", borderRadius: "0.75rem", backgroundColor: "rgba(242, 175, 62, 0.15)", color: "#d99420", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            </div>
+          </div>
+          <h2 style={{ fontSize: "2.5rem", fontWeight: 700, color: "#102e50", margin: "auto 0 0 0", fontFamily: "var(--font-lora)", lineHeight: 1 }}>
             {schools.length}
           </h2>
         </div>
-        <div className="card" style={{ padding: "1.5rem", borderLeft: "4px solid #0874aa" }}>
-          <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Guru</p>
-          <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#102e50", margin: "0.5rem 0", fontFamily: "var(--font-lora)" }}>
+
+        {/* Total Guru */}
+        <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", borderLeft: "5px solid #0874aa", padding: "1.5rem", position: "relative", overflow: "hidden" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+            <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+              Total Guru
+            </p>
+            <div style={{ padding: "0.6rem", borderRadius: "0.75rem", backgroundColor: "rgba(8, 116, 170, 0.1)", color: "#0874aa", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            </div>
+          </div>
+          <h2 style={{ fontSize: "2.5rem", fontWeight: 700, color: "#102e50", margin: "auto 0 0 0", fontFamily: "var(--font-lora)", lineHeight: 1 }}>
             {teachers.length}
           </h2>
         </div>
-        <div className="card" style={{ padding: "1.5rem", borderLeft: "4px solid #a8281c" }}>
-          <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Anak</p>
-          <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#a8281c", margin: "0.5rem 0", fontFamily: "var(--font-lora)" }}>
+
+        {/* Total Anak */}
+        <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", borderLeft: "5px solid #a8281c", padding: "1.5rem", position: "relative", overflow: "hidden" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+            <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+              Total Anak
+            </p>
+            <div style={{ padding: "0.6rem", borderRadius: "0.75rem", backgroundColor: "rgba(168, 40, 28, 0.1)", color: "#a8281c", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+          </div>
+          <h2 style={{ fontSize: "2.5rem", fontWeight: 700, color: "#a8281c", margin: "auto 0 0 0", fontFamily: "var(--font-lora)", lineHeight: 1 }}>
             {students.length}
           </h2>
         </div>
