@@ -2,6 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 import { createServerClient } from "@pemantik/supabase";
 import RilisFormClient from "./RilisFormClient";
+import ReleaseTableClient from "./ReleaseTableClient";
 
 export const metadata: Metadata = {
   title: "Rilis Aplikasi Mobile",
@@ -50,54 +51,7 @@ export default async function RilisPage() {
         </div>
 
         {/* Tabel Riwayat Rilis */}
-        <div className="card" style={{ maxWidth: "100%", overflowX: "auto" }}>
-          <h2 style={{ marginBottom: "1rem" }}>Riwayat Rilis</h2>
-          {releases && releases.length > 0 ? (
-            <div className="table-responsive">
-              <table className="pemantik-table" style={{ width: "100%", minWidth: "600px" }}>
-                <thead>
-                  <tr>
-                    <th>Versi</th>
-                    <th>Code</th>
-                    <th>Tanggal Rilis</th>
-                    <th>Status</th>
-                    <th>Wajib?</th>
-                    <th>Link Download</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {releases.map((r: any) => (
-                    <tr key={r.id}>
-                      <td style={{ fontWeight: 600 }}>{r.version_name}</td>
-                      <td>{r.version_code}</td>
-                      <td>{new Date(r.created_at).toLocaleString("id-ID", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
-                      <td>
-                        <span className={`badge ${r.is_active ? 'badge-success' : 'badge-secondary'}`}>
-                          {r.is_active ? 'Aktif' : 'Non-Aktif'}
-                        </span>
-                      </td>
-                      <td>{r.is_mandatory ? 'Ya' : 'Tidak'}</td>
-                      <td>
-                        <a 
-                          href={r.download_url} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          style={{ color: "var(--clr-biru)", textDecoration: "underline", fontSize: "0.85rem", whiteSpace: "nowrap" }}
-                        >
-                          Download APK
-                        </a>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div style={{ padding: "2rem", textAlign: "center", color: "black" }}>
-              Belum ada versi rilis aplikasi yang diunggah.
-            </div>
-          )}
-        </div>
+        <ReleaseTableClient initialReleases={releases || []} />
       </div>
     </div>
   );

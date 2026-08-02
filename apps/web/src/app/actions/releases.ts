@@ -80,3 +80,17 @@ export async function createExternalRelease(data: {
 
   return { success: true };
 }
+
+export async function updateRelease(id: string, data: any) {
+  const supabase = createServerClient();
+  const { error } = await supabase.from("app_releases" as any).update(data).eq("id", id);
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function deleteRelease(id: string) {
+  const supabase = createServerClient();
+  const { error } = await supabase.from("app_releases" as any).delete().eq("id", id);
+  if (error) return { error: error.message };
+  return { success: true };
+}
