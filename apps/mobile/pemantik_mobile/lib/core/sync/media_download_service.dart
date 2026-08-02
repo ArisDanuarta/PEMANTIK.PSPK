@@ -6,7 +6,7 @@ import 'media_extractor.dart';
 
 part 'media_download_service.g.dart';
 
-// URL-URL yang tidak bisa didownload (streaming only) — tetap bisa diputar online
+// URL-URL yang tidak bisa didownload (streaming only) - tetap bisa diputar online
 const _streamOnlyHosts = [
   'youtube.com',
   'youtu.be',
@@ -88,7 +88,7 @@ class MediaDownloadService extends _$MediaDownloadService {
         allUrls.addAll(MediaExtractor.extractUrls(q));
       }
 
-      // Pisahkan URL stream-only (YouTube, Vimeo, dll) — tidak didownload, tetap bisa diputar online
+      // Pisahkan URL stream-only (YouTube, Vimeo, dll) - tidak didownload, tetap bisa diputar online
       final downloadableUrls = allUrls
           .where((url) => !_isStreamOnlyUrl(url))
           .toList();
@@ -124,7 +124,7 @@ class MediaDownloadService extends _$MediaDownloadService {
             log('[MediaDownload] Downloaded: $url');
             success = true;
           } catch (e) {
-            log('[MediaDownload] Attempt ${attempt + 1}/$maxRetries gagal: $url — $e');
+            log('[MediaDownload] Attempt ${attempt + 1}/$maxRetries gagal: $url - $e');
             if (attempt < maxRetries - 1) {
               // Tunggu sebentar sebelum retry
               await Future.delayed(const Duration(seconds: 1));

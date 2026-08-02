@@ -32,7 +32,7 @@ async function getCurrentUserId(): Promise<string | null> {
 }
 
 export async function generateSandboxSchoolAction(formData: FormData) {
-  const supabase = createServerClient(); // service role — bisa auth.admin.createUser
+  const supabase = createServerClient(); // service role - bisa auth.admin.createUser
 
   try {
     const { role, communityId: communityIdFromAuth } = await requireAuth(["community", "super_admin"]);

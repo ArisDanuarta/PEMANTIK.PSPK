@@ -412,7 +412,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: "center", padding: "3rem 1rem", color: "#adb5bd" }}>
+              <tr><td colSpan={7} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
                 <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🧑‍🎓</div>
                 {search || classFilter !== "all" || genderFilter !== "all" ? "Tidak ada anak yang cocok dengan filter." : "Belum ada anak terdaftar."}
               </td></tr>
@@ -429,17 +429,17 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
                 <td><div style={{ fontWeight: 600, color: "#102e50" }}>{s.full_name}</div></td>
                 <td>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                    <div><span style={{ color: "#6c757d" }}>User:</span> <strong>{s.username}</strong></div>
-                    <div><span style={{ color: "#6c757d" }}>PIN:</span> <code style={{ color: "#a8281c" }}>123456</code></div>
+                    <div><span style={{ color: "black" }}>User:</span> <strong>{s.username}</strong></div>
+                    <div><span style={{ color: "black" }}>PIN:</span> <code style={{ color: "#a8281c" }}>123456</code></div>
                   </div>
-                  {s.nisn && <div style={{ fontSize: "0.78rem", color: "#6c757d", marginTop: "0.25rem" }}>NISN: {s.nisn}</div>}
+                  {s.nisn && <div style={{ fontSize: "0.78rem", color: "black", marginTop: "0.25rem" }}>NISN: {s.nisn}</div>}
                 </td>
                 <td>
                   {s.classes ? (
                     <span style={{ padding: "0.15rem 0.5rem", backgroundColor: "#eff6ff", color: "#1d4ed8", borderRadius: "0.375rem", fontSize: "0.8rem", fontWeight: 500 }}>
                       Kelas {s.classes.grade} - {s.classes.name}
                     </span>
-                  ) : <span style={{ color: "#adb5bd", fontSize: "0.8rem" }}>-</span>}
+                  ) : <span style={{ color: "black", fontSize: "0.8rem" }}>-</span>}
                 </td>
                 <td style={{ fontSize: "0.85rem" }}>{s.gender === "L" ? "Laki-laki" : s.gender === "P" ? "Perempuan" : "-"}</td>
                 <td>

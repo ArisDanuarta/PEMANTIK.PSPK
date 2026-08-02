@@ -3,7 +3,7 @@
 import { createServerClient } from "@pemantik/supabase/client";
 
 export async function uploadApkRelease(formData: FormData) {
-  const supabase = createServerClient(); // service role — bypass RLS
+  const supabase = createServerClient(); // service role - bypass RLS
 
   const file = formData.get("file") as File;
   const versionName = formData.get("versionName") as string;

@@ -118,7 +118,7 @@ function ReorderModal({ level, onClose }: { level: any, onClose: () => void }) {
         
         <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
           {loading ? (
-            <div style={{ textAlign: 'center', color: '#adb5bd', padding: '2rem' }}>Memuat soal...</div>
+            <div style={{ textAlign: 'center', color: "black", padding: '2rem' }}>Memuat soal...</div>
           ) : questions.length === 0 ? (
             <div className="empty-state">Belum ada soal di level ini.</div>
           ) : (
@@ -135,7 +135,7 @@ function ReorderModal({ level, onClose }: { level: any, onClose: () => void }) {
                   <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                       {q.question_code && (
-                        <span style={{ fontSize: '0.65rem', fontWeight: 700, backgroundColor: '#e9ecef', color: '#495057', padding: '0.15rem 0.4rem', borderRadius: '4px', flexShrink: 0 }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, backgroundcolor: "black", color: "black", padding: '0.15rem 0.4rem', borderRadius: '4px', flexShrink: 0 }}>
                           {q.question_code}
                         </span>
                       )}
@@ -373,7 +373,7 @@ export default function PengaturanClient() {
             <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "var(--clr-biru)" }}>
               Kategori - {subjectFilter === "literasi" ? "Literasi" : "Numerasi"}
             </h2>
-            <p style={{ margin: "0.25rem 0 0", fontSize: "0.8rem", color: "#6c757d" }}>
+            <p style={{ margin: "0.25rem 0 0", fontSize: "0.8rem", color: "black" }}>
               Klik kategori untuk melihat level di dalamnya
             </p>
           </div>
@@ -399,7 +399,7 @@ export default function PengaturanClient() {
           {/* Category list */}
           <div style={{ maxHeight: "480px", overflowY: "auto" }}>
             {loadingCategories ? (
-              <div style={{ padding: "2rem", textAlign: "center", color: "#adb5bd" }}>Memuat kategori...</div>
+              <div style={{ padding: "2rem", textAlign: "center", color: "black" }}>Memuat kategori...</div>
             ) : categories.length === 0 ? (
               <div className="empty-state" style={{ padding: "2rem" }}>
                 <div className="empty-state-title">Belum ada kategori</div>
@@ -437,7 +437,7 @@ export default function PengaturanClient() {
                         style={{ padding: "0.875rem 1.25rem", display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer" }}
                         onClick={() => selectCategory(cat)}
                       >
-                        <span style={{ flex: 1, fontWeight: isActive ? 600 : 400, fontSize: "0.875rem", color: "#343a40" }}>
+                        <span style={{ flex: 1, fontWeight: isActive ? 600 : 400, fontSize: "0.875rem", color: "black" }}>
                           {cat.name}
                         </span>
                         <button
@@ -471,7 +471,7 @@ export default function PengaturanClient() {
             <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "var(--clr-biru)" }}>
               {selectedCategory ? `Level: ${selectedCategory.name}` : "Pilih Kategori"}
             </h2>
-            <p style={{ margin: "0.25rem 0 0", fontSize: "0.8rem", color: "#6c757d" }}>
+            <p style={{ margin: "0.25rem 0 0", fontSize: "0.8rem", color: "black" }}>
               {selectedCategory ? "Level yang tersedia dalam kategori ini" : "Pilih kategori di sebelah kiri"}
             </p>
           </div>
@@ -529,7 +529,7 @@ export default function PengaturanClient() {
               <h3 style={{ margin: "0 0 0.75rem", fontSize: "0.9rem", fontWeight: 700, color: "var(--clr-biru)" }}>Daftar Level</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {loadingLevels ? (
-                  <div style={{ padding: "2rem", textAlign: "center", color: "#adb5bd" }}>Memuat level...</div>
+                  <div style={{ padding: "2rem", textAlign: "center", color: "black" }}>Memuat level...</div>
                 ) : levels.length === 0 ? (
                   <div className="empty-state" style={{ padding: "2rem" }}>
                     <div className="empty-state-title">Belum ada level</div>
@@ -591,11 +591,11 @@ export default function PengaturanClient() {
                               background: "rgba(16,46,80,0.07)", display: "flex", flexDirection: "column",
                               alignItems: "center", justifyContent: "center",
                             }}>
-                              <span style={{ fontSize: "0.55rem", fontWeight: 600, color: "#6c757d", textTransform: "uppercase" }}>Level</span>
+                              <span style={{ fontSize: "0.55rem", fontWeight: 600, color: "black", textTransform: "uppercase" }}>Level</span>
                               <span style={{ fontSize: "1rem", fontWeight: 700, color: "var(--clr-biru)", lineHeight: 1 }}>{l.level_number}</span>
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ display: "flex", gap: "0.75rem", fontSize: "0.8rem", color: "#495057", flexWrap: "wrap" }}>
+                              <div style={{ display: "flex", gap: "0.75rem", fontSize: "0.8rem", color: "black", flexWrap: "wrap" }}>
                                 <span>⏱ {l.time_limit_sec / 60} mnt</span>
                                 <span>🎯 Min. {l.passing_threshold} benar</span>
                                 {l.access_code && <span>🔑 {l.access_code}</span>}

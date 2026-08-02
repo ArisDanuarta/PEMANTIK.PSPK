@@ -246,7 +246,7 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
           <tbody>
             {filteredSchools.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: "center", padding: "3rem 1rem", color: "#6c757d" }}>
+                <td colSpan={5} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
                   Tidak ada data ditemukan.
                 </td>
               </tr>
@@ -263,11 +263,11 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                         {row.jenjang_sekolah ? `${row.jenjang_sekolah} ` : ""}
                         {row.status_sekolah ? `${row.status_sekolah}` : ""} 
                       </div>
-                      <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>Kepsek: {row.principal_name || "-"}</div>
+                      <div style={{ fontSize: "0.8rem", color: "black" }}>Kepsek: {row.principal_name || "-"}</div>
                     </td>
                     <td>
                       <div style={{ fontWeight: 500 }}>NPSN: {row.npsn || "-"}</div>
-                      <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>
+                      <div style={{ fontSize: "0.8rem", color: "black" }}>
                         {row.address ? `${row.address}, ` : ""}
                         {row.village ? `${row.village}, ` : ""}
                         {row.district ? `${row.district}, ` : ""}
@@ -277,12 +277,12 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                     <td>
                       {schoolUser ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                          <div><span style={{ color: "#6c757d" }}>User:</span> <strong>{schoolUser.username}</strong></div>
-                          {row.email && <div><span style={{ color: "#6c757d" }}>Email:</span> {row.email}</div>}
-                          <div><span style={{ color: "#6c757d" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code> <span style={{ fontSize: "0.7rem", color: "#adb5bd" }}>(bawaan)</span></div>
+                          <div><span style={{ color: "black" }}>User:</span> <strong>{schoolUser.username}</strong></div>
+                          {row.email && <div><span style={{ color: "black" }}>Email:</span> {row.email}</div>}
+                          <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code> <span style={{ fontSize: "0.7rem", color: "black" }}>(bawaan)</span></div>
                         </div>
                       ) : (
-                        <span style={{ color: "#6c757d", fontSize: "0.85rem" }}>Belum ada akun</span>
+                        <span style={{ color: "black", fontSize: "0.85rem" }}>Belum ada akun</span>
                       )}
                     </td>
                     <td>
@@ -391,7 +391,7 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                 <div style={{ gridColumn: "span 2" }}>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Daftar Kelas (Ikut Asesmen) *</label>
                   <input type="text" name="classes" required placeholder="Misal: 5A, 5B, 6A (Pisahkan dengan koma)" defaultValue={editingSchool ? (editingSchool.classes || []).map(c => c.name).join(", ") : ""} className="form-input" style={{ width: "100%" }} />
-                  <p style={{ fontSize: "0.75rem", color: "#6c757d", marginTop: "0.25rem" }}>
+                  <p style={{ fontSize: "0.75rem", color: "black", marginTop: "0.25rem" }}>
                     Kelas ini nanti akan muncul sebagai pilihan saat Anda membuat akun Guru.
                   </p>
                 </div>

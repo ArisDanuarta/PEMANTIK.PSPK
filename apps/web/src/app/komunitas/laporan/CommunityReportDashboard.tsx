@@ -489,7 +489,7 @@ export default function CommunityReportDashboard({ schools, packages, communityI
           ].map((card) => (
             <div key={card.label} className="stat-card" style={{ textAlign: "center", padding: "1.5rem" }}>
               <div style={{ fontSize: "2rem", fontWeight: 700, color: card.color, lineHeight: 1 }}>{card.value}</div>
-              <div style={{ fontSize: "0.8rem", color: "#6c757d", marginTop: "0.5rem", fontWeight: 500 }}>{card.label}</div>
+              <div style={{ fontSize: "0.8rem", color: "black", marginTop: "0.5rem", fontWeight: 500 }}>{card.label}</div>
             </div>
           ))}
         </div>
@@ -561,7 +561,7 @@ export default function CommunityReportDashboard({ schools, packages, communityI
             <tbody>
               {schools.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "3rem 1rem", color: "#adb5bd" }}>
+                  <td colSpan={8} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
                     Belum ada sekolah binaan yang terdaftar di komunitas ini.
                   </td>
                 </tr>

@@ -22,7 +22,7 @@ export default function KelasManagerGuru({ classes }: Props) {
           <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#102e50", margin: 0 }}>
             Daftar Kelas Saya
           </h2>
-          <p style={{ fontSize: "0.85rem", color: "#6c757d", margin: "0.25rem 0 0" }}>
+          <p style={{ fontSize: "0.85rem", color: "black", margin: "0.25rem 0 0" }}>
             Ini adalah daftar kelas yang ditugaskan kepada Anda oleh Admin Sekolah. Anda hanya bisa mengelola siswa di dalam kelas-kelas ini.
           </p>
         </div>

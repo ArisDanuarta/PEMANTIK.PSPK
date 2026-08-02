@@ -148,7 +148,7 @@ function MobilePreview({
               style={{
                 fontSize: "0.78rem",
                 fontWeight: 500,
-                color: "#555",
+                color: "black",
                 lineHeight: 1.5,
                 marginBottom: "0.65rem",
                 fontStyle: "italic",
@@ -214,7 +214,7 @@ function MobilePreview({
             }}
           >
             {question.question_text || (
-              <span style={{ color: "#adb5bd", fontStyle: "italic" }}>
+              <span style={{ color: "black", fontStyle: "italic" }}>
                 Teks pertanyaan belum diisi
               </span>
             )}
@@ -287,7 +287,7 @@ function MobilePreview({
                         alignItems: "center",
                         justifyContent: "center",
                         fontSize: "0.6rem",
-                        color: "#adb5bd",
+                        color: "black",
                         background: "#f8f9fa",
                       }}
                     >
@@ -320,7 +320,7 @@ function MobilePreview({
             return (
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {/* Instruksi */}
-                <div style={{ fontSize: "0.65rem", color: "#6c757d", textAlign: "center" }}>
+                <div style={{ fontSize: "0.65rem", color: "black", textAlign: "center" }}>
                   Sistem akan meminta siswa merekam dan membacakan teks:
                 </div>
                 {/* Teks target - kotak bergaris emas (sama persis dengan tampilan mobile) */}
@@ -349,7 +349,7 @@ function MobilePreview({
                       border: `1.5px dashed ${accent}`,
                       textAlign: "center",
                       fontSize: "0.72rem",
-                      color: "#adb5bd",
+                      color: "black",
                       fontStyle: "italic",
                     }}
                   >
@@ -372,10 +372,10 @@ function MobilePreview({
                   >
                     🎤
                   </div>
-                  <div style={{ fontSize: "0.6rem", color: "#6c757d" }}>
+                  <div style={{ fontSize: "0.6rem", color: "black" }}>
                     Tekan untuk merekam
                   </div>
-                  <div style={{ fontSize: "0.6rem", color: "#adb5bd" }}>
+                  <div style={{ fontSize: "0.6rem", color: "black" }}>
                     Toleransi kemiripan: {threshold}%
                   </div>
                 </div>
@@ -393,7 +393,7 @@ function MobilePreview({
                   <div style={{ fontSize: "0.78rem", color: "#333", lineHeight: 1.6, marginBottom: "0.75rem", padding: "0.5rem", background: "#f8f9fa", borderRadius: "6px" }}>
                     {fbSentence ? fbSentence.split("___").map((part: string, i: number, arr: any[]) => (
                       <span key={i}>{part}{i < arr.length - 1 && <span style={{ display: "inline-block", minWidth: "50px", borderBottom: `2px solid ${accent}`, margin: "0 4px" }}>&nbsp;</span>}</span>
-                    )) : <span style={{ color: "#adb5bd" }}>Kalimat dengan ___ akan muncul di sini</span>}
+                    )) : <span style={{ color: "black" }}>Kalimat dengan ___ akan muncul di sini</span>}
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.375rem" }}>
                     {fbWordBank.map((w: any) => (
@@ -409,11 +409,11 @@ function MobilePreview({
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
                   {sortItems.map((s: any, i: number) => (
                     <div key={s.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0.75rem", background: "#f8f9fa", borderRadius: "8px", border: "1.5px solid #dee2e6" }}>
-                      <span style={{ fontSize: "0.7rem", color: "#adb5bd", fontWeight: 700 }}>⠿</span>
+                      <span style={{ fontSize: "0.7rem", color: "black", fontWeight: 700 }}>⠿</span>
                       <span style={{ fontSize: "0.75rem" }}>{s.text || `Item ${i + 1}`}</span>
                     </div>
                   ))}
-                  <div style={{ fontSize: "0.65rem", color: "#adb5bd", textAlign: "center", marginTop: "0.25rem" }}>Anak akan mengurutkan item di atas</div>
+                  <div style={{ fontSize: "0.65rem", color: "black", textAlign: "center", marginTop: "0.25rem" }}>Anak akan mengurutkan item di atas</div>
                 </div>
               );
             }
@@ -424,7 +424,7 @@ function MobilePreview({
                 {matchPairs.map((p: any, i: number) => (
                   <div key={p.id} style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "0.25rem", alignItems: "center" }}>
                     <div style={{ fontSize: "0.72rem", padding: "0.375rem 0.5rem", background: "#f8f9fa", border: "1.5px solid #dee2e6", borderRadius: "6px", textAlign: "center", wordBreak: "break-word" }}>{p.left || `Kiri ${i+1}`}</div>
-                    <span style={{ fontSize: "0.7rem", color: "#adb5bd" }}>↔</span>
+                    <span style={{ fontSize: "0.7rem", color: "black" }}>↔</span>
                     <div style={{ fontSize: "0.72rem", padding: "0.375rem 0.5rem", background: accentBg, border: `1.5px solid ${accent}`, borderRadius: "6px", textAlign: "center", color: accent, wordBreak: "break-word" }}>{p.right || `Kanan ${i+1}`}</div>
                   </div>
                 ))}
@@ -457,7 +457,7 @@ function MobilePreview({
           >
             ← Kembali
           </button>
-          <span style={{ fontSize: "0.6rem", color: "#adb5bd" }}>1 / 10</span>
+          <span style={{ fontSize: "0.6rem", color: "black" }}>1 / 10</span>
           <button
             style={{
               fontSize: "0.65rem",
@@ -511,7 +511,7 @@ export default function PreviewPageClient({
     borderRadius: "6px",
     border: "1px solid #dee2e6",
     background: "#fff",
-    color: "#495057",
+    color: "black",
     cursor: "pointer",
     outline: "none",
     width: 170,
@@ -561,7 +561,7 @@ export default function PreviewPageClient({
               fontWeight: 700,
               textTransform: "uppercase",
               letterSpacing: "0.5px",
-              color: "#adb5bd",
+              color: "black",
               flexShrink: 0,
             }}
           >
@@ -632,7 +632,7 @@ export default function PreviewPageClient({
                 style={{
                   padding: "3rem 1.5rem",
                   textAlign: "center",
-                  color: "#adb5bd",
+                  color: "black",
                   fontSize: "0.875rem",
                 }}
               >
@@ -668,7 +668,7 @@ export default function PreviewPageClient({
                         flexShrink: 0,
                         marginTop: 1,
                         background: isSelected ? accent : "#f1f3f5",
-                        color: isSelected ? "#fff" : "#6c757d",
+                        color: isSelected ? "#fff" : "black",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -684,7 +684,7 @@ export default function PreviewPageClient({
                         style={{
                           fontSize: "0.82rem",
                           fontWeight: isSelected ? 600 : 400,
-                          color: isSelected ? "#1a1a2e" : "#495057",
+                          color: isSelected ? "#1a1a2e" : "black",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -694,10 +694,10 @@ export default function PreviewPageClient({
                         {q.question_text || "(Tanpa teks)"}
                       </div>
                       <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", alignItems: "center" }}>
-                        <span style={{ fontSize: "0.65rem", color: "#adb5bd" }}>
+                        <span style={{ fontSize: "0.65rem", color: "black" }}>
                           {TYPE_LABELS[q.question_type] || q.question_type}
                         </span>
-                        <span style={{ color: "#dee2e6" }}>·</span>
+                        <span style={{ color: "black" }}>·</span>
                         <Badge variant={q.is_published ? ("success" as any) : ("warning" as any)}>
                           {q.is_published ? "Published" : "Draft"}
                         </Badge>
@@ -731,7 +731,7 @@ export default function PreviewPageClient({
               marginBottom: "0.75rem",
               textAlign: "center",
               fontWeight: 600,
-              color: "var(--color-gray-500)",
+              color: "black",
               textTransform: "uppercase",
               fontSize: "0.75rem",
               letterSpacing: "1px",
@@ -756,7 +756,7 @@ export default function PreviewPageClient({
         ) : (
           <div style={{ 
             padding: "2rem", 
-            color: "#adb5bd", 
+            color: "black", 
             textAlign: "center", 
             fontSize: "0.875rem",
             backgroundColor: "#fff",

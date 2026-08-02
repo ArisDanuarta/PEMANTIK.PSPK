@@ -330,19 +330,19 @@ export default function SuperAdminReportDashboard({
           }}
         >
           <div className="card" style={{ padding: "1.25rem", borderLeft: "4px solid #0874aa" }}>
-            <p style={{ fontSize: "0.85rem", color: "#6c757d", fontWeight: 600 }}>Total Anak</p>
+            <p style={{ fontSize: "0.85rem", color: "black", fontWeight: 600 }}>Total Anak</p>
             <h3 style={{ fontSize: "1.8rem", color: "#102e50", margin: "0.25rem 0" }}>{totalSiswa}</h3>
           </div>
           <div className="card" style={{ padding: "1.25rem", borderLeft: "4px solid #10b981" }}>
-            <p style={{ fontSize: "0.85rem", color: "#6c757d", fontWeight: 600 }}>Rata-rata Skor</p>
+            <p style={{ fontSize: "0.85rem", color: "black", fontWeight: 600 }}>Rata-rata Skor</p>
             <h3 style={{ fontSize: "1.8rem", color: "#102e50", margin: "0.25rem 0" }}>{avgTotal}</h3>
           </div>
           <div className="card" style={{ padding: "1.25rem", borderLeft: "4px solid #8b5cf6" }}>
-            <p style={{ fontSize: "0.85rem", color: "#6c757d", fontWeight: 600 }}>Rata-rata Literasi</p>
+            <p style={{ fontSize: "0.85rem", color: "black", fontWeight: 600 }}>Rata-rata Literasi</p>
             <h3 style={{ fontSize: "1.8rem", color: "#102e50", margin: "0.25rem 0" }}>{avgLit}</h3>
           </div>
           <div className="card" style={{ padding: "1.25rem", borderLeft: "4px solid #f59e0b" }}>
-            <p style={{ fontSize: "0.85rem", color: "#6c757d", fontWeight: 600 }}>Rata-rata Numerasi</p>
+            <p style={{ fontSize: "0.85rem", color: "black", fontWeight: 600 }}>Rata-rata Numerasi</p>
             <h3 style={{ fontSize: "1.8rem", color: "#102e50", margin: "0.25rem 0" }}>{avgNum}</h3>
           </div>
         </div>
@@ -350,7 +350,7 @@ export default function SuperAdminReportDashboard({
 
       {/* ── EMPTY STATE ── */}
       {!isLoadingData && selectedPackageId && reportData.length === 0 && (
-        <div className="card" style={{ padding: "3rem", textAlign: "center", color: "#6c757d" }}>
+        <div className="card" style={{ padding: "3rem", textAlign: "center", color: "black" }}>
           <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📭</div>
           <p style={{ fontWeight: 600, color: "#102e50", marginBottom: "0.5rem" }}>Data Tidak Ditemukan</p>
           <p style={{ fontSize: "0.9rem" }}>Belum ada anak yang menyelesaikan ujian dengan filter yang dipilih.</p>
@@ -383,7 +383,7 @@ export default function SuperAdminReportDashboard({
                 <tr key={row.id}>
                   <td>
                     <div style={{ fontWeight: 600, color: "#102e50" }}>{row.full_name}</div>
-                    <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>{row.nisn || "-"}</div>
+                    <div style={{ fontSize: "0.8rem", color: "black" }}>{row.nisn || "-"}</div>
                   </td>
                   <td>
                     <div>{row.school_name}</div>
@@ -397,7 +397,7 @@ export default function SuperAdminReportDashboard({
                       ke-{row.attempt_number ?? 1}
                     </span>
                   </td>
-                  <td style={{ textAlign: "center", color: "#6c757d" }}>{row.total_questions}</td>
+                  <td style={{ textAlign: "center", color: "black" }}>{row.total_questions}</td>
                   <td style={{ textAlign: "center", fontWeight: 600, color: "#2d9e5f" }}>{row.total_correct}</td>
                   <td style={{ textAlign: "center", fontWeight: 600, color: "#dc2626" }}>{row.total_wrong}</td>
                   <td style={{ textAlign: "center", fontWeight: 600 }}>{row.score_total}</td>

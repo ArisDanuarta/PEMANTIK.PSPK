@@ -507,7 +507,7 @@ export default function IntervensiSuperAdminClient({
                   boxShadow: msg.role === "ai" ? "0 4px 6px rgba(0,0,0,0.02)" : "0 4px 6px rgba(16, 46, 80, 0.2)"
                 }}>
                   {msg.role === "ai" ? (
-                    <div className="prose prose-sm max-w-none text-slate-800">
+                    <div className="prose prose-sm max-w-none text-black">
                       <ReactMarkdown>
                         {msg.content}
                       </ReactMarkdown>

@@ -124,7 +124,7 @@ export default function QuestionTableClient({
                       style={{
                         fontWeight: 500,
                         fontSize: "0.875rem",
-                        color: "#212529",
+                        color: "black",
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
@@ -134,7 +134,7 @@ export default function QuestionTableClient({
                     >
                       {q.question_text || "(Tanpa teks pertanyaan)"}
                     </div>
-                    <div style={{ fontSize: "0.75rem", color: "#adb5bd" }}>
+                    <div style={{ fontSize: "0.75rem", color: "black" }}>
                       {new Date(q.created_at).toLocaleDateString("id-ID", {
                         day: "2-digit", month: "short", year: "numeric",
                       })}
@@ -177,11 +177,11 @@ export default function QuestionTableClient({
 
                   {/* Level / Kategori */}
                   <td className="col-hide-mobile">
-                    <div style={{ fontSize: "0.82rem", fontWeight: 500, color: "#343a40" }}>
+                    <div style={{ fontSize: "0.82rem", fontWeight: 500, color: "black" }}>
                       {q.question_levels?.question_categories?.name || "-"}
                     </div>
                     {q.question_levels?.level_number != null && (
-                      <div style={{ fontSize: "0.72rem", color: "#adb5bd", marginTop: "0.1rem" }}>
+                      <div style={{ fontSize: "0.72rem", color: "black", marginTop: "0.1rem" }}>
                         Level {q.question_levels.level_number}
                       </div>
                     )}
@@ -239,7 +239,7 @@ export default function QuestionTableClient({
             background: "#f8f9fa",
           }}
         >
-          <span style={{ fontSize: "0.82rem", color: "#6c757d" }}>
+          <span style={{ fontSize: "0.82rem", color: "black" }}>
             Halaman {page} dari {totalPages} · {count} soal total
           </span>
           <div style={{ display: "flex", gap: "0.5rem" }}>

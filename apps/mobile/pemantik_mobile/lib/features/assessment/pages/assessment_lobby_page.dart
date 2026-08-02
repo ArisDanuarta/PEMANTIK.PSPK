@@ -490,7 +490,7 @@ class _MediaDownloadStatusWidget extends ConsumerWidget {
       );
     }
 
-    // === Selesai — ada file yang gagal ===
+    // === Selesai - ada file yang gagal ===
     if (dl.isDone && dl.hasFailures) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -536,7 +536,7 @@ class _MediaDownloadStatusWidget extends ConsumerWidget {
       );
     }
 
-    // === Selesai — semua berhasil ===
+    // === Selesai - semua berhasil ===
     if (dl.isDone && !dl.hasFailures && dl.totalFiles > 0) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

@@ -93,7 +93,7 @@ export default async function RilisPage() {
               </table>
             </div>
           ) : (
-            <div style={{ padding: "2rem", textAlign: "center", color: "#6c757d" }}>
+            <div style={{ padding: "2rem", textAlign: "center", color: "black" }}>
               Belum ada versi rilis aplikasi yang diunggah.
             </div>
           )}

@@ -80,14 +80,14 @@ export default function SystemLogViewer({ initialLogs }: { initialLogs: any[] })
         <tbody>
           {logs.length === 0 ? (
             <tr>
-              <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "#6c757d" }}>
+              <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
                 Tidak ada log sistem yang tercatat.
               </td>
             </tr>
           ) : (
             logs.map((log) => (
               <tr key={log.id}>
-                <td style={{ fontSize: "0.85rem", color: "#6c757d" }}>
+                <td style={{ fontSize: "0.85rem", color: "black" }}>
                   {new Date(log.created_at).toLocaleString("id-ID")}
                 </td>
                 <td>
@@ -101,9 +101,9 @@ export default function SystemLogViewer({ initialLogs }: { initialLogs: any[] })
                       {log.source === "feedback" ? "Feedback/Bug Report" : log.source}
                     </strong>
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#6c757d" }}>Role: {log.role_context || "-"}</div>
+                  <div style={{ fontSize: "0.75rem", color: "black" }}>Role: {log.role_context || "-"}</div>
                   {log.source === "feedback" && (
-                    <div style={{ fontSize: "0.75rem", color: "#495057", marginTop: "0.25rem" }}>
+                    <div style={{ fontSize: "0.75rem", color: "black", marginTop: "0.25rem" }}>
                       Oleh: <strong>{log.details?.sender_name || "-"}</strong><br/>
                       Asal: <strong>{log.details?.entity_name || "-"}</strong>
                     </div>
@@ -111,7 +111,7 @@ export default function SystemLogViewer({ initialLogs }: { initialLogs: any[] })
                 </td>
                 <td style={{ maxWidth: 300, wordWrap: "break-word" }}>
                   {log.source === "feedback" && log.details?.path ? (
-                    <div style={{ marginBottom: "0.25rem", fontSize: "0.8rem", color: "var(--color-gray-500)" }}>
+                    <div style={{ marginBottom: "0.25rem", fontSize: "0.8rem", color: "black" }}>
                       Path: <code>{log.details.path}</code>
                     </div>
                   ) : null}

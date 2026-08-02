@@ -99,7 +99,7 @@ class UpdateService {
             actions: [
               if (!release.isMandatory)
                 TextButton(
-                  child: const Text('Nanti', style: TextStyle(color: Colors.grey)),
+                  child: const Text('Nanti', style: TextStyle(color: Colors.black)),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },

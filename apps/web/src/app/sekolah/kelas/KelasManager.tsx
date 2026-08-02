@@ -165,7 +165,7 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
         ].map((s) => (
           <div key={s.label} className="stat-card" style={{ textAlign: "center", padding: "1.25rem" }}>
             <div style={{ fontSize: "1.75rem", fontWeight: 700, color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: "0.8rem", color: "#6c757d", marginTop: "0.25rem" }}>{s.label}</div>
+            <div style={{ fontSize: "0.8rem", color: "black", marginTop: "0.25rem" }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -188,7 +188,7 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: "3rem 1rem", color: "#adb5bd" }}>
+                <td colSpan={7} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
                   <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🏫</div>
                   {search ? "Tidak ada kelas yang cocok dengan pencarian." : "Belum ada kelas. Klik \"Tambah Kelas\" untuk mulai."}
                 </td>
@@ -207,13 +207,13 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
                     {cls.users && cls.users.length > 0 ? (
                       <div style={{ fontSize: "0.875rem" }}>{cls.users[0].full_name}</div>
                     ) : (
-                      <span style={{ color: "#adb5bd", fontSize: "0.8rem", fontStyle: "italic" }}>Belum ditugaskan</span>
+                      <span style={{ color: "black", fontSize: "0.8rem", fontStyle: "italic" }}>Belum ditugaskan</span>
                     )}
                   </td>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       <span style={{ fontSize: "1rem", fontWeight: 700, color: "#102e50" }}>{studentCount}</span>
-                      <span style={{ fontSize: "0.75rem", color: "#6c757d" }}>anak</span>
+                      <span style={{ fontSize: "0.75rem", color: "black" }}>anak</span>
                     </div>
                   </td>
                   <td><span style={{ fontSize: "0.85rem", color: "#4b5563" }}>{cls.academic_year ?? "-"}</span></td>
@@ -234,7 +234,7 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
         </table>
         </div>
         {filtered.length > 0 && (
-          <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid #f1f3f5", fontSize: "0.8rem", color: "#6c757d" }}>
+          <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid #f1f3f5", fontSize: "0.8rem", color: "black" }}>
             Menampilkan <strong>{filtered.length}</strong> dari <strong>{classes.length}</strong> kelas
           </div>
         )}

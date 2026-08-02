@@ -133,8 +133,8 @@ export default async function Dashboard() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
-                      <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "#343a40" }}>{label}</span>
-                      <span style={{ fontSize: "0.8rem", color: "#6c757d", fontWeight: 600 }}>{count}</span>
+                      <span style={{ fontSize: "0.85rem", fontWeight: 500, color: "black" }}>{label}</span>
+                      <span style={{ fontSize: "0.8rem", color: "black", fontWeight: 600 }}>{count}</span>
                     </div>
                     <div className="progress-bar-track">
                       <div
@@ -143,7 +143,7 @@ export default async function Dashboard() {
                       />
                     </div>
                   </div>
-                  <span style={{ fontSize: "0.75rem", color: "#adb5bd", width: "36px", textAlign: "right", flexShrink: 0 }}>{pct}%</span>
+                  <span style={{ fontSize: "0.75rem", color: "black", width: "36px", textAlign: "right", flexShrink: 0 }}>{pct}%</span>
                 </div>
               );
             })}
@@ -183,8 +183,8 @@ export default async function Dashboard() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--clr-biru)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </div>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "#212529" }}>Tambah Soal Baru</div>
-                  <div style={{ fontSize: "0.75rem", color: "#6c757d" }}>Buat soal dari awal</div>
+                  <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "black" }}>Tambah Soal Baru</div>
+                  <div style={{ fontSize: "0.75rem", color: "black" }}>Buat soal dari awal</div>
                 </div>
               </Link>
 
@@ -204,8 +204,8 @@ export default async function Dashboard() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--clr-biru-muda)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/></svg>
                 </div>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "#212529" }}>Kelola Bank Soal</div>
-                  <div style={{ fontSize: "0.75rem", color: "#6c757d" }}>Lihat, edit, dan hapus soal</div>
+                  <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "black" }}>Kelola Bank Soal</div>
+                  <div style={{ fontSize: "0.75rem", color: "black" }}>Lihat, edit, dan hapus soal</div>
                 </div>
               </Link>
 
@@ -225,8 +225,8 @@ export default async function Dashboard() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2d9e5f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </div>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "#212529" }}>Preview Soal</div>
-                  <div style={{ fontSize: "0.75rem", color: "#6c757d" }}>Lihat tampilan soal di mobile</div>
+                  <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "black" }}>Preview Soal</div>
+                  <div style={{ fontSize: "0.75rem", color: "black" }}>Lihat tampilan soal di mobile</div>
                 </div>
               </Link>
 
@@ -246,8 +246,8 @@ export default async function Dashboard() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--clr-merah)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 0-14.14 0"/><path d="M4 12H2m20 0h-2M12 4V2m0 20v-2"/></svg>
                 </div>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "#212529" }}>Pengaturan Kategori</div>
-                  <div style={{ fontSize: "0.75rem", color: "#6c757d" }}>Kelola level dan kategori soal</div>
+                  <div style={{ fontWeight: 600, fontSize: "0.875rem", color: "black" }}>Pengaturan Kategori</div>
+                  <div style={{ fontSize: "0.75rem", color: "black" }}>Kelola level dan kategori soal</div>
                 </div>
               </Link>
             </div>
@@ -286,12 +286,12 @@ export default async function Dashboard() {
                     }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
-                        fontSize: "0.85rem", fontWeight: 500, color: "#212529",
+                        fontSize: "0.85rem", fontWeight: 500, color: "black",
                         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                       }}>
                         {q.question_text || "(Tanpa teks pertanyaan)"}
                       </div>
-                      <div style={{ fontSize: "0.72rem", color: "#adb5bd", marginTop: "0.15rem" }}>
+                      <div style={{ fontSize: "0.72rem", color: "black", marginTop: "0.15rem" }}>
                         {q.subject_area?.toUpperCase()} · {q.question_type?.replace("_", " ")} · {q.question_levels?.question_categories?.name || "-"}
                       </div>
                     </div>

@@ -245,7 +245,7 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
         <tbody>
           {filteredStudents.length === 0 ? (
             <tr>
-              <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "#6c757d" }}>
+              <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
                 Tidak ada data anak ditemukan.
               </td>
             </tr>
@@ -255,24 +255,24 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
                 <td><strong>{row.full_name}</strong></td>
                 <td>
                   <div style={{ fontWeight: 500 }}>NISN: {row.nisn || "-"}</div>
-                  <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>{row.gender === "L" ? "Laki-laki" : "Perempuan"}</div>
+                  <div style={{ fontSize: "0.8rem", color: "black" }}>{row.gender === "L" ? "Laki-laki" : "Perempuan"}</div>
                 </td>
                 <td>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                    <div><span style={{ color: "#6c757d" }}>User:</span> <strong>{row.username}</strong></div>
-                    <div><span style={{ color: "#6c757d" }}>PIN:</span> <code style={{ color: "#a8281c" }}>123456</code></div>
+                    <div><span style={{ color: "black" }}>User:</span> <strong>{row.username}</strong></div>
+                    <div><span style={{ color: "black" }}>PIN:</span> <code style={{ color: "#a8281c" }}>123456</code></div>
                   </div>
                 </td>
                 <td>
                   <div style={{ fontWeight: 500, color: "#102e50" }}>{row.classes?.name || "-"}</div>
-                  <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>Guru: {row.classes?.users?.full_name || "-"}</div>
+                  <div style={{ fontSize: "0.8rem", color: "black" }}>Guru: {row.classes?.users?.full_name || "-"}</div>
                 </td>
                 <td>{row.schools?.name || "-"}</td>
                 <td>
                   {row.ses_class ? (
                   <SesBadge sesClass={row.ses_class} />
                   ) : (
-                    <span style={{ fontSize: "0.8rem", color: "#6c757d" }}>Belum Dihitung</span>
+                    <span style={{ fontSize: "0.8rem", color: "black" }}>Belum Dihitung</span>
                   )}
                 </td>
                 <td>

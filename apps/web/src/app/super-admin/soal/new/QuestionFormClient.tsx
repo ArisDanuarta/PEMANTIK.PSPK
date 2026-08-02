@@ -83,7 +83,7 @@ function MediaField({
             onChange={e => { const f = e.target.files?.[0]; if (f) onUpload(f); }} />
         </label>
       </div>
-      {hint && <small style={{ color: "var(--color-gray-500)" }}>{hint}</small>}
+      {hint && <small style={{ color: "black" }}>{hint}</small>}
       {/* Preview berdasarkan tipe */}
       {showYouTubePreview && (
         <div style={{ borderRadius: "8px", overflow: "hidden", background: "#000", position: "relative", paddingBottom: "56.25%", height: 0 }}>
@@ -456,7 +456,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
                 <div key={i} style={{ border: `2px solid ${i === imgCorrectIndex ? accent : "#e0e0e0"}`, borderRadius: "10px", overflow: "hidden", backgroundColor: i === imgCorrectIndex ? accentBg : "#f8f9fa" }}>
                   {opt.url
                     ? <img src={opt.url} alt={opt.label || `Opsi ${i + 1}`} style={{ width: "100%", height: "60px", objectFit: "cover", display: "block" }} />
-                    : <div style={{ height: "60px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", color: "#adb5bd" }}>Gambar {i + 1}</div>}
+                    : <div style={{ height: "60px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", color: "black" }}>Gambar {i + 1}</div>}
                   {opt.label && <div style={{ fontSize: "0.65rem", textAlign: "center", padding: "0.25rem", fontWeight: i === imgCorrectIndex ? 600 : 400 }}>{opt.label}</div>}
                 </div>
               ))}
@@ -468,7 +468,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             <>
               <div style={{ background: "#f0f0f0", borderRadius: "8px", padding: "0.5rem", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <span style={{ fontSize: "1rem" }}>🎵</span>
-                <span style={{ fontSize: "0.7rem", color: "#555" }}>Dengarkan audio, lalu pilih jawaban</span>
+                <span style={{ fontSize: "0.7rem", color: "black" }}>Dengarkan audio, lalu pilih jawaban</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {avOptions.map((opt, i) => (
@@ -486,7 +486,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             <>
               <div style={{ background: "#f0f0f0", borderRadius: "8px", padding: "0.5rem", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <span style={{ fontSize: "1rem" }}>🎬</span>
-                <span style={{ fontSize: "0.7rem", color: "#555" }}>Tonton video, lalu pilih jawaban</span>
+                <span style={{ fontSize: "0.7rem", color: "black" }}>Tonton video, lalu pilih jawaban</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 {avOptions.map((opt, i) => (
@@ -505,7 +505,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               <div style={{ fontSize: "0.78rem", color: "#333", lineHeight: 1.6, marginBottom: "0.75rem", padding: "0.5rem", background: "#f8f9fa", borderRadius: "6px" }}>
                 {fbSentence ? fbSentence.split("___").map((part, i, arr) => (
                   <span key={i}>{part}{i < arr.length - 1 && <span style={{ display: "inline-block", minWidth: "50px", borderBottom: `2px solid ${accent}`, margin: "0 4px" }}>&nbsp;</span>}</span>
-                )) : <span style={{ color: "#adb5bd" }}>Kalimat dengan ___ akan muncul di sini</span>}
+                )) : <span style={{ color: "black" }}>Kalimat dengan ___ akan muncul di sini</span>}
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.375rem" }}>
                 {fbWordBank.map(w => (
@@ -518,11 +518,11 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
               {sortItems.map((s, i) => (
                 <div key={s.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0.75rem", background: "#f8f9fa", borderRadius: "8px", border: "1.5px solid #dee2e6" }}>
-                  <span style={{ fontSize: "0.7rem", color: "#adb5bd", fontWeight: 700 }}>⠿</span>
+                  <span style={{ fontSize: "0.7rem", color: "black", fontWeight: 700 }}>⠿</span>
                   <span style={{ fontSize: "0.75rem" }}>{s.text || `Item ${i + 1}`}</span>
                 </div>
               ))}
-              <div style={{ fontSize: "0.65rem", color: "#adb5bd", textAlign: "center", marginTop: "0.25rem" }}>Anak akan mengurutkan item di atas</div>
+              <div style={{ fontSize: "0.65rem", color: "black", textAlign: "center", marginTop: "0.25rem" }}>Anak akan mengurutkan item di atas</div>
             </div>
           );
           return (
@@ -530,7 +530,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               {matchPairs.map((p, i) => (
                 <div key={p.id} style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "0.25rem", alignItems: "center" }}>
                   <div style={{ fontSize: "0.72rem", padding: "0.375rem 0.5rem", background: "#f8f9fa", border: "1.5px solid #dee2e6", borderRadius: "6px", textAlign: "center" }}>{p.left || `Kiri ${i + 1}`}</div>
-                  <span style={{ fontSize: "0.7rem", color: "#adb5bd" }}>↔</span>
+                  <span style={{ fontSize: "0.7rem", color: "black" }}>↔</span>
                   <div style={{ fontSize: "0.72rem", padding: "0.375rem 0.5rem", background: accentBg, border: `1.5px solid ${accent}`, borderRadius: "6px", textAlign: "center", color: accent }}>{p.right || `Kanan ${i + 1}`}</div>
                 </div>
               ))}
@@ -541,11 +541,11 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
           return (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", padding: "0.5rem 0" }}>
               <div style={{ width: "56px", height: "56px", borderRadius: "50%", background: `linear-gradient(135deg, ${accent}, ${accent}99)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", boxShadow: `0 0 0 8px ${accentBg}` }}>🎤</div>
-              <div style={{ fontSize: "0.75rem", color: "#555", textAlign: "center" }}>Tekan mikrofon dan bacakan:</div>
+              <div style={{ fontSize: "0.75rem", color: "black", textAlign: "center" }}>Tekan mikrofon dan bacakan:</div>
               <div style={{ fontSize: "0.85rem", fontWeight: 700, color: accent, textAlign: "center", padding: "0.5rem 1rem", background: accentBg, borderRadius: "8px", border: `1.5px solid ${accent}` }}>
                 {vrTargetText || "Teks target akan muncul di sini"}
               </div>
-              <div style={{ fontSize: "0.65rem", color: "#adb5bd" }}>Toleransi kemiripan: {vrThreshold}%</div>
+              <div style={{ fontSize: "0.65rem", color: "black" }}>Toleransi kemiripan: {vrThreshold}%</div>
             </div>
           );
 
@@ -587,16 +587,16 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
           <div style={{ backgroundColor: accent, color: "white", padding: "2rem 1rem 0.875rem", textAlign: "center", fontWeight: 700, fontSize: "0.95rem", flexShrink: 0 }}>
             {subjectArea === "literasi" ? "Latihan Literasi" : "Latihan Numerasi"}
           </div>
-          {/* Body — urutan: instruksi atas → media → pertanyaan/instruksi bawah → jawaban */}
+          {/* Body - urutan: instruksi atas → media → pertanyaan/instruksi bawah → jawaban */}
           <div style={{ padding: "1rem", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "0.65rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", padding: "0.2rem 0.6rem", borderRadius: "999px", background: "#e9ecef", color: "#495057" }}>Level {selectedLevel?.level_number ?? "0"}</span>
-              {selectedLevel?.time_limit_sec && <span style={{ fontSize: "0.72rem", color: "#6c757d" }}>{selectedLevel.time_limit_sec} dtk</span>}
+              <span style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", padding: "0.2rem 0.6rem", borderRadius: "999px", background: "#e9ecef", color: "black" }}>Level {selectedLevel?.level_number ?? "0"}</span>
+              {selectedLevel?.time_limit_sec && <span style={{ fontSize: "0.72rem", color: "black" }}>{selectedLevel.time_limit_sec} dtk</span>}
             </div>
 
             {/* 1. INSTRUKSI ATAS */}
             {questionInstruction && (
-              <p style={{ fontSize: "0.85rem", fontWeight: 500, lineHeight: 1.5, color: "#555", wordBreak: "break-word", whiteSpace: "pre-wrap", margin: 0, fontStyle: "italic" }}>
+              <p style={{ fontSize: "0.85rem", fontWeight: 500, lineHeight: 1.5, color: "black", wordBreak: "break-word", whiteSpace: "pre-wrap", margin: 0, fontStyle: "italic" }}>
                 {questionInstruction}
               </p>
             )}
@@ -639,7 +639,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               </p>
             )}
             {!questionInstruction && !questionText && (
-              <p style={{ fontSize: "0.9rem", color: "#adb5bd", fontStyle: "italic", margin: 0 }}>Teks instruksi/pertanyaan akan muncul di sini...</p>
+              <p style={{ fontSize: "0.9rem", color: "black", fontStyle: "italic", margin: 0 }}>Teks instruksi/pertanyaan akan muncul di sini...</p>
             )}
 
             {/* 4. JAWABAN */}
@@ -653,7 +653,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
   // ─── Answer section renderer ───────────────────────────────────────────────
 
   const renderAnswerSection = () => {
-    const cardStyle = { padding: "1rem", backgroundColor: "#f8f9fa", borderRadius: "8px", border: "1px solid #e9ecef" };
+    const cardStyle = { padding: "1rem", backgroundcolor: "black", borderRadius: "8px", border: "1px solid #e9ecef" };
     const subtypeBtn = (t: DragDropSubtype, label: string) => (
       <button type="button" onClick={() => setDragSubtype(t)}
         style={{
@@ -671,7 +671,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
       case "multiple_choice":
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <label className="form-label" style={{ fontWeight: 600 }}>Opsi Jawaban <span style={{ color: "#6c757d", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>- centang radio untuk jawaban benar</span></label>
+            <label className="form-label" style={{ fontWeight: 600 }}>Opsi Jawaban <span style={{ color: "black", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>- centang radio untuk jawaban benar</span></label>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
               {mcOptions.map((opt, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem", borderRadius: "8px", border: mcCorrectIndex === i ? "1px solid rgba(45,158,95,0.3)" : "1px solid transparent", backgroundColor: mcCorrectIndex === i ? "rgba(45,158,95,0.04)" : "transparent" }}>
@@ -688,7 +688,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
       case "image_choice":
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            <label className="form-label" style={{ fontWeight: 600 }}>Opsi Gambar <span style={{ color: "#6c757d", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>- centang radio untuk jawaban benar</span></label>
+            <label className="form-label" style={{ fontWeight: 600 }}>Opsi Gambar <span style={{ color: "black", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>- centang radio untuk jawaban benar</span></label>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {imgOptions.map((opt, i) => (
                 <div key={i} style={{ display: "flex", gap: "0.875rem", alignItems: "flex-start", padding: "0.875rem", borderRadius: "10px", border: imgCorrectIndex === i ? "1.5px solid rgba(45,158,95,0.4)" : "1.5px solid #e9ecef", backgroundColor: imgCorrectIndex === i ? "rgba(45,158,95,0.03)" : "#fff" }}>
@@ -723,13 +723,13 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
                 <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--clr-biru)", marginBottom: "0.25rem" }}>
                   {isAudio ? "File audio di atas adalah soal utama" : "File video di atas adalah soal utama"}
                 </div>
-                <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>
+                <div style={{ fontSize: "0.78rem", color: "black" }}>
                   Anak akan {isAudio ? "mendengarkan audio" : "menonton video"} tersebut, lalu memilih jawaban dari opsi di bawah.
                 </div>
               </div>
             </div>
             <div>
-              <label className="form-label" style={{ fontWeight: 600, marginBottom: "0.5rem", display: "block" }}>Opsi Jawaban Pilihan Ganda <span style={{ color: "#6c757d", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>- centang radio untuk jawaban benar</span></label>
+              <label className="form-label" style={{ fontWeight: 600, marginBottom: "0.5rem", display: "block" }}>Opsi Jawaban Pilihan Ganda <span style={{ color: "black", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>- centang radio untuk jawaban benar</span></label>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
                 {avOptions.map((opt, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem", borderRadius: "8px", border: avCorrectIndex === i ? "1px solid rgba(45,158,95,0.3)" : "1px solid transparent", backgroundColor: avCorrectIndex === i ? "rgba(45,158,95,0.04)" : "transparent" }}>
@@ -760,16 +760,16 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             {dragSubtype === "fill_blank" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div style={{ ...cardStyle }}>
-                  <div style={{ fontSize: "0.78rem", color: "#6c757d", marginBottom: "0.5rem" }}>💡 Gunakan <code style={{ background: "#e9ecef", padding: "0 4px", borderRadius: "3px" }}>___</code> (tiga underscore) untuk menandai posisi blank.</div>
+                  <div style={{ fontSize: "0.78rem", color: "black", marginBottom: "0.5rem" }}>💡 Gunakan <code style={{ background: "#e9ecef", padding: "0 4px", borderRadius: "3px" }}>___</code> (tiga underscore) untuk menandai posisi blank.</div>
                   <label className="form-label" style={{ fontWeight: 600 }}>Kalimat Soal</label>
                   <input type="text" className="form-input" style={{ marginTop: "0.375rem" }} placeholder='Contoh: "Ibu ___ ke pasar setiap ___"' value={fbSentence} onChange={e => setFbSentence(e.target.value)} />
                 </div>
                 <div>
-                  <label className="form-label" style={{ fontWeight: 600, marginBottom: "0.5rem", display: "block" }}>Bank Kata <span style={{ color: "#6c757d", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>- urutan input = urutan jawaban benar</span></label>
+                  <label className="form-label" style={{ fontWeight: 600, marginBottom: "0.5rem", display: "block" }}>Bank Kata <span style={{ color: "black", fontWeight: 400, textTransform: "none", fontSize: "0.75rem" }}>- urutan input = urutan jawaban benar</span></label>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                     {fbWordBank.map((w, i) => (
                       <div key={w.id} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                        <span style={{ fontSize: "0.75rem", color: "#adb5bd", width: "20px", textAlign: "right", flexShrink: 0 }}>{i + 1}.</span>
+                        <span style={{ fontSize: "0.75rem", color: "black", width: "20px", textAlign: "right", flexShrink: 0 }}>{i + 1}.</span>
                         <input type="text" className="form-input" placeholder={`Kata ${i + 1}`} value={w.text} onChange={e => updateFbWord(w.id, e.target.value)} style={{ flex: 1 }} />
                         <button type="button" onClick={() => removeFbWord(w.id)} className="btn btn-outline btn-sm" style={{ color: "var(--clr-merah)", borderColor: "var(--clr-merah)", flexShrink: 0 }}>✕</button>
                       </div>
@@ -783,13 +783,13 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             {dragSubtype === "sorting" && (
               <div>
                 <div style={{ ...cardStyle, marginBottom: "0.75rem" }}>
-                  <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>💡 Masukkan item dalam <strong>urutan yang benar</strong>. Saat ditampilkan ke anak, urutannya akan diacak otomatis.</div>
+                  <div style={{ fontSize: "0.78rem", color: "black" }}>💡 Masukkan item dalam <strong>urutan yang benar</strong>. Saat ditampilkan ke anak, urutannya akan diacak otomatis.</div>
                 </div>
                 <label className="form-label" style={{ fontWeight: 600, marginBottom: "0.5rem", display: "block" }}>Item (Urutan Benar)</label>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                   {sortItems.map((s, i) => (
                     <div key={s.id} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                      <span style={{ fontSize: "0.8rem", color: "#adb5bd", width: "20px", textAlign: "right", flexShrink: 0 }}>#{i + 1}</span>
+                      <span style={{ fontSize: "0.8rem", color: "black", width: "20px", textAlign: "right", flexShrink: 0 }}>#{i + 1}</span>
                       <input type="text" className="form-input" placeholder={`Item ${i + 1}`} value={s.text} onChange={e => updateSortItem(s.id, e.target.value)} style={{ flex: 1 }} />
                       <button type="button" onClick={() => removeSortItem(s.id)} className="btn btn-outline btn-sm" style={{ color: "var(--clr-merah)", borderColor: "var(--clr-merah)", flexShrink: 0 }}>✕</button>
                     </div>
@@ -802,7 +802,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             {dragSubtype === "matching" && (
               <div>
                 <div style={{ ...cardStyle, marginBottom: "0.75rem" }}>
-                  <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>💡 Masukkan pasangan yang benar. Kolom kanan akan diacak saat ditampilkan ke anak.</div>
+                  <div style={{ fontSize: "0.78rem", color: "black" }}>💡 Masukkan pasangan yang benar. Kolom kanan akan diacak saat ditampilkan ke anak.</div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr auto", gap: "0.5rem", alignItems: "center", marginBottom: "0.375rem" }}>
                   <span className="form-label" style={{ textAlign: "center" }}>Kolom Kiri</span>
@@ -813,7 +813,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
                 {matchPairs.map((p, i) => (
                   <div key={p.id} style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr auto", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem" }}>
                     <input type="text" className="form-input" placeholder={`Kiri ${i + 1}`} value={p.left} onChange={e => updateMatchPair(p.id, "left", e.target.value)} />
-                    <span style={{ color: "#adb5bd", textAlign: "center", fontSize: "1rem" }}>↔</span>
+                    <span style={{ color: "black", textAlign: "center", fontSize: "1rem" }}>↔</span>
                     <input type="text" className="form-input" placeholder={`Kanan ${i + 1}`} value={p.right} onChange={e => updateMatchPair(p.id, "right", e.target.value)} />
                     <button type="button" onClick={() => removeMatchPair(p.id)} className="btn btn-outline btn-sm" style={{ color: "var(--clr-merah)", borderColor: "var(--clr-merah)" }}>✕</button>
                   </div>
@@ -831,7 +831,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               <span style={{ fontSize: "1.5rem" }}>🎤</span>
               <div>
                 <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--clr-biru)", marginBottom: "0.25rem" }}>Cara Kerja Voice Recording</div>
-                <div style={{ fontSize: "0.78rem", color: "#6c757d", lineHeight: 1.6 }}>
+                <div style={{ fontSize: "0.78rem", color: "black", lineHeight: 1.6 }}>
                   Anak merekam suara membaca teks target. Sistem membandingkan dengan <strong>Levenshtein Distance</strong>. Skor ≥ threshold = benar.
                 </div>
               </div>
@@ -839,7 +839,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
 
             <div>
               <label className="form-label" style={{ fontWeight: 600 }}>Teks Target (Original Word)</label>
-              <small style={{ color: "#6c757d", display: "block", marginBottom: "0.375rem" }}>Teks yang harus dibacakan siswa.</small>
+              <small style={{ color: "black", display: "block", marginBottom: "0.375rem" }}>Teks yang harus dibacakan siswa.</small>
               <textarea
                 className="form-input"
                 rows={3}
@@ -854,7 +854,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               <label className="form-label" style={{ fontWeight: 600 }}>
                 Threshold Toleransi: <span style={{ color: "var(--clr-biru)", fontFamily: "monospace" }}>{vrThreshold}%</span>
               </label>
-              <small style={{ color: "#6c757d", display: "block", marginBottom: "0.5rem" }}>
+              <small style={{ color: "black", display: "block", marginBottom: "0.5rem" }}>
                 Rekomendasi: 75–85% untuk toleransi ejaan/dialek.
               </small>
               <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
@@ -868,7 +868,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
                   value={vrThreshold} onChange={e => setVrThreshold(Number(e.target.value))}
                   style={{ width: "72px", textAlign: "center" }}
                 />
-                <span style={{ fontSize: "0.8rem", color: "#6c757d" }}>%</span>
+                <span style={{ fontSize: "0.8rem", color: "black" }}>%</span>
               </div>
               <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
                 {[60, 70, 75, 80, 85, 90].map(v => (
@@ -905,7 +905,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
       paddingBottom: "2rem"
     }}>
 
-      {/* ── Kolom kiri: form — scroll normal ── */}
+      {/* ── Kolom kiri: form - scroll normal ── */}
       <div style={{
         flex: "1 1 420px",
         minWidth: 0,
@@ -970,7 +970,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
           </h2>
 
           <div style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <label className="form-label" style={{ fontWeight: 600 }}>Instruksi Atas <span style={{ color: "var(--color-gray-500)", fontWeight: 400, fontSize: "0.75rem" }}>— muncul SEBELUM media (contoh: "Dengarkan suara berikut")</span></label>
+            <label className="form-label" style={{ fontWeight: 600 }}>Instruksi Atas <span style={{ color: "black", fontWeight: 400, fontSize: "0.75rem" }}>- muncul SEBELUM media (contoh: "Dengarkan suara berikut")</span></label>
             <textarea className="form-input" style={{ width: "100%", minHeight: "60px", resize: "vertical" }} rows={2}
               placeholder="Contoh: Dengarkan suara berikut ini dengan seksama."
               value={questionInstruction}
@@ -978,7 +978,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
           </div>
 
           <div style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <label className="form-label" style={{ fontWeight: 600 }}>Teks Pertanyaan <span style={{ color: "var(--color-gray-500)", fontWeight: 400, fontSize: "0.75rem" }}>— muncul SETELAH media (contoh: "Pilihlah suara yang kamu dengar")</span></label>
+            <label className="form-label" style={{ fontWeight: 600 }}>Teks Pertanyaan <span style={{ color: "black", fontWeight: 400, fontSize: "0.75rem" }}>- muncul SETELAH media (contoh: "Pilihlah suara yang kamu dengar")</span></label>
             <textarea className="form-input" style={{ width: "100%", minHeight: "100px", resize: "vertical" }} rows={4}
               placeholder="Tuliskan pertanyaan di sini..." value={questionText} onChange={e => setQuestionText(e.target.value)} />
           </div>
@@ -1032,7 +1032,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
         </div>
       </div>
 
-      {/* ── Kolom kanan: Preview STICKY — tidak ikut scroll ── */}
+      {/* ── Kolom kanan: Preview STICKY - tidak ikut scroll ── */}
       {isMounted && (
         <div style={{
           flex: "0 0 auto",
@@ -1047,7 +1047,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
             marginBottom: "0.75rem",
             textAlign: "center",
             fontWeight: 600,
-            color: "var(--color-gray-500)",
+            color: "black",
             textTransform: "uppercase",
             fontSize: "0.75rem",
             letterSpacing: "1px",

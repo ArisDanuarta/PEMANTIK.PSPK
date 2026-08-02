@@ -20,7 +20,7 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
     <div style={{ maxWidth: "800px", margin: "0 auto", paddingBottom: "3rem" }}>
       <div style={{ marginBottom: "1.5rem", display: "flex", gap: "0.5rem", alignItems: "center" }}>
         <Link href="/admin-soal/soal" style={{ color: "var(--clr-biru)", textDecoration: "none", fontWeight: 600 }}>&larr; Kembali</Link>
-        <span style={{ color: "var(--color-gray-500)" }}>/</span>
+        <span style={{ color: "black" }}>/</span>
         <h1 style={{ margin: 0, fontSize: "1.25rem", color: "#1a1a1a" }}>Detail Soal</h1>
       </div>
 
@@ -30,7 +30,7 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
             <h2 style={{ fontSize: "1.5rem", margin: "0 0 0.5rem 0", color: "#1a1a1a" }}>
               {q.subject_area === "literasi" ? "Literasi" : "Numerasi"} - Level {level ?? "?"}
             </h2>
-            <div style={{ color: "var(--color-gray-600)", fontSize: "0.9rem" }}>
+            <div style={{ color: "black", fontSize: "0.9rem" }}>
               Kategori: {category ?? "Tidak ada"}
             </div>
           </div>
@@ -46,17 +46,17 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
 
         <div style={{ borderTop: "1px solid #eee", paddingTop: "1.5rem", display: "flex", gap: "3rem" }}>
           <div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-gray-500)", marginBottom: "0.5rem", textTransform: "uppercase" }}>Kode Soal</div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "black", marginBottom: "0.5rem", textTransform: "uppercase" }}>Kode Soal</div>
             <div style={{ fontSize: "1.1rem", color: "var(--clr-biru)", fontWeight: 700 }}>{q.question_code || "-"}</div>
           </div>
           <div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-gray-500)", marginBottom: "0.5rem", textTransform: "uppercase" }}>Tipe Soal</div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "black", marginBottom: "0.5rem", textTransform: "uppercase" }}>Tipe Soal</div>
             <div style={{ fontSize: "1rem", color: "#1a1a1a" }}>{q.question_type.replace('_', ' ')}</div>
           </div>
         </div>
 
         <div style={{ borderTop: "1px solid #eee", paddingTop: "1.5rem" }}>
-          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-gray-500)", marginBottom: "0.5rem", textTransform: "uppercase" }}>Teks Pertanyaan</div>
+          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "black", marginBottom: "0.5rem", textTransform: "uppercase" }}>Teks Pertanyaan</div>
           <p style={{ fontSize: "1.1rem", lineHeight: 1.6, color: "#1a1a1a", whiteSpace: "pre-wrap", margin: 0 }}>
             {q.question_text || "-"}
           </p>
@@ -64,7 +64,7 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
 
         {(q.question_image_url || q.question_audio_url || q.question_video_url) && (
           <div style={{ borderTop: "1px solid #eee", paddingTop: "1.5rem" }}>
-            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-gray-500)", marginBottom: "0.5rem", textTransform: "uppercase" }}>Media Stimulus</div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "black", marginBottom: "0.5rem", textTransform: "uppercase" }}>Media Stimulus</div>
             <div style={{ padding: "1rem", background: "#f8f9fa", borderRadius: "8px", wordBreak: "break-all", fontSize: "0.9rem", color: "var(--clr-biru)" }}>
               <a href={q.question_image_url || q.question_audio_url || q.question_video_url} target="_blank" rel="noreferrer">
                 {q.question_image_url || q.question_audio_url || q.question_video_url}
@@ -75,7 +75,7 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
 
         {q.options && (
           <div style={{ borderTop: "1px solid #eee", paddingTop: "1.5rem" }}>
-            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-gray-500)", marginBottom: "0.5rem", textTransform: "uppercase" }}>Opsi & Jawaban</div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "black", marginBottom: "0.5rem", textTransform: "uppercase" }}>Opsi & Jawaban</div>
             <pre style={{ background: "#f8f9fa", padding: "1rem", borderRadius: "8px", overflowX: "auto", fontSize: "0.85rem", margin: 0 }}>
               {JSON.stringify({ options: q.options, correct_answer: q.correct_answer }, null, 2)}
             </pre>
@@ -84,7 +84,7 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
 
         {q.explanation && (
           <div style={{ borderTop: "1px solid #eee", paddingTop: "1.5rem" }}>
-            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-gray-500)", marginBottom: "0.5rem", textTransform: "uppercase" }}>Penjelasan</div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "black", marginBottom: "0.5rem", textTransform: "uppercase" }}>Penjelasan</div>
             <p style={{ fontSize: "1rem", lineHeight: 1.5, color: "#1a1a1a", whiteSpace: "pre-wrap", margin: 0 }}>
               {q.explanation}
             </p>

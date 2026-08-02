@@ -515,39 +515,39 @@ export default function SchoolDetailKomunitas({
             <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.1rem", color: "#102e50" }}>Identitas Sekolah</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.9rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
-                <span style={{ color: "#6c757d" }}>Nama Resmi:</span>
+                <span style={{ color: "black" }}>Nama Resmi:</span>
                 <strong style={{ color: "#111827" }}>{school.name}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
-                <span style={{ color: "#6c757d" }}>NPSN:</span>
+                <span style={{ color: "black" }}>NPSN:</span>
                 <strong style={{ color: "#111827" }}>{school.npsn || "-"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
-                <span style={{ color: "#6c757d" }}>Email:</span>
+                <span style={{ color: "black" }}>Email:</span>
                 <strong style={{ color: "#111827" }}>{school.email || "-"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
-                <span style={{ color: "#6c757d" }}>Status:</span>
+                <span style={{ color: "black" }}>Status:</span>
                 <strong style={{ color: "#111827" }}>{school.status_sekolah || "-"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
-                <span style={{ color: "#6c757d" }}>Jenjang:</span>
+                <span style={{ color: "black" }}>Jenjang:</span>
                 <strong style={{ color: "#111827" }}>{school.jenjang_sekolah || "-"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
-                <span style={{ color: "#6c757d" }}>Kepala Sekolah:</span>
+                <span style={{ color: "black" }}>Kepala Sekolah:</span>
                 <strong style={{ color: "#111827" }}>{school.principal_name || "-"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
-                <span style={{ color: "#6c757d" }}>No. Kontak:</span>
+                <span style={{ color: "black" }}>No. Kontak:</span>
                 <strong style={{ color: "#111827" }}>{school.contact_phone || "-"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f8f9fa", paddingBottom: "0.5rem" }}>
-                <span style={{ color: "#6c757d" }}>Alamat:</span>
+                <span style={{ color: "black" }}>Alamat:</span>
                 <strong style={{ color: "#111827", textAlign: "right" }}>{school.address || "-"}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#6c757d" }}>Lokasi:</span>
+                <span style={{ color: "black" }}>Lokasi:</span>
                 <strong style={{ color: "#111827", textAlign: "right" }}>
                   {[school.village, school.district, school.city, school.province].filter(Boolean).join(", ") || "-"}
                 </strong>
@@ -557,7 +557,7 @@ export default function SchoolDetailKomunitas({
 
           <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5", boxShadow: "0 2px 4px rgba(0,0,0,0.03)" }}>
             <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.1rem", color: "#102e50" }}>Status Import Dapodik & Akun</h3>
-            <p style={{ margin: "0 0 1rem 0", fontSize: "0.85rem", color: "#6c757d" }}>
+            <p style={{ margin: "0 0 1rem 0", fontSize: "0.85rem", color: "black" }}>
               Kelola data guru, siswa, kelas dari Dapodik serta unduh kredensial login (akun) sekolah ini.
             </p>
 
@@ -647,7 +647,7 @@ export default function SchoolDetailKomunitas({
           </div>
 
           {filteredTeachers.length === 0 ? (
-            <div style={{ padding: "3rem", textAlign: "center", color: "#6c757d" }}>
+            <div style={{ padding: "3rem", textAlign: "center", color: "black" }}>
               Belum ada guru terdaftar di sekolah ini.
             </div>
           ) : (
@@ -742,7 +742,7 @@ export default function SchoolDetailKomunitas({
           </div>
 
           {filteredStudents.length === 0 ? (
-            <div style={{ padding: "3rem", textAlign: "center", color: "#6c757d" }}>
+            <div style={{ padding: "3rem", textAlign: "center", color: "black" }}>
               Belum ada anak terdaftar yang cocok dengan pencarian / filter ini.
             </div>
           ) : (
@@ -814,7 +814,7 @@ export default function SchoolDetailKomunitas({
           </div>
 
           {classes.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "3rem", color: "#6c757d" }}>
+            <div style={{ textAlign: "center", padding: "3rem", color: "black" }}>
               Belum ada kelas terdaftar di sekolah ini.
             </div>
           ) : (

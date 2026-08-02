@@ -29,7 +29,7 @@ interface PemantikLogoProgressProps {
  *
  * CATATAN PERBAIKAN:
  * Versi sebelumnya pakai SVG <clipPath> bersarang dengan path gelombang
- * kompleks yang di-reference lewat id dinamis — pendekatan itu rapuh
+ * kompleks yang di-reference lewat id dinamis - pendekatan itu rapuh
  * (gampang gagal render "stuck abu-abu" di beberapa kondisi browser/SSR)
  * dan susah di-debug. Versi ini pakai CSS `clip-path: inset()` biasa di
  * elemen langsung (tanpa id-referencing sama sekali), yang jauh lebih
@@ -124,7 +124,7 @@ export default function PemantikLogoProgress({
       </div>
 
       {showLabel && (
-        <span style={{ fontSize: 14, fontWeight: 500, color: "#444441" }}>
+        <span style={{ fontSize: 14, fontWeight: 500, color: "black" }}>
           {Math.round((displayPercent / 100) * max)}/{max} ({Math.round(displayPercent)}%)
         </span>
       )}

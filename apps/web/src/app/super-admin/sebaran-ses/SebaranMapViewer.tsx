@@ -240,9 +240,9 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
       }}>
         <div style={{ fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.5rem" }}>Rata-rata Skor SES</div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span style={{ fontSize: "0.75rem", color: "#666" }}>Rendah</span>
+          <span style={{ fontSize: "0.75rem", color: "black" }}>Rendah</span>
           <div style={{ width: 100, height: 10, background: "linear-gradient(to right, #ff4b4b, #4caf50)", borderRadius: 4 }} />
-          <span style={{ fontSize: "0.75rem", color: "#666" }}>Tinggi</span>
+          <span style={{ fontSize: "0.75rem", color: "black" }}>Tinggi</span>
         </div>
       </div>
       </div>

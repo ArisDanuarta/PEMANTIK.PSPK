@@ -75,7 +75,7 @@ export default async function DaftarSoalPage({
           padding: "0.625rem 1.5rem",
           borderBottom: "1px solid #f1f3f5",
           fontSize: "0.8rem",
-          color: "#6c757d",
+          color: "black",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",

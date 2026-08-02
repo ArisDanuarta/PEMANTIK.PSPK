@@ -57,8 +57,8 @@ export function ResponsiveTable<T>({
               if (col.hideBelow === "md") return null;
               return (
                 <div key={col.key} className="flex flex-col">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{col.header}</span>
-                  <div className="text-sm text-gray-900 mt-1">{col.render(row, index)}</div>
+                  <span className="text-xs font-semibold text-black uppercase tracking-wider">{col.header}</span>
+                  <div className="text-sm text-black mt-1">{col.render(row, index)}</div>
                 </div>
               );
             })}
@@ -77,7 +77,7 @@ export function ResponsiveTable<T>({
             {columns.map((col) => {
               const hiddenClass = col.hideBelow === "lg" ? "max-lg:hidden" : col.hideBelow === "md" ? "max-md:hidden" : "";
               return (
-                <th key={col.key} className={`bg-gray-50 text-gray-500 text-xs font-semibold uppercase tracking-wider p-3 text-left border-b border-gray-200 whitespace-nowrap ${hiddenClass}`}>
+                <th key={col.key} className={`bg-gray-50 text-black text-xs font-semibold uppercase tracking-wider p-3 text-left border-b border-gray-200 whitespace-nowrap ${hiddenClass}`}>
                   {col.header}
                 </th>
               );
@@ -90,7 +90,7 @@ export function ResponsiveTable<T>({
               {columns.map((col) => {
                 const hiddenClass = col.hideBelow === "lg" ? "max-lg:hidden" : col.hideBelow === "md" ? "max-md:hidden" : "";
                 return (
-                  <td key={col.key} className={`p-3 border-b border-gray-100 text-gray-800 align-middle ${hiddenClass}`}>
+                  <td key={col.key} className={`p-3 border-b border-gray-100 text-black align-middle ${hiddenClass}`}>
                     {col.render(row, index)}
                   </td>
                 );

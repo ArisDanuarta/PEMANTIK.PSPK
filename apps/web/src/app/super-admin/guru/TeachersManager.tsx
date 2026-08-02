@@ -229,7 +229,7 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
         <tbody>
           {filteredTeachers.length === 0 ? (
             <tr>
-              <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "#6c757d" }}>
+              <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
                 Tidak ada data guru ditemukan.
               </td>
             </tr>
@@ -239,8 +239,8 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
                 <td><strong>{row.full_name}</strong></td>
                 <td>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                    <div><span style={{ color: "#6c757d" }}>User:</span> <strong>{row.username}</strong></div>
-                    <div><span style={{ color: "#6c757d" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code></div>
+                    <div><span style={{ color: "black" }}>User:</span> <strong>{row.username}</strong></div>
+                    <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code></div>
                   </div>
                 </td>
                 <td>{row.schools?.name || "-"}</td>
@@ -319,11 +319,11 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
                            );
                          })
                        ) : (
-                         <span style={{ fontSize: "0.8rem", color: "#6c757d" }}>Belum ada kelas di sekolah ini.</span>
+                         <span style={{ fontSize: "0.8rem", color: "black" }}>Belum ada kelas di sekolah ini.</span>
                        )}
                      </div>
                   ) : (
-                     <div style={{ padding: "0.75rem", border: "1px dashed #e5e7eb", borderRadius: "0.375rem", fontSize: "0.8rem", color: "#6c757d", textAlign: "center" }}>
+                     <div style={{ padding: "0.75rem", border: "1px dashed #e5e7eb", borderRadius: "0.375rem", fontSize: "0.8rem", color: "black", textAlign: "center" }}>
                         Pilih sekolah terlebih dahulu
                      </div>
                   )}

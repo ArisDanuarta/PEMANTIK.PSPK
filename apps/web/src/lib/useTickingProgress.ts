@@ -20,13 +20,13 @@ interface TickingProgressOptions {
 
 /**
  * Membuat angka "menghitung" naik secara halus (1, 2, 3, 4, 5...) menuju
- * nilai asli terbaru — walaupun nilai asli itu sendiri hanya berubah
+ * nilai asli terbaru - walaupun nilai asli itu sendiri hanya berubah
  * sesekali (per-chunk upload, atau per-poll tiap beberapa detik).
  *
  * Cara kerja: setiap kali nilai asli berubah, hook menghitung kecepatan
  * dari jarak waktu sejak update sebelumnya (delta / waktu berlalu), lalu
  * kecepatan itu DIBATASI supaya proses menghitung tidak lebih cepat dari
- * `minDurationMs` — ini mencegah kasus "0 tiba-tiba jadi selesai" saat
+ * `minDurationMs` - ini mencegah kasus "0 tiba-tiba jadi selesai" saat
  * server ternyata memproses lebih cepat dari perkiraan.
  */
 export function useTickingProgress(

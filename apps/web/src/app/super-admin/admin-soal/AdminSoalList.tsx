@@ -127,8 +127,8 @@ export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] 
       label: "Akun Akses",
       render: (val: any) => (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-          <div><span style={{ color: "#6c757d" }}>User:</span> <strong>{val}</strong></div>
-          <div><span style={{ color: "#6c757d" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code></div>
+          <div><span style={{ color: "black" }}>User:</span> <strong>{val}</strong></div>
+          <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code></div>
         </div>
       )
     },

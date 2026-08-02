@@ -154,7 +154,7 @@ export default function RilisFormClient() {
           }} />
         </div>
         <p style={{ marginTop: "0.75rem", color: "#6b7280", fontSize: "0.85rem" }}>
-          {totalMB > 0 ? `${Math.min(Math.round((uploadedMB / totalMB) * 100), 100)}%` : "0%"} — Mohon tunggu, jangan menutup halaman ini.
+          {totalMB > 0 ? `${Math.min(Math.round((uploadedMB / totalMB) * 100), 100)}%` : "0%"} - Mohon tunggu, jangan menutup halaman ini.
         </p>
       </div>
     );
@@ -226,7 +226,7 @@ export default function RilisFormClient() {
             />
             {file && (
               <p style={{ marginTop: "0.25rem", fontSize: "0.8rem", color: "#6b7280" }}>
-                {file.name} — {(file.size / (1024 * 1024)).toFixed(1)} MB
+                {file.name} - {(file.size / (1024 * 1024)).toFixed(1)} MB
               </p>
             )}
           </div>

@@ -333,7 +333,7 @@ class _QuestionHeaderWidgetState extends ConsumerState<QuestionHeaderWidget> {
               width: double.infinity,
               fit: BoxFit.contain,
               placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-              errorWidget: (context, url, error) => const Center(child: Icon(Icons.broken_image, size: 48, color: Colors.grey)),
+              errorWidget: (context, url, error) => const Center(child: Icon(Icons.broken_image, size: 48, color: Colors.black)),
             ),
           ),
           const SizedBox(height: 24),

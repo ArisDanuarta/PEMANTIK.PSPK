@@ -10,11 +10,11 @@ import {
 } from "@/app/actions/interventions";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// InterventionGraph — PSPK Knowledge Map
+// InterventionGraph - PSPK Knowledge Map
 //
 // CATATAN PENTING PERUBAHAN ARSITEKTUR:
 // Versi sebelumnya memakai d3-force (forceSimulation) untuk menata posisi node.
-// Force simulation TIDAK deterministik — hasil akhirnya tergantung keseimbangan
+// Force simulation TIDAK deterministik - hasil akhirnya tergantung keseimbangan
 // charge/collide/center yang bisa "meledak" (sebagian node numpuk, sebagian
 // terlempar jauh), dan posisi label yang dihitung di setiap tick bisa telat
 // sinkron dengan bentuknya.
@@ -286,7 +286,7 @@ function DrilldownView({
         .attr("data-link-for", n.id);
     });
 
-    // Hub — rounded-rect (senada logogram bubble chat PSPK)
+    // Hub - rounded-rect (senada logogram bubble chat PSPK)
     const hubG = zoomG.append("g").attr("transform", `translate(${CX},${CY})`);
     hubG.append("rect").attr("x", -62).attr("y", -40).attr("width", 124).attr("height", 80).attr("rx", 18)
       .attr("fill", "white").attr("stroke", color).attr("stroke-width", 2.5);
@@ -577,7 +577,7 @@ export default function InterventionGraph() {
     return () => { clusterSelectionRef.current = null; };
   }, [clusters, crossLinks, loadingOverview, selectedTag, overviewRenderKey]);
 
-  // ── Effect 2: filter pencarian — hanya ubah opacity, TIDAK menata ulang posisi ──
+  // ── Effect 2: filter pencarian - hanya ubah opacity, TIDAK menata ulang posisi ──
   useEffect(() => {
     if (!clusterSelectionRef.current) return;
     clusterSelectionRef.current.transition().duration(150)

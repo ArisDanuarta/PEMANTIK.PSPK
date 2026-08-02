@@ -127,7 +127,7 @@ export default function BulkUploadModal({
   const [batchStatus, setBatchStatus] = useState<DapodikBatchStatus | null>(null);
   const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
-  // Angka yang "menghitung" halus, dipakai hanya untuk tampilan —
+  // Angka yang "menghitung" halus, dipakai hanya untuk tampilan -
   // bukan sumber kebenaran progress. Ini yang bikin animasi 1,2,3,4,5...
   // bukan loncat 0 -> 50 sekali sentak.
   const smoothGenericCurrent = useTickingProgress(

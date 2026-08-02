@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     "sekolah",
   ],
   authors: [{ name: "PSPK" }],
-  // Canonical URL — tells Google the authoritative URL for this page
+  // Canonical URL - tells Google the authoritative URL for this page
   alternates: {
     canonical: "/",
   },
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
     siteName: "Pemantik PSPK",
     locale: "id_ID",
     type: "website",
-    // og:image — gambar yang muncul saat link dibagikan di WhatsApp, Twitter, dll.
+    // og:image - gambar yang muncul saat link dibagikan di WhatsApp, Twitter, dll.
     // Path relatif dari metadataBase secara otomatis akan menjadi URL absolut.
     images: [
       {

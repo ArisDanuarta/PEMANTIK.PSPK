@@ -207,7 +207,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "#adb5bd" }}>
+              <tr><td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
                 <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>👨‍🏫</div>
                 {search ? "Tidak ada guru yang cocok." : "Belum ada guru terdaftar di sekolah ini."}
               </td></tr>
@@ -216,10 +216,10 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                 <td><div style={{ fontWeight: 600, color: "#102e50" }}>{t.full_name}</div></td>
                 <td>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                    <div><span style={{ color: "#6c757d" }}>User:</span> <strong>{t.username}</strong></div>
-                    <div><span style={{ color: "#6c757d" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code></div>
+                    <div><span style={{ color: "black" }}>User:</span> <strong>{t.username}</strong></div>
+                    <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code></div>
                   </div>
-                  {t.nip && <div style={{ fontSize: "0.78rem", color: "#6c757d", marginTop: "0.25rem" }}>NIP: {t.nip}</div>}
+                  {t.nip && <div style={{ fontSize: "0.78rem", color: "black", marginTop: "0.25rem" }}>NIP: {t.nip}</div>}
                 </td>
                 <td>
                   {t.classes && t.classes.length > 0 ? (
@@ -228,7 +228,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                         <span key={c.id} style={{ padding: "0.15rem 0.4rem", backgroundColor: "#eff6ff", color: "#1d4ed8", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 500 }}>{c.name}</span>
                       ))}
                     </div>
-                  ) : <span style={{ color: "#adb5bd", fontSize: "0.8rem" }}>-</span>}
+                  ) : <span style={{ color: "black", fontSize: "0.8rem" }}>-</span>}
                 </td>
                 <td style={{ fontSize: "0.85rem" }}>{t.gender === "L" ? "Laki-laki" : t.gender === "P" ? "Perempuan" : "-"}</td>
                 <td><Badge variant={t.is_active ? "success" : "danger"}>{t.is_active ? "Aktif" : "Nonaktif"}</Badge></td>
@@ -295,7 +295,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                         );
                       })
                     ) : (
-                      <span style={{ fontSize: "0.8rem", color: "#6c757d" }}>Belum ada kelas di sekolah ini.</span>
+                      <span style={{ fontSize: "0.8rem", color: "black" }}>Belum ada kelas di sekolah ini.</span>
                     )}
                   </div>
                 </div>
@@ -309,7 +309,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Email (Opsional)</label>
                   <input type="email" name="email" defaultValue={editingTeacher?.email ?? ""} className="form-input" style={{ width: "100%" }} disabled={!!editingTeacher} />
-                  {editingTeacher && <p style={{ fontSize: "0.75rem", color: "#6c757d", marginTop: "0.25rem" }}>Email tidak bisa diubah.</p>}
+                  {editingTeacher && <p style={{ fontSize: "0.75rem", color: "black", marginTop: "0.25rem" }}>Email tidak bisa diubah.</p>}
                 </div>
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Tanggal Lahir *</label>

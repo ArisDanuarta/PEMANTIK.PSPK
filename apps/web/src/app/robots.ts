@@ -28,7 +28,7 @@ export default function robots(): MetadataRoute.Robots {
           "/",        // Root (redirect ke /login)
           "/login",   // Halaman login (halaman publik utama)
         ],
-        // Halaman yang DIBLOKIR dari crawler — halaman internal sistem
+        // Halaman yang DIBLOKIR dari crawler - halaman internal sistem
         disallow: [
           "/super-admin/",
           "/admin-soal/",

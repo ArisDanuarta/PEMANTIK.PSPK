@@ -230,7 +230,7 @@ export default function IntegratedDashboardManager({
                 {
                   key: "no",
                   header: "No",
-                  render: (_, index) => <span className="text-gray-500">{communityStats.indexOf(_) + 1}</span>,
+                  render: (_, index) => <span className="text-black">{communityStats.indexOf(_) + 1}</span>,
                   hideBelow: "md",
                   priority: 0
                 },
@@ -249,13 +249,13 @@ export default function IntegratedDashboardManager({
                 {
                   key: "schools",
                   header: "Jumlah Sekolah",
-                  render: (c) => <span className="font-semibold text-slate-800">{c.schoolsCount.toLocaleString("id-ID")}</span>,
+                  render: (c) => <span className="font-semibold text-black">{c.schoolsCount.toLocaleString("id-ID")}</span>,
                   priority: 1
                 },
                 {
                   key: "teachers",
                   header: "Jumlah Guru",
-                  render: (c) => <span className="font-semibold text-slate-800">{c.teachersCount.toLocaleString("id-ID")}</span>,
+                  render: (c) => <span className="font-semibold text-black">{c.teachersCount.toLocaleString("id-ID")}</span>,
                   hideBelow: "md",
                   priority: 0
                 },

@@ -21,7 +21,7 @@ export default async function EditQuestionPage({ params }: { params: Promise<{ i
     }}>
       <div style={{ flexShrink: 0, marginBottom: "1.5rem", display: "flex", gap: "0.5rem", alignItems: "center" }}>
         <Link href="/admin-soal/soal" style={{ color: "var(--clr-biru)", textDecoration: "none", fontWeight: 600 }}>&larr; Kembali</Link>
-        <span style={{ color: "var(--color-gray-500)" }}>/</span>
+        <span style={{ color: "black" }}>/</span>
         <h1 style={{ margin: 0, fontSize: "1.25rem", color: "#1a1a1a" }}>Edit Soal</h1>
       </div>
 

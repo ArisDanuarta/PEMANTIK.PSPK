@@ -228,7 +228,7 @@ export default function CommunitiesManager({
           <div style={{ fontSize: "0.8rem", color: "#2563eb", fontWeight: 500 }}>
             {row.status_kepemilikan ? `${row.status_kepemilikan}` : ""}
           </div>
-          <div style={{ fontSize: "0.8rem", color: "#6c757d" }}>
+          <div style={{ fontSize: "0.8rem", color: "black" }}>
             {[row.village, row.district, row.city, row.province].filter(Boolean).join(", ") || row.address || "Tidak ada alamat"}
           </div>
         </div>
@@ -239,9 +239,9 @@ export default function CommunitiesManager({
       label: "Akun Akses",
       render: (val: any) => (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-          <div><span style={{ color: "#6c757d" }}>Kode:</span> <code style={{ background: "#f1f3f5", padding: "0.1rem 0.3rem", borderRadius: 4 }}>{String(val)}</code></div>
-          <div><span style={{ color: "#6c757d" }}>User:</span> <strong>admin_{String(val)}</strong></div>
-          <div><span style={{ color: "#6c757d" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code> <span style={{ fontSize: "0.7rem", color: "#adb5bd" }}>(bawaan)</span></div>
+          <div><span style={{ color: "black" }}>Kode:</span> <code style={{ background: "#f1f3f5", padding: "0.1rem 0.3rem", borderRadius: 4 }}>{String(val)}</code></div>
+          <div><span style={{ color: "black" }}>User:</span> <strong>admin_{String(val)}</strong></div>
+          <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code> <span style={{ fontSize: "0.7rem", color: "black" }}>(bawaan)</span></div>
         </div>
       ),
     },
@@ -251,7 +251,7 @@ export default function CommunitiesManager({
       render: (_: any, row: Community) => (
         <div>
           <div style={{ fontWeight: 500 }}>{row.contact_name || "-"}</div>
-          <div style={{ fontSize: "0.75rem", color: "#6c757d" }}>
+          <div style={{ fontSize: "0.75rem", color: "black" }}>
             {row.contact_email ? `${row.contact_email}` : ""}
             {row.contact_phone ? ` • ${row.contact_phone}` : ""}
           </div>
@@ -389,7 +389,7 @@ export default function CommunitiesManager({
               defaultValue={editingComm?.code || ""}
             />
             {!editingComm && (
-              <span style={{ fontSize: "0.75rem", color: "#6c757d", marginTop: "0.25rem" }}>
+              <span style={{ fontSize: "0.75rem", color: "black", marginTop: "0.25rem" }}>
                 Kode ini digunakan sebagai prefix username otomatis dan tidak dapat diubah nanti.
               </span>
             )}
