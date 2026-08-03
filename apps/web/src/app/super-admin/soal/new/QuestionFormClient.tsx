@@ -46,26 +46,27 @@ function MediaField({
     void;
   accept: string; onUpload: (f: File) => void; uploading: boolean;
 }) {
-  // Deteksi tipe berdasarkan accept atau ekstensi URL
-  const isVideoAccept = accept.includes("video");
-  const isAudioAccept = accept.includes("audio") && !accept.includes("video");
-  const isImageAccept = accept.startsWith("image");
+  const isMixedAccept = accept.includes(",");
+  const isVideoAccept = !isMixedAccept && accept.includes("video");
+  const isAudioAccept = !isMixedAccept && accept.includes("audio");
+  const isImageAccept = !isMixedAccept && accept.includes("image");
 
-  // Jika accept campuran (image/*,audio/*,video/*), tebak dari URL
   const lowerUrl = value?.toLowerCase() || "";
   const isVideoUrl = lowerUrl.match(/\.(mp4|webm|ogg|mov|avi|mkv)(\?|$)/);
   const isAudioUrl = lowerUrl.match(/\.(mp3|wav|ogg|aac|m4a|flac)(\?|$)/);
+  const isImageUrl = lowerUrl.match(/\.(jpg|jpeg|png|gif|webp|svg|avif)(\?|$)/);
   const isYouTube = lowerUrl.includes("youtube.com") || lowerUrl.includes("youtu.be");
+  
   const getYtId = (u: string) => {
     const m = u.match(/(?:youtu\.be\/|watch\?v=|embed\/)([^#&?]{11})/);
     return m ? m[1] : null;
   };
   const ytId = value ? getYtId(value) : null;
 
-  const showVideoPreview = value && !uploading && (isVideoAccept || isVideoUrl) && !isYouTube;
-  const showAudioPreview = value && !uploading && (isAudioAccept || (isAudioUrl && !isVideoAccept));
-  const showImagePreview = value && !uploading && (isImageAccept && !isVideoAccept && !isAudioAccept && !isVideoUrl && !isAudioUrl);
-  const showYouTubePreview = value && !uploading && ytId;
+  const showVideoPreview = value && !uploading && !ytId && (isVideoUrl || isVideoAccept);
+  const showAudioPreview = value && !uploading && !ytId && (isAudioUrl || isAudioAccept);
+  const showImagePreview = value && !uploading && !ytId && (isImageUrl || isImageAccept || (!isVideoUrl && !isAudioUrl && !isVideoAccept && !isAudioAccept));
+  const showYouTubePreview = value && !uploading && !!ytId;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
@@ -112,7 +113,7 @@ function MediaField({
         />
       )}
       {showImagePreview && (
-        <img src={value} alt="preview" style={{ maxHeight: "120px", borderRadius: "6px", objectFit: "cover", marginTop: "0.25rem" }} />
+        <img src={value} alt="preview" style={{ maxHeight: "120px", borderRadius: "6px", objectFit: "contain", backgroundColor: "#f0f0f0", marginTop: "0.25rem" }} />
       )}
     </div>
   );
@@ -231,38 +232,51 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
       const res = await getQuestionCategories(subjectArea);
       if (res.success && res.data) {
         setCategories(res.data);
-        if (initialData?.question_levels?.category_id) {
-          setCategoryId(initialData.question_levels.category_id);
-        } else if (res.data.length > 0 && !categoryId) {
-          setCategoryId(res.data[0].id);
-        } else if (res.data.length === 0) {
-          setCategoryId("");
+        
+        let currentCat = categoryId;
+        if (initialData && initialData.subject_area === subjectArea && initialData.question_levels?.category_id) {
+          currentCat = initialData.question_levels.category_id;
         }
+        
+        const isValid = res.data.some((c: any) => c.id === currentCat);
+        if (!isValid) {
+          setCategoryId(res.data.length > 0 ? res.data[0].id : "");
+        } else {
+          setCategoryId(currentCat);
+        }
+        
         if (res.data.length === 0) { setLevels([]); setLevelId(""); }
       }
       setLoadingCategories(false);
     }
     loadCategories();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subjectArea]);
 
   useEffect(() => {
     async function loadLevels() {
-      if (!categoryId) return;
+      if (!categoryId) { setLevels([]); setLevelId(""); return; }
       setLoadingLevels(true);
       const res = await getQuestionLevels(categoryId);
       if (res.success && res.data) {
         setLevels(res.data);
-        if (initialData?.level_id && res.data.find((l: any) => l.id === initialData.level_id)) {
-          setLevelId(initialData.level_id);
-        } else if (res.data.length > 0 && !levelId) {
-          setLevelId(res.data[0].id);
-        } else if (res.data.length === 0) {
-          setLevelId("");
+        
+        let currentLevel = levelId;
+        if (initialData && initialData.question_levels?.category_id === categoryId && initialData.level_id) {
+          currentLevel = initialData.level_id;
+        }
+        
+        const isValid = res.data.some((l: any) => l.id === currentLevel);
+        if (!isValid) {
+          setLevelId(res.data.length > 0 ? res.data[0].id : "");
+        } else {
+          setLevelId(currentLevel);
         }
       }
       setLoadingLevels(false);
     }
     loadLevels();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId]);
 
   // ─── Upload helper ─────────────────────────────────────────────────────────
@@ -455,7 +469,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
               {imgOptions.map((opt, i) => (
                 <div key={i} style={{ border: `2px solid ${i === imgCorrectIndex ? accent : "#e0e0e0"}`, borderRadius: "10px", overflow: "hidden", backgroundColor: i === imgCorrectIndex ? accentBg : "#f8f9fa" }}>
                   {opt.url
-                    ? <img src={opt.url} alt={opt.label || `Opsi ${i + 1}`} style={{ width: "100%", height: "60px", objectFit: "cover", display: "block" }} />
+                    ? <img src={opt.url} alt={opt.label || `Opsi ${i + 1}`} style={{ width: "100%", height: "60px", objectFit: "contain", backgroundColor: "#f0f0f0", display: "block" }} />
                     : <div style={{ height: "60px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", color: "black" }}>Gambar {i + 1}</div>}
                   {opt.label && <div style={{ fontSize: "0.65rem", textAlign: "center", padding: "0.25rem", fontWeight: i === imgCorrectIndex ? 600 : 400 }}>{opt.label}</div>}
                 </div>
@@ -614,7 +628,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
                   {isImage && (
                     <div style={{ borderRadius: "8px", overflow: "hidden", background: "#f0f0f0", flexShrink: 0 }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={mediaUrl} alt="media" style={{ width: "100%", display: "block", maxHeight: "120px", objectFit: "cover" }} />
+                      <img src={mediaUrl} alt="media" style={{ width: "100%", display: "block", maxHeight: "120px", objectFit: "contain", backgroundColor: "#f0f0f0" }} />
                     </div>
                   )}
                   {ytId && (

@@ -171,7 +171,7 @@ function MobilePreview({
                     <img
                       src={question.question_image_url}
                       alt="Stimulus"
-                      style={{ width: "100%", objectFit: "cover", maxHeight: 105, display: "block" }}
+                      style={{ width: "100%", objectFit: "contain", maxHeight: 105, display: "block", backgroundColor: "#f0f0f0" }}
                     />
                   </div>
                 )}
@@ -277,7 +277,7 @@ function MobilePreview({
                     <img
                       src={opt.url}
                       alt={opt.label}
-                      style={{ width: "100%", height: 52, objectFit: "cover", display: "block" }}
+                      style={{ width: "100%", height: 52, objectFit: "contain", display: "block", backgroundColor: "#f0f0f0" }}
                     />
                   ) : (
                     <div

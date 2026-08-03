@@ -46,6 +46,12 @@ export default function QuestionTableClient({
 }: Props) {
   const router = useRouter();
   const [questions, setQuestions] = useState(initialQuestions);
+
+  // Sinkronisasi state lokal dengan prop dari server (penting untuk pagination & filter)
+  React.useEffect(() => {
+    setQuestions(initialQuestions);
+  }, [initialQuestions]);
+
   const { success, error } = useToast();
   const { confirm } = useConfirm();
 

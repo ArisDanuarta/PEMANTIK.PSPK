@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 export interface UsePaginationResult<T> {
   paginatedData: T[];
@@ -13,18 +13,50 @@ export interface UsePaginationResult<T> {
 /**
  * Hook ringan untuk client-side pagination.
  * Otomatis reset ke halaman 1 saat `data` berubah (akibat filter/search).
+ * Menyimpan status halaman di sessionStorage sehingga tidak reset saat tombol Back digunakan.
  */
 export function usePagination<T>(
   data: T[],
   itemsPerPage: number
 ): UsePaginationResult<T> {
   const [currentPage, setCurrentPage] = useState(1);
+  const [isMounted, setIsMounted] = useState(false);
+  const [prevDataLength, setPrevDataLength] = useState(data.length);
 
-  // Reset ke halaman 1 setiap kali panjang data berubah (filter/search)
+  // Restore page dari sessionStorage saat pertama kali mount
   useEffect(() => {
-    setCurrentPage(1);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.length]);
+    if (typeof window !== "undefined") {
+      const key = `pagination_${window.location.pathname}`;
+      const savedPage = window.sessionStorage.getItem(key);
+      if (savedPage) {
+        const parsed = parseInt(savedPage, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          setCurrentPage(parsed);
+        }
+      }
+    }
+    setIsMounted(true);
+  }, []);
+
+  // Reset ke halaman 1 JIKA panjang data benar-benar berubah (user melakukan search/filter)
+  useEffect(() => {
+    if (isMounted && data.length !== prevDataLength) {
+      setCurrentPage(1);
+      setPrevDataLength(data.length);
+      if (typeof window !== "undefined") {
+        const key = `pagination_${window.location.pathname}`;
+        window.sessionStorage.setItem(key, "1");
+      }
+    }
+  }, [data.length, prevDataLength, isMounted]);
+
+  const setPage = useCallback((page: number) => {
+    setCurrentPage(page);
+    if (typeof window !== "undefined") {
+      const key = `pagination_${window.location.pathname}`;
+      window.sessionStorage.setItem(key, page.toString());
+    }
+  }, []);
 
   const totalItems = data.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
@@ -46,7 +78,7 @@ export function usePagination<T>(
     currentPage: safePage,
     totalPages,
     totalItems,
-    setCurrentPage,
+    setCurrentPage: setPage,
     startIndex,
     endIndex,
   };

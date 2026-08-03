@@ -674,6 +674,7 @@ h6 { font-size: 0.875rem; }
 .form-textarea {
   font-family: var(--font-body);
   font-size: 0.875rem;
+  line-height: 1.5;
   padding: 0.625rem 0.875rem;
   border: 1px solid #d1d5db; /* Lighter border */
   border-radius: var(--radius-md);
@@ -682,6 +683,7 @@ h6 { font-size: 0.875rem; }
   width: 100%;
   transition: all var(--duration-fast);
   outline: none;
+  min-height: 44px; /* Mencegah select kempes */
 }
 
 .form-input:hover,
@@ -1010,4 +1012,12 @@ phantom-ui {
   clip: rect(0,0,0,0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Hide time and duration in native media players (WebKit) */
+audio::-webkit-media-controls-current-time-display,
+audio::-webkit-media-controls-time-remaining-display,
+video::-webkit-media-controls-current-time-display,
+video::-webkit-media-controls-time-remaining-display {
+  display: none !important;
 }
