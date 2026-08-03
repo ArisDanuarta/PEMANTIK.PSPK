@@ -98,7 +98,7 @@ class ImageChoiceWidget extends ConsumerWidget {
                         child: url.isNotEmpty
                             ? CachedNetworkImage(
                                 imageUrl: url,
-                                fit: BoxFit.contain,
+                                fit: BoxFit.scaleDown,
                                 width: double.infinity,
                                 placeholder: (context, url) => const Center(
                                   child: CircularProgressIndicator(

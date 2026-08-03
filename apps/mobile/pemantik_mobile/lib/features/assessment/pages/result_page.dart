@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/widgets/pspk_button.dart';
 import '../../../core/router/app_router.dart';
+import 'package:lottie/lottie.dart';
 
 class ResultPage extends StatelessWidget {
   final bool isPassed;
@@ -33,19 +34,15 @@ class ResultPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         // Ikon Status
-                        Container(
-                          width: 96,
-                          height: 96,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isPassed
-                                ? AppColors.sukses.withValues(alpha: 0.12)
-                                : AppColors.kuningEmas.withValues(alpha: 0.12),
-                          ),
-                          child: Icon(
-                            isPassed ? Icons.check_outlined : Icons.refresh_outlined,
-                            color: isPassed ? AppColors.sukses : AppColors.kuningEmas,
-                            size: 48,
+                        SizedBox(
+                          width: 120,
+                          height: 120,
+                          child: Lottie.asset(
+                            isPassed 
+                                ? 'assets/animations/Success.json' 
+                                : 'assets/animations/Failed.json',
+                            repeat: false,
+                            fit: BoxFit.contain,
                           ),
                         ),
                         const SizedBox(height: 32),
@@ -84,7 +81,7 @@ class ResultPage extends StatelessWidget {
                             child: Column(
                               children: [
                                 Text(
-                                  isPassed ? 'Pesan dari Sistem:' : 'Catatan Tambahan:',
+                                  isPassed ? 'Capaian Level:' : 'Catatan Tambahan:',
                                   style: AppTextStyles.bodyMedium.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: isPassed ? AppColors.sukses : AppColors.merahMarun,

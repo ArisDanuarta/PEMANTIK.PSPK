@@ -39,6 +39,11 @@ export default function GenerateSekolahTrialModal({
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const categoryIds = formData.getAll("category_ids");
+    if (categoryIds.length === 0) {
+      error("Gagal", "Pilih minimal 1 paket soal.");
+      return;
+    }
     formData.append("community_id", communityId);
 
     const numTeachers = parseInt(formData.get("num_teachers") as string, 10) || 2;
@@ -253,14 +258,27 @@ export default function GenerateSekolahTrialModal({
 
             <div className="form-group">
               <label className="form-label">Pilih Akses Ujian (Paket Soal)</label>
-              <select name="category_id" className="form-input" required>
-                <option value="">-- Pilih Paket Soal --</option>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.5rem",
+                  maxHeight: "150px",
+                  overflowY: "auto",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "0.375rem",
+                  padding: "0.75rem",
+                  backgroundColor: "#fff",
+                }}
+              >
+                {categories.length === 0 && <span style={{ fontSize: "0.875rem", color: "#64748b" }}>Belum ada paket soal</span>}
                 {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <label key={c.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.875rem" }}>
+                    <input type="checkbox" name="category_ids" value={c.id} style={{ width: "16px", height: "16px" }} />
                     {c.name} ({c.subject_area})
-                  </option>
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
 
             <div

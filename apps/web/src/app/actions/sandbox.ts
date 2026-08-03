@@ -45,12 +45,12 @@ export async function generateSandboxSchoolAction(formData: FormData) {
     const schoolName = (formData.get("school_name") as string)?.trim();
     const numTeachers = parseInt(formData.get("num_teachers") as string, 10);
     const numStudents = parseInt(formData.get("num_students") as string, 10);
-    const categoryId = formData.get("category_id") as string;
+    const categoryIds = formData.getAll("category_ids") as string[];
 
     if (!schoolName) return { success: false, error: "Nama Sekolah wajib diisi." };
     if (isNaN(numTeachers) || numTeachers < 1 || numTeachers > 10) return { success: false, error: "Jumlah Guru harus antara 1 dan 10." };
     if (isNaN(numStudents) || numStudents < 1 || numStudents > 50) return { success: false, error: "Jumlah Siswa per Kelas harus antara 1 dan 50." };
-    if (!categoryId) return { success: false, error: "Pilih Akses Ujian wajib dipilih." };
+    if (!categoryIds || categoryIds.length === 0) return { success: false, error: "Minimal 1 Paket Soal wajib dipilih." };
 
     // Ambil user ID dari JWT cookie (tidak perlu getUser() karena service role tidak punya session)
     const grantedBy = await getCurrentUserId();
@@ -155,15 +155,16 @@ export async function generateSandboxSchoolAction(formData: FormData) {
     }
 
     // ── 4. Panggil RPC untuk simpan semua entitas ke database ──────────────
+    // @ts-ignore - Supabase types require regeneration after DB migration
     const { error: rpcError } = await supabase.rpc("insert_sandbox_school_data", {
       p_community_id: targetCommunityId,
       p_school_id: schoolId,
       p_school_name: schoolName,
-      p_category_id: categoryId,
+      p_category_ids: categoryIds,
       p_granted_by: grantedBy,
       p_users: usersPayload as unknown as import("@pemantik/supabase").Json,
       p_students: studentsPayload as unknown as import("@pemantik/supabase").Json,
-    });
+    } as any);
 
     if (rpcError) {
       await rollbackAuthUsers(supabase, createdAuthIds);

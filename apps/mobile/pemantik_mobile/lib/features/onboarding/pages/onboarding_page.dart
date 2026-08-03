@@ -181,7 +181,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with TickerProv
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: page.textColor,
-                            fontSize: 28,
+                            fontSize: 25,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.2,
                           ),
