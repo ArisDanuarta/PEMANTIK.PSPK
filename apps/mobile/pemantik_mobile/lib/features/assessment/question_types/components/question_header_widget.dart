@@ -265,7 +265,9 @@ class _QuestionHeaderWidgetState extends ConsumerState<QuestionHeaderWidget> {
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: AspectRatio(
-                aspectRatio: 16 / 9,
+                aspectRatio: _isVideoYoutube
+                    ? 16 / 9
+                    : (_videoPlayerController?.value.aspectRatio ?? 16 / 9),
                 child: _isVideoYoutube && _youtubeController != null
                     ? YoutubePlayer(controller: _youtubeController!)
                     : _videoPlayerController != null
@@ -355,14 +357,19 @@ class _QuestionHeaderWidgetState extends ConsumerState<QuestionHeaderWidget> {
           ),
           const SizedBox(height: 24),
         ] else if (imageUrl != null && imageUrl.isNotEmpty) ...[
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: CachedNetworkImage(
-              imageUrl: imageUrl,
-              width: double.infinity,
-              fit: BoxFit.contain,
-              placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-              errorWidget: (context, url, error) => const Center(child: Icon(Icons.broken_image, size: 48, color: Colors.black)),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.5,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
+                width: double.infinity,
+                fit: BoxFit.contain,
+                placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                errorWidget: (context, url, error) => const Center(child: Icon(Icons.broken_image, size: 48, color: Colors.black)),
+              ),
             ),
           ),
           const SizedBox(height: 24),
