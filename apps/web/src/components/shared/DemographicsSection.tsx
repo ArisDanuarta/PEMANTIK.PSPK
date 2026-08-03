@@ -73,8 +73,8 @@ export default function DemographicsSection({
       <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #f1f3f5" }}>
         <h3 style={{ margin: "0 0 0.25rem 0", color: "#102e50", fontSize: "1.1rem" }}>{title}</h3>
         <p style={{ margin: "0 0 1.5rem 0", color: "#6b7280", fontSize: "0.85rem" }}>{description}</p>
-        <div style={{ padding: "2.5rem", textAlign: "center", color: "#9ca3af", backgroundcolor: "black", borderRadius: "0.5rem", border: "1px dashed #dee2e6" }}>
-          Belum ada data demografi anak yang tersedia.
+        <div style={{ padding: "2rem", textAlign: "center", color: "#9ca3af", backgroundColor: "#f9fafb", borderRadius: "0.5rem" }}>
+          Tidak ada data demografi anak yang tersedia.
         </div>
       </div>
     );

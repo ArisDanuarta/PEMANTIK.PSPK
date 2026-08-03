@@ -12,7 +12,12 @@ import {
   bulkCreateStudentsAction,
   bulkDeleteStudentsAction,
 } from "@/app/actions/students";
-import { requestRetakeAction, bulkRequestRetakeAction } from "@/app/actions/retake-requests";
+import { 
+  requestRetakeAction, 
+  bulkRequestRetakeAction, 
+  getSchoolAvailableAssessmentsAction,
+  getCategoryLevelsAction
+} from "@/app/actions/retake-requests";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import Pagination from "@/components/shared/Pagination";
 import { usePagination } from "@/lib/usePagination";
@@ -62,6 +67,15 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [isBulkRetakeModalOpen, setIsBulkRetakeModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<StudentRow | null>(null);
+  
+  // States for Retake dropdowns
+  const [schoolAssessments, setSchoolAssessments] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [selectedPhase, setSelectedPhase] = useState("");
+  const [selectedLevelName, setSelectedLevelName] = useState("");
+  const [isFetchingData, setIsFetchingData] = useState(false);
+
   const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { success: showSuccess, error: showError } = useToast();
@@ -164,19 +178,50 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
     await bulkDeleteStudentsAction(ids);
   };
 
-  const handleOpenRetake = (s: StudentRow) => {
+  const handleOpenRetake = async (s: StudentRow) => {
     setRetakeStudent(s);
     setRetakeReason("");
+    setSelectedCategoryId("");
+    setSelectedPhase("");
+    setSelectedLevelName("");
+    setLevels([]);
     setRetakeModalOpen(true);
+    
+    if (schoolAssessments.length === 0) {
+      setIsFetchingData(true);
+      const res = await getSchoolAvailableAssessmentsAction(schoolId);
+      if (res.success) {
+        setSchoolAssessments(res.data || []);
+      }
+      setIsFetchingData(false);
+    }
+  };
+
+  const handleCategoryChange = async (val: string) => {
+    const [cat, ph] = val.split('|');
+    setSelectedCategoryId(cat || "");
+    setSelectedPhase(ph || "");
+    setSelectedLevelName("");
+    setLevels([]);
+    
+    if (cat) {
+      setIsFetchingData(true);
+      const res = await getCategoryLevelsAction(cat);
+      if (res.success) setLevels(res.data || []);
+      setIsFetchingData(false);
+    }
   };
 
   const handleRequestRetake = async () => {
-    if (!retakeStudent || !retakeReason.trim()) return;
+    if (!retakeStudent || !retakeReason.trim() || !selectedCategoryId || !selectedPhase) return;
     startTransition(async () => {
       const res = await requestRetakeAction({
         schoolId,
         studentId: retakeStudent.id,
         reason: retakeReason,
+        categoryId: selectedCategoryId,
+        phase: selectedPhase,
+        levelName: selectedLevelName,
       });
       if (res.success) {
         showSuccess("Berhasil", res.message ?? "Permintaan dikirim.");
@@ -187,13 +232,34 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
     });
   };
 
+  const handleOpenBulkRetake = async () => {
+    setRetakeReason("");
+    setSelectedCategoryId("");
+    setSelectedPhase("");
+    setSelectedLevelName("");
+    setLevels([]);
+    setIsBulkRetakeModalOpen(true);
+    
+    if (schoolAssessments.length === 0) {
+      setIsFetchingData(true);
+      const res = await getSchoolAvailableAssessmentsAction(schoolId);
+      if (res.success) {
+        setSchoolAssessments(res.data || []);
+      }
+      setIsFetchingData(false);
+    }
+  };
+
   const handleBulkRequestRetake = async () => {
-    if (selectedStudentIds.length === 0 || !retakeReason.trim()) return;
+    if (selectedStudentIds.length === 0 || !retakeReason.trim() || !selectedCategoryId || !selectedPhase) return;
     startTransition(async () => {
       const res = await bulkRequestRetakeAction({
         schoolId,
         studentIds: selectedStudentIds,
         reason: retakeReason,
+        categoryId: selectedCategoryId,
+        phase: selectedPhase,
+        levelName: selectedLevelName,
       });
       if (res.success) {
         showSuccess("Berhasil", res.message ?? "Permintaan ujian ulang masal dikirim.");
@@ -322,6 +388,41 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
             <div style={{ marginBottom: "1rem", fontSize: "0.9rem", color: "#475569" }}>
               Ajukan permintaan ke Superadmin untuk me-reset sesi ujian terakhir <strong>{retakeStudent.full_name}</strong>.
             </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", marginBottom: "1rem" }}>
+              <label style={{ fontSize: "0.85rem", fontWeight: 500, color: "#1e293b" }}>Kategori & Fase Ujian <span style={{ color: "red" }}>*</span></label>
+              <select 
+                className="form-input" 
+                value={`${selectedCategoryId}|${selectedPhase}`}
+                onChange={e => handleCategoryChange(e.target.value)}
+                disabled={isPending || isFetchingData}
+              >
+                <option value="|">- Pilih Kategori -</option>
+                {schoolAssessments.map((sa: any, idx) => (
+                  <option key={idx} value={`${sa.category_id}|${sa.phase}`}>
+                    {sa.question_categories?.name} - {sa.phase}
+                  </option>
+                ))}
+              </select>
+              {isFetchingData && <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>Memuat data akses...</span>}
+            </div>
+
+            {selectedCategoryId && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", marginBottom: "1rem" }}>
+                <label style={{ fontSize: "0.85rem", fontWeight: 500, color: "#1e293b" }}>Level Bermasalah (Opsional)</label>
+                <select 
+                  className="form-input" 
+                  value={selectedLevelName}
+                  onChange={e => setSelectedLevelName(e.target.value)}
+                  disabled={isPending || isFetchingData}
+                >
+                  <option value="">- Tidak Spesifik / Bebas -</option>
+                  {levels.map((lvl: any) => (
+                    <option key={lvl.id} value={`Level ${lvl.level_number}`}>Level {lvl.level_number}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
             <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", marginBottom: "1.25rem" }}>
               <label style={{ fontSize: "0.85rem", fontWeight: 500, color: "#1e293b" }}>Alasan Request <span style={{ color: "red" }}>*</span></label>
               <textarea 
@@ -335,7 +436,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
             </div>
             <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
               <Button type="button" variant="outline" onClick={() => setRetakeModalOpen(false)} disabled={isPending}>Batal</Button>
-              <Button type="button" onClick={handleRequestRetake} disabled={isPending || !retakeReason.trim()} style={{ backgroundColor: "#ca8a04", color: "white" }}>
+              <Button type="button" onClick={handleRequestRetake} disabled={isPending || !retakeReason.trim() || !selectedCategoryId || !selectedPhase} style={{ backgroundColor: "#ca8a04", color: "white" }}>
                 {isPending ? "Mengirim..." : "Kirim Request"}
               </Button>
             </div>
@@ -353,6 +454,41 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
             <div style={{ marginBottom: "1rem", fontSize: "0.9rem", color: "#475569" }}>
               Ajukan permintaan ke Superadmin untuk me-reset sesi ujian terakhir <strong>{selectedStudentIds.length} anak</strong>. Alasan ini akan berlaku untuk semuanya.
             </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", marginBottom: "1rem" }}>
+              <label style={{ fontSize: "0.85rem", fontWeight: 500, color: "#1e293b" }}>Kategori & Fase Ujian <span style={{ color: "red" }}>*</span></label>
+              <select 
+                className="form-input" 
+                value={`${selectedCategoryId}|${selectedPhase}`}
+                onChange={e => handleCategoryChange(e.target.value)}
+                disabled={isPending || isFetchingData}
+              >
+                <option value="|">- Pilih Kategori -</option>
+                {schoolAssessments.map((sa: any, idx) => (
+                  <option key={idx} value={`${sa.category_id}|${sa.phase}`}>
+                    {sa.question_categories?.name} - {sa.phase}
+                  </option>
+                ))}
+              </select>
+              {isFetchingData && <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>Memuat data akses...</span>}
+            </div>
+
+            {selectedCategoryId && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", marginBottom: "1rem" }}>
+                <label style={{ fontSize: "0.85rem", fontWeight: 500, color: "#1e293b" }}>Level Bermasalah (Opsional)</label>
+                <select 
+                  className="form-input" 
+                  value={selectedLevelName}
+                  onChange={e => setSelectedLevelName(e.target.value)}
+                  disabled={isPending || isFetchingData}
+                >
+                  <option value="">- Tidak Spesifik / Bebas -</option>
+                  {levels.map((lvl: any) => (
+                    <option key={lvl.id} value={`Level ${lvl.level_number}`}>Level {lvl.level_number}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", marginBottom: "1.25rem" }}>
               <label style={{ fontSize: "0.85rem", fontWeight: 500, color: "#1e293b" }}>Alasan Request Masal <span style={{ color: "red" }}>*</span></label>
               <textarea 
@@ -366,7 +502,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
             </div>
             <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
               <Button type="button" variant="outline" onClick={() => setIsBulkRetakeModalOpen(false)} disabled={isPending}>Batal</Button>
-              <Button type="button" onClick={handleBulkRequestRetake} disabled={isPending || !retakeReason.trim()} style={{ backgroundColor: "#ca8a04", color: "white" }}>
+              <Button type="button" onClick={handleBulkRequestRetake} disabled={isPending || !retakeReason.trim() || !selectedCategoryId || !selectedPhase} style={{ backgroundColor: "#ca8a04", color: "white" }}>
                 {isPending ? "Mengirim..." : "Kirim Request"}
               </Button>
             </div>
@@ -386,7 +522,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
             <Button size="sm" variant="outline" onClick={handleBulkDelete} style={{ color: "#dc2626", borderColor: "#fca5a5" }}>
               Hapus Terpilih
             </Button>
-            <Button size="sm" onClick={() => { setRetakeReason(""); setIsBulkRetakeModalOpen(true); }} style={{ backgroundColor: "#ca8a04", color: "white" }}>
+            <Button size="sm" onClick={handleOpenBulkRetake} style={{ backgroundColor: "#ca8a04", color: "white" }}>
               Request Ujian Ulang Terpilih
             </Button>
           </div>

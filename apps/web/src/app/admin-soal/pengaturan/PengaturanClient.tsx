@@ -135,7 +135,7 @@ function ReorderModal({ level, onClose }: { level: any, onClose: () => void }) {
                   <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                       {q.question_code && (
-                        <span style={{ fontSize: '0.65rem', fontWeight: 700, backgroundcolor: "black", color: "black", padding: '0.15rem 0.4rem', borderRadius: '4px', flexShrink: 0 }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, backgroundColor: "black", color: "white", padding: '0.15rem 0.4rem', borderRadius: '4px', flexShrink: 0 }}>
                           {q.question_code}
                         </span>
                       )}

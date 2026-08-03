@@ -4,26 +4,24 @@ import { createServerClient } from "@pemantik/supabase";
 import { revalidatePath } from "next/cache";
 import { resetStudentSession } from "./assessment";
 
-export async function requestRetakeAction(data: { sessionId?: string; schoolId: string; studentId: string; reason: string }) {
+export async function requestRetakeAction(data: { categoryId: string; phase: string; schoolId: string; studentId: string; reason: string; levelName?: string }) {
   try {
     const supabase = createServerClient();
     
-    let targetSessionId = data.sessionId;
-    
-    if (!targetSessionId) {
-      const { data: latestSession } = await supabase
-        .from("assessment_sessions")
-        .select("id")
-        .eq("student_id", data.studentId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-        
-      if (!latestSession) {
-        return { success: false, error: "Anak ini belum pernah memulai sesi ujian apapun." };
-      }
-      targetSessionId = latestSession.id;
+    const { data: latestSession } = await supabase
+      .from("assessment_sessions")
+      .select("id")
+      .eq("student_id", data.studentId)
+      .eq("category_id", data.categoryId)
+      .eq("phase", data.phase)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+      
+    if (!latestSession) {
+      return { success: false, error: "Anak ini belum pernah memulai sesi ujian pada paket tersebut." };
     }
+    const targetSessionId = latestSession.id;
 
     // Check if there's already a pending request for this session
     const { data: existingReq } = await (supabase as any)
@@ -37,13 +35,15 @@ export async function requestRetakeAction(data: { sessionId?: string; schoolId: 
       return { success: false, error: "Permintaan ujian ulang untuk sesi ini sudah diajukan dan sedang menunggu persetujuan." };
     }
 
+    const finalReason = data.levelName ? `[Bermasalah di ${data.levelName}] ${data.reason}` : data.reason;
+
     const { error } = await (supabase as any)
       .from("assessment_retake_requests")
       .insert({
         session_id: targetSessionId,
         school_id: data.schoolId,
         student_id: data.studentId,
-        reason: data.reason,
+        reason: finalReason,
         status: "pending"
       });
 
@@ -65,48 +65,22 @@ export async function approveRetakeAction(requestId: string, sessionId: string) 
     
     const { data: reqData, error: reqErr } = await (supabase as any)
       .from("assessment_retake_requests")
-      .select("student_id, school_id")
+      .select("student_id, school_id, session_id")
       .eq("id", requestId)
       .single();
 
     if (reqErr || !reqData) throw new Error("Request not found");
 
-    const { data: schoolData } = await supabase
-      .from("schools")
-      .select("community_id")
-      .eq("id", reqData.school_id)
-      .single();
-
-    const communityId = schoolData?.community_id;
-
-    // Cari fase terakhir (latest assessment_access) untuk sekolah atau komunitas ini
-    const { data: latestAccess } = await supabase
-      .from("assessment_access")
+    const { data: sessionData, error: sessErr } = await supabase
+      .from("assessment_sessions")
       .select("category_id, phase")
-      .in("target_id", [reqData.school_id, communityId].filter(Boolean))
-      .order("created_at", { ascending: false })
-      .limit(1)
+      .eq("id", reqData.session_id)
       .single();
 
-    if (latestAccess) {
-      // Buat hak akses spesifik untuk siswa ini, berlaku 7 hari dari sekarang
-      // Mundurkan validFrom 1 jam untuk menghindari masalah perbedaan jam server (Time Drift) yang menyebabkan RLS error
-      const validFrom = new Date();
-      validFrom.setHours(validFrom.getHours() - 1);
-      
-      const validUntil = new Date();
-      validUntil.setDate(validUntil.getDate() + 7);
+    if (sessErr || !sessionData) throw new Error("Session not found");
 
-      await supabase.from("assessment_access").insert({
-        target_type: "student",
-        target_id: reqData.student_id,
-        category_id: latestAccess.category_id,
-        phase: latestAccess.phase || "Tahap 1",
-        is_active: true,
-        valid_from: validFrom.toISOString(),
-        valid_until: validUntil.toISOString(),
-      });
-    }
+    // Sesuai requirement, kita HAPUS pembuatan access_access secara individu (perpanjangan masa aktif).
+    // Sesi baru akan secara natural terikat dengan tanggal kadaluarsa dari paket/fase yang sedang aktif bagi sekolah.
 
     const { error: updateErr } = await (supabase as any)
       .from("assessment_retake_requests")
@@ -147,7 +121,7 @@ export async function rejectRetakeAction(requestId: string) {
   }
 }
 
-export async function bulkRequestRetakeAction(data: { schoolId: string; studentIds: string[]; reason: string }) {
+export async function bulkRequestRetakeAction(data: { schoolId: string; studentIds: string[]; reason: string; categoryId: string; phase: string; levelName?: string }) {
   try {
     const supabase = createServerClient();
     
@@ -158,6 +132,8 @@ export async function bulkRequestRetakeAction(data: { schoolId: string; studentI
         .from("assessment_sessions")
         .select("id")
         .eq("student_id", studentId)
+        .eq("category_id", data.categoryId)
+        .eq("phase", data.phase)
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
@@ -176,13 +152,15 @@ export async function bulkRequestRetakeAction(data: { schoolId: string; studentI
 
       if (existingReq) continue;
 
+      const finalReason = data.levelName ? `[Bermasalah di ${data.levelName}] ${data.reason}` : data.reason;
+
       const { error } = await (supabase as any)
         .from("assessment_retake_requests")
         .insert({
           session_id: targetSessionId,
           school_id: data.schoolId,
           student_id: studentId,
-          reason: data.reason,
+          reason: finalReason,
           status: "pending"
         });
 
@@ -205,45 +183,21 @@ export async function bulkApproveRetakeAction(requests: { id: string; sessionId:
     for (const req of requests) {
       const { data: reqData, error: reqErr } = await (supabase as any)
         .from("assessment_retake_requests")
-        .select("student_id, school_id")
+        .select("student_id, school_id, session_id")
         .eq("id", req.id)
         .single();
 
       if (reqErr || !reqData) continue;
 
-      const { data: schoolData } = await supabase
-        .from("schools")
-        .select("community_id")
-        .eq("id", reqData.school_id)
-        .single();
-
-      const communityId = schoolData?.community_id;
-
-      // Cari fase terakhir (latest assessment_access) untuk sekolah atau komunitas ini
-      const { data: latestAccess } = await supabase
-        .from("assessment_access")
+      const { data: sessionData, error: sessErr } = await supabase
+        .from("assessment_sessions")
         .select("category_id, phase")
-        .in("target_id", [reqData.school_id, communityId].filter(Boolean))
-        .order("created_at", { ascending: false })
-        .limit(1)
+        .eq("id", reqData.session_id)
         .single();
 
-      if (latestAccess) {
-        const validFrom = new Date();
-        validFrom.setHours(validFrom.getHours() - 1);
-        const validUntil = new Date();
-        validUntil.setDate(validUntil.getDate() + 7);
+      if (sessErr || !sessionData) continue;
 
-        await supabase.from("assessment_access").insert({
-          target_type: "student",
-          target_id: reqData.student_id,
-          category_id: latestAccess.category_id,
-          phase: latestAccess.phase || "Tahap 1",
-          is_active: true,
-          valid_from: validFrom.toISOString(),
-          valid_until: validUntil.toISOString(),
-        });
-      }
+      // Sesuai requirement, tidak perlu insert ke assessment_access untuk individu
 
       const { error: updateErr } = await (supabase as any)
         .from("assessment_retake_requests")
@@ -280,5 +234,66 @@ export async function bulkRejectRetakeAction(requestIds: string[]) {
   } catch (err: any) {
     console.error("bulkRejectRetakeAction error:", err);
     return { success: false, error: "Gagal menolak ujian ulang masal." };
+  }
+}
+
+export async function getStudentSessionsForRetakeAction(studentId: string) {
+  try {
+    const supabase = createServerClient();
+    const { data, error } = await supabase
+      .from("assessment_sessions")
+      .select("id, phase, category_id, status, created_at, question_categories(name)")
+      .eq("student_id", studentId)
+      .order("created_at", { ascending: false });
+    
+    if (error) throw error;
+    return { success: true, data };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function getSchoolAvailableAssessmentsAction(schoolId: string) {
+  try {
+    const supabase = createServerClient();
+    const { data, error } = await supabase
+      .from("assessment_access")
+      .select("phase, category_id, question_categories(name)")
+      .eq("target_type", "school")
+      .eq("target_id", schoolId)
+      .eq("is_active", true);
+
+    if (error) throw error;
+    
+    // Deduplikasi berdasar category_id & phase
+    const uniqueMap = new Map();
+    data?.forEach(item => {
+      const key = `${item.category_id}-${item.phase}`;
+      if (!uniqueMap.has(key)) uniqueMap.set(key, item);
+    });
+    
+    return { success: true, data: Array.from(uniqueMap.values()) };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function getCategoryLevelsAction(categoryId: string) {
+  try {
+    const supabase = createServerClient();
+    const { data, error } = await supabase
+      .from("question_levels")
+      .select("id, level_number")
+      .eq("category_id", categoryId)
+      .order("level_number", { ascending: true });
+
+    if (error) {
+      console.error("Error getCategoryLevelsAction:", error);
+      throw error;
+    }
+    console.log("getCategoryLevelsAction data:", data);
+    return { success: true, data };
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
 }

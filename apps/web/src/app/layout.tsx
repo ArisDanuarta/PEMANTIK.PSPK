@@ -48,10 +48,6 @@ export const metadata: Metadata = {
     google: "YxPpuVS3AlmNs0ZRi47tzcyx2jU_YwrXlh9bN1dfERg",
   },
 
-  verification: {
-    google: "YxPpuVS3AlmNs0ZRi47tzcyx2jU_YwrXlh9bN1dfERg",
-  },
-
   title: {
     default: "Pemantik – Platform Asesmen Literasi & Numerasi",
     template: "%s | Pemantik PSPK",
