@@ -259,7 +259,8 @@ function buildRawSheetCommunity(
       let scoreVal: string | number = "-";
       if (ansObj) {
         if (ansObj.answer_data || ansObj.is_correct !== null) {
-          scoreVal = formatExportAnswer(ansObj.answer_data, ansObj.is_correct);
+          // Isi dengan 1 untuk benar, 0 untuk salah
+          scoreVal = ansObj.is_correct === true ? 1 : 0;
         }
       }
       
@@ -658,15 +659,17 @@ export async function GET(request: Request) {
     const ln = levelMap.get(q.level_id) ?? 0;
     levelCounts[ln] = (levelCounts[ln] ?? 0) + 1;
     questionIndexMap.set(q.id, questionHeaders.length);
-    questionHeaders.push(q.question_code || `[Level ${ln}] Soal ${levelCounts[ln]}`);
+    // Gunakan kode soal sebagai header
+    questionHeaders.push(q.question_code || `Soal-${levelCounts[ln]}`);
   });
 
   // Map jawaban per sesi dan soal (1 = benar, 0 = salah) untuk matriks di Sheet 2
-  const answerMatrixMap = new Map<string, Map<string, string>>();
+  const answerMatrixMap = new Map<string, Map<string, string | number>>();
   answers.forEach((ans) => {
     if (!ans.session_id || !ans.question_id) return;
     if (!answerMatrixMap.has(ans.session_id)) answerMatrixMap.set(ans.session_id, new Map());
-    const val = formatExportAnswer(ans.answer_data, ans.is_correct);
+    // Isi dengan 1 untuk benar, 0 untuk salah sesuai permintaan user
+    const val = ans.is_correct === true ? 1 : 0;
     answerMatrixMap.get(ans.session_id)!.set(ans.question_id, val);
   });
 

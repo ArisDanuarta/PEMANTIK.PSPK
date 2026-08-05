@@ -1173,7 +1173,7 @@ export async function importDapodikAction(
             message: `Import Dapodik menambahkan ${uniqueNewSes.length} indikator SES baru (skor belum ditentukan). Silakan atur bobotnya di Pengaturan SES agar skor siswa bisa dihitung.`,
             type: "warning",
           }));
-          (supabase as any).from("notifications").insert(notifications)
+          (adminSupabase as any).from("notifications").insert(notifications)
             .then(() => {}).catch(() => {}); 
         }
       }

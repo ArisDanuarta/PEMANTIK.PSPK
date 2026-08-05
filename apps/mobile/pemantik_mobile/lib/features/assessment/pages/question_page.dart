@@ -56,12 +56,29 @@ class _QuestionPageState extends ConsumerState<QuestionPage> {
       ).select((s) => s.value?.isTimeUp),
       (prev, next) async {
         if (next == true) {
+          // Tampilkan loading dialog agar user tidak bisa interaksi saat disubmit paksa
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const Center(
+              child: CircularProgressIndicator(color: AppColors.kuningEmas),
+            ),
+          );
+
+          final isPassed = await ref
+              .read(assessmentControllerProvider(widget.sessionId).notifier)
+              .submitAssessment(widget.sessionId, forced: true);
+
+          if (context.mounted) {
+            Navigator.of(context).pop(); // Tutup loading dialog
+          }
+
           final db = ref.read(databaseProvider);
           final session = await db.sessionDao.getSessionById(widget.sessionId);
           String? customMessage;
           if (session != null && session.levelId != null) {
             final level = await db.levelDao.getLevelById(session.levelId!);
-            customMessage = level?.failureMessage;
+            customMessage = isPassed ? level?.successMessage : level?.failureMessage;
           }
           
           if (context.mounted) {
@@ -69,7 +86,7 @@ class _QuestionPageState extends ConsumerState<QuestionPage> {
               AppRouter.resultPage,
               (_) => false,
               arguments: {
-                'isPassed': false, // Default isPassed to false on timeout
+                'isPassed': isPassed,
                 'customMessage': customMessage,
               },
             );

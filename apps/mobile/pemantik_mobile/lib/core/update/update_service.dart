@@ -112,9 +112,12 @@ class UpdateService {
                 child: const Text('Unduh Sekarang'),
                 onPressed: () async {
                   final url = Uri.parse(release.downloadUrl);
-                  if (await canLaunchUrl(url)) {
+                  try {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
+                  } catch (e) {
+                    debugPrint('Gagal membuka URL: $e');
                   }
+                  
                   // Jika tidak mandatory, biarkan mereka menutup popup setelah klik
                   if (!release.isMandatory) {
                     if (context.mounted) Navigator.of(context).pop();

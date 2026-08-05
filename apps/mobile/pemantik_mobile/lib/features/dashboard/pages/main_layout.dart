@@ -3,7 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import 'dashboard_page.dart';
 import '../../profile/pages/profile_page.dart';
 import '../../assessment/pages/assessment_history_page.dart';
-
+import 'package:flutter/services.dart';
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
 
@@ -13,6 +13,7 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
+  DateTime? _lastPressedAt;
 
   final List<Widget> _pages = const [
     DashboardPage(),
@@ -22,10 +23,33 @@ class _MainLayoutState extends State<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: IndexedStack(index: _currentIndex, children: _pages),
-      bottomNavigationBar: Container(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        
+        final now = DateTime.now();
+        if (_lastPressedAt == null || 
+            now.difference(_lastPressedAt!) > const Duration(seconds: 2)) {
+          _lastPressedAt = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Tekan kembali sekali lagi untuk keluar', style: TextStyle(color: Colors.white)),
+              backgroundColor: AppColors.birNavy,
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        } else {
+          // Keluar dari aplikasi
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: IndexedStack(index: _currentIndex, children: _pages),
+        bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.border, width: 1)),
         ),
@@ -85,6 +109,7 @@ class _MainLayoutState extends State<MainLayout> {
           ],
         ),
       ),
+    ),
     );
   }
 }

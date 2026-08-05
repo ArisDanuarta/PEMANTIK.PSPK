@@ -171,7 +171,7 @@ export function Sidebar({ role, roleName, userName, sections }: SidebarProps) {
             }}
           />
           <Image
-            src="/images/SIDEBAR_MINI.PNG"
+            src="/images/SIDEBAR_MINI.png"
             alt="Logo PSPK Mini"
             fill
             sizes="64px"
@@ -325,12 +325,13 @@ export function Sidebar({ role, roleName, userName, sections }: SidebarProps) {
               {roleName}
             </div>
           </div>
-          {/* Notification Bell - Hide label if inside it has one, but it is just a bell icon */}
+          {/* Notification Bell - Selalu tampilkan meski sidebar diminimize agar user tetap bisa cek notif */}
           <div style={{
-            opacity: isCollapsed ? 0 : 1,
-            maxWidth: isCollapsed ? 0 : 32,
-            overflow: "hidden",
-            transition: "opacity 200ms ease, max-width 300ms ease",
+            opacity: 1,
+            maxWidth: 32,
+            overflow: "visible", // Biarkan counter badge bisa terlihat penuh
+            transition: "all 200ms ease",
+            marginTop: isCollapsed ? "0.25rem" : "0", // Jarak sedikit dari ikon profil saat collapse
           }}>
             <NotificationBell />
           </div>
