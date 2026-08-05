@@ -14,108 +14,204 @@ class ResultPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: Container(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const SizedBox(height: 20),
-
-                    // --- BAGIAN TENGAH ---
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Ikon Status
-                        SizedBox(
-                          width: 120,
-                          height: 120,
-                          child: Lottie.asset(
-                            isPassed 
-                                ? 'assets/animations/Success.json' 
-                                : 'assets/animations/Failed.json',
-                            repeat: false,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Teks Konfirmasi
-                        Text(
-                          isPassed ? 'Bagus Sekali!' : 'Belum Tepat',
-                          style: AppTextStyles.heading1,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isPassed
+                ? [
+                    AppColors.kuningEmas.withValues(alpha: 0.2),
+                    AppColors.background
+                  ]
+                : [
+                    const Color(0xFFE0E6ED),
+                    Colors.white,
+                  ],
+          ),
+        ),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: Container(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // --- Animasi ---
+                      SizedBox(
+                        width: 200,
+                        height: 200,
+                        child: Lottie.asset(
                           isPassed
-                              ? 'Kamu sudah menyelesaikan asesmen ini dengan sangat baik. Jawabanmu sudah dikirim ke guru.'
-                              : 'Tidak apa-apa, tetap semangat! Kamu bisa mempelajarinya lagi nanti.',
-                          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
-                          textAlign: TextAlign.center,
+                              ? 'assets/animations/Success.json'
+                              : 'assets/animations/Failed.json',
+                          repeat: false,
+                          fit: BoxFit.contain,
                         ),
-                        if (customMessage != null && customMessage!.isNotEmpty) ...[
-                          const SizedBox(height: 24),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: isPassed 
-                                  ? AppColors.sukses.withValues(alpha: 0.1)
-                                  : AppColors.merahMarun.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isPassed 
-                                    ? AppColors.sukses.withValues(alpha: 0.3)
-                                    : AppColors.merahMarun.withValues(alpha: 0.3),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // --- Judul ---
+                      Text(
+                        isPassed ? 'Bagus Sekali!' : 'Belum Tepat',
+                        style: AppTextStyles.heading1.copyWith(
+                          color: AppColors.primary,
+                          fontSize: 32,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // --- Kartu Info ---
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryContainer.withValues(alpha: 0.08),
+                              blurRadius: 30,
+                              offset: const Offset(0, 8),
+                            )
+                          ],
+                          border: isPassed
+                              ? null
+                              : Border.all(
+                                  color: AppColors.surfaceVariant.withValues(alpha: 0.3),
+                                ),
+                        ),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            // Accent Graphic (Flame Motif)
+                            Positioned(
+                              top: -40,
+                              right: -40,
+                              child: Transform.rotate(
+                                angle: isPassed ? 0 : 0.2, // ~12 degrees
+                                child: Icon(
+                                  Icons.local_fire_department,
+                                  size: 120,
+                                  color: isPassed
+                                      ? AppColors.kuningEmas.withValues(alpha: 0.2)
+                                      : AppColors.surfaceTint.withValues(alpha: 0.1),
+                                ),
                               ),
                             ),
-                            child: Column(
+                            // Isi Kartu
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Text(
-                                  isPassed ? 'Capaian Level:' : 'Catatan Tambahan:',
-                                  style: AppTextStyles.bodyMedium.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: isPassed ? AppColors.sukses : AppColors.merahMarun,
+                                if (isPassed) ...[
+                                  Text(
+                                    'CAPAIAN LEVEL',
+                                    style: AppTextStyles.labelMedium.copyWith(
+                                      color: AppColors.onSurfaceVariant,
+                                      letterSpacing: 2,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  customMessage!,
-                                  style: AppTextStyles.bodyMedium,
-                                  textAlign: TextAlign.center,
-                                ),
+                                  const SizedBox(height: 8),
+                                  if (customMessage != null && customMessage!.isNotEmpty)
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.star, color: AppColors.kuningEmas),
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: Text(
+                                            customMessage!,
+                                            style: AppTextStyles.heading2.copyWith(
+                                              color: AppColors.primary,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Icon(Icons.star, color: AppColors.kuningEmas),
+                                      ],
+                                    ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Luar biasa! Kamu telah menyelesaikan penilaian ini dengan sangat baik. Terus pertahankan semangat belajarmu!',
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: AppColors.onSurfaceVariant,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ] else ...[
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.lightbulb, color: AppColors.jingga),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Catatan Belajar',
+                                        style: AppTextStyles.heading2.copyWith(
+                                          color: AppColors.jingga,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    (customMessage != null && customMessage!.isNotEmpty)
+                                        ? customMessage!
+                                        : 'Tidak apa-apa, setiap kesalahan adalah proses belajar. Jangan menyerah, ayo coba pelajari materinya lagi!',
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: AppColors.onSurfaceVariant,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ],
                             ),
-                          ),
-                        ],
-                      ],
-                    ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 48),
 
-                    // --- BAGIAN BAWAH ---
-                    Padding(
-                      padding: const EdgeInsets.only(top: 32.0),
-                      child: PspkButton(
-                        label: 'Kembali ke Beranda',
-                        fullWidth: true,
+                      // --- Tombol Kembali ---
+                      ElevatedButton(
                         onPressed: () {
                           Navigator.of(
                             context,
                           ).pushNamedAndRemoveUntil(AppRouter.home, (_) => false);
                         },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.onPrimary,
+                          minimumSize: const Size(double.infinity, 56),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(100), // rounded-full
+                          ),
+                          elevation: 8,
+                          shadowColor: AppColors.primaryContainer.withValues(alpha: 0.3),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.home, size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Kembali ke Beranda',
+                              style: AppTextStyles.labelLarge.copyWith(color: Colors.white),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
