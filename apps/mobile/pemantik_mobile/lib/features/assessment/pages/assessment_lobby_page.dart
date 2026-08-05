@@ -8,8 +8,6 @@ import 'package:uuid/uuid.dart';
 import '../../../core/database/database.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../shared/widgets/pspk_button.dart';
-import '../../../shared/widgets/pspk_dialog.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/supabase/supabase_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -42,17 +40,23 @@ class AssessmentLobbyPage extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<AssessmentLobbyPage> createState() =>
-      _AssessmentLobbyPageState();
+  ConsumerState<AssessmentLobbyPage> createState() => _AssessmentLobbyPageState();
 }
 
 class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
   final _accessCodeController = TextEditingController();
+  
+  bool _showTimeLockError = false;
+  String _timeLockErrorTitle = '';
+  String _timeLockErrorMsg = '';
+  bool _showConfirmation = false;
+  List<String> _questionTypes = [];
+  bool _isLoadingTypes = true;
 
   @override
   void initState() {
     super.initState();
-    // Mulai download media di background segera saat lobby dibuka
+    _loadQuestionTypes();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final dlState = ref.read(mediaDownloadServiceProvider);
       if (!dlState.isDownloading && !dlState.isDone) {
@@ -61,10 +65,62 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
     });
   }
 
+  Future<void> _loadQuestionTypes() async {
+    final db = ref.read(databaseProvider);
+    try {
+      final questions = await (db.select(db.localQuestions)
+            ..where((t) => t.levelId.equals(widget.levelId)))
+          .get();
+      
+      final rawTypes = questions.map((q) => q.questionType).toSet().toList();
+      
+      final mappedTypes = rawTypes.map((type) {
+        switch (type) {
+          case 'multiple_choice': return 'Pilihan Ganda';
+          case 'image_choice': return 'Pilihan Gambar';
+          case 'audio_question': return 'Soal Audio';
+          case 'video_question': return 'Soal Video';
+          case 'drag_drop': return 'Drag & Drop';
+          case 'voice_recording': return 'Voice Recording';
+          default: return 'Lainnya';
+        }
+      }).toList();
+      
+      if (mounted) {
+        setState(() {
+          _questionTypes = mappedTypes;
+          _isLoadingTypes = false;
+        });
+      }
+    } catch (e) {
+      log('Error loading question types: $e');
+      if (mounted) {
+        setState(() {
+          _questionTypes = ['Campuran'];
+          _isLoadingTypes = false;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _accessCodeController.dispose();
     super.dispose();
+  }
+
+  void _showErrorOverlay(String title, String message) {
+    setState(() {
+      _timeLockErrorTitle = title;
+      _timeLockErrorMsg = message;
+      _showTimeLockError = true;
+    });
+  }
+
+  void _hideErrorOverlay() {
+    setState(() {
+      _showTimeLockError = false;
+    });
   }
 
   void _startSession() async {
@@ -74,29 +130,17 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
     final studentStr = await secureStorage.read(key: 'student_data');
     final student = jsonDecode(studentStr!);
 
-    // Membuat Session ID yang unik dengan standar UUIDv4
     final sessionId = const Uuid().v4();
 
-    // ── Minggu 2: ambil access_id dari cache lokal ────────────────────────
-    // CategoryDao menyimpan access_id dari assessment_access saat sync
-    final localCategory = await db.categoryDao.getCategoryById(
-      widget.categoryId,
-    );
+    final localCategory = await db.categoryDao.getCategoryById(widget.categoryId);
     final accessId = localCategory?.accessId;
 
     if (accessId == null) {
-      log(
-        'PERINGATAN: access_id tidak ditemukan untuk categoryId=${widget.categoryId}. '
-        'Pastikan sync sudah berjalan. Sesi tetap dibuat tanpa access_id (backward compat).',
-      );
+      log('PERINGATAN: access_id tidak ditemukan. Sesi tetap dibuat tanpa access_id.');
     }
-    // ── Minggu 2: Online Check (Force Insert ke Supabase) ──────────────
-    // Ini adalah 'best implementation' untuk mencegah sesi tersangkut jika
-    // dikerjakan offline namun akses ditarik (dicabut) di server.
+
     bool canProceed = true;
     try {
-      // Coba INSERT langsung ke Supabase. RLS akan memvalidasi is_active
-      // secara real-time di server.
       await SupabaseConfig.client.from('assessment_sessions').insert({
         'id': sessionId,
         'student_id': student['id'],
@@ -112,30 +156,16 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
       });
       log('Berhasil INSERT sesi ke Supabase secara real-time.');
     } catch (e) {
-      log('Gagal membuat sesi di server (RLS / Jaringan): $e');
+      log('Gagal membuat sesi di server: $e');
       if (e is PostgrestException && e.code == '42501') {
-        // 42501 adalah RLS Violation (Akses Dicabut atau Kedaluwarsa)
         canProceed = false;
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Akses asesmen ini telah ditutup atau dicabut oleh Admin.',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
+          _showErrorOverlay('Akses Ditolak', 'Akses asesmen ini telah ditutup atau dicabut oleh Admin.');
         }
-      } else {
-        // Error jaringan (Offline).
-        // Sebagai aplikasi offline-first, kita tetap mengizinkan lanjut,
-        // namun risiko sesi ditolak saat sync later tetap ada.
-        log('Aplikasi offline, sesi akan disinkronisasikan nanti.');
       }
     }
 
     if (!canProceed) return;
-    // ──────────────────────────────────────────────────────────────────────
 
     await db.sessionDao.createSession(
       LocalSessionsCompanion(
@@ -146,7 +176,6 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
         levelId: drift.Value(widget.levelId),
         startedAt: drift.Value(DateTime.now()),
         createdAt: drift.Value(DateTime.now()),
-        // Minggu 2: bind sesi ke akses ujian + track level awal
         accessId: drift.Value(accessId),
         currentLevelId: drift.Value(widget.levelId),
         phase: drift.Value(localCategory?.phase ?? 'Tahap 1'),
@@ -154,414 +183,521 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
     );
 
     if (mounted) {
-      Navigator.of(
-        context,
-      ).pushReplacementNamed(AppRouter.questionPage, arguments: sessionId);
+      Navigator.of(context).pushReplacementNamed(AppRouter.questionPage, arguments: sessionId);
     }
   }
 
-  void _promptAccessCode() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+  void _onMulaiPressed() async {
+    final db = ref.read(databaseProvider);
+    final cats = await (db.select(db.localCategories)..where((t) => t.id.equals(widget.categoryId))).get();
+    
+    if (cats.isNotEmpty) {
+      final cat = cats.first;
+      final now = DateTime.now();
+      
+      if (cat.validUntil != null && now.isAfter(cat.validUntil!)) {
+        _showErrorOverlay('Asesmen Berakhir', 'Maaf, waktu pengerjaan untuk asesmen ini sudah berakhir.');
+        return;
+      }
+      if (cat.validFrom != null && now.isBefore(cat.validFrom!)) {
+        _showErrorOverlay('Belum Dimulai', 'Asesmen ini belum bisa dimulai sekarang.');
+        return;
+      }
+    }
+
+    if (widget.accessCode != null && widget.accessCode!.isNotEmpty) {
+      if (_accessCodeController.text.trim() != widget.accessCode) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kode akses salah atau kosong!'),
+            backgroundColor: AppColors.error,
           ),
-          title: Text('Masukkan Kode Akses', style: AppTextStyles.heading2),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Level ini dilindungi dengan kode akses. Silakan minta kode dari guru/admin.',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textMuted,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _accessCodeController,
-                decoration: InputDecoration(
-                  hintText: 'Kode Akses',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.birNavy),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Batal',
-                style: AppTextStyles.buttonText.copyWith(
-                  color: AppColors.textMuted,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (_accessCodeController.text.trim() == widget.accessCode) {
-                  Navigator.pop(context);
-                  _startSession();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Kode akses salah!'),
-                      backgroundColor: AppColors.merahMarun,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.birNavy,
-              ),
-              child: const Text('Mulai'),
-            ),
-          ],
         );
-      },
-    );
+        return;
+      }
+    }
+
+    setState(() {
+      _showConfirmation = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final minutes = widget.timeLimitSec ~/ 60;
+    bool requiresCode = widget.accessCode != null && widget.accessCode!.isNotEmpty;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        leading: const BackButton(color: AppColors.birNavy),
-        title: const SizedBox.shrink(),
-      ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: Container(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // --- BAGIAN ATAS ---
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Persiapan Level ${widget.levelNumber}',
-                          style: AppTextStyles.heading1,
-                        ),
-                        const SizedBox(height: 24),
-
-                        _InfoRow(
-                          icon: Icons.timer_outlined,
-                          label: 'Waktu Maksimal: $minutes Menit',
-                        ),
-                        _InfoRow(
-                          icon: Icons.library_books_outlined,
-                          label: 'Jumlah Soal: ${widget.totalQuestions}',
-                        ),
-                        if (widget.accessCode != null &&
-                            widget.accessCode!.isNotEmpty)
-                          const _InfoRow(
-                            icon: Icons.lock_outline,
-                            label: 'Membutuhkan Kode Akses',
-                          ),
-
-                        const SizedBox(height: 24),
-                        const Divider(color: AppColors.border),
-                        const SizedBox(height: 16),
-
-                        if (widget.learningObjective != null &&
-                            widget.learningObjective!.isNotEmpty) ...[
-                          Text(
-                            'Capaian Belajar:',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.learningObjective!,
-                            style: AppTextStyles.bodyMedium,
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.birNavyMuda,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(
-                                Icons.info_outline,
-                                color: AppColors.birTeal,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Kerjakan semua soal dengan teliti. Kamu tidak bisa kembali ke soal sebelumnya.',
-                                  style: AppTextStyles.bodyMedium,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // --- BAGIAN BAWAH ---
-                    Padding(
-                      padding: const EdgeInsets.only(top: 24.0),
-                      child: Column(
-                        children: [
-                          // Widget status download media
-                          _MediaDownloadStatusWidget(),
-                          const SizedBox(height: 16),
-                          PspkButton(
-                            label: 'Mulai Sekarang',
-                            fullWidth: true,
-                            onPressed: () async {
-                              final db = ref.read(databaseProvider);
-                              final cats =
-                                  await (db.select(db.localCategories)..where(
-                                        (t) => t.id.equals(widget.categoryId),
-                                      ))
-                                      .get();
-                              if (cats.isNotEmpty) {
-                                final cat = cats.first;
-                                final now = DateTime.now();
-                                if (cat.validUntil != null &&
-                                    now.isAfter(cat.validUntil!)) {
-                                  if (context.mounted) {
-                                    showPspkDialog(
-                                      context,
-                                      title: 'Akses Berakhir',
-                                      message:
-                                          'Maaf, waktu pengerjaan untuk asesmen ini sudah berakhir.',
-                                      isError: true,
-                                      confirmText: 'Kembali',
-                                      onConfirm: () => Navigator.pop(context),
-                                    );
-                                  }
-                                  return;
-                                }
-                                if (cat.validFrom != null &&
-                                    now.isBefore(cat.validFrom!)) {
-                                  if (context.mounted) {
-                                    showPspkDialog(
-                                      context,
-                                      title: 'Belum Mulai',
-                                      message:
-                                          'Asesmen ini belum bisa dimulai sekarang.',
-                                      isError: true,
-                                      confirmText: 'Kembali',
-                                      onConfirm: () => Navigator.pop(context),
-                                    );
-                                  }
-                                  return;
-                                }
-                              }
-
-                              if (widget.accessCode != null &&
-                                  widget.accessCode!.isNotEmpty) {
-                                if (context.mounted) _promptAccessCode();
-                              } else {
-                                if (context.mounted) {
-                                  showPspkDialog(
-                                    context,
-                                    title: 'Mulai Asesmen?',
-                                    message:
-                                        'Waktu akan berjalan dan tidak bisa dijeda. Pastikan kamu sudah siap ya.',
-                                    confirmText: 'Ya, Mulai',
-                                    onConfirm: () => _startSession(),
-                                  );
-                                }
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _InfoRow({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Row(
+      body: Stack(
         children: [
-          Icon(icon, size: 20, color: AppColors.textMuted),
-          const SizedBox(width: 12),
-          Text(label, style: AppTextStyles.bodyLarge),
-        ],
-      ),
-    );
-  }
-}
-
-/// Widget yang menampilkan status download aset soal di halaman lobby
-class _MediaDownloadStatusWidget extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final dl = ref.watch(mediaDownloadServiceProvider);
-
-    // Jika tidak ada aset yang perlu di-download, sembunyikan widget ini
-    if (!dl.isDownloading && !dl.isDone) return const SizedBox.shrink();
-    if (dl.isDone && dl.totalFiles == 0) return const SizedBox.shrink();
-
-    // === Sedang mengunduh ===
-    if (dl.isDownloading) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.birNavyMuda,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.birTeal.withValues(alpha: 0.4)),
-        ),
-        child: Row(
-          children: [
-            const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppColors.birTeal,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Menyiapkan soal... (${dl.downloadedFiles}/${dl.totalFiles})',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.birNavy,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: dl.progress,
-                      minHeight: 4,
-                      backgroundColor: AppColors.birNavy.withValues(alpha: 0.15),
-                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.birTeal),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // === Selesai - ada file yang gagal ===
-    if (dl.isDone && dl.hasFailures) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.orange.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.orange.shade300),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+          SafeArea(
+            child: Column(
               children: [
-                Icon(Icons.warning_amber_rounded,
-                    color: Colors.orange.shade700, size: 20),
-                const SizedBox(width: 8),
+                _buildHeader(context),
                 Expanded(
-                  child: Text(
-                    '${dl.failedUrls.length} file gagal diunduh. '
-                    'Soal tetap bisa dikerjakan, namun media mungkin perlu koneksi internet.',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.orange.shade800,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(left: 20, right: 20, top: 24, bottom: 120),
+                    child: Column(
+                      children: [
+                        _buildBentoGrid(minutes, requiresCode),
+                        const SizedBox(height: 16),
+                        _buildCapaianBelajar(),
+                        const SizedBox(height: 24),
+                        _MediaDownloadStatusWidget(),
+                        const SizedBox(height: 24),
+                        if (requiresCode) _buildAccessCodeInput(),
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            GestureDetector(
-              onTap: () =>
-                  ref.read(mediaDownloadServiceProvider.notifier).retryFailed(),
-              child: Text(
-                'Coba Unduh Ulang',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.birNavy,
-                  fontWeight: FontWeight.bold,
-                  decoration: TextDecoration.underline,
+          ),
+
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
+              decoration: BoxDecoration(
+                color: AppColors.surface.withValues(alpha: 0.9),
+              ),
+              child: ElevatedButton(
+                onPressed: _onMulaiPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFD700),
+                  foregroundColor: AppColors.primary,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 8,
+                  shadowColor: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                ),
+                child: Text(
+                  'Mulai Sekarang',
+                  style: AppTextStyles.heading2.copyWith(color: AppColors.primary),
                 ),
               ),
             ),
-          ],
-        ),
-      );
-    }
+          ),
 
-    // === Selesai - semua berhasil ===
-    if (dl.isDone && !dl.hasFailures && dl.totalFiles > 0) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.green.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green.shade300),
-        ),
-        child: Row(
+          if (_showTimeLockError)
+            Positioned.fill(
+              child: Container(
+                color: AppColors.primary.withValues(alpha: 0.4),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                alignment: Alignment.center,
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, spreadRadius: 5)],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: const BoxDecoration(
+                          color: AppColors.surfaceContainerHighest,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.hourglass_empty, size: 40, color: AppColors.primary),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _timeLockErrorTitle,
+                        style: AppTextStyles.heading1,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _timeLockErrorMsg,
+                        style: AppTextStyles.bodyMedium.copyWith(color: const Color(0xFF74777F)),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _hideErrorOverlay,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.onPrimary,
+                          minimumSize: const Size(double.infinity, 48),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'Mengerti',
+                          style: AppTextStyles.labelLarge.copyWith(color: AppColors.onPrimary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+          if (_showConfirmation)
+            Positioned.fill(
+              child: Container(
+                color: AppColors.primary.withValues(alpha: 0.4),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                alignment: Alignment.center,
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, spreadRadius: 5)],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE6F4F1),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.help_outline, size: 40, color: Color(0xFF146C2E)),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Mulai Asesmen?',
+                        style: AppTextStyles.heading1,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Waktu akan berjalan dan tidak bisa dijeda. Pastikan kamu sudah siap ya.',
+                        style: AppTextStyles.bodyMedium.copyWith(color: const Color(0xFF74777F)),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => setState(() => _showConfirmation = false),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                side: const BorderSide(color: AppColors.primary),
+                                minimumSize: const Size(double.infinity, 48),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: Text('Batal', style: AppTextStyles.labelLarge.copyWith(color: AppColors.primary)),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                setState(() => _showConfirmation = false);
+                                _startSession();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: AppColors.onPrimary,
+                                minimumSize: const Size(double.infinity, 48),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                elevation: 0,
+                              ),
+                              child: Text('Ya, Mulai', style: AppTextStyles.labelLarge.copyWith(color: AppColors.onPrimary)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1)),
+        ],
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+            onPressed: () => Navigator.pop(context),
+          ),
+          Expanded(
+            child: Text(
+              'Persiapan Level ${widget.levelNumber}',
+              style: AppTextStyles.heading1.copyWith(color: AppColors.primary, fontSize: 20),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(width: 48),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBentoGrid(int minutes, bool requiresCode) {
+    return Column(
+      children: [
+        Row(
           children: [
-            Icon(Icons.check_circle_outline_rounded,
-                color: Colors.green.shade600, size: 20),
-            const SizedBox(width: 10),
-            Text(
-              'Semua aset soal siap. Kamu bisa mulai!',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: Colors.green.shade700,
-                fontWeight: FontWeight.w500,
+            Expanded(
+              child: _buildBentoCard(
+                icon: Icons.schedule,
+                iconBg: AppColors.primary.withValues(alpha: 0.1),
+                iconColor: AppColors.primary,
+                title: 'Waktu Maksimal',
+                subtitle: '$minutes Menit',
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildBentoCard(
+                icon: Icons.format_list_numbered,
+                iconBg: const Color(0xFFEADDFF),
+                iconColor: const Color(0xFF4F378B),
+                title: 'Jumlah Soal',
+                subtitle: '${widget.totalQuestions} Soal',
               ),
             ),
           ],
         ),
-      );
-    }
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildBentoCard(
+                icon: requiresCode ? Icons.key : Icons.lock_open,
+                iconBg: const Color(0xFFC4EED0),
+                iconColor: const Color(0xFF146C2E),
+                title: 'Status Akses',
+                subtitle: requiresCode ? 'Diperlukan' : 'Terbuka',
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildBentoCard(
+                icon: Icons.format_list_bulleted,
+                iconBg: const Color(0xFFD3E3FD), // Soft Blue
+                iconColor: const Color(0xFF0B57D0), // Deep Blue
+                title: 'Tipe Soal',
+                subtitle: _isLoadingTypes ? 'Memuat...' : (_questionTypes.isEmpty ? 'Campuran' : _questionTypes.join(', ')),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
-    return const SizedBox.shrink();
+  Widget _buildCapaianBelajar() {
+    if (widget.learningObjective == null || widget.learningObjective!.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(color: const Color(0xFF805600).withValues(alpha: 0.1), shape: BoxShape.circle),
+                alignment: Alignment.center,
+                child: const Icon(Icons.school, color: Color(0xFF805600), size: 18),
+              ),
+              const SizedBox(width: 12),
+              Text('Capaian Belajar', style: AppTextStyles.labelSmall.copyWith(color: const Color(0xFF74777F))),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            widget.learningObjective!,
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurface, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBentoCard({
+    required IconData icon,
+    required Color iconBg,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      height: 110,
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const Spacer(),
+          Text(
+            title,
+            style: AppTextStyles.labelSmall.copyWith(color: const Color(0xFF74777F)),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600, color: AppColors.onSurface),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAccessCodeInput() {
+    return Column(
+      children: [
+        Text(
+          'Masukkan Kode Akses',
+          style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _accessCodeController,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.heading1.copyWith(letterSpacing: 4, fontSize: 24, color: AppColors.primary),
+          textCapitalization: TextCapitalization.characters,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.surfaceContainerLowest,
+            hintText: '......',
+            hintStyle: const TextStyle(letterSpacing: 4),
+            contentPadding: const EdgeInsets.symmetric(vertical: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFFC4C6CF)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MediaDownloadStatusWidget extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dl = ref.watch(mediaDownloadServiceProvider);
+
+    if (!dl.isDownloading && !dl.isDone) return const SizedBox.shrink();
+    if (dl.isDone && dl.totalFiles == 0) return const SizedBox.shrink();
+
+    String title = dl.isDownloading ? 'Menyiapkan Soal' : 'Materi Terunduh';
+    String status = dl.isDownloading ? '${dl.downloadedFiles}/${dl.totalFiles}' : (dl.hasFailures ? 'Gagal' : 'Ready');
+    Color statusColor = dl.isDownloading ? const Color(0xFFCA8A04) : (dl.hasFailures ? AppColors.error : const Color(0xFF146C2E));
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_download, color: Color(0xFF74777F)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+                Text(status, style: AppTextStyles.labelSmall.copyWith(color: statusColor)),
+              ],
+            ),
+          ),
+          if (dl.isDownloading)
+            SizedBox(
+              width: 80,
+              height: 8,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: dl.progress,
+                  backgroundColor: AppColors.surfaceContainerHighest,
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              ),
+            )
+          else if (!dl.hasFailures)
+            Container(
+              width: 80,
+              height: 8,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF008080)]),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
