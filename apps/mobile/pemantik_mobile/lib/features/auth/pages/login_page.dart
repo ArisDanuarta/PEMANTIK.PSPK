@@ -99,14 +99,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    // FIX 4: Gunakan _showDialogSafely dan cek mounted sebelum navigasi
+    // Gunakan _showDialogSafely dan cek mounted sebelum navigasi
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.error != null && next.error != previous?.error) {
         _showDialogSafely(
-          title: 'Ups, Gagal',
+          title: 'Login Gagal',
           message: next.error!,
           isError: true,
-          confirmText: 'Coba Lagi',
+          confirmText: 'Tutup',
           onConfirm: () {
             if (mounted) {
               setState(() {
@@ -119,10 +119,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
       if (next.isAuthenticated && (previous?.isAuthenticated != true)) {
         _showDialogSafely(
-          title: 'Berhasil!',
-          message: 'Kamu berhasil masuk. Siap untuk memulai asesmen?',
+          title: 'Selamat Datang!',
+          message: 'Anda berhasil masuk ke Pemantik.',
           isError: false,
-          confirmText: 'Mulai',
+          confirmText: 'Lanjut',
           onConfirm: () {
             if (mounted) {
               Navigator.of(
@@ -134,151 +134,152 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       }
     });
 
+    final bool isConfirmEnabled = _usernameController.text.trim().isNotEmpty && _pin.length == _pinLength;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.primaryContainer,
       body: SafeArea(
+        bottom: false,
         child: IgnorePointer(
           ignoring: authState.isLoading,
           child: LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
-                child: Container(
+                physics: const ClampingScrollPhysics(),
+                child: ConstrainedBox(
                   constraints: BoxConstraints(
                     minHeight: constraints.maxHeight,
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // --- BAGIAN ATAS ---
-                      Column(
-                        children: [
-                          const SizedBox(height: 60),
-
-                          // Logo Pemantik
-                          Image.asset(
-                            'assets/images/LOGO_PEMANTIK_BERWARNA.png',
-                            height: 60,
-                            fit: BoxFit.contain,
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Tagline
-                          Text(
-                            'Asesmen Literasi & Numerasi',
-                            style: AppTextStyles.heading2.copyWith(
-                              color: AppColors.birNavy,
-                              fontStyle: FontStyle.italic,
-                              fontSize: 18,
+                      // --- BAGIAN ATAS (Header) ---
+                      Container(
+                        width: double.infinity,
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight * 0.35,
+                        ),
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/images/LOGO_PEMANTIK_PUTIH_KUNING.png',
+                              height: 64,
+                              fit: BoxFit.contain,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Masukkan kredensial untuk memulai asesmen',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.textMuted,
+                            const SizedBox(height: 12),
+                            Text(
+                              'Tingkatkan Literasi & Numerasi Sejak Dini',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.onPrimaryContainer,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 40),
+                          ],
+                        ),
+                      ),
 
-                          // Form Username
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.border),
+                      // --- BAGIAN BAWAH (Card) ---
+                      Container(
+                        width: double.infinity,
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight * 0.65,
+                        ),
+                        padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                        decoration: const BoxDecoration(
+                          color: AppColors.surfaceContainerLowest,
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 30,
+                              offset: Offset(0, -8),
                             ),
-                            child: TextField(
-                              controller: _usernameController,
-                              autocorrect: false,
-                              enableSuggestions: false,
-                              textInputAction: TextInputAction.done,
-                              decoration: InputDecoration(
-                                hintText: 'Nama Pengguna',
-                                hintStyle: AppTextStyles.bodyMedium.copyWith(
-                                  color: AppColors.textMuted,
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Username Input
+                            Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.outlineVariant),
+                              ),
+                              child: TextField(
+                                controller: _usernameController,
+                                autocorrect: false,
+                                enableSuggestions: false,
+                                textInputAction: TextInputAction.done,
+                                decoration: InputDecoration(
+                                  prefixIcon: const Icon(Icons.person_outline, color: AppColors.outlineVariant),
+                                  hintText: 'Username',
+                                  hintStyle: AppTextStyles.bodyLarge.copyWith(
+                                    color: AppColors.outlineVariant,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
                                 ),
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 16,
+                                style: AppTextStyles.bodyLarge.copyWith(
+                                  color: AppColors.onSurface,
                                 ),
                               ),
-                              style: AppTextStyles.bodyLarge,
                             ),
-                          ),
-                          const SizedBox(height: 32),
+                            const SizedBox(height: 24),
 
-                          // Indikator PIN
-                          Text(
-                            'PIN Akses',
-                            style: AppTextStyles.label.copyWith(
-                              color: AppColors.birNavy,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            // PIN Indicator
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: List.generate(_pinLength, (index) {
                                 final isFilled = index < _pin.length;
+                                final isActive = index == _pin.length;
                                 return AnimatedContainer(
                                   duration: const Duration(milliseconds: 150),
-                                  margin: const EdgeInsets.symmetric(horizontal: 6),
                                   width: 48,
-                                  height: 56,
+                                  height: 48,
                                   decoration: BoxDecoration(
-                                    color: isFilled
-                                        ? AppColors.birNavy
-                                        : AppColors.surface,
+                                    color: isFilled ? AppColors.primary : AppColors.surface,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: isFilled
-                                          ? AppColors.birNavy
-                                          : AppColors.border,
-                                      width: 2,
+                                          ? AppColors.primary
+                                          : (isActive ? AppColors.secondaryContainer : AppColors.outlineVariant),
+                                      width: isActive ? 2 : 1,
                                     ),
                                   ),
                                   child: Center(
                                     child: isFilled
-                                        ? const Icon(
-                                            Icons.circle,
-                                            size: 12,
-                                            color: Colors.white,
+                                        ? Text(
+                                            _pin[index],
+                                            style: AppTextStyles.heading2.copyWith(
+                                              color: AppColors.onPrimary,
+                                              fontSize: 24,
+                                            ),
                                           )
                                         : null,
                                   ),
                                 );
                               }),
                             ),
-                          ),
-                          const SizedBox(height: 16),
+                            const SizedBox(height: 32),
 
-                          if (authState.isLoading)
-                            const CircularProgressIndicator(
-                                color: AppColors.kuningEmas)
-                          else
-                            const SizedBox(height: 20),
-                        ],
-                      ),
-
-                      // --- BAGIAN BAWAH ---
-                      Column(
-                        children: [
-                          const SizedBox(height: 20),
-                          NumpadWidget(
-                            onDigitPressed: _handleDigitPressed,
-                            onDelete: _handleDelete,
-                            onConfirm: _handleLogin,
-                            confirmEnabled:
-                                _usernameController.text.trim().isNotEmpty &&
-                                _pin.length == _pinLength,
-                          ),
-                          const SizedBox(height: 24),
-                        ],
+                            // Numpad
+                            NumpadWidget(
+                              onDigitPressed: _handleDigitPressed,
+                              onDelete: _handleDelete,
+                              onConfirm: _handleLogin,
+                              confirmEnabled: isConfirmEnabled,
+                              isLoading: authState.isLoading,
+                            ),
+                            
+                            // Bottom SafeArea padding
+                            SizedBox(height: MediaQuery.paddingOf(context).bottom),
+                          ],
+                        ),
                       ),
                     ],
                   ),

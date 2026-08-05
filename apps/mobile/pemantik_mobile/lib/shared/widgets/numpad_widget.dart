@@ -9,6 +9,7 @@ class NumpadWidget extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onConfirm;
   final bool confirmEnabled;
+  final bool isLoading;
 
   const NumpadWidget({
     super.key,
@@ -16,6 +17,7 @@ class NumpadWidget extends StatelessWidget {
     required this.onDelete,
     required this.onConfirm,
     this.confirmEnabled = false,
+    this.isLoading = false,
   });
 
   @override
@@ -43,8 +45,9 @@ class NumpadWidget extends StatelessWidget {
         _NumpadKey(label: '0', onPressed: () => onDigitPressed('0')),
         _NumpadKey(
           label: 'Masuk',
-          onPressed: confirmEnabled ? onConfirm : null,
+          onPressed: confirmEnabled && !isLoading ? onConfirm : null,
           variant: KeyVariant.primary,
+          isLoading: isLoading,
         ),
       ],
     );
@@ -55,26 +58,28 @@ class _NumpadKey extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final KeyVariant variant;
+  final bool isLoading;
 
   const _NumpadKey({
     required this.label,
     this.onPressed,
     this.variant = KeyVariant.normal,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final bg = switch (variant) {
       KeyVariant.primary =>
-        onPressed != null ? AppColors.kuningEmas : AppColors.border,
-      KeyVariant.action => AppColors.birNavyMuda,
+          onPressed != null ? AppColors.secondaryContainer : AppColors.surfaceVariant,
+      KeyVariant.action => AppColors.surfaceVariant,
       KeyVariant.normal => AppColors.surface,
     };
 
     final textColor = switch (variant) {
-      KeyVariant.primary => Colors.white,
-      KeyVariant.action => AppColors.birNavy,
-      KeyVariant.normal => AppColors.birNavy,
+      KeyVariant.primary => onPressed != null ? AppColors.onSecondaryFixed : AppColors.onSurfaceVariant,
+      KeyVariant.action => AppColors.onSurfaceVariant,
+      KeyVariant.normal => AppColors.onSurface,
     };
 
     return Material(
@@ -84,13 +89,19 @@ class _NumpadKey extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: onPressed,
         child: Center(
-          child: Text(
-            label,
-            style: AppTextStyles.buttonText.copyWith(
-              color: textColor,
-              fontSize: label.length > 1 ? 14 : 22,
-            ),
-          ),
+          child: isLoading && variant == KeyVariant.primary
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(color: AppColors.onSecondaryFixed, strokeWidth: 2),
+                )
+              : Text(
+                  label,
+                  style: AppTextStyles.buttonText.copyWith(
+                    color: textColor,
+                    fontSize: label.length > 1 ? 16 : 22,
+                  ),
+                ),
         ),
       ),
     );

@@ -9,6 +9,7 @@ environment:
   sdk: ^3.11.5
 
 dependencies:
+  flutter_svg: ^2.3.0
   audioplayers: ^6.7.1
   cached_network_image: ^3.4.1
   collection: ^1.19.1
@@ -48,6 +49,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/icons/
     - assets/images/
     - assets/fonts/
     - assets/animations/
