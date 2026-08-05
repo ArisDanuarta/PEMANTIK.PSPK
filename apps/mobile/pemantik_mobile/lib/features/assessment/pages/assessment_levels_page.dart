@@ -1,12 +1,51 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../shared/widgets/pspk_button.dart';
 import '../../../core/router/app_router.dart';
 import '../providers/assessment_levels_provider.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 import '../../../core/database/database.dart';
+
+final categoryNameProvider = FutureProvider.family<String, String>((ref, id) async {
+  final db = ref.watch(databaseProvider);
+  final category = await db.categoryDao.getCategoryById(id);
+  return category?.name ?? 'Kategori Asesmen';
+});
+
+class DiagonalStripesPainter extends CustomPainter {
+  final Color color;
+  final double width;
+  final double space;
+
+  DiagonalStripesPainter({
+    required this.color,
+    this.width = 1.0,
+    this.space = 10.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = width
+      ..style = PaintingStyle.stroke;
+
+    final double maxDimension = size.width + size.height;
+
+    for (double i = -maxDimension; i < maxDimension; i += space) {
+      canvas.drawLine(
+        Offset(i, 0),
+        Offset(i + maxDimension, maxDimension),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
 
 class AssessmentLevelsPage extends ConsumerWidget {
   final String categoryId;
@@ -19,54 +58,461 @@ class AssessmentLevelsPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        leading: const BackButton(color: AppColors.birNavy),
-        title: Text('Daftar Level', style: AppTextStyles.heading2),
-        centerTitle: true,
-      ),
       body: SafeArea(
-        child: levelsAsync.when(
-          data: (levels) {
-            if (levels.isEmpty) {
-              return Center(
-                child: Text(
-                  'Level belum tersedia.',
-                  style: AppTextStyles.bodyMedium,
-                ),
-              );
-            }
+        child: Column(
+          children: [
+            _buildHeader(context, ref),
+            Expanded(
+              child: levelsAsync.when(
+                data: (levels) {
+                  if (levels.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'Level belum tersedia.',
+                        style: AppTextStyles.bodyMedium,
+                      ),
+                    );
+                  }
 
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: levels.length,
-                  itemBuilder: (context, index) {
-                    final info = levels[index];
-                    return _LevelCard(categoryId: categoryId, info: info);
-                  },
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: Text(
+                            'Selesaikan level secara berurutan untuk menguasai materi.',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                        // Roadmap Stack
+                        Stack(
+                          children: [
+                            // Vertical Line
+                            Positioned(
+                              left: 28, // 56 / 2
+                              top: 28,
+                              bottom: 28,
+                              child: Container(
+                                width: 2,
+                                color: AppColors.outlineVariant,
+                              ),
+                            ),
+                            // Items
+                            Column(
+                              children: List.generate(levels.length, (index) {
+                                final info = levels[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 24),
+                                  child: _LevelRow(categoryId: categoryId, info: info, index: index),
+                                );
+                              }),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
                 ),
+                error: (e, _) => Center(child: Text('Terjadi kesalahan: $e')),
               ),
-            );
-          },
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.kuningEmas),
-          ),
-          error: (e, _) => Center(child: Text('Terjadi kesalahan: $e')),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  Widget _buildHeader(BuildContext context, WidgetRef ref) {
+    final nameAsync = ref.watch(categoryNameProvider(categoryId));
+
+    String catName = nameAsync.value ?? 'Daftar Level';
+    String initials = _getInitials(catName);
+
+    return Container(
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 2,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+                onPressed: () => Navigator.pop(context),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryContainer,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  initials,
+                  style: AppTextStyles.heading2.copyWith(
+                    color: AppColors.onPrimaryContainer,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                catName,
+                style: AppTextStyles.heading1.copyWith(
+                  color: AppColors.primary,
+                  fontSize: 20,
+                ),
+              ),
+            ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.cloud_done, color: AppColors.primary),
+            onPressed: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getInitials(String name) {
+    final words = name.split(' ');
+    if (words.isEmpty) return '??';
+    if (words.length == 1) {
+      return words[0].substring(0, 1).toUpperCase();
+    }
+    return '${words[0].substring(0, 1)}${words[1].substring(0, 1)}'.toUpperCase();
+  }
 }
 
-class _LevelCard extends ConsumerWidget {
+class _LevelRow extends ConsumerWidget {
   final String categoryId;
   final LevelInfo info;
+  final int index;
 
-  const _LevelCard({required this.categoryId, required this.info});
+  const _LevelRow({
+    required this.categoryId,
+    required this.info,
+    required this.index,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final level = info.level;
+    bool isLocked = !info.isUnlocked;
+    bool isPassed = info.isPassed;
+    bool isFailed = info.isFailed;
+
+    if (isFailed) isLocked = true; // Still locked from progressing to next, but shows failed state
+
+    final String levelNumStr = level.levelNumber.toString().padLeft(2, '0');
+    final String title = 'Level ${level.levelNumber}';
+
+    // State Colors
+    const Color softTeal = Color(0xFFE6F4F1);
+    const Color softMaroon = Color(0xFFFDECEC);
+    const Color gold = Color(0xFFFFD700);
+
+    Widget indicator;
+    Widget card;
+
+    if (isPassed) {
+      indicator = _buildIndicator(levelNumStr, AppColors.primary, softTeal, Colors.white);
+      card = _buildCompletedCard(title);
+    } else if (isFailed) {
+      indicator = _buildIndicator(levelNumStr, AppColors.primary, softMaroon, Colors.white);
+      card = _buildFailedCard(context, ref, title, level.id);
+    } else if (!isLocked) {
+      // Active
+      indicator = _buildActiveIndicator(levelNumStr, AppColors.primary, Colors.white, gold);
+      card = _buildActiveCard(context, title, level, info.totalQuestions);
+    } else {
+      // Locked
+      indicator = _buildIndicator(levelNumStr, const Color(0xFF74777F), AppColors.surfaceContainer, Colors.white);
+      card = _buildLockedCard(title);
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        indicator,
+        const SizedBox(width: 16),
+        Expanded(child: card),
+      ],
+    );
+  }
+
+  Widget _buildIndicator(String text, Color textColor, Color bgColor, Color borderColor) {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: bgColor,
+        shape: BoxShape.circle,
+        border: Border.all(color: borderColor, width: 2),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        style: AppTextStyles.heading1.copyWith(color: textColor, fontSize: 24),
+      ),
+    );
+  }
+
+  Widget _buildActiveIndicator(String text, Color textColor, Color bgColor, Color borderColor) {
+    return SizedBox(
+      width: 56,
+      height: 56,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const _PingingRing(color: Color(0xFFFFD700)),
+          _buildIndicator(text, textColor, bgColor, borderColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompletedCard(String title) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE6F4F1), // soft-teal
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            right: -20,
+            bottom: -20,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+                boxShadow: const [BoxShadow(color: Colors.white24, blurRadius: 30)],
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.heading2.copyWith(color: AppColors.primary),
+                  ),
+                  const Icon(Icons.check_circle, color: AppColors.sukses, size: 32),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Selesai',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActiveCard(BuildContext context, String title, LocalLevel level, int totalQuestions) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFFD700)), // gold
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 30,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.heading2.copyWith(color: AppColors.primary),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '$totalQuestions Soal • Estimasi ${level.timeLimitSec != null ? (level.timeLimitSec! ~/ 60) : 30} menit',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pushNamed(
+                AppRouter.assessmentLobby,
+                arguments: {
+                  'categoryId': categoryId,
+                  'levelId': level.id,
+                  'levelNumber': level.levelNumber,
+                  'accessCode': level.accessCode,
+                  'totalQuestions': totalQuestions,
+                  'passingThreshold': level.passingThreshold,
+                  'timeLimitSec': level.timeLimitSec ?? 60,
+                  'learningObjective': level.learningObjective,
+                  'successMessage': level.successMessage,
+                  'failureMessage': level.failureMessage,
+                },
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.onPrimary,
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
+            ),
+            child: Text(
+              'Mulai',
+              style: AppTextStyles.labelLarge.copyWith(color: AppColors.onPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFailedCard(BuildContext context, WidgetRef ref, String title, String levelId) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDECEC), // soft-maroon
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: AppTextStyles.heading2.copyWith(color: AppColors.primary),
+              ),
+              const Icon(Icons.cancel, color: AppColors.error, size: 32),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            info.level.failureMessage ?? 'Kamu Hebat, Tetap Memetik Potensi Kamu. Jangan menyerah, ayo coba lagi!',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: () => _showHistoryModal(context, ref, levelId),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary, width: 2),
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: Text(
+              'Cek Riwayat',
+              style: AppTextStyles.labelLarge.copyWith(color: AppColors.primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLockedCard(String title) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.outlineVariant),
+      ),
+      child: CustomPaint(
+        painter: DiagonalStripesPainter(
+          color: Colors.black.withValues(alpha: 0.02),
+          width: 10,
+          space: 20,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.heading2.copyWith(color: const Color(0xFF74777F)),
+                ),
+                const Icon(Icons.lock, color: Color(0xFF74777F), size: 28),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: null,
+              style: ElevatedButton.styleFrom(
+                disabledBackgroundColor: AppColors.outlineVariant,
+                disabledForegroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+              ),
+              child: Text(
+                'Terkunci',
+                style: AppTextStyles.labelLarge.copyWith(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _showHistoryModal(
     BuildContext context,
@@ -91,297 +537,217 @@ class _LevelCard extends ConsumerWidget {
 
     showModalBottomSheet(
       context: context,
-      constraints: const BoxConstraints(maxWidth: 600),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      backgroundColor: AppColors.surface,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Riwayat & Sinkronisasi', style: AppTextStyles.heading2),
-              const SizedBox(height: 16),
-              if (sessions.isEmpty)
-                Text(
-                  'Belum ada riwayat pengerjaan.',
-                  style: AppTextStyles.bodyMedium,
-                )
-              else
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: sessions.length,
-                    itemBuilder: (context, index) {
-                      final item = sessions[index];
-                      final session = item.session;
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLowest,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                offset: const Offset(0, -8),
+                blurRadius: 30,
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Handle bar
+                  Container(
+                    width: 48,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: AppColors.outlineVariant.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  Text('Riwayat & Sinkronisasi', style: AppTextStyles.heading2),
+                  const SizedBox(height: 16),
+                  
+                  if (sessions.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Text(
+                        'Belum ada riwayat pengerjaan.',
+                        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+                      ),
+                    )
+                  else
+                    Flexible(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: sessions.length,
+                        itemBuilder: (context, index) {
+                          final item = sessions[index];
+                          final session = item.session;
 
-                      Color syncColor = AppColors.jingga;
-                      String syncText = 'Menunggu';
-                      IconData syncIcon = Icons.sync;
+                          Color syncColor = const Color(0xFFCA8A04);
+                          String syncText = 'Lokal';
+                          IconData syncIcon = Icons.hourglass_empty;
+                          Color pillBg = const Color(0xFFFEFCE8);
+                          Color pillBorder = const Color(0xFFFEF08A);
 
-                      if (session.syncStatus == 'synced') {
-                        syncColor = AppColors.sukses;
-                        syncText = 'Tersinkronisasi';
-                        syncIcon = Icons.cloud_done_outlined;
-                      } else if (session.syncStatus == 'failed') {
-                        syncColor = AppColors.merahMarun;
-                        syncText = 'Gagal';
-                        syncIcon = Icons.error_outline;
-                      }
+                          if (session.syncStatus == 'synced') {
+                            syncColor = const Color(0xFF059669);
+                            syncText = 'Tersinkron';
+                            syncIcon = Icons.cloud_done;
+                            pillBg = const Color(0xFFECFDF5);
+                            pillBorder = const Color(0xFFD1FAE5);
+                          } else if (session.syncStatus == 'failed') {
+                            syncColor = const Color(0xFFDC2626);
+                            syncText = 'Gagal';
+                            syncIcon = Icons.error;
+                            pillBg = const Color(0xFFFEF2F2);
+                            pillBorder = const Color(0xFFFECACA);
+                          }
 
-                      final dateStr = session.completedAt != null
-                          ? '${session.completedAt!.day.toString().padLeft(2, '0')}/${session.completedAt!.month.toString().padLeft(2, '0')}/${session.completedAt!.year} ${session.completedAt!.hour.toString().padLeft(2, '0')}:${session.completedAt!.minute.toString().padLeft(2, '0')}'
-                          : '-';
+                          final dateStr = session.completedAt != null
+                              ? '${session.completedAt!.day.toString().padLeft(2, '0')}/${session.completedAt!.month.toString().padLeft(2, '0')}/${session.completedAt!.year} ${session.completedAt!.hour.toString().padLeft(2, '0')}:${session.completedAt!.minute.toString().padLeft(2, '0')}'
+                              : '-';
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.background,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.2)),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  'Sesi Pengerjaan Selesai',
-                                  style: AppTextStyles.heading2.copyWith(fontSize: 15),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(syncIcon, size: 14, color: syncColor),
-                                    const SizedBox(width: 4),
                                     Text(
-                                      syncText,
-                                      style: AppTextStyles.label.copyWith(
-                                        color: syncColor,
-                                        fontWeight: FontWeight.bold,
+                                      'Sesi Pengerjaan Selesai',
+                                      style: AppTextStyles.heading2.copyWith(fontSize: 15, color: AppColors.primary),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: pillBg,
+                                        border: Border.all(color: pillBorder),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(syncIcon, size: 12, color: syncColor),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            syncText,
+                                            style: AppTextStyles.labelSmall.copyWith(
+                                              color: syncColor,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
+                                Text(
+                                  dateStr,
+                                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.onSurfaceVariant),
+                                ),
                               ],
                             ),
-                            Text(dateStr, style: AppTextStyles.label),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-            ],
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.onPrimary,
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Tutup',
+                        style: AppTextStyles.labelLarge.copyWith(color: AppColors.onPrimary),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         );
       },
     );
   }
+}
+
+class _PingingRing extends StatefulWidget {
+  final Color color;
+  const _PingingRing({required this.color});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final level = info.level;
-    bool isLocked = !info.isUnlocked;
-    bool isPassed = info.isPassed;
-    bool isFailed = info.isFailed;
+  State<_PingingRing> createState() => _PingingRingState();
+}
 
-    Color cardColor = AppColors.surface;
-    Color borderColor = AppColors.border;
+class _PingingRingState extends State<_PingingRing> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
 
-    if (isLocked && !isFailed) {
-      cardColor = Colors.grey.shade100;
-    } else if (isPassed) {
-      cardColor = AppColors.birNavyMuda;
-      borderColor = AppColors.birTeal.withValues(alpha: 0.3);
-    } else if (isFailed) {
-      cardColor = AppColors.merahMarun.withValues(alpha: 0.05);
-      borderColor = AppColors.merahMarun.withValues(alpha: 0.3);
-      isLocked = true;
-    }
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Level ${level.levelNumber}',
-                style: AppTextStyles.heading2.copyWith(
-                  color: (isLocked && !isFailed)
-                      ? AppColors.textMuted
-                      : (isFailed
-                            ? AppColors.merahMarun
-                            : AppColors.birNavyGelap),
-                ),
-              ),
-              if (isPassed)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.sukses.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.check_circle,
-                        size: 14,
-                        color: AppColors.sukses,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Selesai',
-                        style: AppTextStyles.label.copyWith(
-                          color: AppColors.sukses,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else if (isFailed)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.merahMarun.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.cancel,
-                        size: 14,
-                        color: AppColors.merahMarun,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Gagal',
-                        style: AppTextStyles.label.copyWith(
-                          color: AppColors.merahMarun,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else if (isLocked)
-                const Icon(
-                  Icons.lock_outline,
-                  size: 20,
-                  color: AppColors.textMuted,
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Jumlah Soal: ${info.totalQuestions}',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.birNavyGelap,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          if (!isLocked && !isPassed && !isFailed) ...[
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: PspkButton(
-                    label: 'Mulai',
-                    size: ButtonSize.small,
-                    fullWidth: true,
-                    onPressed: () {
-                      Navigator.of(context).pushNamed(
-                        AppRouter.assessmentLobby,
-                        arguments: {
-                          'categoryId': categoryId,
-                          'levelId': level.id,
-                          'levelNumber': level.levelNumber,
-                          'accessCode': level.accessCode,
-                          'totalQuestions': info.totalQuestions,
-                          'passingThreshold': level.passingThreshold,
-                          'timeLimitSec': level.timeLimitSec ?? 60,
-                          'learningObjective': level.learningObjective,
-                          'successMessage': level.successMessage,
-                          'failureMessage': level.failureMessage,
-                        },
-                      );
-                    },
-                  ),
-                ),
-                if (info.highestScore > 0) ...[
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: PspkButton(
-                      label: 'Riwayat',
-                      size: ButtonSize.small,
-                      outlined: true,
-                      fullWidth: true,
-                      onPressed: () =>
-                          _showHistoryModal(context, ref, level.id),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ] else if (isPassed || isFailed) ...[
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: PspkButton(
-                    label: 'Riwayat',
-                    size: ButtonSize.small,
-                    outlined: true,
-                    fullWidth: true,
-                    onPressed: () => _showHistoryModal(context, ref, level.id),
-                  ),
-                ),
-              ],
-            ),
-          ] else if (isLocked) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: null,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  side: const BorderSide(color: AppColors.border),
-                ),
-                child: Text(
-                  'Terkunci',
-                  style: AppTextStyles.buttonText.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-                ),
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.4).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+    _opacityAnimation = Tween<double>(begin: 0.5, end: 0.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _opacityAnimation.value,
+          child: Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: widget.color, width: 2),
               ),
             ),
-          ],
-        ],
-      ),
+          ),
+        );
+      },
     );
   }
 }
