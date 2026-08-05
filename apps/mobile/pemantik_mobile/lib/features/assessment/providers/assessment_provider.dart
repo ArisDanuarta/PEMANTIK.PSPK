@@ -261,7 +261,6 @@ class AssessmentController extends _$AssessmentController {
         state = AsyncData(
           state.value!.copyWith(remainingSeconds: 0, isTimeUp: true),
         );
-        forceSubmit();
         return;
       }
       state = AsyncData(state.value!.copyWith(remainingSeconds: remaining));
