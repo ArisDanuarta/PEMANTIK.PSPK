@@ -19,104 +19,121 @@ class MultipleChoiceWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Memantau jawaban yang dipilih saat ini dari state provider
     final selected = ref.watch(selectedAnswerProvider(sessionId, question.id));
     final seed = sessionId.hashCode ^ question.id.hashCode;
     final choices = List<dynamic>.from(question.options['choices'] as List<dynamic>? ?? [])
       ..shuffle(Random(seed));
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        QuestionHeaderWidget(question: question),
-        const SizedBox(height: 24),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: choices.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
-          itemBuilder: (_, i) {
-            final choice = choices[i];
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outlineVariant),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tipe Soal Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.primaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              'Pilihan Ganda',
+              style: AppTextStyles.labelMedium.copyWith(color: AppColors.onPrimaryContainer, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 16),
+          QuestionHeaderWidget(question: question),
+          const SizedBox(height: 24),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: choices.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            itemBuilder: (_, i) {
+              final choice = choices[i];
 
-            String value = '';
-            String label = '';
+              String value = '';
+              String label = '';
 
-            if (choice is Map) {
-              value =
-                  choice['value']?.toString() ??
-                  choice['id']?.toString() ??
-                  choice['key']?.toString() ??
-                  '';
-              label =
-                  choice['label']?.toString() ??
-                  choice['text']?.toString() ??
-                  value;
-            } else {
-              value = choice.toString();
-              label = choice.toString();
-            }
+              if (choice is Map) {
+                value = choice['value']?.toString() ?? choice['id']?.toString() ?? choice['key']?.toString() ?? '';
+                label = choice['label']?.toString() ?? choice['text']?.toString() ?? value;
+              } else {
+                value = choice.toString();
+                label = choice.toString();
+              }
 
-            final isSelected = selected == value;
+              final isSelected = selected == value;
+              final letter = String.fromCharCode(65 + i);
 
-            return GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                ref
-                    .read(assessmentControllerProvider(sessionId).notifier)
-                    .selectAnswer(question.id, value);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.birNavy : AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? AppColors.birNavy : AppColors.border,
-                    width: isSelected ? 2 : 1,
+              return GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  ref.read(assessmentControllerProvider(sessionId).notifier).selectAnswer(question.id, value);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.secondaryContainer.withValues(alpha: 0.2) : AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? AppColors.secondaryContainer : AppColors.outlineVariant,
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Letter indicator
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.secondaryContainer : AppColors.surface,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? AppColors.secondaryContainer : AppColors.outlineVariant,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          letter,
+                          style: AppTextStyles.heading3.copyWith(
+                            color: isSelected ? AppColors.onSecondaryFixed : AppColors.onSurfaceVariant,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          label,
+                          style: AppTextStyles.bodyLarge.copyWith(
+                            color: AppColors.onSurface,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                      if (isSelected) ...[
+                        const SizedBox(width: 16),
+                        const Icon(Icons.check_circle, color: AppColors.secondaryContainer, size: 24),
+                      ],
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    // Radio indicator
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected ? Colors.white : AppColors.border,
-                          width: isSelected ? 5 : 2,
-                        ),
-                        color: isSelected
-                            ? AppColors.birNavy
-                            : Colors.transparent,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        label,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: isSelected ? Colors.white : AppColors.birNavy,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }

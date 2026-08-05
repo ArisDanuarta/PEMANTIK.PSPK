@@ -144,9 +144,6 @@ class _DragDropWidgetState extends ConsumerState<DragDropWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        QuestionHeaderWidget(question: widget.question),
-        const SizedBox(height: 24),
-
         // Kalimat dengan slot drop
         Container(
           width: double.infinity,
@@ -189,8 +186,8 @@ class _DragDropWidgetState extends ConsumerState<DragDropWidget> {
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: isHovering
-                                ? AppColors.kuningEmas
-                                : AppColors.birNavy,
+                                ? AppColors.secondaryContainer
+                                : (filledWord != null ? AppColors.primary : AppColors.outlineVariant),
                             width: 2,
                             style: BorderStyle.solid,
                           ),
@@ -310,8 +307,6 @@ class _DragDropWidgetState extends ConsumerState<DragDropWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        QuestionHeaderWidget(question: widget.question),
-        const SizedBox(height: 8),
         Text(
           'Urutkan dari yang paling sesuai',
           style: AppTextStyles.label.copyWith(color: AppColors.textMuted),
@@ -492,15 +487,12 @@ class _DragDropWidgetState extends ConsumerState<DragDropWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        QuestionHeaderWidget(question: widget.question),
-        const SizedBox(height: 8),
         Text(
           'Pasangkan setiap item di kiri dengan yang tepat di kanan',
-          style: AppTextStyles.label.copyWith(color: AppColors.textMuted),
+          style: AppTextStyles.labelSmall.copyWith(color: AppColors.onSurfaceVariant),
         ),
         const SizedBox(height: 24),
 
-        // Grid pasangan
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -683,11 +675,40 @@ class _DragDropWidgetState extends ConsumerState<DragDropWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return switch (_subtype) {
-      'sorting' => _buildSorting(),
-      'matching' => _buildMatching(),
-      _ => _buildFillBlank(),
-    };
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outlineVariant),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.primaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              _subtype == 'sorting' ? 'Mengurutkan' : (_subtype == 'matching' ? 'Mencocokkan' : 'Drag & Drop'),
+              style: AppTextStyles.labelMedium.copyWith(color: AppColors.onPrimaryContainer, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 16),
+          QuestionHeaderWidget(question: widget.question),
+          const SizedBox(height: 24),
+          switch (_subtype) {
+            'sorting' => _buildSorting(),
+            'matching' => _buildMatching(),
+            _ => _buildFillBlank(),
+          },
+        ],
+      ),
+    );
   }
 }
 
@@ -701,32 +722,41 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final Widget chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: isDragging ? AppColors.kuningEmas : AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
+        color: isDragging ? AppColors.secondaryContainer : AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDragging ? AppColors.kuningEmas : AppColors.birNavy,
-          width: 2,
+          color: isDragging ? AppColors.secondaryContainer : AppColors.outlineVariant,
+          width: 1,
         ),
-        boxShadow: isDragging
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ]
-            : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDragging ? 0.2 : 0.05),
+            blurRadius: isDragging ? 16 : 8,
+            offset: Offset(0, isDragging ? 8 : 4),
+          ),
+        ],
       ),
       child: Text(
         label,
         style: AppTextStyles.bodyLarge.copyWith(
-          color: isDragging ? Colors.white : AppColors.birNavy,
-          fontWeight: FontWeight.w600,
+          color: isDragging ? AppColors.onSecondaryFixed : AppColors.onSurface,
+          fontWeight: isDragging ? FontWeight.w700 : FontWeight.w600,
         ),
       ),
     );
+
+    if (isDragging) {
+      return Transform.scale(
+        scale: 1.05,
+        child: Transform.rotate(
+          angle: 0.05, // Slight rotation
+          child: chip,
+        ),
+      );
+    }
+    return chip;
   }
 }

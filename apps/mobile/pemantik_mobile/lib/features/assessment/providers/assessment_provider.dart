@@ -224,6 +224,25 @@ class AssessmentController extends _$AssessmentController {
     }
   }
 
+  Future<void> previousQuestion(String sessionId) async {
+    if (state.value == null) return;
+    final currentState = state.value!;
+
+    if (currentState.currentIndex > 0) {
+      final prevIndex = currentState.currentIndex - 1;
+      currentState.pageController.animateToPage(
+        prevIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+
+      final db = ref.read(databaseProvider);
+      await db.sessionDao.updateQuestionIndex(sessionId, prevIndex);
+
+      state = AsyncData(currentState.copyWith(currentIndex: prevIndex));
+    }
+  }
+
   Future<void> jumpToQuestion(int index) async {
     if (state.value == null) return;
     final currentState = state.value!;

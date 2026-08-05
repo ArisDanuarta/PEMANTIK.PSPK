@@ -61,9 +61,17 @@ class AppRouter {
           ),
         );
       case questionPage:
-        final sessionId = settings.arguments as String? ?? '';
+        final args = settings.arguments;
+        String sessionId = '';
+        String title = 'Pemantik';
+        if (args is Map<String, dynamic>) {
+          sessionId = args['sessionId'] as String? ?? '';
+          title = args['title'] as String? ?? 'Pemantik';
+        } else if (args is String) {
+          sessionId = args;
+        }
         return MaterialPageRoute(
-          builder: (_) => QuestionPage(sessionId: sessionId),
+          builder: (_) => QuestionPage(sessionId: sessionId, title: title),
         );
       case resultPage:
         final args = settings.arguments as Map<String, dynamic>? ?? {};
