@@ -58,9 +58,7 @@ class ResultPage extends StatelessWidget {
                           isPassed
                               ? 'Kamu sudah menyelesaikan asesmen ini dengan sangat baik. Jawabanmu sudah dikirim ke guru.'
                               : 'Tidak apa-apa, tetap semangat! Kamu bisa mempelajarinya lagi nanti.',
-                          style: AppTextStyles.bodyLarge.copyWith(
-                            color: AppColors.textMuted,
-                          ),
+                          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
                           textAlign: TextAlign.center,
                         ),
                         if (customMessage != null && customMessage!.isNotEmpty) ...[

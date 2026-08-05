@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/database/database.dart';
+import '../../../core/sync/sync_service.dart';
+import 'package:drift/drift.dart' hide JsonKey;
 
 class LevelInfo {
   final LocalLevel level;
@@ -10,6 +12,7 @@ class LevelInfo {
   final bool isFailed;
   final int highestScore;
   final int totalQuestions;
+  final bool isForcedExit;
 
   LevelInfo({
     required this.level,
@@ -18,6 +21,7 @@ class LevelInfo {
     required this.isFailed,
     required this.highestScore,
     required this.totalQuestions,
+    required this.isForcedExit,
   });
 }
 
@@ -64,6 +68,25 @@ final assessmentLevelsProvider = StreamProvider.family<List<LevelInfo>, String>(
     bool nextLevelUnlocked =
         true; // Level 1 (or first level in sorted list) always unlocked
 
+    // ✅ FIX #7: Jika lokal tidak punya sesi sama sekali untuk student ini,
+    //    kemungkinan besar user baru install ulang / ganti device.
+    //    Tarik data dari Supabase terlebih dahulu agar progres tidak hilang.
+    //    Ini hanya dijalankan sekali saat levels list pertama kali dimuat.
+    final allLocalSessions = await (db.select(db.localSessions)
+          ..where((t) => t.studentId.equals(studentId)))
+        .get();
+    if (allLocalSessions.isEmpty) {
+      try {
+        // Gunakan syncServiceProvider untuk pull data dari Supabase
+        // Catatan: ref.read di dalam async* generator aman karena ini bukan build()
+        await ref.read(syncServiceProvider).syncPastSessions();
+        // Setelah sync, levelsStream akan emit data baru otomatis,
+        // sehingga loop for-await akan menerima data terbaru.
+      } catch (syncErr) {
+        // Jika gagal sync (offline/error), lanjut dengan data lokal yang ada (kosong)
+      }
+    }
+
     for (final level in levels) {
       // Cari skor tertinggi dari local_answers
       final highestCorrectAnswers = await db.sessionDao
@@ -78,6 +101,25 @@ final assessmentLevelsProvider = StreamProvider.family<List<LevelInfo>, String>(
       // Cari jumlah total soal untuk level ini
       final questions = await db.questionDao.getQuestionsForLevel(level.id);
 
+      // Cek apakah sesi terakhir merupakan forced exit (timeSpentSec == -1)
+      bool isForcedExit = false;
+      if (isFailed) {
+        final latestSession = await (db.select(db.localSessions)
+              ..where((t) =>
+                  t.studentId.equals(studentId) &
+                  (t.levelId.equals(level.id) | t.currentLevelId.equals(level.id)) &
+                  t.phase.equals(currentPhase) &
+                  t.status.equals('completed'))
+              ..orderBy([
+                (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc)
+              ])
+              ..limit(1))
+            .getSingleOrNull();
+        if (latestSession != null && latestSession.timeSpentSec == -1) {
+          isForcedExit = true;
+        }
+      }
+
       result.add(
         LevelInfo(
           level: level,
@@ -88,6 +130,7 @@ final assessmentLevelsProvider = StreamProvider.family<List<LevelInfo>, String>(
           isFailed: isFailed,
           highestScore: highestCorrectAnswers,
           totalQuestions: questions.length,
+          isForcedExit: isForcedExit,
         ),
       );
 

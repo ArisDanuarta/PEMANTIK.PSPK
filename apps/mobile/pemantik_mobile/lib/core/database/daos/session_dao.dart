@@ -205,6 +205,23 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
             .get();
     return sessions.length;
   }
+
+  Future<int> getTotalAttemptsCountForLevel(
+    String studentId,
+    String levelId,
+    String phase,
+  ) async {
+    final sessions =
+        await (select(localSessions)..where(
+              (t) =>
+                  t.studentId.equals(studentId) &
+                  (t.levelId.equals(levelId) |
+                      t.currentLevelId.equals(levelId)) &
+                  t.phase.equals(phase),
+            ))
+            .get();
+    return sessions.length;
+  }
 }
 
 class SessionHistoryItem {

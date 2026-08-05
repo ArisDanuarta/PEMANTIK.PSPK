@@ -25,10 +25,74 @@ class QuestionPage extends ConsumerStatefulWidget {
   ConsumerState<QuestionPage> createState() => _QuestionPageState();
 }
 
-class _QuestionPageState extends ConsumerState<QuestionPage> {
+class _QuestionPageState extends ConsumerState<QuestionPage> with WidgetsBindingObserver {
+  bool _isFailing = false;
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if ((state == AppLifecycleState.paused || state == AppLifecycleState.inactive) && !_isFailing) {
+      _isFailing = true;
+      _handleCheat();
+    }
+  }
+
+  Future<void> _handleCheat() async {
+    final notifier = ref.read(assessmentControllerProvider(widget.sessionId).notifier);
+    final isPassed = await notifier.submitAssessment(widget.sessionId, forced: true);
+    
+    if (mounted) {
+      showPspkDialog(
+        context,
+        title: 'Aktivitas Mencurigakan',
+        message: 'Kamu keluar dari aplikasi saat asesmen berlangsung. Sesi ini otomatis digagalkan.',
+        isError: true,
+        confirmText: 'Kembali',
+        onConfirm: () => _navigateToResult(isPassed),
+      );
+    }
+  }
+
+  Future<void> _navigateToResult(bool isPassed) async {
+    if (!mounted) return;
+    
+    final db = ref.read(databaseProvider);
+    final session = await db.sessionDao.getSessionById(widget.sessionId);
+    String? customMessage;
+    
+    if (session != null) {
+      if (session.timeSpentSec == -1) {
+        customMessage = 'Sesi digagalkan secara otomatis karena anak terdeteksi keluar dari aplikasi saat asesmen berlangsung.';
+      } else {
+        // Cek fallback currentLevelId jika levelId null (untuk asesmen adaptif)
+        final effectiveLevelId = session.levelId ?? session.currentLevelId;
+        if (effectiveLevelId != null) {
+          final level = await db.levelDao.getLevelById(effectiveLevelId);
+          customMessage = isPassed ? level?.successMessage : level?.failureMessage;
+        }
+      }
+    }
+    
+    if (mounted) {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRouter.resultPage,
+        (_) => false,
+        arguments: {
+          'isPassed': isPassed,
+          'customMessage': customMessage,
+        },
+      );
+    }
   }
 
   @override
@@ -112,10 +176,9 @@ class _QuestionPageState extends ConsumerState<QuestionPage> {
         );
 
         if (shouldPop == true) {
-          // Force submit to register failure
-          await ref.read(assessmentControllerProvider(widget.sessionId).notifier).forceSubmit();
+          final isPassed = await ref.read(assessmentControllerProvider(widget.sessionId).notifier).submitAssessment(widget.sessionId, forced: true);
           if (context.mounted) {
-            Navigator.of(context).pop();
+            await _navigateToResult(isPassed);
           }
         }
       },
@@ -239,22 +302,8 @@ class _QuestionPageState extends ConsumerState<QuestionPage> {
                                 onConfirm: () async {
                                   log('Mengumpulkan jawaban untuk sesi: ${widget.sessionId}');
                                   final isPassed = await ref.read(assessmentControllerProvider(widget.sessionId).notifier).submitAssessment(widget.sessionId);
-                                  final db = ref.read(databaseProvider);
-                                  final session = await db.sessionDao.getSessionById(widget.sessionId);
-                                  String? customMessage;
-                                  if (session != null && session.levelId != null) {
-                                    final level = await db.levelDao.getLevelById(session.levelId!);
-                                    customMessage = isPassed ? level?.successMessage : level?.failureMessage;
-                                  }
                                   if (context.mounted) {
-                                    Navigator.of(context).pushNamedAndRemoveUntil(
-                                      AppRouter.resultPage,
-                                      (_) => false,
-                                      arguments: {
-                                        'isPassed': isPassed,
-                                        'customMessage': customMessage,
-                                      },
-                                    );
+                                    await _navigateToResult(isPassed);
                                   }
                                 },
                               );
@@ -264,15 +313,18 @@ class _QuestionPageState extends ConsumerState<QuestionPage> {
                           }
                         : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.onPrimary,
+                        backgroundColor: AppColors.kuningEmas,
+                        foregroundColor: AppColors.birNavy,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(state.isLastQuestion ? 'Kumpulkan' : 'Lanjut', style: AppTextStyles.labelLarge),
+                          Text(
+                            state.isLastQuestion ? 'Kumpulkan' : 'Lanjut', 
+                            style: AppTextStyles.labelLarge.copyWith(color: AppColors.birNavy),
+                          ),
                           if (!state.isLastQuestion) ...[
                             const SizedBox(width: 8),
                             const Icon(Icons.arrow_forward, size: 20),

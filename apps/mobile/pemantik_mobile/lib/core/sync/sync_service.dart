@@ -22,10 +22,7 @@ class SyncService {
       final studentStr = await storage.read(key: 'student_data');
       if (studentStr == null) return;
 
-      // Baca data anak dari SecureStorage untuk dipakai di Minggu 2
-      // (binding session ke access_id, dll.)
       final student = jsonDecode(studentStr);
-      // Variabel ini akan dipakai di Minggu 2 (insert session + access_id tracking)
       // ignore: unused_local_variable
       final String? schoolId = student['school_id'] as String?;
       // ignore: unused_local_variable
@@ -33,19 +30,14 @@ class SyncService {
       // ignore: unused_local_variable
       final String? studentId = student['id'] as String?;
 
-
       // Query assessment_access untuk school anak ini.
       // RLS policy 'student_view_own_access' sudah memfilter berdasarkan:
       //   - school_id dari JWT claims (via jwt_school_id())
       //   - is_active = true
       //   - valid_from <= now() <= valid_until
-      // Sehingga kita tidak perlu filter manual di sini - cukup pakai .select().
-      // Catatan: target_id di assessment_access adalah school_id atau community_id,
-      //          BUKAN student_id, sehingga student_id tidak relevan di sini.
       final accessResponse = await SupabaseConfig.client
           .from('assessment_access')
           .select(
-            // Tambah 'id' (access_id) untuk binding sesi ke akses ujian (Minggu 2)
             'id, category_id, phase, valid_from, valid_until, question_categories ( id, name, subject_area )',
           )
           .eq('is_active', true);
@@ -55,7 +47,7 @@ class SyncService {
       for (final row in accessResponse) {
         final pkgData = row['question_categories'];
         if (pkgData == null) continue;
-        
+
         final categoryId = pkgData['id'] as String;
         activeCategoryIds.add(categoryId);
 
@@ -75,11 +67,9 @@ class SyncService {
                   ? DateTime.parse(row['valid_until'])
                   : null,
             ),
-            // Minggu 2: simpan access_id lokal agar sesi baru bisa terikat ke akses
             accessId: Value(row['id'] as String?),
           ),
         );
-
 
         final levelsResponse = await SupabaseConfig.client
             .from('question_levels')
@@ -138,7 +128,7 @@ class SyncService {
           );
         }
       }
-      
+
       // Hapus kategori lokal yang sudah tidak ada di Supabase (akses dicabut atau kedaluwarsa)
       final allLocalCategories = await _db.categoryDao.getAllCategories();
       for (final localCat in allLocalCategories) {
@@ -154,22 +144,28 @@ class SyncService {
     }
   }
 
+  // ─── FIX #1: onConflict pakai 'id' (PK) bukan session_id,question_id
+  // (student_answers tidak punya UNIQUE constraint pada session_id+question_id)
   Future<void> _uploadSingleAnswer(LocalAnswer answer) async {
     // Skip sesi lama yang format ID-nya belum UUID (menghindari error UUID dari DB)
     if (answer.sessionId.startsWith('ses_')) return;
 
-    await SupabaseConfig.client.from('student_answers').upsert({
-      'id': answer.id,
-      'session_id': answer.sessionId,
-      'question_id': answer.questionId,
-      'answer_data': jsonDecode(answer.answerData),
-      'is_correct': answer.isCorrect,
-      'score': answer.score ?? (answer.isCorrect == true ? 1 : 0),
-      'time_spent_sec': answer.timeSpentSec,
-      'status': 'answered',
-      'sync_status': 'synced',
-      'answered_at': answer.answeredAt.toIso8601String(),
-    }, onConflict: 'session_id,question_id');
+    await SupabaseConfig.client.from('student_answers').upsert(
+      {
+        'id': answer.id,
+        'session_id': answer.sessionId,
+        'question_id': answer.questionId,
+        'answer_data': jsonDecode(answer.answerData),
+        'is_correct': answer.isCorrect,
+        'score': answer.score ?? (answer.isCorrect == true ? 1 : 0),
+        'time_spent_sec': answer.timeSpentSec,
+        'status': 'answered',
+        'sync_status': 'synced',
+        'answered_at': answer.answeredAt.toIso8601String(),
+      },
+      // ✅ FIX #1: pakai primary key 'id' — pasti unik dan ada di schema
+      onConflict: 'id',
+    );
   }
 
   Future<void> uploadCompletedSessions() async {
@@ -187,7 +183,7 @@ class SyncService {
       log('Memulai Sinkronisasi Upload untuk anak $currentStudentId...');
 
       // 1. Upload status Sesi yang berstatus pending (baik in_progress maupun completed)
-      // HANYA MILIK ANAK YANG SEDANG LOGIN (encegah bentrok multi-user di 1 device)
+      //    HANYA MILIK ANAK YANG SEDANG LOGIN (encegah bentrok multi-user di 1 device)
       final pendingSessions = await _db.sessionDao.getPendingSessionsForStudent(currentStudentId);
       for (final session in pendingSessions) {
         // Skip sesi lama yang ID-nya bukan UUID untuk menghindari error di DB
@@ -203,12 +199,22 @@ class SyncService {
 
           // Hitung waktu pengerjaan (detik) antara started_at dan completed_at
           int? timeSpentSec = session.timeSpentSec;
-          if (timeSpentSec == null || timeSpentSec == 0) {
-            if (session.startedAt != null && session.completedAt != null) {
-              timeSpentSec = session.completedAt!.difference(session.startedAt!).inSeconds;
-            }
+          // ─── FIX #6: Jaga nilai -1 sebagai marker forced_exit saat upload ──────
+          // Hanya kalkulasi ulang jika belum ada nilai (null/0) DAN bukan forced-exit (-1)
+          if ((timeSpentSec == null || timeSpentSec == 0) &&
+              session.startedAt != null &&
+              session.completedAt != null) {
+            timeSpentSec = session.completedAt!.difference(session.startedAt!).inSeconds;
           }
 
+          // ✅ FIX #6: Kirim is_forced_exit menggunakan sentinel -1
+          //    Agar ketika ditarik lagi oleh syncPastSessions nilainya tidak berubah menjadi null
+          final bool isForcedExit = timeSpentSec == -1;
+          final int? uploadedTimeSpent = isForcedExit ? -1 : timeSpentSec;
+
+          // ✅ Restored: 'category_id' adalah kolom NOT NULL di assessment_sessions.
+          // Error 42703 sebelumnya bukan karena kolom tidak ada, tapi bug posisi field.
+          // Error 23502 (null constraint) membuktikan kolom ini WAJIB ada.
           await SupabaseConfig.client.from('assessment_sessions').upsert({
             'id': session.id,
             'student_id': session.studentId,
@@ -216,23 +222,25 @@ class SyncService {
             'school_id': session.schoolId,
             'status': session.status,
             'score': correctCount,
-            'time_spent_sec': timeSpentSec,
+            'time_spent_sec': uploadedTimeSpent,
             'phase': session.phase,
             'started_at': session.startedAt?.toIso8601String(),
             'completed_at': session.completedAt?.toIso8601String(),
             'sync_status': 'synced',
             'synced_at': DateTime.now().toIso8601String(),
             'attempt_number': session.attemptNumber,
-            // ── Minggu 2: sertakan access_id dan current_level_id ─────────
-            // null jika sesi dibuat sebelum Minggu 2 (backward compat)
             if (session.accessId != null) 'access_id': session.accessId,
-            if (session.currentLevelId != null || session.levelId != null) 'current_level_id': session.currentLevelId ?? session.levelId,
-            if (session.levelId != null || session.currentLevelId != null) 'level_id': session.levelId ?? session.currentLevelId,
+            if (session.currentLevelId != null || session.levelId != null)
+              'current_level_id': session.currentLevelId ?? session.levelId,
+            if (session.levelId != null || session.currentLevelId != null)
+              'level_id': session.levelId ?? session.currentLevelId,
           });
           await _db.sessionDao.updateSyncStatus(session.id, 'synced');
-          log('Sesi ${session.id} berhasil diupload. Skor: $correctCount/${sessionAnswers.length}');
+          log('Sesi ${session.id} berhasil diupload. Skor: $correctCount/${sessionAnswers.length}${isForcedExit ? " [FORCED EXIT]" : ""}');
         } catch (e) {
           log('Gagal upload sesi ${session.id}: $e');
+          // PENTING: Jangan lanjut ke advance_student_level jika upload sesi gagal.
+          // Tandai sesi ini agar dilewati di step 3.
         }
       }
 
@@ -250,24 +258,41 @@ class SyncService {
             );
             log('Sesi kedaluwarsa untuk jawaban ${answer.id}');
           } else {
-            // error lain (network blip, dll) - biarkan tetap 'pending' untuk retry
             log('Sync error (will retry): ${e.message}');
           }
         } catch (e) {
-          // error tak terduga - tetap pending, log untuk investigasi
           log('Unexpected sync error: $e');
         }
       }
 
-      // 3. Panggil advance_student_level HANYA untuk sesi 'completed' yang sudah terupload.
-      // Fungsi ini menggantikan validate_level_completion() (Minggu 1) - versi baru ini
-      // juga melakukan UPDATE di database (current_level_id atau status=completed).
+      // ─── FIX #2: Panggil advance_student_level SETELAH semua jawaban selesai diupload ──
+      // Sekarang kita pastikan semua jawaban sudah tersinkron terlebih dahulu.
+      // TAMBAHAN: Hanya panggil untuk sesi yang BERHASIL diupload (syncStatus sudah 'synced').
       for (final session in pendingSessions) {
         if (session.status == 'completed' && !session.id.startsWith('ses_')) {
-          // Butuh current_level_id - ambil dari levelId yang disimpan lokal
+          // ✅ Cek: sesi harus sudah berhasil diupload ke Supabase
+          //    (jika masih 'pending', berarti upload sesi gagal, skip RPC)
+          final latestSession = await _db.sessionDao.getSessionById(session.id);
+          if (latestSession == null || latestSession.syncStatus != 'synced') {
+            log('[Sync] Sesi ${session.id}: upload gagal atau belum sync, tunda advance_student_level');
+            continue;
+          }
+
           final levelId = session.currentLevelId ?? session.levelId;
           if (levelId == null) {
             log('[Sync] Sesi ${session.id}: tidak ada current_level_id, lewati advance_student_level');
+            continue;
+          }
+
+          // ✅ FIX #2: Verifikasi jawaban sudah benar-benar terupload ke Supabase
+          //    sebelum panggil RPC yang membaca student_answers dari server.
+          final sessionAnswersAfterUpload = await _db.answerDao.getAnswersForSession(session.id);
+          final allAnswersSynced = sessionAnswersAfterUpload.every(
+            (a) => a.syncStatus == 'synced',
+          );
+
+          if (!allAnswersSynced) {
+            log('[Sync] Sesi ${session.id}: ada jawaban yang belum sync, tunda advance_student_level ke siklus berikutnya');
             continue;
           }
 
@@ -275,40 +300,49 @@ class SyncService {
             final result = await SupabaseConfig.client.rpc(
               'advance_student_level',
               params: {
-                'p_session_id':       session.id,
+                'p_session_id': session.id,
                 'p_current_level_id': levelId,
               },
             );
 
             if (result is Map) {
-              final action     = result['action'] as String? ?? 'unknown';
+              final action = result['action'] as String? ?? 'unknown';
               final levelScore = result['level_score'];
-              final reason     = result['reason'];
+              final reason = result['reason'];
 
               if (action == 'advance') {
-                final nextLevelId     = result['next_level_id'];
+                final nextLevelId = result['next_level_id'];
                 final nextLevelNumber = result['next_level_number'];
                 log('[Sync] Sesi ${session.id}: NAIK ke Level $nextLevelNumber (score: $levelScore%)');
 
-                // Update local session currentLevelId untuk sinkronisasi di masa depan
+                // Update local session currentLevelId
                 await (_db.update(_db.localSessions)
-                  ..where((t) => t.id.equals(session.id)))
-                  .write(LocalSessionsCompanion(
-                    currentLevelId: Value(nextLevelId?.toString()),
-                  ));
+                      ..where((t) => t.id.equals(session.id)))
+                    .write(LocalSessionsCompanion(
+                  currentLevelId: Value(nextLevelId?.toString()),
+                ));
               } else if (action == 'complete') {
                 log('[Sync] Sesi ${session.id}: SELESAI (score: $levelScore%, reason: $reason)');
+              } else if (action == 'fail') {
+                log('[Sync] Sesi ${session.id}: GAGAL (score: $levelScore%, reason: $reason)');
               } else if (action == 'error') {
-                log('[Sync] Sesi ${session.id}: advance_student_level error → reason: ${result['reason']}, detail: ${result['detail']}');
+                // RPC mengembalikan action='error' — ini bisa terjadi karena:
+                // - Sesi sudah pernah diproses (duplicate call) → aman, abaikan
+                // - Data lama dengan enum 'void' status → abaikan, non-fatal
+                // - Detail ada di result['detail']
+                log('[Sync] Sesi ${session.id}: advance_student_level mengembalikan error (non-fatal) → reason: ${result['reason']}, detail: ${result['detail']}');
+              } else {
+                log('[Sync] Sesi ${session.id}: advance_student_level action tidak dikenal: $action');
               }
             }
+          } on PostgrestException catch (rpcError) {
+            // Error jaringan atau DB fatal — log tapi jangan crash
+            log('[Sync] PostgrestException pada advance_student_level sesi ${session.id}: ${rpcError.message} (code: ${rpcError.code})');
           } catch (rpcError) {
-            // Jangan crash sync karena error RPC - sesi tetap tersimpan lokal
             log('[Sync] Gagal panggil advance_student_level untuk sesi ${session.id}: $rpcError');
           }
         }
       }
-
 
       log('Sinkronisasi Upload Selesai');
     } catch (e) {
@@ -324,26 +358,49 @@ class SyncService {
 
       final student = jsonDecode(studentStr);
       final studentId = student['id'];
-      
+
       if (studentId == null) return;
 
       log('Memulai Sinkronisasi Tarik Data Lama (Sync Down)...');
-      
+
+      // ✅ FIX #5 & #8: Tarik semua sesi, termasuk yang di-void.
+      // Jika di-void oleh admin (ujian ulang), kita harus menariknya ke lokal
+      // dan mengubah statusnya menjadi 'void' agar tidak dihitung lagi sebagai attempt.
       final sessionsResponse = await SupabaseConfig.client
           .from('assessment_sessions')
           .select('*, student_answers(*)')
           .eq('student_id', studentId);
-
       for (final row in sessionsResponse) {
+        // ✅ FIX B: Jangan timpa sesi lokal yang belum tersinkron (pending/syncing).
+        //    Skenario berbahaya:
+        //    1. Siswa selesai asesmen → sesi lokal jadi 'completed' + syncStatus='pending'
+        //    2. Upload ke Supabase GAGAL → server masih simpan sesi lama dengan status='pending'
+        //    3. syncPastSessions tarik data dari server → status='pending' menimpa 'completed' lokal
+        //    4. Akibat: sesi seolah hilang, level terbuka kembali = BUG.
+        //
+        //    Solusi: jika ada sesi lokal dengan ID yang sama DAN syncStatus != 'synced',
+        //    itu berarti data lokal adalah ground truth. Skip, jangan ditimpa.
+        final sessionId = row['id'] as String;
+        final existingLocal = await _db.sessionDao.getSessionById(sessionId);
+        if (existingLocal != null && existingLocal.syncStatus != 'synced') {
+          log('[SyncDown] Skip sesi $sessionId — ada data lokal yang belum tersinkron (${existingLocal.syncStatus}). Data lokal dipertahankan.');
+          continue;
+        }
+
+        // ✅ FIX #8: Jika sesi di-void di Supabase (karena request ujian ulang), 
+        // pastikan status lokalnya menjadi 'void'.
+        final isVoid = row['is_void'] == true;
+        final effectiveStatus = isVoid ? 'void' : row['status'];
+
         await _db.sessionDao.upsertSession(
           LocalSessionsCompanion(
             id: Value(row['id']),
             studentId: Value(row['student_id']),
-            categoryId: Value(row['category_id']),
+            categoryId: Value(row['category_id'] ?? ''),
             schoolId: Value(row['school_id'] ?? ''),
             levelId: Value(row['level_id'] ?? row['current_level_id']),
             currentLevelId: Value(row['current_level_id'] ?? row['level_id']),
-            status: Value(row['status']),
+            status: Value(effectiveStatus),
             attemptNumber: Value(row['attempt_number'] ?? 1),
             currentQuestionIndex: Value(row['current_question_index'] ?? 0),
             startedAt: Value(row['started_at'] != null ? DateTime.parse(row['started_at']) : null),
@@ -378,7 +435,7 @@ class SyncService {
           );
         }
       }
-      
+
       log('Sinkronisasi Tarik Data Selesai (Ditemukan ${sessionsResponse.length} sesi)');
     } catch (e) {
       log('Gagal Sinkronisasi Tarik Data Lama: $e');

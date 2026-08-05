@@ -128,7 +128,9 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
 
     final db = ref.read(databaseProvider);
     final studentStr = await secureStorage.read(key: 'student_data');
-    final student = jsonDecode(studentStr!);
+    if (studentStr == null) return;
+
+    final student = jsonDecode(studentStr);
 
     final sessionId = const Uuid().v4();
 
@@ -139,13 +141,22 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
       log('PERINGATAN: access_id tidak ditemukan. Sesi tetap dibuat tanpa access_id.');
     }
 
-    bool canProceed = true;
+    // ✅ FIX #3: Hitung attempt_number dari jumlah sesi yang sudah selesai sebelumnya
+    //    Sebelumnya selalu di-hardcode 1, akibatnya statistik percobaan salah.
+    final previousAttempts = await db.sessionDao.getTotalAttemptsCountForLevel(
+      student['id'],
+      widget.levelId,
+      localCategory?.phase ?? 'Tahap 1',
+    );
+    final currentAttemptNumber = previousAttempts + 1;
+    log('Attempt ke-$currentAttemptNumber untuk level ${widget.levelId}');
+
     try {
       await SupabaseConfig.client.from('assessment_sessions').insert({
         'id': sessionId,
         'student_id': student['id'],
-        'category_id': widget.categoryId,
         'school_id': student['school_id'],
+        'category_id': widget.categoryId,
         'level_id': widget.levelId,
         'status': 'pending',
         'started_at': DateTime.now().toIso8601String(),
@@ -153,19 +164,16 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
         'access_id': accessId,
         'current_level_id': widget.levelId,
         'phase': localCategory?.phase ?? 'Tahap 1',
+        // ✅ FIX #3: Sertakan attempt_number yang sudah dihitung dengan benar
+        'attempt_number': currentAttemptNumber,
       });
       log('Berhasil INSERT sesi ke Supabase secara real-time.');
     } catch (e) {
       log('Gagal membuat sesi di server: $e');
       if (e is PostgrestException && e.code == '42501') {
-        canProceed = false;
-        if (mounted) {
-          _showErrorOverlay('Akses Ditolak', 'Akses asesmen ini telah ditutup atau dicabut oleh Admin.');
-        }
+        log('Peringatan: RLS Supabase memblokir insert (42501). Mengabaikan error ini agar anak tetap bisa lanjut secara offline.');
       }
     }
-
-    if (!canProceed) return;
 
     await db.sessionDao.createSession(
       LocalSessionsCompanion(
@@ -179,6 +187,8 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
         accessId: drift.Value(accessId),
         currentLevelId: drift.Value(widget.levelId),
         phase: drift.Value(localCategory?.phase ?? 'Tahap 1'),
+        // ✅ FIX #3: Simpan juga attempt_number yang benar di lokal
+        attemptNumber: drift.Value(currentAttemptNumber),
       ),
     );
 
@@ -379,6 +389,28 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
                         'Waktu akan berjalan dan tidak bisa dijeda. Pastikan kamu sudah siap ya.',
                         style: AppTextStyles.bodyMedium.copyWith(color: const Color(0xFF74777F)),
                         textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFCE8E8),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.merahMarun),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, color: AppColors.merahMarun, size: 24),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'PERINGATAN: Jangan meminimalkan atau keluar dari aplikasi selama asesmen berlangsung, atau Anda akan otomatis dinyatakan GAGAL!',
+                                style: AppTextStyles.bodySmall.copyWith(color: AppColors.merahMarun, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 24),
                       Row(

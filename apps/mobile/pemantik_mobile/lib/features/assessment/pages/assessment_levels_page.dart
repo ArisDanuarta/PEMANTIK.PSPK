@@ -7,6 +7,7 @@ import '../../../core/router/app_router.dart';
 import '../providers/assessment_levels_provider.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 import '../../../core/database/database.dart';
+import '../../../core/sync/sync_service.dart';
 
 final categoryNameProvider = FutureProvider.family<String, String>((ref, id) async {
   final db = ref.watch(databaseProvider);
@@ -74,46 +75,62 @@ class AssessmentLevelsPage extends ConsumerWidget {
                     );
                   }
 
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 24),
-                          child: Text(
-                            'Selesaikan level secara berurutan untuk menguasai materi.',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                        // Roadmap Stack
-                        Stack(
-                          children: [
-                            // Vertical Line
-                            Positioned(
-                              left: 28, // 56 / 2
-                              top: 28,
-                              bottom: 28,
-                              child: Container(
-                                width: 2,
-                                color: AppColors.outlineVariant,
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      try {
+                        await ref.read(syncServiceProvider).syncPastSessions();
+                        // ignore: unused_result
+                        ref.refresh(assessmentLevelsProvider(categoryId));
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Gagal sinkronisasi: $e')),
+                          );
+                        }
+                      }
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            child: Text(
+                              'Selesaikan level secara berurutan untuk menguasai materi.',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.onSurfaceVariant,
                               ),
                             ),
-                            // Items
-                            Column(
-                              children: List.generate(levels.length, (index) {
-                                final info = levels[index];
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 24),
-                                  child: _LevelRow(categoryId: categoryId, info: info, index: index),
-                                );
-                              }),
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          // Roadmap Stack
+                          Stack(
+                            children: [
+                              // Vertical Line
+                              Positioned(
+                                left: 28, // 56 / 2
+                                top: 28,
+                                bottom: 28,
+                                child: Container(
+                                  width: 2,
+                                  color: AppColors.outlineVariant,
+                                ),
+                              ),
+                              // Items
+                              Column(
+                                children: List.generate(levels.length, (index) {
+                                  final info = levels[index];
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 24),
+                                    child: _LevelRow(categoryId: categoryId, info: info, index: index),
+                                  );
+                                }),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -188,7 +205,30 @@ class AssessmentLevelsPage extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.cloud_done, color: AppColors.primary),
-            onPressed: () {},
+            onPressed: () async {
+              try {
+                await ref.read(syncServiceProvider).syncPastSessions();
+                // ignore: unused_result
+                ref.refresh(assessmentLevelsProvider(categoryId));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Sinkronisasi selesai!'),
+                      backgroundColor: AppColors.sukses,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Gagal sinkronisasi: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
+            },
           ),
         ],
       ),
@@ -444,7 +484,9 @@ class _LevelRow extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            info.level.failureMessage ?? 'Kamu Hebat, Tetap Memetik Potensi Kamu. Jangan menyerah, ayo coba lagi!',
+            info.isForcedExit
+                ? 'Sesi digagalkan secara otomatis karena anak terdeteksi keluar dari aplikasi saat asesmen berlangsung.'
+                : (info.level.failureMessage ?? 'Kamu Hebat, Tetap Memetik Potensi Kamu. Jangan menyerah, ayo coba lagi!'),
             style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error),
           ),
           const SizedBox(height: 16),

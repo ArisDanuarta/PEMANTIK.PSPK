@@ -42,7 +42,14 @@ class _PemantikAppState extends ConsumerState<PemantikApp> {
 
       // FIX 2: Guard - hanya sync kalau sudah login
       if (wasOffline && isNowOnline && _isAuthenticated) {
-        ref.read(syncServiceProvider).uploadCompletedSessions();
+        // ✅ FIX #8: Saat kembali online, jalankan FULL sync:
+        //    - uploadCompletedSessions: kirim jawaban pending ke server
+        //    - syncCategoriesAndQuestions: tarik soal/akses terbaru dari admin
+        //    Sebelumnya hanya upload, sehingga perubahan soal dari admin
+        //    tidak diterima sampai app di-restart.
+        final sync = ref.read(syncServiceProvider);
+        sync.uploadCompletedSessions();
+        sync.syncCategoriesAndQuestions();
       }
       _lastStatus = result;
     });

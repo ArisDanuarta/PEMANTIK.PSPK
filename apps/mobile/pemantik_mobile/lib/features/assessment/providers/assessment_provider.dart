@@ -131,6 +131,9 @@ List<LocalQuestion> _shuffleQuestionsPerLevel(
 @riverpod
 class AssessmentController extends _$AssessmentController {
   Timer? _countdownTimer;
+  // ✅ FIX #4: Guard untuk mencegah submitAssessment dipanggil dua kali
+  // (contoh: forced exit saat timer habis → dua submit bersamaan → jawaban duplikat)
+  bool _isSubmitting = false;
 
   @override
   Future<AssessmentState> build(String sessionId) async {
@@ -293,114 +296,149 @@ class AssessmentController extends _$AssessmentController {
 
   // Fungsi Baru: Mengunci jawaban dan simpan ke SQLite lokal
   Future<bool> submitAssessment(String sessionId, {bool forced = false}) async {
-    if (state.value == null) return false;
-    final currentState = state.value!;
-    final db = ref.read(databaseProvider);
+    // ✅ FIX #4: Tolak panggilan ganda — cegah duplikasi jawaban di local_answers
+    if (_isSubmitting) {
+      log('[Assessment] submitAssessment dipanggil dua kali — diabaikan (sudah dalam proses)');
+      return false;
+    }
+    _isSubmitting = true;
 
-    int correctCount = 0;
+    try {
+      if (state.value == null) return false;
+      final currentState = state.value!;
+      final db = ref.read(databaseProvider);
 
-    // 1. Simpan setiap jawaban ke tabel LocalAnswers
-    for (final q in currentState.questions) {
-      final userAnswer = currentState.answers[q.id];
-      final parsed = _tryParseAnswerJson(userAnswer);
-      final isVoiceAnswer = q.type == 'voice_recording' && parsed != null;
+      // ✅ FIX #4: Cek apakah jawaban untuk sesi ini sudah pernah disimpan sebelumnya
+      //    (guard kedua jika flag _isSubmitting terlewati karena async)
+      final existingAnswers = await db.answerDao.getAnswersForSession(sessionId);
+      if (existingAnswers.isNotEmpty) {
+        log('[Assessment] Sesi $sessionId sudah memiliki ${existingAnswers.length} jawaban — submit dibatalkan (sudah pernah submit)');
+        // Hitung hasil dari jawaban yang sudah ada
+        final correctCount = existingAnswers.where((a) => a.isCorrect == true).length;
+        final sessionDataExisting = await db.sessionDao.getSessionById(sessionId);
+        if (sessionDataExisting != null && sessionDataExisting.levelId != null) {
+          final level = await db.levelDao.getLevelById(sessionDataExisting.levelId!);
+          if (level != null) return correctCount >= level.passingThreshold;
+        }
+        return correctCount > 0;
+      }
 
-      // ─── Evaluasi benar/salah per tipe soal ────────────────────────────────
-      bool isCorrect = false;
-      if (userAnswer != null) {
-        switch (q.type) {
-          case 'multiple_choice':
-          case 'audio_question':
-          case 'video_question':
-            // Admin menyimpan correct_answer sebagai string langsung (misal "A")
-            // atau dalam map {'answers': "A"}
-            final correctVal =
-                q.correctAnswer['answers'] ?? q.correctAnswer['value'];
-            isCorrect = userAnswer == correctVal?.toString();
-            break;
-          case 'image_choice':
-            // Admin menyimpan correct_answer berupa {"index": 0, "url": "..."}
-            // User memilih dengan submit URL gambar
-            final correctUrl =
-                q.correctAnswer['url'] ?? q.correctAnswer['answers'];
-            isCorrect = userAnswer == correctUrl?.toString();
-            break;
-          case 'voice_recording':
-            // Penilaian berdasarkan kemiripan (similarity score dari widget)
-            final score = parsed?['score'] as num? ?? 0;
-            final threshold =
-                (q.correctAnswer['threshold_pct'] as num?)?.toDouble() ?? 80;
-            isCorrect = (score * 100) >= threshold;
-            break;
-          case 'drag_drop':
-            // Dinilai oleh widget, jawaban sudah berisi hasil evaluasi
-            final dragParsed = _tryParseAnswerJson(userAnswer);
-            isCorrect = dragParsed?['is_correct'] == true;
-            break;
-          default:
-            isCorrect = false;
+      int correctCount = 0;
+
+      // 1. Simpan setiap jawaban ke tabel LocalAnswers
+      for (final q in currentState.questions) {
+        final userAnswer = currentState.answers[q.id];
+        final parsed = _tryParseAnswerJson(userAnswer);
+        final isVoiceAnswer = q.type == 'voice_recording' && parsed != null;
+
+        // ─── Evaluasi benar/salah per tipe soal ────────────────────────────────
+        bool isCorrect = false;
+        if (userAnswer != null) {
+          switch (q.type) {
+            case 'multiple_choice':
+            case 'audio_question':
+            case 'video_question':
+              // Admin menyimpan correct_answer sebagai string langsung (misal "A")
+              // atau dalam map {'answers': "A"}
+              final correctVal =
+                  q.correctAnswer['answers'] ?? q.correctAnswer['value'];
+              isCorrect = userAnswer == correctVal?.toString();
+              break;
+            case 'image_choice':
+              // Admin menyimpan correct_answer berupa {"index": 0, "url": "..."}
+              // User memilih dengan submit URL gambar
+              final correctUrl =
+                  q.correctAnswer['url'] ?? q.correctAnswer['answers'];
+              isCorrect = userAnswer == correctUrl?.toString();
+              break;
+            case 'voice_recording':
+              // Penilaian berdasarkan kemiripan (similarity score dari widget)
+              final score = parsed?['score'] as num? ?? 0;
+              final threshold =
+                  (q.correctAnswer['threshold_pct'] as num?)?.toDouble() ?? 80;
+              isCorrect = (score * 100) >= threshold;
+              break;
+            case 'drag_drop':
+              // Dinilai oleh widget, jawaban sudah berisi hasil evaluasi
+              final dragParsed = _tryParseAnswerJson(userAnswer);
+              isCorrect = dragParsed?['is_correct'] == true;
+              break;
+            default:
+              isCorrect = false;
+          }
+        }
+        if (isCorrect) correctCount++;
+
+        await db.answerDao
+            .into(db.localAnswers)
+            .insert(
+              LocalAnswersCompanion(
+                id: drift.Value(UuidHelper.generateV4()),
+                sessionId: drift.Value(sessionId),
+                questionId: drift.Value(q.id),
+                answerData: drift.Value(
+                  isVoiceAnswer
+                      ? jsonEncode(parsed)
+                      : jsonEncode({'value': userAnswer}),
+                ),
+                recordingLocalPath: isVoiceAnswer
+                    ? drift.Value(parsed['path'] as String?)
+                    : const drift.Value(null),
+                questionVersion: drift.Value(q.version.toString()),
+                isCorrect: drift.Value(isCorrect),
+                score: drift.Value(isCorrect ? 1.0 : 0.0),
+                syncStatus: const drift.Value('pending'),
+                answeredAt: drift.Value(DateTime.now()),
+              ),
+            );
+      }
+
+      // 2. Tandai Sesi sebagai Selesai
+      // Hitung waktu pengerjaan nyata dari startedAt sesi → sekarang
+      final sessionData0 = await db.sessionDao.getSessionById(sessionId);
+      final timeSpent = sessionData0?.startedAt != null
+          ? DateTime.now().difference(sessionData0!.startedAt!).inSeconds
+          : 0;
+
+      await (db.update(db.localSessions)
+            ..where((t) => t.id.equals(sessionId)))
+          .write(
+        LocalSessionsCompanion(
+          status:       const drift.Value('completed'),
+          completedAt:  drift.Value(DateTime.now()),
+          syncStatus:   const drift.Value('pending'),
+          timeSpentSec: drift.Value(forced ? -1 : timeSpent),
+        ),
+      );
+
+      // 3. Panggil SyncService secara background untuk segera upload jika ada internet
+      if (forced) {
+        try {
+          await ref.read(syncServiceProvider).uploadCompletedSessions();
+        } catch (e) {
+          log('Gagal upload sinkronisasi saat dipaksa (forced): $e');
+        }
+      } else {
+        ref.read(syncServiceProvider).uploadCompletedSessions().catchError((e) {
+          log('Upload jawaban background tertunda: $e');
+        });
+      }
+
+      // Cek kelulusan berdasarkan passing_threshold dari local_levels
+      final sessionData = await db.sessionDao.getSessionById(sessionId);
+      if (sessionData != null && sessionData.levelId != null) {
+        final level = await db.levelDao.getLevelById(sessionData.levelId!);
+        if (level != null) {
+          return correctCount >= level.passingThreshold;
         }
       }
-      if (isCorrect) correctCount++;
 
-      await db.answerDao
-          .into(db.localAnswers)
-          .insert(
-            LocalAnswersCompanion(
-              id: drift.Value(UuidHelper.generateV4()),
-              sessionId: drift.Value(sessionId),
-              questionId: drift.Value(q.id),
-              answerData: drift.Value(
-                isVoiceAnswer
-                    ? jsonEncode(parsed)
-                    : jsonEncode({'value': userAnswer}),
-              ),
-              recordingLocalPath: isVoiceAnswer
-                  ? drift.Value(parsed['path'] as String?)
-                  : const drift.Value(null),
-              questionVersion: drift.Value(q.version.toString()),
-              isCorrect: drift.Value(isCorrect),
-              score: drift.Value(isCorrect ? 1.0 : 0.0),
-              syncStatus: const drift.Value('pending'),
-              answeredAt: drift.Value(DateTime.now()),
-            ),
-          );
+      // Fallback jika tidak ada level (harusnya tidak terjadi)
+      return correctCount > 0;
+    } finally {
+      // ✅ FIX #4: Selalu reset flag setelah submit selesai (berhasil atau error)
+      _isSubmitting = false;
     }
-
-    // 2. Tandai Sesi sebagai Selesai
-    // Hitung waktu pengerjaan nyata dari startedAt sesi → sekarang
-    final sessionData0 = await db.sessionDao.getSessionById(sessionId);
-    final timeSpent = sessionData0?.startedAt != null
-        ? DateTime.now().difference(sessionData0!.startedAt!).inSeconds
-        : 0;
-
-    await (db.update(db.localSessions)
-          ..where((t) => t.id.equals(sessionId)))
-        .write(
-      LocalSessionsCompanion(
-        status:       const drift.Value('completed'),
-        completedAt:  drift.Value(DateTime.now()),
-        syncStatus:   const drift.Value('pending'),
-        timeSpentSec: drift.Value(timeSpent),
-      ),
-    );
-
-    // 3. Panggil SyncService secara background untuk segera upload jika ada internet
-    ref.read(syncServiceProvider).uploadCompletedSessions().catchError((e) {
-      log('Upload jawaban background tertunda: $e');
-    });
-
-    // Cek kelulusan berdasarkan passing_threshold dari local_levels
-    final sessionData = await db.sessionDao.getSessionById(sessionId);
-    if (sessionData != null && sessionData.levelId != null) {
-      final level = await db.levelDao.getLevelById(sessionData.levelId!);
-      if (level != null) {
-        return correctCount >= level.passingThreshold;
-      }
-    }
-
-    // Fallback jika tidak ada level (harusnya tidak terjadi)
-    return correctCount > 0;
   }
 }
 

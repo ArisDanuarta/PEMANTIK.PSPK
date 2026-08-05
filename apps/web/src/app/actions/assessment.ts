@@ -177,23 +177,7 @@ export async function resetStudentSession(sessionId: string) {
     if (voidErr) {
       return { success: false, error: "Gagal membatalkan sesi lama." };
     }
-
-    // 3. Buat session baru untuk anak yang sama, di kategori yang sama, attempt + 1
-    const { error: insertErr } = await supabase
-      .from("assessment_sessions")
-      .insert({
-        student_id: oldSession.student_id,
-        category_id: oldSession.category_id,
-        school_id: oldSession.school_id,
-        phase: oldSession.phase || "Tahap 1",
-        attempt_number: (oldSession.attempt_number || 1) + 1,
-        status: "pending",
-      });
-
-    if (insertErr) {
-      // Rollback is complex without RPC transaction, but setting void is fine since we can manually retry
-      return { success: false, error: "Sesi lama dibatalkan, namun gagal membuat sesi baru." };
-    }
+    
 
     revalidatePath("/guru/dashboard");
     revalidatePath("/sekolah/dashboard");
