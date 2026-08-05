@@ -8,27 +8,49 @@ part of 'dashboard_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Provider untuk data profil siswa yang sedang login.
+///
+/// PENTING: ini sengaja dibuat sebagai Notifier (bukan function provider biasa)
+/// supaya state-nya bisa di-update LANGSUNG dari luar (misal setelah edit
+/// profil berhasil), tanpa harus invalidate() + menunggu refetch dari storage.
+/// Dengan invalidate() biasa, widget yang sedang tidak "aktif" di navigation
+/// stack (misal ProfilePage yang tertutup EditProfilePage) kadang tidak
+/// langsung ter-render ulang sampai ada trigger rebuild lain (contoh: logout
+/// lalu login lagi). Dengan setData() di bawah, perubahan langsung
+/// ter-broadcast ke semua widget yang ref.watch(currentStudentProvider).
 
-@ProviderFor(currentStudent)
+@ProviderFor(CurrentStudent)
 final currentStudentProvider = CurrentStudentProvider._();
 
+/// Provider untuk data profil siswa yang sedang login.
+///
+/// PENTING: ini sengaja dibuat sebagai Notifier (bukan function provider biasa)
+/// supaya state-nya bisa di-update LANGSUNG dari luar (misal setelah edit
+/// profil berhasil), tanpa harus invalidate() + menunggu refetch dari storage.
+/// Dengan invalidate() biasa, widget yang sedang tidak "aktif" di navigation
+/// stack (misal ProfilePage yang tertutup EditProfilePage) kadang tidak
+/// langsung ter-render ulang sampai ada trigger rebuild lain (contoh: logout
+/// lalu login lagi). Dengan setData() di bawah, perubahan langsung
+/// ter-broadcast ke semua widget yang ref.watch(currentStudentProvider).
 final class CurrentStudentProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<Map<String, dynamic>?>,
-          Map<String, dynamic>?,
-          FutureOr<Map<String, dynamic>?>
-        >
-    with
-        $FutureModifier<Map<String, dynamic>?>,
-        $FutureProvider<Map<String, dynamic>?> {
+    extends $AsyncNotifierProvider<CurrentStudent, Map<String, dynamic>?> {
+  /// Provider untuk data profil siswa yang sedang login.
+  ///
+  /// PENTING: ini sengaja dibuat sebagai Notifier (bukan function provider biasa)
+  /// supaya state-nya bisa di-update LANGSUNG dari luar (misal setelah edit
+  /// profil berhasil), tanpa harus invalidate() + menunggu refetch dari storage.
+  /// Dengan invalidate() biasa, widget yang sedang tidak "aktif" di navigation
+  /// stack (misal ProfilePage yang tertutup EditProfilePage) kadang tidak
+  /// langsung ter-render ulang sampai ada trigger rebuild lain (contoh: logout
+  /// lalu login lagi). Dengan setData() di bawah, perubahan langsung
+  /// ter-broadcast ke semua widget yang ref.watch(currentStudentProvider).
   CurrentStudentProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'currentStudentProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -38,17 +60,44 @@ final class CurrentStudentProvider
 
   @$internal
   @override
-  $FutureProviderElement<Map<String, dynamic>?> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<Map<String, dynamic>?> create(Ref ref) {
-    return currentStudent(ref);
-  }
+  CurrentStudent create() => CurrentStudent();
 }
 
-String _$currentStudentHash() => r'3a2001ef3521e1029f2f71804f5d029792681a9a';
+String _$currentStudentHash() => r'559449b025824afa53fae2e581a9a0a2006efcbf';
+
+/// Provider untuk data profil siswa yang sedang login.
+///
+/// PENTING: ini sengaja dibuat sebagai Notifier (bukan function provider biasa)
+/// supaya state-nya bisa di-update LANGSUNG dari luar (misal setelah edit
+/// profil berhasil), tanpa harus invalidate() + menunggu refetch dari storage.
+/// Dengan invalidate() biasa, widget yang sedang tidak "aktif" di navigation
+/// stack (misal ProfilePage yang tertutup EditProfilePage) kadang tidak
+/// langsung ter-render ulang sampai ada trigger rebuild lain (contoh: logout
+/// lalu login lagi). Dengan setData() di bawah, perubahan langsung
+/// ter-broadcast ke semua widget yang ref.watch(currentStudentProvider).
+
+abstract class _$CurrentStudent extends $AsyncNotifier<Map<String, dynamic>?> {
+  FutureOr<Map<String, dynamic>?> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref =
+        this.ref
+            as $Ref<AsyncValue<Map<String, dynamic>?>, Map<String, dynamic>?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<Map<String, dynamic>?>,
+                Map<String, dynamic>?
+              >,
+              AsyncValue<Map<String, dynamic>?>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
 
 @ProviderFor(availableAssessments)
 final availableAssessmentsProvider = AvailableAssessmentsProvider._();

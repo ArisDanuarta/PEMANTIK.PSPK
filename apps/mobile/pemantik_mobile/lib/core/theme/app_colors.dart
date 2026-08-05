@@ -37,12 +37,16 @@ class AppColors {
   static const outlineVariant = Color(0xFFC4C6CF);
   static const errorContainer = Color(0xFFFFDAD6);
   static const onErrorContainer = Color(0xFF93000A);
+  static const error = Color(0xFFA8281C); // same as gagal
+  static const onError = Color(0xFFFFFFFF);
   static const primary = Color(0xFF001934);
   static const onPrimary = Color(0xFFFFFFFF);
   static const onSurface = Color(0xFF0B1C30);
   static const surfaceTint = Color(0xFF456084);
   static const inverseSurface = Color(0xFF213145);
   static const inversePrimary = Color(0xFFADC8F2);
-  static const surfaceContainerLow = Color(0xFFEFF4FF);
+  static const surfaceContainer = Color(0xFFE0EDFF);
+  static const surfaceContainerHigh = Color(0xFFD3E4FE);
   static const surfaceContainerHighest = Color(0xFFD3E4FE);
+  static const secondaryFixed = Color(0xFFFEBA48); // alias for secondaryContainer if needed
 }

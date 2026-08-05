@@ -36,7 +36,14 @@ serve(async (req) => {
       .from("students")
       .select(`
         id, pin_hash, full_name, is_active, school_id, class_id,
-        username, nisn, gender, ses_class,
+        username, nisn, gender, ses_class, birth_date,
+        province, city, district, village,
+        father_occupation_id, mother_occupation_id,
+        father_education_id, mother_education_id,
+        father_occupation:father_occupation_id ( name ),
+        mother_occupation:mother_occupation_id ( name ),
+        father_education:father_education_id ( name ),
+        mother_education:mother_education_id ( name ),
         schools ( name, community_id ),
         classes ( name )
       `)

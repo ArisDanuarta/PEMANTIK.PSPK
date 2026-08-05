@@ -51,6 +51,31 @@ class AppTextStyles {
     color: AppColors.textMuted,
   );
 
+  static final labelLarge = GoogleFonts.rubik(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: AppColors.birNavy,
+  );
+
+  static final labelMedium = GoogleFonts.rubik(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: AppColors.birNavy,
+  );
+
+  static final labelSmall = GoogleFonts.rubik(
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textMuted,
+  );
+
+  static final heading3 = GoogleFonts.lora(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.birNavyGelap,
+    height: 1.4,
+  );
+
   static final buttonText = GoogleFonts.rubik(
     fontSize: 16,
     fontWeight: FontWeight.w600,

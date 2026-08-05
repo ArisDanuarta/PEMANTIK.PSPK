@@ -20,7 +20,7 @@ class AuthState {
   AuthState({this.isLoading = false, this.error, this.isAuthenticated = false});
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class Auth extends _$Auth {
   final _storage = secureStorage;
   bool _mounted = true;
@@ -38,28 +38,16 @@ class Auth extends _$Auth {
   }
 
   /// Cek apakah siswa sudah login sebelumnya (dipanggil dari SplashPage).
-  ///
-  /// Validasi yang dilakukan:
-  /// 1. Baca 'student_jwt' dari SecureStorage
-  /// 2. Baca 'student_data' (data profil siswa) dari SecureStorage
-  /// 3. Kedua data harus ada agar dianggap valid
-  ///
-  /// JWT diverifikasi tidak perlu decode di Flutter - RLS Supabase yang akan
-  /// memvalidasi signature-nya saat request pertama.
   Future<bool> checkInitialAuth() async {
     try {
-      // Gunakan kunci yang sama dengan yang dipakai saat login
       final token = await _storage.read(key: SupabaseConfig.studentJwtKey);
       final studentData = await _storage.read(key: 'student_data');
 
       if (!_mounted) return false;
 
       if (token != null && studentData != null) {
-        // Kedua data ada → siswa dianggap sudah login
-        // Token sudah otomatis dipakai oleh accessToken callback di SupabaseConfig
         log('=== [Auth] Session ditemukan, siswa sudah login ===');
         state = AuthState(isAuthenticated: true);
-        // Memicu sync background untuk memastikan data offline langsung terupload saat app dibuka online
         ref.read(syncServiceProvider).uploadCompletedSessions();
         return true;
       }
@@ -70,20 +58,11 @@ class Auth extends _$Auth {
   }
 
   /// Login siswa dengan username dan PIN.
-  ///
-  /// Flow:
-  /// 1. Panggil Edge Function 'authenticate-student'
-  /// 2. Edge Function return JWT valid (HS256) + data anak
-  /// 3. Simpan JWT ke SecureStorage dengan kunci 'student_jwt'
-  ///    (kunci ini sudah dikonfigurasi sebagai accessToken callback di Supabase)
-  /// 4. Simpan data profil siswa ke 'student_data'
-  /// 5. Semua request Supabase selanjutnya otomatis pakai JWT ini
   Future<void> login(String username, String pin) async {
     if (!_mounted) return;
     state = AuthState(isLoading: true);
 
     try {
-      // Panggil Edge Function dengan timeout 20 detik (cold start bisa lama)
       final response = await SupabaseConfig.client.functions
           .invoke(
             'authenticate-student',
@@ -103,7 +82,6 @@ class Auth extends _$Auth {
       if (response.status == 200) {
         final data = response.data;
 
-        // Validasi format response sebelum disimpan
         final token = data['token'];
         final student = data['student'];
 
@@ -114,40 +92,36 @@ class Auth extends _$Auth {
           return;
         }
 
-        // ── SIMPAN TOKEN JWT VALID KE SECURE STORAGE ──────────────────────
-        // Kunci 'student_jwt' = kunci yang dipakai accessToken callback
-        // di SupabaseConfig.initialize() → otomatis dipakai semua request
         await _storage.write(
-          key: SupabaseConfig.studentJwtKey, // = 'student_jwt'
+          key: SupabaseConfig.studentJwtKey,
           value: token.toString(),
         );
 
-        // Simpan data profil siswa untuk kebutuhan UI & offline
-        await _storage.write(key: 'student_data', value: jsonEncode(student));
+        final studentMap = Map<String, dynamic>.from(student as Map);
+        await _storage.write(key: 'student_data', value: jsonEncode(studentMap));
 
-        // Log untuk debugging - cek format JWT (harus 3 bagian dipisah titik)
         final parts = token.toString().split('.');
         if (parts.length == 3) {
-          log(
-            '=== [Auth] Login berhasil. Token format JWT valid (3 parts) ===',
-          );
+          log('=== [Auth] Login berhasil. Token format JWT valid (3 parts) ===');
         } else {
-          log(
-            '=== [Auth] PERINGATAN: Token bukan format JWT valid! Parts: ${parts.length} ===',
-          );
+          log('=== [Auth] PERINGATAN: Token bukan format JWT valid! Parts: ${parts.length} ===');
         }
 
         if (!_mounted) return;
 
-        // Invalidate provider yang mungkin masih menyimpan cache sebelumnya
-        ref.invalidate(currentStudentProvider);
+        // PENTING: dorong data langsung ke CurrentStudent notifier (realtime),
+        // ganti invalidate() supaya widget yang sudah aktif langsung ter-update
+        // tanpa nunggu refetch dari storage.
+        ref.read(currentStudentProvider.notifier).setData(studentMap);
+
+        // Provider lain masih aman pakai invalidate karena memang harus
+        // full refetch data siswa yang baru login (bukan sekadar push data).
         ref.invalidate(availableAssessmentsProvider);
         ref.invalidate(studentHistoryProvider);
         ref.invalidate(studentCompletedSessionsStreamProvider);
         ref.invalidate(assessmentLevelsProvider);
 
         state = AuthState(isAuthenticated: true);
-        // Memicu sinkronisasi background untuk mengupload sesi offline milik anak yang baru login
         ref.read(syncServiceProvider).uploadCompletedSessions();
       } else {
         final errorMsg =
@@ -164,12 +138,10 @@ class Auth extends _$Auth {
     } catch (e) {
       if (!_mounted) return;
       log('=== [Auth] ERROR LOGIN: $e ===');
-      
+
       String errorMsg = 'Terjadi kesalahan jaringan. Pastikan perangkat terhubung internet.';
-      
-      // Tangkap pesan error dari Supabase Edge Function (misal 401 Unauthorized)
+
       if (e.toString().contains('FunctionException') || e.toString().contains('error')) {
-        // Coba ekstrak pesan error dari body response jika tersedia
         try {
           final errorStr = e.toString();
           if (errorStr.contains('Nama pengguna tidak ditemukan') || errorStr.contains('tidak aktif')) {
@@ -179,8 +151,7 @@ class Auth extends _$Auth {
           } else if (errorStr.contains('Username dan PIN wajib diisi')) {
             errorMsg = 'Mohon lengkapi username dan PIN.';
           } else {
-             // Fallback yang lebih spesifik daripada "Kesalahan Jaringan" jika kita tahu ini respon server
-             errorMsg = 'Login ditolak oleh server. Periksa kembali data Anda.';
+            errorMsg = 'Login ditolak oleh server. Periksa kembali data Anda.';
           }
         } catch (_) {}
       }
@@ -189,28 +160,88 @@ class Auth extends _$Auth {
     }
   }
 
+  /// Mengubah data profil siswa via Edge Function (bypass RLS), lalu
+  /// langsung dorong hasilnya ke CurrentStudent notifier (realtime update UI).
+  Future<bool> updateStudentProfile(Map<String, dynamic> newData) async {
+    state = AuthState(isLoading: true);
+    try {
+      final studentStr = await _storage.read(key: 'student_data');
+      if (studentStr == null) throw Exception('Data siswa lokal tidak ditemukan');
+
+      final Map<String, dynamic> currentStudent = jsonDecode(studentStr);
+      final studentId = currentStudent['id'] as String?;
+
+      if (studentId == null) throw Exception('ID Siswa tidak ditemukan');
+
+      final jwt = await _storage.read(key: SupabaseConfig.studentJwtKey);
+      if (jwt == null) throw Exception('JWT tidak ditemukan, silakan login ulang');
+
+      final response = await SupabaseConfig.client.functions.invoke(
+        'refresh-student-profile',
+        headers: {'Authorization': 'Bearer $jwt'},
+        body: newData,
+      );
+
+      Map<String, dynamic> updated;
+
+      if (response.status == 200 && response.data?['student'] != null) {
+        // Data terbaru dari server (sudah termasuk relasi father_occupation dll)
+        final freshStudent = Map<String, dynamic>.from(response.data['student'] as Map);
+        updated = {...currentStudent, ...freshStudent};
+        await _storage.write(key: 'student_data', value: jsonEncode(updated));
+        log('[Auth] Profil diperbarui & cache disinkron dari server ✓');
+      } else {
+        // Fallback: simpan lokal saja jika edge function gagal.
+        // Reset relasi nested karena id-nya berubah tapi nama nested-nya belum ke-refresh.
+        updated = {
+          ...currentStudent,
+          ...newData,
+          'father_occupation': null,
+          'mother_occupation': null,
+          'father_education': null,
+          'mother_education': null,
+        };
+        await _storage.write(key: 'student_data', value: jsonEncode(updated));
+        log('[Auth] Profil disimpan lokal (fallback). Status: ${response.status}');
+      }
+
+      if (!_mounted) return true;
+
+      // INI KUNCI FIX-NYA: push langsung ke state notifier, bukan invalidate.
+      // ProfilePage yang watch currentStudentProvider akan langsung rebuild
+      // dengan data baru, walaupun sedang tidak aktif di navigation stack.
+      ref.read(currentStudentProvider.notifier).setData(updated);
+
+      if (_mounted) {
+        state = AuthState(isAuthenticated: true);
+      }
+      return true;
+    } catch (e) {
+      log('=== [Auth] ERROR UPDATE PROFILE: $e ===');
+      if (_mounted) {
+        state = AuthState(error: 'Gagal memperbarui profil: $e');
+      }
+      return false;
+    }
+  }
+
   /// Logout: hapus semua data sesi dari SecureStorage.
-  ///
-  /// Setelah ini dipanggil, accessToken callback akan return null,
-  /// sehingga request Supabase kembali ke mode anon.
   Future<void> logout() async {
     try {
       await _storage.deleteAll();
 
-      // Bersihkan juga seluruh database SQLite lokal untuk mencegah kebocoran data antar akun
       final db = ref.read(databaseProvider);
       await db.clearAllData();
 
-      // Invalidate provider yang menyimpan state/cache dari user sebelumnya
-      ref.invalidate(currentStudentProvider);
+      // Kosongkan state notifier secara langsung (realtime), plus invalidate
+      // provider lain yang memang harus full reset ke kondisi awal.
+      ref.read(currentStudentProvider.notifier).clear();
       ref.invalidate(availableAssessmentsProvider);
       ref.invalidate(studentHistoryProvider);
       ref.invalidate(studentCompletedSessionsStreamProvider);
       ref.invalidate(assessmentLevelsProvider);
 
-      log(
-        '=== [Auth] Logout berhasil. Semua data sesi & database dihapus. ===',
-      );
+      log('=== [Auth] Logout berhasil. Semua data sesi & database dihapus. ===');
     } catch (e) {
       log('=== [Auth] ERROR LOGOUT: $e ===');
     } finally {

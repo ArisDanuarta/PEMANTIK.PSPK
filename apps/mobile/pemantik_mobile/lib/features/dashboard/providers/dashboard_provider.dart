@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:flutter/foundation.dart';
 import '../../../core/sync/media_download_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/storage/secure_storage.dart';
@@ -8,14 +9,44 @@ import '../../../core/sync/sync_service.dart';
 
 part 'dashboard_provider.g.dart';
 
-@riverpod
-Future<Map<String, dynamic>?> currentStudent(Ref ref) async {
-  final storage = secureStorage;
-  final dataStr = await storage.read(key: 'student_data');
-  if (dataStr != null) {
-    return jsonDecode(dataStr);
+/// Provider untuk data profil siswa yang sedang login.
+///
+/// PENTING: ini sengaja dibuat sebagai Notifier (bukan function provider biasa)
+/// supaya state-nya bisa di-update LANGSUNG dari luar (misal setelah edit
+/// profil berhasil), tanpa harus invalidate() + menunggu refetch dari storage.
+/// Dengan invalidate() biasa, widget yang sedang tidak "aktif" di navigation
+/// stack (misal ProfilePage yang tertutup EditProfilePage) kadang tidak
+/// langsung ter-render ulang sampai ada trigger rebuild lain (contoh: logout
+/// lalu login lagi). Dengan setData() di bawah, perubahan langsung
+/// ter-broadcast ke semua widget yang ref.watch(currentStudentProvider).
+@Riverpod(keepAlive: true)
+class CurrentStudent extends _$CurrentStudent {
+  @override
+  Future<Map<String, dynamic>?> build() async {
+    final storage = secureStorage;
+    final dataStr = await storage.read(key: 'student_data');
+    if (dataStr == null) return null;
+    return Map<String, dynamic>.from(jsonDecode(dataStr));
   }
-  return null;
+
+  void setData(Map<String, dynamic> data) {
+    debugPrint('=== [CurrentStudent] setData dipanggil: ${data['full_name']} ===');
+    state = AsyncData(data);
+  }
+
+  void clear() {
+    state = const AsyncData(null);
+  }
+
+  Future<void> reloadFromStorage() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final storage = secureStorage;
+      final dataStr = await storage.read(key: 'student_data');
+      if (dataStr == null) return null;
+      return Map<String, dynamic>.from(jsonDecode(dataStr));
+    });
+  }
 }
 
 class AssessmentCategory {
@@ -130,21 +161,21 @@ Future<DashboardData> availableAssessments(Ref ref) async {
       historyByPhase.putIfAbsent(cat.phase, () => []).add(cat);
     } else {
       activeByPhase.putIfAbsent(cat.phase, () => []).add(cat);
-      
+
       // Hitung progress untuk kategori aktif ini jika studentId ada dan belum masa tenggang awal
       if (studentId != null && !cat.isComingSoon) {
         final levels = await db.levelDao.getLevelsByCategory(cat.id);
         int completedLevels = 0;
-        
+
         for (final level in levels) {
           final count = await db.sessionDao.getCompletedSessionsCountForLevel(
-            studentId, 
-            level.id, 
-            cat.phase
+            studentId,
+            level.id,
+            cat.phase,
           );
           if (count > 0) completedLevels++;
         }
-        
+
         learningProgress.add(PackageProgress(
           categoryId: cat.id,
           categoryName: cat.name,

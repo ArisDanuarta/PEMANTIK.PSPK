@@ -6,6 +6,7 @@ import '../../features/assessment/pages/assessment_lobby_page.dart';
 import '../../features/assessment/pages/question_page.dart';
 import '../../features/assessment/pages/result_page.dart';
 import '../../features/onboarding/pages/onboarding_page.dart';
+import '../../features/profile/pages/edit_profile_page.dart';
 
 class AppRouter {
   static const String login = '/login';
@@ -15,6 +16,7 @@ class AppRouter {
   static const String assessmentLobby = '/assessment/lobby';
   static const String questionPage = '/assessment/question';
   static const String resultPage = '/assessment/result';
+  static const String editProfile = '/profile/edit';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -24,6 +26,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const LoginPage());
       case home:
         return MaterialPageRoute(builder: (_) => const MainLayout());
+      case editProfile:
+        return MaterialPageRoute(builder: (_) => const EditProfilePage());
       case assessmentLevels:
         final categoryId = settings.arguments as String? ?? '';
         return MaterialPageRoute(
