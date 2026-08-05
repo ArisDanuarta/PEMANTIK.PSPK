@@ -25,6 +25,7 @@ class AssessmentCategory {
   final String phase;
   final DateTime? validFrom;
   final DateTime? validUntil;
+  final int totalLevels;
 
   AssessmentCategory({
     required this.id,
@@ -33,9 +34,10 @@ class AssessmentCategory {
     required this.phase,
     this.validFrom,
     this.validUntil,
+    this.totalLevels = 0,
   });
 
-  factory AssessmentCategory.fromLocal(LocalCategory local) {
+  factory AssessmentCategory.fromLocal(LocalCategory local, {int totalLevels = 0}) {
     return AssessmentCategory(
       id: local.id,
       name: local.name,
@@ -43,6 +45,7 @@ class AssessmentCategory {
       phase: local.phase,
       validFrom: local.validFrom,
       validUntil: local.validUntil,
+      totalLevels: totalLevels,
     );
   }
 
@@ -63,12 +66,33 @@ class AssessmentCategory {
   }
 }
 
-// Kembalikan dua list: Aktif dan Riwayat
+class PackageProgress {
+  final String categoryId;
+  final String categoryName;
+  final String subjectArea;
+  final int completed;
+  final int total;
+
+  PackageProgress({
+    required this.categoryId,
+    required this.categoryName,
+    required this.subjectArea,
+    required this.completed,
+    required this.total,
+  });
+}
+
+// Kembalikan data Aktif, Riwayat, dan Progres
 class DashboardData {
   final Map<String, List<AssessmentCategory>> activeByPhase;
   final Map<String, List<AssessmentCategory>> historyByPhase;
+  final List<PackageProgress> learningProgress;
 
-  DashboardData({required this.activeByPhase, required this.historyByPhase});
+  DashboardData({
+    required this.activeByPhase,
+    required this.historyByPhase,
+    required this.learningProgress,
+  });
 }
 
 @riverpod
@@ -87,24 +111,54 @@ Future<DashboardData> availableAssessments(Ref ref) async {
   // Langsung ambil data yang ada di database lokal agar cepat
   final db = ref.read(databaseProvider);
   final locals = await db.categoryDao.getAllCategories();
-  final allCategories = locals
-      .map((l) => AssessmentCategory.fromLocal(l))
-      .toList();
+  final allCategories = <AssessmentCategory>[];
+  for (final local in locals) {
+    final levels = await db.levelDao.getLevelsByCategory(local.id);
+    allCategories.add(AssessmentCategory.fromLocal(local, totalLevels: levels.length));
+  }
 
   final activeByPhase = <String, List<AssessmentCategory>>{};
   final historyByPhase = <String, List<AssessmentCategory>>{};
+  final learningProgress = <PackageProgress>[];
+
+  // Get current student ID
+  final student = await ref.watch(currentStudentProvider.future);
+  final studentId = student?['id'] as String?;
 
   for (final cat in allCategories) {
-    // Kita anggap expired/riwayat adalah ujian yang sudah tidak valid
     if (cat.isExpired) {
       historyByPhase.putIfAbsent(cat.phase, () => []).add(cat);
     } else {
       activeByPhase.putIfAbsent(cat.phase, () => []).add(cat);
+      
+      // Hitung progress untuk kategori aktif ini jika studentId ada dan belum masa tenggang awal
+      if (studentId != null && !cat.isComingSoon) {
+        final levels = await db.levelDao.getLevelsByCategory(cat.id);
+        int completedLevels = 0;
+        
+        for (final level in levels) {
+          final count = await db.sessionDao.getCompletedSessionsCountForLevel(
+            studentId, 
+            level.id, 
+            cat.phase
+          );
+          if (count > 0) completedLevels++;
+        }
+        
+        learningProgress.add(PackageProgress(
+          categoryId: cat.id,
+          categoryName: cat.name,
+          subjectArea: cat.subjectArea,
+          completed: completedLevels,
+          total: levels.length,
+        ));
+      }
     }
   }
 
   return DashboardData(
     activeByPhase: activeByPhase,
     historyByPhase: historyByPhase,
+    learningProgress: learningProgress,
   );
 }

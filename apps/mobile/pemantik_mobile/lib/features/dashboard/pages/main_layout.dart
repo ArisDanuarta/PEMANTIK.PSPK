@@ -47,69 +47,84 @@ class _MainLayoutState extends State<MainLayout> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.surface,
+        extendBody: true,
         body: IndexedStack(index: _currentIndex, children: _pages),
         bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0B1C30).withValues(alpha: 0.05),
+                offset: const Offset(0, -4),
+                blurRadius: 20,
+              ),
+            ],
+          ),
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 8,
+            bottom: MediaQuery.paddingOf(context).bottom > 0
+                ? MediaQuery.paddingOf(context).bottom
+                : 16,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(0, Icons.home_outlined, Icons.home, 'Beranda'),
+              _buildNavItem(1, Icons.history_outlined, Icons.history, 'Riwayat'),
+              _buildNavItem(2, Icons.person_outline, Icons.person, 'Profil Saya'),
+            ],
+          ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          backgroundColor: AppColors.surface,
-          selectedItemColor: AppColors.birNavy,
-          unselectedItemColor: AppColors.textMuted,
-          selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 13,
-          ),
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: Icon(Icons.home_outlined),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: Icon(Icons.home),
-              ),
-              label: 'Beranda',
+      ),
+    );
+  }
+
+  Widget _buildNavItem(
+    int index,
+    IconData iconOutlined,
+    IconData iconFilled,
+    String label,
+  ) {
+    final isSelected = _currentIndex == index;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.surfaceTint : Colors.transparent, // or primaryContainer depending on active theme, HTML says bg-primary-container but surfaceTint matches design if primaryContainer is too dark. Wait, let's use primary (Navy) or surfaceTint for active. Let's use primary.
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? iconFilled : iconOutlined,
+              color: isSelected ? AppColors.onPrimary : AppColors.onSurfaceVariant,
             ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: Icon(Icons.history_outlined),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Rubik',
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? AppColors.onPrimary : AppColors.onSurfaceVariant,
               ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: Icon(Icons.history),
-              ),
-              label: 'Riwayat',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: Icon(Icons.person_outline),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: Icon(Icons.person),
-              ),
-              label: 'Profil Saya',
             ),
           ],
         ),
       ),
-    ),
     );
   }
 }
