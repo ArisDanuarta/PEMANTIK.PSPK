@@ -9,6 +9,8 @@ import 'core/router/app_router.dart';
 import 'core/sync/sync_service.dart';
 import 'core/update/update_service.dart';
 
+import 'package:permission_handler/permission_handler.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseConfig.initialize();
@@ -110,6 +112,17 @@ class _AppEntryState extends ConsumerState<_AppEntry> {
   }
 
   Future<void> _checkAuth() async {
+    // 0. Minta semua izin yang diperlukan aplikasi di awal agar dialog izin
+    // sistem operasi tidak memicu anti-cheat (AppLifecycleState.inactive) saat ujian.
+    try {
+      await [
+        Permission.microphone,
+        Permission.speech,
+      ].request();
+    } catch (e) {
+      debugPrint('Permission request error: $e');
+    }
+
     // 1. Cek pembaruan aplikasi
     final updateService = ref.read(updateServiceProvider);
     final update = await updateService.checkForUpdates();
