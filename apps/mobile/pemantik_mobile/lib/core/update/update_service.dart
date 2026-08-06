@@ -79,22 +79,24 @@ class UpdateService {
           canPop: !release.isMandatory,
           child: AlertDialog(
             title: Text('Pembaruan Tersedia (${release.versionName})'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  release.isMandatory
-                      ? 'Pembaruan ini diwajibkan untuk melanjutkan penggunaan aplikasi.'
-                      : 'Ada versi aplikasi terbaru. Apakah Anda ingin mengunduhnya sekarang?',
-                ),
-                if (release.releaseNotes.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  const Text('Catatan Rilis:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(release.releaseNotes, style: const TextStyle(fontSize: 14)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    release.isMandatory
+                        ? 'Pembaruan ini diwajibkan untuk melanjutkan penggunaan aplikasi.'
+                        : 'Ada versi aplikasi terbaru. Apakah Anda ingin mengunduhnya sekarang?',
+                  ),
+                  if (release.releaseNotes.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    const Text('Catatan Rilis:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(release.releaseNotes, style: const TextStyle(fontSize: 14)),
+                  ],
                 ],
-              ],
+              ),
             ),
             actions: [
               if (!release.isMandatory)
