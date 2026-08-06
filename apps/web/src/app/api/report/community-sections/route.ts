@@ -150,11 +150,17 @@ export async function GET(request: Request) {
       }
     });
 
+    const { count: totalCommunityStudents } = await supabase
+       .from("students")
+       .select("*", { count: "exact", head: true })
+       .in("school_id", schoolIds);
+
     const data = distinctPhases.map((phase) => ({
       phase,
       valid_from: phaseTimeMap.get(phase)?.valid_from ?? null,
       valid_until: phaseTimeMap.get(phase)?.valid_until ?? null,
       student_count: phaseMap.get(phase)?.size ?? 0,
+      total_students: totalCommunityStudents ?? 0,
     }));
 
     return NextResponse.json({ data });

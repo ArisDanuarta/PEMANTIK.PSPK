@@ -210,9 +210,9 @@ function buildAnalisisSoal(allQuestions: any[], answers: any[], levelMap: Map<st
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helper: build Sheet 1 Khusus Komunitas - RAW Data Lengkap 1 Sheet
+// Helper: build RAW Data Lengkap 1 Sheet
 // ─────────────────────────────────────────────────────────────────────────────
-function buildRawSheetCommunity(
+function buildRawSheet(
   rows: any[],
   answers: any[],
   allQuestions: any[],
@@ -244,13 +244,26 @@ function buildRawSheetCommunity(
     const baseRow: Record<string, any> = {
       id:                   row.session_id        ?? "-",
       id_user:              row.student_username  || row.nisn || row.student_id || "-",
-      category:             row.category_name     ?? "-",
-      type_soal:            row.subject_area || (allQuestions[0]?.question_type ?? "-"),
-      attempt:              row.attempt_number    ?? 1,
-      level:                row.final_level_number != null ? `Level ${row.final_level_number}` : "-",
       nama_siswa:           row.student_name      ?? "-",
       gender:               row.gender            ?? "-",
+      tgl_lahir_siswa:      row.birth_date        ?? "-",
+      umur_siswa:           umurSiswa,
       kelas:                row.grade ? `Kelas ${row.grade} - ${row.class_name ?? ""}`.trim() : row.class_name ?? "-",
+      asal_sekolah:         row.school_name       ?? "-",
+      asal_komunitas:       row.community_name    ?? "-",
+      "asal_kelurahan/desa":row.student_village || row.village || "-",
+      asal_kecamatan:       row.student_district || row.district || "-",
+      asal_kabupaten_kota:  row.student_city || row.city || "-",
+      asal_provinsi:        row.student_province || row.province || "-",
+      pendidikan_ayah:      pendAyah,
+      pendidikan_ibu:       pendIbu,
+      pekerjaan_ayah:       kerjAyah,
+      pekerjaan_ibu:        kerjIbu,
+      SES:                  row.ses_class ? `${row.ses_class}${row.ses_score != null ? ` (${row.ses_score})` : ""}` : "-",
+      category:             row.category_name     ?? "-",
+      type_soal:            row.subject_area || (allQuestions[0]?.question_type ?? "-"),
+      level:                row.final_level_number != null ? `Level ${row.final_level_number}` : "-",
+      attempt:              row.attempt_number    ?? 1,
     };
 
     allQuestions.forEach((q, idx) => {
@@ -268,19 +281,8 @@ function buildRawSheetCommunity(
       baseRow[headerCode] = scoreVal;
     });
 
-    baseRow["umur_siswa"]          = umurSiswa;
-    baseRow["tgl_lahir_siswa"]     = row.birth_date ?? "-";
-    baseRow["asal_provinsi"]       = row.student_province || row.province || "-";
-    baseRow["asal_kabupaten_kota"] = row.student_city || row.city || "-";
-    baseRow["pekerjaan_ayah"]      = kerjAyah;
-    baseRow["pekerjaan_ibu"]       = kerjIbu;
-    baseRow["pendidikan_ayah"]     = pendAyah;
-    baseRow["pendidikan_ibu"]      = pendIbu;
-    baseRow["SES"]                 = row.ses_class ? `${row.ses_class}${row.ses_score != null ? ` (${row.ses_score})` : ""}` : "-";
-    baseRow["asal_sekolah"]        = row.school_name       ?? "-";
-    baseRow["komunitas_user"]      = row.community_name    ?? "-";
-    baseRow["Waktu Mulai"]         = row.started_at ? new Date(row.started_at).toLocaleString("id-ID") : "-";
-    baseRow["Durasi Pengerjaan"]   = row.time_spent_sec != null ? `${row.time_spent_sec} detik` : "0 detik";
+    baseRow["waktu_mulai"]         = row.started_at ? new Date(row.started_at).toLocaleString("id-ID") : "-";
+    baseRow["durasi_pengerjaan"]   = row.time_spent_sec != null ? `${row.time_spent_sec} detik` : "0 detik";
 
     return baseRow;
   });
@@ -525,6 +527,8 @@ export async function GET(request: Request) {
           ses_score: st?.ses_score,
           student_province: st?.province || "-",
           student_city: st?.city || "-",
+          student_district: st?.district || "-",
+          student_village: st?.village || "-",
           session_id: s.id,
           session_status: s.status,
           started_at: s.started_at,
@@ -604,10 +608,16 @@ export async function GET(request: Request) {
       if (q?.level_id) activeLevelIds.add(q.level_id);
     });
 
-    const { data: levelsData } = await supabase
+    let levelsQuery = supabase
       .from("question_levels")
-      .select("id, level_number")
-      .eq("category_id", category_id);
+      .select("id, level_number");
+
+    if (category_id !== "all") {
+      levelsQuery = levelsQuery.eq("category_id", category_id);
+    } else if (activeLevelIds.size > 0) {
+      levelsQuery = levelsQuery.in("id", [...activeLevelIds]);
+    }
+    const { data: levelsData } = await levelsQuery;
 
     (levelsData ?? []).forEach((l) => {
       if (levelParam && levelParam !== "all") {
@@ -679,26 +689,36 @@ export async function GET(request: Request) {
   // ── 3. WORKBOOK ───────────────────────────────────────────────────────────
   const wb = XLSX.utils.book_new();
 
-  const isCommunityRawExport = userRole === "community" || target_type === "community" || searchParams.get("raw") === "true";
+  const isRawOnly = searchParams.get("raw") === "true";
+  const isSuperadmin = userRole === "super_admin" || target_type === "all";
 
-  if (isCommunityRawExport) {
-    let rawData = buildRawSheetCommunity(rows, answers, allQuestions, studentDemoMap, sesMap);
+  // Build RAW Data (Digunakan oleh export khusus raw atau superadmin)
+  let rawData: any[] = [];
+  if (isRawOnly || isSuperadmin) {
+    rawData = buildRawSheet(rows, answers, allQuestions, studentDemoMap, sesMap);
     if (rawData.length === 0) {
       rawData = [{
-        id: "-", id_user: "-", category: "-", type_soal: "-", attempt: 1, level: "-",
-        nama_siswa: "Belum Ada Data Sesi Asesmen", gender: "-", kelas: "-",
-        "Jawaban": "-",
-        umur_siswa: "-", tgl_lahir_siswa: "-", asal_provinsi: "-", asal_kabupaten_kota: "-",
-        pekerjaan_ayah: "-", pekerjaan_ibu: "-", pendidikan_ayah: "-", pendidikan_ibu: "-",
-        SES: "-", asal_sekolah: "-", komunitas_user: "-", "Waktu Mulai": "-", "Durasi Pengerjaan": "0 detik"
+        id: "-", id_user: "-", nama_siswa: "Belum Ada Data Sesi Asesmen", gender: "-", tgl_lahir_siswa: "-",
+        umur_siswa: "-", kelas: "-", asal_sekolah: "-", asal_komunitas: "-", "asal_kelurahan/desa": "-",
+        asal_kecamatan: "-", asal_kabupaten_kota: "-", asal_provinsi: "-", pendidikan_ayah: "-", pendidikan_ibu: "-",
+        pekerjaan_ayah: "-", pekerjaan_ibu: "-", SES: "-", category: "-", type_soal: "-", level: "-", attempt: 1,
+        "Jawaban": "-", waktu_mulai: "-", durasi_pengerjaan: "0 detik"
       }];
     }
+  }
+
+  if (isRawOnly) {
     XLSX.utils.book_append_sheet(
       wb,
       XLSX.utils.json_to_sheet(rawData),
       "RAW Data Asesmen"
     );
   } else {
+    // ── Prepend RAW Data Khusus Superadmin ────────────────────────────────────
+    if (isSuperadmin) {
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rawData), "RAW Data Lengkap");
+    }
+
     // ── SHEET 1: Ringkasan Sekolah ────────────────────────────────────────────
     const sheet1 = buildRingkasanSekolah(rows);
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet1), "Ringkasan Sekolah");

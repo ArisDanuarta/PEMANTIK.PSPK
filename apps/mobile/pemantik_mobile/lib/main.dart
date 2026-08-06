@@ -118,6 +118,8 @@ class _AppEntryState extends ConsumerState<_AppEntry> {
       await [
         Permission.microphone,
         Permission.speech,
+        Permission.camera,
+        Permission.storage,
       ].request();
     } catch (e) {
       debugPrint('Permission request error: $e');

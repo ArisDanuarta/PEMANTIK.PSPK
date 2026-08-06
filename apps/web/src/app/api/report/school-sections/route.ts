@@ -80,12 +80,22 @@ export async function GET(request: Request) {
       }
     });
 
+    // Count total students per class
+    const { data: allStudents } = await supabase.from("students").select("class_id").in("class_id", classIds);
+    const classTotalMap = new Map<string, number>();
+    (allStudents ?? []).forEach(st => {
+       if (st.class_id) {
+           classTotalMap.set(st.class_id, (classTotalMap.get(st.class_id) ?? 0) + 1);
+       }
+    });
+
     const data = classes.map((cls) => ({
       class_id: cls.id,
       class_name: cls.name,
       grade: cls.grade,
       academic_year: cls.academic_year ?? null,
       student_count: classStudentMap.get(cls.id)?.size ?? 0,
+      total_students: classTotalMap.get(cls.id) ?? 0,
     }));
 
     return NextResponse.json({ data });
@@ -153,11 +163,17 @@ export async function GET(request: Request) {
       }
     });
 
+    const { count: totalSchoolStudents } = await supabase
+       .from("students")
+       .select("*", { count: "exact", head: true })
+       .eq("school_id", schoolId);
+
     const data = distinctPhases.map((phase) => ({
       phase,
       valid_from: phaseTimeMap.get(phase)?.valid_from ?? null,
       valid_until: phaseTimeMap.get(phase)?.valid_until ?? null,
       student_count: phaseMap.get(phase)?.size ?? 0,
+      total_students: totalSchoolStudents ?? 0,
     }));
 
     return NextResponse.json({ data });

@@ -199,6 +199,8 @@ class AssessmentLevelsPage extends ConsumerWidget {
                 fontSize: 20,
               ),
               overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              softWrap: false,
             ),
           ),
           IconButton(

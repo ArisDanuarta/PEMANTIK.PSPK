@@ -28,8 +28,8 @@ interface ReportRow {
   class_name: string;
 }
 
-interface ClassCard  { class_id: string; class_name: string; grade: number; academic_year: string | null; student_count: number }
-interface PhaseCard  { phase: string; valid_from: string | null; valid_until: string | null; student_count: number }
+interface ClassCard  { class_id: string; class_name: string; grade: number; academic_year: string | null; student_count: number; total_students?: number; }
+interface PhaseCard  { phase: string; valid_from: string | null; valid_until: string | null; student_count: number; total_students?: number; }
 interface LevelCard  { level_number: number; student_count: number }
 
 type SectionType = "per_class" | "per_phase" | "per_level";
@@ -83,9 +83,9 @@ function SectionTab({ active, label, onClick }: { active: boolean; label: string
 // ─── Data Card ────────────────────────────────────────────────────────────────
 
 function DataCard({
-  title, subtitle, count, countLabel, onDownload, isDownloading,
+  title, subtitle, count, total, countLabel, onDownload, isDownloading,
 }: {
-  title: string; subtitle?: string; count: number; countLabel: string;
+  title: string; subtitle?: string; count: number; total?: number; countLabel: string;
   onDownload: () => void; isDownloading: boolean;
 }) {
   return (
@@ -109,7 +109,9 @@ function DataCard({
         {subtitle && <div style={{ fontSize: "0.78rem", color: "#6b7280", marginTop: "0.2rem" }}>{subtitle}</div>}
       </div>
       <div style={{ display: "flex", alignItems: "baseline", gap: "0.35rem" }}>
-        <span style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0874aa", lineHeight: 1 }}>{count}</span>
+        <span style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0874aa", lineHeight: 1 }}>
+          {count} {total !== undefined && <span style={{ fontSize: "1.1rem", color: "#6b7280", fontWeight: 600 }}>/ {total}</span>}
+        </span>
         <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>{countLabel}</span>
       </div>
       <button
@@ -160,6 +162,7 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
   const [selectedClassId, setSelectedClassId]   = useState("all");
   const [selectedGender, setSelectedGender]     = useState("all");
   const [selectedSes, setSelectedSes]           = useState("all");
+  const [selectedPhase, setSelectedPhase]       = useState("all");
   const [search, setSearch]                     = useState("");
   const [reportData, setReportData]             = useState<ReportRow[]>([]);
   const [isLoadingData, setIsLoadingData]       = useState(false);
@@ -200,6 +203,7 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
     setSelectedClassId("all");
     setSelectedGender("all");
     setSelectedSes("all");
+    setSelectedPhase("all");
     setSearch("");
     setReportData([]);
     setClassCards([]);
@@ -275,9 +279,16 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
     }
   }, [selectedPackageId, schoolId, showError, showSuccess]);
 
+  // Derive available phases from loaded data
+  const availablePhases = useMemo(() => {
+    const phases = [...new Set(reportData.map(r => r.phase).filter(Boolean))].sort();
+    return phases;
+  }, [reportData]);
+
   // ── Toolbar Filter ──────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     return reportData.filter((row) => {
+      if (selectedPhase !== "all" && row.phase !== selectedPhase) return false;
       if (selectedClassId !== "all" && row.class_id !== selectedClassId) return false;
       if (selectedGender !== "all" && row.gender !== selectedGender) return false;
       if (selectedSes !== "all" && row.ses_class !== selectedSes) return false;
@@ -287,7 +298,7 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
       }
       return true;
     });
-  }, [reportData, selectedClassId, selectedGender, selectedSes, search]);
+  }, [reportData, selectedPhase, selectedClassId, selectedGender, selectedSes, search]);
 
   const stats = useMemo(() => {
     const n = filtered.length;
@@ -378,6 +389,47 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
         )}
       </div>
 
+      {/* ── Filter Fase ── */}
+      {availablePhases.length > 1 && (
+        <div className="card" style={{ padding: "0.75rem 1.5rem", display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+          <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#475569", whiteSpace: "nowrap" }}>🗓️ Filter Fase:</span>
+          <button
+            onClick={() => setSelectedPhase("all")}
+            style={{
+              padding: "0.35rem 0.9rem", borderRadius: "999px", border: "1.5px solid",
+              borderColor: selectedPhase === "all" ? "#0ea5e9" : "#e2e8f0",
+              backgroundColor: selectedPhase === "all" ? "#e0f2fe" : "white",
+              color: selectedPhase === "all" ? "#0369a1" : "#64748b",
+              fontWeight: selectedPhase === "all" ? 700 : 500,
+              fontSize: "0.8rem", cursor: "pointer", transition: "all 0.15s",
+            }}
+          >
+            Semua Fase
+          </button>
+          {availablePhases.map((phase) => (
+            <button
+              key={phase}
+              onClick={() => setSelectedPhase(phase)}
+              style={{
+                padding: "0.35rem 0.9rem", borderRadius: "999px", border: "1.5px solid",
+                borderColor: selectedPhase === phase ? "#0ea5e9" : "#e2e8f0",
+                backgroundColor: selectedPhase === phase ? "#e0f2fe" : "white",
+                color: selectedPhase === phase ? "#0369a1" : "#64748b",
+                fontWeight: selectedPhase === phase ? 700 : 500,
+                fontSize: "0.8rem", cursor: "pointer", transition: "all 0.15s",
+              }}
+            >
+              {phase}
+            </button>
+          ))}
+          {selectedPhase !== "all" && (
+            <span style={{ fontSize: "0.75rem", color: "#64748b", marginLeft: "auto" }}>
+              Menampilkan data fase: <strong style={{ color: "#0369a1" }}>{selectedPhase}</strong>
+            </span>
+          )}
+        </div>
+      )}
+
       {/* ── 2. Section Switcher ── */}
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <div style={{
@@ -408,7 +460,8 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
                         title={`Kelas ${card.grade} - ${card.class_name}`}
                         subtitle={card.academic_year ?? undefined}
                         count={card.student_count}
-                        countLabel="siswa"
+                        total={card.total_students}
+                        countLabel="siswa mengerjakan"
                         onDownload={() => handleCardDownload("class", card.class_id)}
                         isDownloading={downloadingCard === `class-${card.class_id}`}
                       />
@@ -427,7 +480,8 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
                         title={card.phase}
                         subtitle={card.valid_from ? `${fmt(card.valid_from)} – ${fmt(card.valid_until)}` : undefined}
                         count={card.student_count}
-                        countLabel="siswa"
+                        total={card.total_students}
+                        countLabel="siswa mengerjakan"
                         onDownload={() => handleCardDownload("phase", card.phase)}
                         isDownloading={downloadingCard === `phase-${card.phase}`}
                       />

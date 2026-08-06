@@ -141,6 +141,21 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
       log('PERINGATAN: access_id tidak ditemukan. Sesi tetap dibuat tanpa access_id.');
     }
 
+    if (localCategory != null && localCategory.validUntil != null) {
+      if (DateTime.now().isAfter(localCategory.validUntil!)) {
+        log('Akses ujian sudah kedaluwarsa!');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Sesi gagal dimulai: Waktu akses ujian telah berakhir.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     // ✅ FIX #3: Hitung attempt_number dari jumlah sesi yang sudah selesai sebelumnya
     //    Sebelumnya selalu di-hardcode 1, akibatnya statistik percobaan salah.
     final previousAttempts = await db.sessionDao.getTotalAttemptsCountForLevel(

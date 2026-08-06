@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "id.pspk.pemantik_mobile"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
