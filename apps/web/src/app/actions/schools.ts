@@ -313,7 +313,15 @@ export async function deleteSchoolAction(id: string): Promise<ActionResponse> {
       .select("id")
       .eq("school_id", id);
 
+    // Delete interventions first to prevent RESTRICT on users (submitted_by)
+    await supabase.from("interventions").delete().eq("school_id", id);
+
     if (usersData && usersData.length > 0) {
+      const userIds = usersData.map(u => u.id);
+      
+      // Delete phase requests created by these users to prevent RESTRICT foreign key error on user deletion
+      await supabase.from("assessment_phase_requests").delete().in("requested_by", userIds);
+
       for (const u of usersData) {
         const { error: delErr } = await supabase.auth.admin.deleteUser(u.id);
         if (delErr) {
@@ -322,7 +330,16 @@ export async function deleteSchoolAction(id: string): Promise<ActionResponse> {
       }
       // Explicitly delete from public.users to prevent 'chk_school_has_school' check constraint trigger
       // when schools are deleted and users.school_id tries to set to NULL.
-      await supabase.from("users").delete().eq("school_id", id);
+      const { error: usersErr } = await supabase.from("users").delete().eq("school_id", id);
+      if (usersErr) {
+        return { success: false, error: "Gagal menghapus relasi user sekolah: " + usersErr.message };
+      }
+    } else {
+      // Just in case usersData was empty but there is still some orphaned user
+      const { error: usersErr } = await supabase.from("users").delete().eq("school_id", id);
+      if (usersErr) {
+        return { success: false, error: "Gagal menghapus relasi user sekolah: " + usersErr.message };
+      }
     }
 
     // Explicitly delete records with RESTRICT foreign keys to allow school deletion

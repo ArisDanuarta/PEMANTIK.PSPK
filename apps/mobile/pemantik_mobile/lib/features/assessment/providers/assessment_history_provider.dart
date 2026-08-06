@@ -115,5 +115,24 @@ final studentHistoryProvider =
         groupedHistory.putIfAbsent(phase, () => []).add(item);
       }
 
-      return groupedHistory;
+      // Pastikan fase aktif saat ini (fase dari kategori terbaru) selalu ada di daftar riwayat,
+      // meskipun belum ada sesi yang selesai, agar riwayat lama bisa diminimize dan fase baru muncul bersih.
+      final allCategories = await db.categoryDao.getAllCategories();
+      if (allCategories.isNotEmpty) {
+        // Asumsikan kategori dengan ID/tanggal terbaru mewakili fase aktif
+        // Urutkan kategori (opsional, tapi kita bisa ambil dari data yang ada)
+        final activePhase = allCategories.last.phase;
+        groupedHistory.putIfAbsent(activePhase, () => []);
+      }
+
+      // Urutkan Map sehingga activePhase / fase terbaru ada di urutan pertama (paling atas)
+      final sortedHistory = Map.fromEntries(
+        groupedHistory.entries.toList()
+          ..sort((a, b) {
+            // Urutkan berdasarkan fase secara descending (Tahap 2 di atas Tahap 1, Fase B di atas Fase A)
+            return b.key.compareTo(a.key);
+          })
+      );
+
+      return sortedHistory;
     });

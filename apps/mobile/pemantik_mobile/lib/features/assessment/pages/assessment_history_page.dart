@@ -250,14 +250,26 @@ class _PhaseGroupSectionState extends State<_PhaseGroupSection> {
           child: _isExpanded
               ? Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                  child: Column(
-                    children: widget.items.map((item) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _HistoryCard(item: item),
-                      );
-                    }).toList(),
-                  ),
+                  child: widget.items.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: Text(
+                              'Belum ada riwayat di fase ini.',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Column(
+                          children: widget.items.map((item) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: _HistoryCard(item: item),
+                            );
+                          }).toList(),
+                        ),
                 )
               : const SizedBox.shrink(),
         ),
