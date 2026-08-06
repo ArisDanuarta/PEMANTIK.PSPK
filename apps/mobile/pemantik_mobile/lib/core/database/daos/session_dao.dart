@@ -104,7 +104,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
               (t) =>
                   t.studentId.equals(studentId) &
                   (t.levelId.equals(levelId) |
-                      t.currentLevelId.equals(levelId)) &
+                      (t.levelId.isNull() & t.currentLevelId.equals(levelId))) &
                   t.status.equals('completed') &
                   t.phase.equals(phase),
             ))
@@ -142,7 +142,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
                 (t) =>
                     t.studentId.equals(studentId) &
                     (t.levelId.equals(levelId) |
-                        t.currentLevelId.equals(levelId)) &
+                        (t.levelId.isNull() & t.currentLevelId.equals(levelId))) &
                     t.status.equals('completed') &
                     t.phase.equals(phase),
               )
@@ -198,7 +198,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
               (t) =>
                   t.studentId.equals(studentId) &
                   (t.levelId.equals(levelId) |
-                      t.currentLevelId.equals(levelId)) &
+                      (t.levelId.isNull() & t.currentLevelId.equals(levelId))) &
                   t.status.equals('completed') &
                   t.phase.equals(phase),
             ))
@@ -216,7 +216,7 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
               (t) =>
                   t.studentId.equals(studentId) &
                   (t.levelId.equals(levelId) |
-                      t.currentLevelId.equals(levelId)) &
+                      (t.levelId.isNull() & t.currentLevelId.equals(levelId))) &
                   t.phase.equals(phase),
             ))
             .get();

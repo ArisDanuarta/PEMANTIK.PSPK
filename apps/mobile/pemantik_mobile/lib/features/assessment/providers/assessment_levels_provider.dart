@@ -107,7 +107,7 @@ final assessmentLevelsProvider = StreamProvider.family<List<LevelInfo>, String>(
         final latestSession = await (db.select(db.localSessions)
               ..where((t) =>
                   t.studentId.equals(studentId) &
-                  (t.levelId.equals(level.id) | t.currentLevelId.equals(level.id)) &
+                  (t.levelId.equals(level.id) | (t.levelId.isNull() & t.currentLevelId.equals(level.id))) &
                   t.phase.equals(currentPhase) &
                   t.status.equals('completed'))
               ..orderBy([

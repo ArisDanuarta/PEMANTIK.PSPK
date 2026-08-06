@@ -50,15 +50,15 @@ export default function AksesUjianSekolahClient({
   // State untuk form pengajuan independen
   const [showModalRequest, setShowModalRequest] = useState(false);
   const [reqPhase, setReqPhase] = useState("");
-  const [reqCategory, setReqCategory] = useState("");
+  const [reqCategoryIds, setReqCategoryIds] = useState<string[]>([]);
   const [reqValidFrom, setReqValidFrom] = useState("");
   const [reqValidUntil, setReqValidUntil] = useState("");
   const [isSubmittingReq, setIsSubmittingReq] = useState(false);
 
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reqPhase || !reqCategory || !reqValidFrom || !reqValidUntil) {
-      showInfo("Lengkapi Form", "Mohon isi nama fase, kategori ujian, dan tanggal mulai/selesai asesmen.");
+    if (!reqPhase || reqCategoryIds.length === 0 || !reqValidFrom || !reqValidUntil) {
+      showInfo("Lengkapi Form", "Mohon isi nama fase, pilih minimal satu kategori ujian, dan tanggal mulai/selesai asesmen.");
       return;
     }
     if (new Date(reqValidFrom) >= new Date(reqValidUntil)) {
@@ -70,7 +70,7 @@ export default function AksesUjianSekolahClient({
     try {
       const res = await submitPhaseRequestForIndependentSchoolAction({
         schoolId,
-        categoryId: reqCategory,
+        categoryIds: reqCategoryIds,
         phase: reqPhase.trim(),
         validFrom: reqValidFrom,
         validUntil: reqValidUntil,
@@ -80,7 +80,7 @@ export default function AksesUjianSekolahClient({
         showSuccess("Pengajuan Berhasil", `Fase "${reqPhase}" berhasil diajukan ke Superadmin.`);
         setShowModalRequest(false);
         setReqPhase("");
-        setReqCategory("");
+        setReqCategoryIds([]);
         setReqValidFrom("");
         setReqValidUntil("");
       } else {
@@ -304,20 +304,35 @@ export default function AksesUjianSekolahClient({
                 <label className="form-label" style={{ fontWeight: 700, color: "#334155", display: "block", marginBottom: "0.35rem" }}>
                   Pilih Kategori / Paket Ujian <span style={{ color: "red" }}>*</span>
                 </label>
-                <select
-                  className="form-input"
-                  value={reqCategory}
-                  onChange={(e) => setReqCategory(e.target.value)}
-                  required
-                  style={{ width: "100%", padding: "0.65rem 0.85rem" }}
-                >
-                  <option value="">- Pilih Kategori -</option>
-                  {allCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name} ({cat.subject_area.toUpperCase()})
-                    </option>
+                <div style={{
+                  maxHeight: "150px", overflowY: "auto", border: "1px solid #d1d5db", borderRadius: "0.5rem",
+                  padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem", backgroundColor: "#f9fafb"
+                }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", fontWeight: 600, borderBottom: "1px solid #e5e7eb", paddingBottom: "0.4rem", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={allCategories.length > 0 && reqCategoryIds.length === allCategories.length}
+                      onChange={(e) => {
+                        if (e.target.checked) setReqCategoryIds(allCategories.map((c: any) => c.id));
+                        else setReqCategoryIds([]);
+                      }}
+                    />
+                    Pilih Semua Kategori ({allCategories.length})
+                  </label>
+                  {allCategories.map((cat: any) => (
+                    <label key={cat.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={reqCategoryIds.includes(cat.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) setReqCategoryIds([...reqCategoryIds, cat.id]);
+                          else setReqCategoryIds(reqCategoryIds.filter(id => id !== cat.id));
+                        }}
+                      />
+                      <span>{cat.name} {cat.subject_area ? `(${cat.subject_area.toUpperCase()})` : ""}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>

@@ -49,33 +49,68 @@ export async function markPersiapanSelesaiAction(
   phase: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const communityId = await getCommunityIdFromHeader();
-    if (!communityId) {
-      return { success: false, error: "Tidak dapat mengidentifikasi komunitas Anda." };
+    const headersList = await headers();
+    const communityId = headersList.get("x-community-id");
+    const schoolIdHeader = headersList.get("x-school-id");
+    const role = headersList.get("x-user-role");
+
+    const isCommunityRole = role === "community" || role === "super_admin";
+    const isSchoolRole = role === "school";
+
+    if (!isCommunityRole && !isSchoolRole) {
+      return { success: false, error: "Anda tidak memiliki akses untuk aksi ini." };
+    }
+
+    if (isSchoolRole && schoolId !== schoolIdHeader) {
+      return { success: false, error: "Anda tidak dapat mengubah timeline sekolah lain." };
     }
 
     const supabase = await createServerClient();
 
-    // Cek apakah sekolah memang milik komunitas ini
+    // Cek sekolah di DB
     const { data: school, error: schoolErr } = await supabase
       .from("schools")
-      .select("id, name, community_id")
+      .select("id, name, community_id, communities(name)")
       .eq("id", schoolId)
-      .eq("community_id", communityId)
       .maybeSingle();
 
     if (schoolErr || !school) {
-      return { success: false, error: "Sekolah tidak ditemukan atau bukan binaan komunitas Anda." };
+      return { success: false, error: "Sekolah tidak ditemukan." };
+    }
+
+    let communityName = null;
+    if (school.communities && Array.isArray(school.communities)) {
+      communityName = (school.communities[0] as any)?.name ?? null;
+    } else if (school.communities) {
+      communityName = (school.communities as any)?.name ?? null;
+    }
+
+    const isIndependent = !school.community_id || communityName === "SEKOLAH INDEPENDEN";
+
+    if (isSchoolRole) {
+      if (!isIndependent) {
+        return { success: false, error: "Timeline Anda dikelola oleh Komunitas (Read-only)." };
+      }
+    } else if (isCommunityRole) {
+      if (school.community_id !== communityId) {
+        return { success: false, error: "Sekolah bukan binaan komunitas Anda." };
+      }
     }
 
     // Cek apakah sudah ada stage untuk kombinasi (school, phase, community) ini
-    const { data: existing } = await (supabase as any)
+    let existingQuery = (supabase as any)
       .from("school_assessment_stages")
       .select("id, current_stage")
       .eq("school_id", schoolId)
-      .eq("phase", phase)
-      .eq("community_id", communityId)
-      .maybeSingle();
+      .eq("phase", phase);
+      
+    if (school.community_id) {
+      existingQuery = existingQuery.eq("community_id", school.community_id);
+    } else {
+      existingQuery = existingQuery.is("community_id", null);
+    }
+
+    const { data: existing } = await existingQuery.maybeSingle();
 
     if (existing) {
       // Sudah ada - validasi bisa di-update
@@ -101,7 +136,7 @@ export async function markPersiapanSelesaiAction(
         .from("school_assessment_stages")
         .insert({
           school_id: schoolId,
-          community_id: communityId,
+          community_id: school.community_id,
           phase,
           current_stage: "pengajuan_fase",
           stage_updated_at: new Date().toISOString(),
@@ -112,6 +147,7 @@ export async function markPersiapanSelesaiAction(
 
     revalidatePath("/komunitas/dashboard");
     revalidatePath("/komunitas/akses-ujian");
+    revalidatePath("/sekolah/dashboard");
     return { success: true };
   } catch (err: any) {
     console.error("[markPersiapanSelesaiAction]", err);
@@ -127,7 +163,16 @@ export async function bulkMarkPersiapanSelesaiAction(
   phase: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const communityId = await getCommunityIdFromHeader();
+    const headersList = await headers();
+    const communityId = headersList.get("x-community-id");
+    const role = headersList.get("x-user-role");
+    
+    const isCommunityRole = role === "community" || role === "super_admin";
+
+    if (!isCommunityRole) {
+      return { success: false, error: "Anda tidak memiliki akses untuk aksi massal ini." };
+    }
+
     if (!communityId) {
       return { success: false, error: "Tidak dapat mengidentifikasi komunitas Anda." };
     }
@@ -286,10 +331,15 @@ export async function closeAssessmentManuallyAction(
   stageId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const communityId = await getCommunityIdFromHeader();
-    const schoolId = await getSchoolIdFromHeader();
+    const headersList = await headers();
+    const communityId = headersList.get("x-community-id");
+    const schoolId = headersList.get("x-school-id");
+    const role = headersList.get("x-user-role");
 
-    if (!communityId && !schoolId) {
+    const isCommunityRole = role === "community" || role === "super_admin";
+    const isSchoolRole = role === "school";
+
+    if (!isCommunityRole && !isSchoolRole) {
       return { success: false, error: "Sesi tidak valid. Tidak dapat mengidentifikasi pengguna." };
     }
 
@@ -300,16 +350,24 @@ export async function closeAssessmentManuallyAction(
       .select("id, current_stage, community_id, school_id")
       .eq("id", stageId);
 
-    if (communityId) {
-      query = query.eq("community_id", communityId);
-    } else if (schoolId) {
-      query = query.eq("school_id", schoolId);
-    }
-
     const { data: stage, error: fetchErr } = await query.maybeSingle();
 
     if (fetchErr || !stage) {
-      return { success: false, error: "Tahap tidak ditemukan atau Anda tidak memiliki akses." };
+      return { success: false, error: "Tahap tidak ditemukan." };
+    }
+
+    if (isSchoolRole) {
+      // Pastikan sekolah ini mengurus tahapannya sendiri dan ia adalah sekolah independen
+      if (stage.school_id !== schoolId) {
+        return { success: false, error: "Anda tidak berhak menutup asesmen sekolah lain." };
+      }
+      if (stage.community_id) {
+        return { success: false, error: "Timeline Anda dikelola oleh Komunitas (Read-only)." };
+      }
+    } else if (isCommunityRole) {
+      if (stage.community_id !== communityId) {
+        return { success: false, error: "Sekolah bukan binaan komunitas Anda." };
+      }
     }
 
     if (stage.current_stage !== "proses_asesmen") {
@@ -373,7 +431,16 @@ export async function bulkCloseAssessmentAction(
   stageIds: string[],
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const communityId = await getCommunityIdFromHeader();
+    const headersList = await headers();
+    const communityId = headersList.get("x-community-id");
+    const role = headersList.get("x-user-role");
+
+    const isCommunityRole = role === "community" || role === "super_admin";
+
+    if (!isCommunityRole) {
+      return { success: false, error: "Anda tidak memiliki akses untuk aksi massal ini." };
+    }
+
     if (!communityId) {
       return { success: false, error: "Tidak dapat mengidentifikasi komunitas Anda." };
     }
@@ -449,7 +516,18 @@ export async function markIntervensiSelesaiAction(
   stageId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const communityId = await getCommunityIdFromHeader();
+    const headersList = await headers();
+    const communityId = headersList.get("x-community-id");
+    const schoolId = headersList.get("x-school-id");
+    const role = headersList.get("x-user-role");
+
+    const isCommunityRole = role === "community" || role === "super_admin";
+    const isSchoolRole = role === "school";
+
+    if (!isCommunityRole && !isSchoolRole) {
+      return { success: false, error: "Sesi tidak valid. Tidak dapat mengidentifikasi pengguna." };
+    }
+
     const supabase = await createServerClient();
 
     let query = (supabase as any)
@@ -457,14 +535,23 @@ export async function markIntervensiSelesaiAction(
       .select("id, current_stage, community_id, school_id")
       .eq("id", stageId);
 
-    if (communityId) {
-      query = query.eq("community_id", communityId);
-    }
-
     const { data: stage, error: fetchErr } = await query.maybeSingle();
 
     if (fetchErr || !stage) {
-      return { success: false, error: "Tahap tidak ditemukan atau Anda tidak memiliki akses." };
+      return { success: false, error: "Tahap tidak ditemukan." };
+    }
+
+    if (isSchoolRole) {
+      if (stage.school_id !== schoolId) {
+        return { success: false, error: "Anda tidak berhak menyelesaikan tahap intervensi sekolah lain." };
+      }
+      if (stage.community_id) {
+        return { success: false, error: "Timeline Anda dikelola oleh Komunitas (Read-only)." };
+      }
+    } else if (isCommunityRole) {
+      if (stage.community_id !== communityId) {
+        return { success: false, error: "Sekolah bukan binaan komunitas Anda." };
+      }
     }
 
     if (stage.current_stage !== "intervensi") {
@@ -502,7 +589,18 @@ export async function advanceStageToNewPhaseAction(
   newPhaseName: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const communityId = await getCommunityIdFromHeader();
+    const headersList = await headers();
+    const communityId = headersList.get("x-community-id");
+    const schoolId = headersList.get("x-school-id");
+    const role = headersList.get("x-user-role");
+
+    const isCommunityRole = role === "community" || role === "super_admin";
+    const isSchoolRole = role === "school";
+
+    if (!isCommunityRole && !isSchoolRole) {
+      return { success: false, error: "Sesi tidak valid. Tidak dapat mengidentifikasi pengguna." };
+    }
+
     const supabase = await createServerClient();
 
     let query = (supabase as any)
@@ -510,14 +608,23 @@ export async function advanceStageToNewPhaseAction(
       .select("id, school_id, community_id, phase, current_stage")
       .eq("id", stageId);
 
-    if (communityId) {
-      query = query.eq("community_id", communityId);
-    }
-
     const { data: stage, error: fetchErr } = await query.maybeSingle();
 
     if (fetchErr || !stage) {
       return { success: false, error: "Tahap tidak ditemukan." };
+    }
+
+    if (isSchoolRole) {
+      if (stage.school_id !== schoolId) {
+        return { success: false, error: "Anda tidak berhak memajukan fase asesmen sekolah lain." };
+      }
+      if (stage.community_id) {
+        return { success: false, error: "Timeline Anda dikelola oleh Komunitas (Read-only)." };
+      }
+    } else if (isCommunityRole) {
+      if (stage.community_id !== communityId) {
+        return { success: false, error: "Sekolah bukan binaan komunitas Anda." };
+      }
     }
 
     // Buat row stage baru atau update row saat ini ke fase baru

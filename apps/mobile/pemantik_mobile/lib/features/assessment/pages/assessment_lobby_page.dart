@@ -488,52 +488,58 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
   Widget _buildBentoGrid(int minutes, bool requiresCode) {
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildBentoCard(
-                icon: Icons.schedule,
-                iconBg: AppColors.primary.withValues(alpha: 0.1),
-                iconColor: AppColors.primary,
-                title: 'Waktu Maksimal',
-                subtitle: '$minutes Menit',
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _buildBentoCard(
+                  icon: Icons.schedule,
+                  iconBg: AppColors.primary.withValues(alpha: 0.1),
+                  iconColor: AppColors.primary,
+                  title: 'Waktu Maksimal',
+                  subtitle: '$minutes Menit',
+                ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildBentoCard(
-                icon: Icons.format_list_numbered,
-                iconBg: const Color(0xFFEADDFF),
-                iconColor: const Color(0xFF4F378B),
-                title: 'Jumlah Soal',
-                subtitle: '${widget.totalQuestions} Soal',
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildBentoCard(
+                  icon: Icons.format_list_numbered,
+                  iconBg: const Color(0xFFEADDFF),
+                  iconColor: const Color(0xFF4F378B),
+                  title: 'Jumlah Soal',
+                  subtitle: '${widget.totalQuestions} Soal',
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildBentoCard(
-                icon: requiresCode ? Icons.key : Icons.lock_open,
-                iconBg: const Color(0xFFC4EED0),
-                iconColor: const Color(0xFF146C2E),
-                title: 'Status Akses',
-                subtitle: requiresCode ? 'Diperlukan' : 'Terbuka',
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _buildBentoCard(
+                  icon: requiresCode ? Icons.key : Icons.lock_open,
+                  iconBg: const Color(0xFFC4EED0),
+                  iconColor: const Color(0xFF146C2E),
+                  title: 'Status Akses',
+                  subtitle: requiresCode ? 'Diperlukan' : 'Terbuka',
+                ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildBentoCard(
-                icon: Icons.format_list_bulleted,
-                iconBg: const Color(0xFFD3E3FD), // Soft Blue
-                iconColor: const Color(0xFF0B57D0), // Deep Blue
-                title: 'Tipe Soal',
-                subtitle: _isLoadingTypes ? 'Memuat...' : (_questionTypes.isEmpty ? 'Campuran' : _questionTypes.join(', ')),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildBentoCard(
+                  icon: Icons.format_list_bulleted,
+                  iconBg: const Color(0xFFD3E3FD), // Soft Blue
+                  iconColor: const Color(0xFF0B57D0), // Deep Blue
+                  title: 'Tipe Soal',
+                  subtitle: _isLoadingTypes ? 'Memuat...' : (_questionTypes.isEmpty ? 'Campuran' : _questionTypes.join('\n')),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -590,9 +596,8 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
     required String subtitle,
   }) {
     return Container(
-      height: 110,
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
@@ -606,7 +611,7 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Container(
             width: 36,
@@ -615,19 +620,18 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
             alignment: Alignment.center,
             child: Icon(icon, color: iconColor, size: 20),
           ),
-          const Spacer(),
+          const SizedBox(height: 16),
           Text(
             title,
             style: AppTextStyles.labelSmall.copyWith(color: const Color(0xFF74777F)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             subtitle,
             style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600, color: AppColors.onSurface),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+            maxLines: null,
           ),
         ],
       ),

@@ -56,15 +56,10 @@ class ImageChoiceWidget extends ConsumerWidget {
           const SizedBox(height: 16),
           QuestionHeaderWidget(question: question),
           const SizedBox(height: 24),
-          GridView.builder(
+          ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.0, // Square aspect ratio
-            ),
+            separatorBuilder: (_, _) => const SizedBox(height: 16),
             itemCount: rawChoices.length,
             itemBuilder: (_, i) {
               final choice = rawChoices[i];
@@ -79,7 +74,6 @@ class ImageChoiceWidget extends ConsumerWidget {
               }
 
               final isSelected = selected == url;
-              final letter = String.fromCharCode(65 + i);
 
               return GestureDetector(
                 onTap: () {
@@ -102,26 +96,31 @@ class ImageChoiceWidget extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12),
                         child: Column(
                           children: [
-                            Expanded(
-                              child: url.isNotEmpty
-                                  ? CachedNetworkImage(
-                                      imageUrl: url,
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      placeholder: (context, url) => const Center(
+                            url.isNotEmpty
+                                ? CachedNetworkImage(
+                                    imageUrl: url,
+                                    fit: BoxFit.contain,
+                                    width: double.infinity,
+                                    placeholder: (context, url) => const Center(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(32.0),
                                         child: CircularProgressIndicator(color: AppColors.secondaryContainer),
                                       ),
-                                      errorWidget: (context, url, error) => const Center(
+                                    ),
+                                    errorWidget: (context, url, error) => const Center(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(32.0),
                                         child: Icon(Icons.broken_image_outlined, color: AppColors.onSurfaceVariant, size: 40),
                                       ),
-                                    )
-                                  : Container(
-                                      color: AppColors.surfaceVariant,
-                                      child: const Center(
-                                        child: Icon(Icons.image_outlined, color: AppColors.onSurfaceVariant, size: 40),
-                                      ),
                                     ),
-                            ),
+                                  )
+                                : Container(
+                                    color: AppColors.surfaceVariant,
+                                    height: 150,
+                                    child: const Center(
+                                      child: Icon(Icons.image_outlined, color: AppColors.onSurfaceVariant, size: 40),
+                                    ),
+                                  ),
                             if (label.isNotEmpty)
                               Container(
                                 width: double.infinity,
@@ -142,31 +141,7 @@ class ImageChoiceWidget extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    // Letter Indicator Overlay
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.secondaryContainer : AppColors.surface.withValues(alpha: 0.9),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected ? AppColors.secondaryContainer : AppColors.outlineVariant,
-                          ),
-                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          letter,
-                          style: AppTextStyles.heading3.copyWith(
-                            color: isSelected ? AppColors.onSecondaryFixed : AppColors.onSurfaceVariant,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
+
                     // Check icon overlay
                     if (isSelected)
                       Positioned(

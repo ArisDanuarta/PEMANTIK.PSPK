@@ -71,7 +71,6 @@ class MultipleChoiceWidget extends ConsumerWidget {
               }
 
               final isSelected = selected == value;
-              final letter = String.fromCharCode(65 + i);
 
               return GestureDetector(
                 onTap: () {
@@ -92,27 +91,7 @@ class MultipleChoiceWidget extends ConsumerWidget {
                   ),
                   child: Row(
                     children: [
-                      // Letter indicator
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.secondaryContainer : AppColors.surface,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected ? AppColors.secondaryContainer : AppColors.outlineVariant,
-                          ),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          letter,
-                          style: AppTextStyles.heading3.copyWith(
-                            color: isSelected ? AppColors.onSecondaryFixed : AppColors.onSurfaceVariant,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
+
                       Expanded(
                         child: Text(
                           label,

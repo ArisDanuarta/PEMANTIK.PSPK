@@ -176,15 +176,15 @@ export async function submitPhaseRequestAction(
 export async function submitPhaseRequestForIndependentSchoolAction(
   payload: {
     schoolId: string;
-    categoryId: string;
+    categoryIds: string[];
     phase: string;
     validFrom: string;
     validUntil: string;
   }
-): Promise<{ success: boolean; error?: string; requestId?: string }> {
+): Promise<{ success: boolean; error?: string; requestIds?: string[] }> {
   try {
-    const { schoolId, categoryId, phase, validFrom, validUntil } = payload;
-    if (!schoolId || !categoryId || !phase || !validFrom || !validUntil) {
+    const { schoolId, categoryIds, phase, validFrom, validUntil } = payload;
+    if (!schoolId || !categoryIds || categoryIds.length === 0 || !phase || !validFrom || !validUntil) {
       return { success: false, error: "Semua field wajib diisi (kategori, fase, tanggal)." };
     }
     if (new Date(validFrom) >= new Date(validUntil)) {
@@ -209,30 +209,31 @@ export async function submitPhaseRequestForIndependentSchoolAction(
     }
 
     // Insert pengajuan (community_id null karena sekolah independen)
-    const { data: newRequest, error: insertErr } = await (supabase as any)
-      .from("assessment_phase_requests")
-      .insert({
-        community_id: null,
-        category_id: categoryId,
-        phase: phase.trim(),
-        target_school_ids: [schoolId],
-        valid_from: new Date(validFrom).toISOString(),
-        valid_until: new Date(validUntil).toISOString(),
-        status: "pending",
-        requested_by: userId,
-      })
-      .select("id")
-      .single();
+    const inserts = categoryIds.map(catId => ({
+      community_id: null,
+      category_id: catId,
+      phase: phase.trim(),
+      target_school_ids: [schoolId],
+      valid_from: new Date(validFrom).toISOString(),
+      valid_until: new Date(validUntil).toISOString(),
+      status: "pending",
+      requested_by: userId,
+    }));
 
-    if (insertErr || !newRequest) throw insertErr || new Error("Gagal membuat pengajuan.");
+    const { data: newRequests, error: insertErr } = await (supabase as any)
+      .from("assessment_phase_requests")
+      .insert(inserts)
+      .select("id");
+
+    if (insertErr || !newRequests) throw insertErr || new Error("Gagal membuat pengajuan.");
 
     // Update stage sekolah menjadi 'pengajuan_fase' jika belum
-    await (supabase as any).from("school_assessment_stages").upsert({
+    const { error: stageErr } = await (supabase as any).from("school_assessment_stages").upsert({
       school_id: schoolId,
       community_id: null,
       phase: phase.trim(),
       current_stage: "pengajuan_fase",
-      phase_request_id: newRequest.id,
+      phase_request_id: newRequests[0].id,
       stage_updated_at: new Date().toISOString(),
     }, { onConflict: "school_id,phase,community_id" });
 
@@ -240,12 +241,13 @@ export async function submitPhaseRequestForIndependentSchoolAction(
     await notifyAllSuperAdmins(
       "Pengajuan Fase Sekolah Independen",
       `Sekolah Independen "${school.name}" mengajukan fase asesmen: "${phase}".`,
-      { request_id: newRequest.id, school_id: schoolId },
+      { request_ids: newRequests.map((r: any) => r.id), school_id: schoolId },
     );
 
+    if (stageErr) console.error("Gagal update stage sekolah independen:", stageErr);
+
     revalidatePath("/sekolah/akses-ujian");
-    revalidatePath("/super-admin/persetujuan");
-    return { success: true, requestId: newRequest.id };
+    return { success: true, requestIds: newRequests.map((r: any) => r.id) };
   } catch (err: any) {
     console.error("[submitPhaseRequestForIndependentSchoolAction]", err);
     return { success: false, error: err.message || "Terjadi kesalahan sistem." };

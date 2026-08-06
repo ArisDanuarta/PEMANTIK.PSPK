@@ -314,13 +314,6 @@ class SyncService {
                 final nextLevelId = result['next_level_id'];
                 final nextLevelNumber = result['next_level_number'];
                 log('[Sync] Sesi ${session.id}: NAIK ke Level $nextLevelNumber (score: $levelScore%)');
-
-                // Update local session currentLevelId
-                await (_db.update(_db.localSessions)
-                      ..where((t) => t.id.equals(session.id)))
-                    .write(LocalSessionsCompanion(
-                  currentLevelId: Value(nextLevelId?.toString()),
-                ));
               } else if (action == 'complete') {
                 log('[Sync] Sesi ${session.id}: SELESAI (score: $levelScore%, reason: $reason)');
               } else if (action == 'fail') {

@@ -79,7 +79,7 @@ final studentHistoryProvider =
         final subjectArea = category?.subjectArea ?? 'Umum';
         final phase = session.phase;
 
-        final levelId = session.currentLevelId ?? session.levelId;
+        final levelId = session.levelId ?? session.currentLevelId;
         final level =
             levelId != null ? await db.levelDao.getLevelById(levelId) : null;
         final levelName =
