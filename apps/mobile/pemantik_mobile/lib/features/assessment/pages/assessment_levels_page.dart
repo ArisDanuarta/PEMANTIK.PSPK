@@ -166,42 +166,40 @@ class AssessmentLevelsPage extends ConsumerWidget {
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-                onPressed: () => Navigator.pop(context),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+            onPressed: () => Navigator.pop(context),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 16),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              color: AppColors.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              initials,
+              style: AppTextStyles.heading2.copyWith(
+                color: AppColors.onPrimaryContainer,
+                fontSize: 16,
               ),
-              const SizedBox(width: 16),
-              Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  initials,
-                  style: AppTextStyles.heading2.copyWith(
-                    color: AppColors.onPrimaryContainer,
-                    fontSize: 16,
-                  ),
-                ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              catName,
+              style: AppTextStyles.heading1.copyWith(
+                color: AppColors.primary,
+                fontSize: 20,
               ),
-              const SizedBox(width: 12),
-              Text(
-                catName,
-                style: AppTextStyles.heading1.copyWith(
-                  color: AppColors.primary,
-                  fontSize: 20,
-                ),
-              ),
-            ],
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.cloud_done, color: AppColors.primary),

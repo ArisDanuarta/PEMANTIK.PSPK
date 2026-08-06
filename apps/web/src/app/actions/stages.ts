@@ -34,6 +34,33 @@ async function getSchoolIdFromHeader(): Promise<string | null> {
   return headersList.get("x-school-id");
 }
 
+/**
+ * Helper to deactivate assessment access bypassing RLS since communities 
+ * do not have UPDATE policy on assessment_access.
+ */
+async function deactivateAssessmentAccessAdmin(
+  targetType: "school" | "community",
+  targetId: string,
+  phase: string
+) {
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const admin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    await (admin as any)
+      .from("assessment_access")
+      .update({ is_active: false })
+      .eq("target_type", targetType)
+      .eq("target_id", targetId)
+      .eq("phase", phase);
+  } catch (err) {
+    console.error(`[deactivateAssessmentAccessAdmin] Failed to deactivate access for ${targetType} ${targetId}`, err);
+  }
+}
+
 // ─── Actions ───────────────────────────────────────────────────────────────
 
 /**
@@ -280,14 +307,14 @@ export async function checkAndAutoTransitionStages(communityId: string): Promise
     // punya valid_until sudah terlewat
     const { data: activeStages } = await (supabase as any)
       .from("school_assessment_stages")
-      .select("id, phase_request_id")
+      .select("id, phase_request_id, school_id, phase, community_id")
       .eq("community_id", communityId)
       .eq("current_stage", "proses_asesmen")
       .not("phase_request_id", "is", null);
 
     if (!activeStages || activeStages.length === 0) return;
 
-    const requestIds = (activeStages as Array<{ id: string; phase_request_id: string | null }>)
+    const requestIds = (activeStages as Array<{ id: string; phase_request_id: string | null; school_id: string; phase: string; community_id: string }>)
       .map((s) => s.phase_request_id)
       .filter(Boolean) as string[];
 
@@ -301,11 +328,29 @@ export async function checkAndAutoTransitionStages(communityId: string): Promise
     if (!expiredRequests || expiredRequests.length === 0) return;
 
     const expiredRequestIds = new Set((expiredRequests as Array<{ id: string }>).map((r) => r.id));
-    const stagesToTransition = (activeStages as Array<{ id: string; phase_request_id: string | null }>)
-      .filter((s) => s.phase_request_id && expiredRequestIds.has(s.phase_request_id))
-      .map((s) => s.id);
+    const stagesToTransition = (activeStages as Array<{ id: string; phase_request_id: string | null; school_id: string; phase: string; community_id: string }>)
+      .filter((s) => s.phase_request_id && expiredRequestIds.has(s.phase_request_id));
 
     if (stagesToTransition.length === 0) return;
+
+    // Matikan akses ujian (assessment_access) karena batas waktu habis
+    const phasesToCheck = new Set<string>();
+    for (const stage of stagesToTransition) {
+      await deactivateAssessmentAccessAdmin("school", stage.school_id, stage.phase);
+      phasesToCheck.add(stage.phase);
+    }
+
+    // Matikan juga akses komunitas jika semua sekolah di fase tsb sudah ditutup
+    for (const phase of Array.from(phasesToCheck)) {
+      const remainingInPhase = (activeStages as Array<{ id: string; phase_request_id: string | null; school_id: string; phase: string; community_id: string }>)
+        .filter(s => s.phase === phase && (!s.phase_request_id || !expiredRequestIds.has(s.phase_request_id)));
+      
+      if (remainingInPhase.length === 0) {
+        await deactivateAssessmentAccessAdmin("community", communityId, phase);
+      }
+    }
+
+    const stageIdsToTransition = stagesToTransition.map((s) => s.id);
 
     // Batch update ke 'intervensi'
     await (supabase as any)
@@ -314,7 +359,9 @@ export async function checkAndAutoTransitionStages(communityId: string): Promise
         current_stage: "intervensi",
         stage_updated_at: new Date().toISOString(),
       })
-      .in("id", stagesToTransition);
+      .in("id", stageIdsToTransition);
+
+    console.log(`[AutoTransition] ${stageIdsToTransition.length} stage(s) diubah ke 'intervensi'.`);
 
     console.log(`[AutoTransition] ${stagesToTransition.length} stage(s) diubah ke 'intervensi'.`);
   } catch (err: any) {
@@ -388,12 +435,7 @@ export async function closeAssessmentManuallyAction(
     if (updateErr) throw updateErr;
 
     // Deactivate assessment_access to ensure students can no longer access it
-    await (supabase as any)
-      .from("assessment_access")
-      .update({ is_active: false })
-      .eq("target_type", "school")
-      .eq("target_id", stage.school_id)
-      .eq("phase", stage.phase);
+    await deactivateAssessmentAccessAdmin("school", stage.school_id, stage.phase);
 
     if (stage.community_id && communityId) {
       // Check if all schools in this phase for the community are now closed
@@ -406,12 +448,7 @@ export async function closeAssessmentManuallyAction(
 
       if (!activeStages || activeStages.length === 0) {
         // All schools are closed, deactivate community access too
-        await (supabase as any)
-          .from("assessment_access")
-          .update({ is_active: false })
-          .eq("target_type", "community")
-          .eq("target_id", communityId)
-          .eq("phase", stage.phase);
+        await deactivateAssessmentAccessAdmin("community", communityId, stage.phase);
       }
     }
 
@@ -469,12 +506,7 @@ export async function bulkCloseAssessmentAction(
           .eq("id", stageId);
 
         // Deactivate school access
-        await (supabase as any)
-          .from("assessment_access")
-          .update({ is_active: false })
-          .eq("target_type", "school")
-          .eq("target_id", stage.school_id)
-          .eq("phase", stage.phase);
+        await deactivateAssessmentAccessAdmin("school", stage.school_id, stage.phase);
 
         // Track phase to deactivate community access later
         phasesToCheck.add(stage.phase);
@@ -491,12 +523,7 @@ export async function bulkCloseAssessmentAction(
         .eq("current_stage", "proses_asesmen");
 
       if (!activeStages || activeStages.length === 0) {
-        await (supabase as any)
-          .from("assessment_access")
-          .update({ is_active: false })
-          .eq("target_type", "community")
-          .eq("target_id", communityId)
-          .eq("phase", phase);
+        await deactivateAssessmentAccessAdmin("community", communityId, phase);
       }
     }
 

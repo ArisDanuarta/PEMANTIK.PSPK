@@ -87,7 +87,11 @@ class AssessmentHistoryPage extends ConsumerWidget {
                     physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
                       SliverToBoxAdapter(child: _buildHeader()),
-                      ..._buildGroupedSlivers(groupedHistory, context),
+                      SliverToBoxAdapter(
+                        child: Column(
+                          children: _buildGroupedWidgets(groupedHistory, context),
+                        ),
+                      ),
                       const SliverPadding(padding: EdgeInsets.only(bottom: 120)), // Space for bottom nav
                     ],
                   ),
@@ -143,83 +147,122 @@ class AssessmentHistoryPage extends ConsumerWidget {
     );
   }
 
-  List<Widget> _buildGroupedSlivers(
+  List<Widget> _buildGroupedWidgets(
     Map<String, List<StudentAssessmentHistoryItem>> groupedData,
     BuildContext context,
   ) {
-    final slivers = <Widget>[];
+    if (groupedData.isEmpty) return [];
 
-    groupedData.forEach((phase, items) {
-      // Phase grouping styles based on phase content
-      final isFaseA = phase.toLowerCase().contains('fase a');
-      final phaseBgColor = isFaseA ? AppColors.surfaceContainerHigh : const Color(0xFFFFDAD5); // tertiary-fixed
-      final phaseTextColor = isFaseA ? AppColors.primary : const Color(0xFF410000); // on-tertiary-fixed
-      final phaseBorderColor = isFaseA ? AppColors.primary.withValues(alpha: 0.1) : const Color(0xFFFFB4A8); // tertiary-fixed-dim
-      final phaseIcon = isFaseA ? Icons.school : Icons.menu_book;
+    final latestPhase = groupedData.keys.first;
 
-      slivers.add(
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: _StickyHeaderDelegate(
-            minHeight: 64,
-            maxHeight: 64,
-            child: Container(
-              color: AppColors.background.withValues(alpha: 0.9),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              alignment: Alignment.centerLeft,
-              child: ClipRRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: phaseBgColor,
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: phaseBorderColor),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(phaseIcon, size: 18, color: phaseTextColor),
-                        const SizedBox(width: 8),
-                        Text(
-                          phase.toUpperCase(),
-                          style: AppTextStyles.labelMedium.copyWith(
-                            color: phaseTextColor,
-                            letterSpacing: 1.2,
-                            fontWeight: FontWeight.bold,
+    return groupedData.entries.map((entry) {
+      return _PhaseGroupSection(
+        phase: entry.key,
+        items: entry.value,
+        initiallyExpanded: entry.key == latestPhase,
+      );
+    }).toList();
+  }
+}
+
+class _PhaseGroupSection extends StatefulWidget {
+  final String phase;
+  final List<StudentAssessmentHistoryItem> items;
+  final bool initiallyExpanded;
+
+  const _PhaseGroupSection({
+    required this.phase,
+    required this.items,
+    required this.initiallyExpanded,
+  });
+
+  @override
+  State<_PhaseGroupSection> createState() => _PhaseGroupSectionState();
+}
+
+class _PhaseGroupSectionState extends State<_PhaseGroupSection> {
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isFaseA = widget.phase.toLowerCase().contains('fase a');
+    final phaseBgColor = isFaseA ? AppColors.surfaceContainerHigh : const Color(0xFFFFDAD5); // tertiary-fixed
+    final phaseTextColor = isFaseA ? AppColors.primary : const Color(0xFF410000); // on-tertiary-fixed
+    final phaseBorderColor = isFaseA ? AppColors.primary.withValues(alpha: 0.1) : const Color(0xFFFFB4A8); // tertiary-fixed-dim
+    final phaseIcon = isFaseA ? Icons.school : Icons.menu_book;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GestureDetector(
+          onTap: () => setState(() => _isExpanded = !_isExpanded),
+          child: Container(
+            color: Colors.transparent, // allow tap on entire row
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ClipRRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: phaseBgColor,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: phaseBorderColor),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(phaseIcon, size: 18, color: phaseTextColor),
+                          const SizedBox(width: 8),
+                          Text(
+                            widget.phase.toUpperCase(),
+                            style: AppTextStyles.labelMedium.copyWith(
+                              color: phaseTextColor,
+                              letterSpacing: 1.2,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+                Icon(
+                  _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ],
             ),
           ),
         ),
-      );
-
-      slivers.add(
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final item = items[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _HistoryCard(item: item),
-                );
-              },
-              childCount: items.length,
-            ),
-          ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          child: _isExpanded
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                  child: Column(
+                    children: widget.items.map((item) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _HistoryCard(item: item),
+                      );
+                    }).toList(),
+                  ),
+                )
+              : const SizedBox.shrink(),
         ),
-      );
-    });
-
-    return slivers;
+      ],
+    );
   }
 }
 
@@ -816,34 +859,4 @@ Widget _buildSyncStatusBadge(String status) {
   );
 }
 
-// ── STICKY HEADER DELEGATE ─────────────────────────────────────────────────────────
 
-class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double minHeight;
-  final double maxHeight;
-  final Widget child;
-
-  _StickyHeaderDelegate({
-    required this.minHeight,
-    required this.maxHeight,
-    required this.child,
-  });
-
-  @override
-  double get minExtent => minHeight;
-
-  @override
-  double get maxExtent => maxHeight;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return SizedBox.expand(child: child);
-  }
-
-  @override
-  bool shouldRebuild(_StickyHeaderDelegate oldDelegate) {
-    return maxHeight != oldDelegate.maxHeight ||
-        minHeight != oldDelegate.minHeight ||
-        child != oldDelegate.child;
-  }
-}
