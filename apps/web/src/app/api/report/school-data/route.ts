@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const supabase = createServerClient();
 
   // Ambil semua sesi untuk sekolah + kategori ini (isolasi ketat via school_id)
-  const { data: sessionsData, error } = await supabase
+  let query = supabase
     .from("assessment_sessions")
     .select(`
       id, category_id, student_id, school_id, status, score, time_spent_sec,
@@ -24,9 +24,14 @@ export async function GET(request: Request) {
       student_answers(is_correct, score, answer_data, questions(subject_area, question_type, question_text))
     `)
     .eq("school_id", schoolId)
-    .eq("category_id", categoryId)
     .eq("is_void", false)
     .order("completed_at", { ascending: false });
+
+  if (categoryId !== "all") {
+    query = query.eq("category_id", categoryId);
+  }
+
+  const { data: sessionsData, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: "Gagal mengambil data laporan: " + error.message }, { status: 500 });

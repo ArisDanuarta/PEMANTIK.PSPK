@@ -45,7 +45,7 @@ export default function SuperAdminReportDashboard({
   communities,
   packages,
 }: SuperAdminReportDashboardProps) {
-  const [selectedPackageId, setSelectedPackageId] = useState<string>("");
+  const [selectedPackageId, setSelectedPackageId] = useState<string>("all");
   const [selectedCommunityId, setSelectedCommunityId] = useState<string>("all");
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>("all");
   const [selectedGender, setSelectedGender] = useState<string>("all");
@@ -98,6 +98,11 @@ export default function SuperAdminReportDashboard({
         }
 
         const res = await fetch(url.toString());
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("text/html")) {
+          window.location.href = "/login";
+          return;
+        }
         if (!res.ok) {
           const json = await res.json().catch(() => ({}));
           showError("Gagal Memuat Data", json.error || "Terjadi kesalahan saat mengambil data laporan.");
@@ -210,10 +215,10 @@ export default function SuperAdminReportDashboard({
             </label>
             <SearchableSelect
               name="category_id"
-              options={packages.map((p) => ({ value: p.id, label: p.name }))}
+              options={[{ value: "all", label: "Semua Kategori (Semua Ujian)" }, ...packages.map((p) => ({ value: p.id, label: p.name }))]}
               value={selectedPackageId}
               onChange={setSelectedPackageId}
-              placeholder="-- Pilih Kategori --"
+              placeholder="Pilih Kategori Ujian"
             />
           </div>
           <div>

@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   }
 
   // 2. Ambil sesi ujian hanya milik komunitas ini, untuk kategori yang dipilih
-  const { data: sessionsData, error: sessErr } = await supabase
+  let query = supabase
     .from("assessment_sessions")
     .select(`
       id,
@@ -60,9 +60,14 @@ export async function GET(request: Request) {
       )
     `)
     .in("school_id", schoolIds)
-    .eq("category_id", categoryId)
     .eq("is_void", false)
     .order("completed_at", { ascending: false });
+
+  if (categoryId !== "all") {
+    query = query.eq("category_id", categoryId);
+  }
+
+  const { data: sessionsData, error: sessErr } = await query;
 
   if (sessErr) {
     console.error("Error fetching sessions for report:", sessErr);

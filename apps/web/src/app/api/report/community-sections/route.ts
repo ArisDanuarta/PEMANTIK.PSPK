@@ -48,12 +48,17 @@ export async function GET(request: Request) {
   if (section === "per_school") {
     // Ambil agregat jumlah sesi per sekolah
     // TIDAK filter is_active → mendukung arsip permanen (spec §2.2.5)
-    const { data: sessions, error: sessErr } = await supabase
+    let sessionsQuery = supabase
       .from("assessment_sessions")
       .select("school_id, student_id")
       .in("school_id", schoolIds)
-      .eq("category_id", categoryId)
       .eq("is_void", false);
+
+    if (categoryId !== "all") {
+      sessionsQuery = sessionsQuery.eq("category_id", categoryId);
+    }
+
+    const { data: sessions, error: sessErr } = await sessionsQuery;
 
     if (sessErr) {
       return NextResponse.json({ error: "Gagal mengambil data sesi." }, { status: 500 });
@@ -86,13 +91,18 @@ export async function GET(request: Request) {
   // ═══════════════════════════════════════════════════════════════════════════
   if (section === "per_phase") {
     // Ambil sesi per fase
-    const { data: sessions, error: sessErr } = await supabase
+    let sessionsQuery = supabase
       .from("assessment_sessions")
       .select("phase, student_id")
       .in("school_id", schoolIds)
-      .eq("category_id", categoryId)
       .eq("is_void", false)
       .not("phase", "is", null);
+
+    if (categoryId !== "all") {
+      sessionsQuery = sessionsQuery.eq("category_id", categoryId);
+    }
+
+    const { data: sessions, error: sessErr } = await sessionsQuery;
 
     if (sessErr) {
       return NextResponse.json({ error: "Gagal mengambil data sesi." }, { status: 500 });
@@ -109,13 +119,18 @@ export async function GET(request: Request) {
     // Ambil rentang waktu per fase dari assessment_access
     // TIDAK filter is_active → mendukung arsip (spec §2.2.5)
     const distinctPhases = Array.from(phaseMap.keys());
-    const { data: accessData } = await supabase
+    let accessQuery = supabase
       .from("assessment_access")
       .select("phase, valid_from, valid_until")
       .in("target_id", schoolIds)
       .eq("target_type", "school")
-      .eq("category_id", categoryId)
       .in("phase", distinctPhases);
+
+    if (categoryId !== "all") {
+      accessQuery = accessQuery.eq("category_id", categoryId);
+    }
+
+    const { data: accessData } = await accessQuery;
 
     // Ambil rentang waktu terluas per fase (max valid_until, min valid_from)
     const phaseTimeMap = new Map<string, { valid_from: string; valid_until: string }>();
@@ -151,12 +166,17 @@ export async function GET(request: Request) {
   // ═══════════════════════════════════════════════════════════════════════════
   if (section === "per_level") {
     // Ambil session ids & student_id yang relevan di komunitas ini dulu
-    const { data: sessions, error: sidErr } = await supabase
+    let sessionsQuery = supabase
       .from("assessment_sessions")
       .select("id, student_id")
       .in("school_id", schoolIds)
-      .eq("category_id", categoryId)
       .eq("is_void", false);
+
+    if (categoryId !== "all") {
+      sessionsQuery = sessionsQuery.eq("category_id", categoryId);
+    }
+
+    const { data: sessions, error: sidErr } = await sessionsQuery;
 
     if (sidErr) {
       return NextResponse.json({ error: "Gagal mengambil data sesi." }, { status: 500 });

@@ -167,7 +167,7 @@ function DataCard({
 
 export default function CommunityReportDashboard({ schools, packages, communityId }: Props) {
   // ── Kategori & Section ──────────────────────────────────────────────────
-  const [selectedPackageId, setSelectedPackageId] = useState("");
+  const [selectedPackageId, setSelectedPackageId] = useState("all");
   const [activeSection, setActiveSection] = useState<SectionType>("per_level");
 
   // ── Section data ────────────────────────────────────────────────────────
@@ -194,6 +194,11 @@ export default function CommunityReportDashboard({ schools, packages, communityI
       const res = await fetch(
         `/api/report/community-sections?community_id=${communityId}&category_id=${categoryId}&section=${section}`
       );
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        window.location.href = "/login";
+        return;
+      }
       if (!res.ok) {
         let errStr = `Gagal memuat dari server (${res.status})`;
         try { const errJson = await res.json(); if (errJson.error) errStr = errJson.error; } catch (_) {}
@@ -227,6 +232,11 @@ export default function CommunityReportDashboard({ schools, packages, communityI
     setIsLoadingData(true);
     try {
       const res = await fetch(`/api/report/community-data?community_id=${communityId}&category_id=${pkgId}`);
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        window.location.href = "/login";
+        return;
+      }
       if (!res.ok) {
         let errStr = `Gagal memuat data dari server (${res.status})`;
         try { const errJson = await res.json(); if (errJson.error) errStr = errJson.error; } catch (_) {}
@@ -240,6 +250,13 @@ export default function CommunityReportDashboard({ schools, packages, communityI
       setIsLoadingData(false);
     }
   }, [activeSection, communityId, fetchSectionData, showError]);
+
+  // ── Initial Fetch ───────────────────────────────────────────────────────
+  React.useEffect(() => {
+    if (packages.length > 0) {
+      handlePackageChange("all");
+    }
+  }, [packages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Handle Section Switch ───────────────────────────────────────────────
   const handleSectionChange = useCallback(async (section: SectionType) => {
@@ -377,14 +394,16 @@ export default function CommunityReportDashboard({ schools, packages, communityI
               </label>
               <SearchableSelect
                 name="category_id"
-                options={packages.map((p) => ({ value: p.id, label: p.name }))}
+                options={[{ value: "all", label: "Semua Kategori (Semua Ujian)" }, ...packages.map((p) => ({ value: p.id, label: p.name }))]}
                 value={selectedPackageId}
-                onChange={handlePackageChange}
-                placeholder="- Pilih Kategori Ujian -"
+                onChange={(val) => handlePackageChange(val as string)}
+                placeholder="Pilih Kategori Ujian"
               />
             </div>
             <div style={{ fontSize: "0.8rem", color: "#6b7280", paddingTop: "1.5rem" }}>
-              {selectedPackageId ? `${packages.find(p => p.id === selectedPackageId)?.name} dipilih` : "Pilih kategori untuk menampilkan data."}
+              {selectedPackageId
+                ? `${selectedPackageId === "all" ? "Semua Kategori" : packages.find(p => p.id === selectedPackageId)?.name} dipilih`
+                : "Pilih kategori untuk menampilkan data."}
             </div>
           </div>
         )}

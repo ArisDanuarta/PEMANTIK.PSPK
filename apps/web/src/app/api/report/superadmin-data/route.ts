@@ -62,8 +62,11 @@ export async function GET(request: Request) {
       ses_class,
       ses_score
     `)
-    .eq("category_id", categoryId)
     .not("session_id", "is", null);
+
+  if (categoryId !== "all") {
+    query = query.eq("category_id", categoryId);
+  }
 
   // Filter komunitas
   if (communityId && communityId !== "all") {

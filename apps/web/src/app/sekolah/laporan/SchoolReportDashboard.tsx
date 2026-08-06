@@ -147,7 +147,7 @@ function DataCard({
 
 export default function SchoolReportDashboard({ packages, classes, schoolId }: Props) {
   // ── Kategori & Section ──────────────────────────────────────────────────
-  const [selectedPackageId, setSelectedPackageId] = useState("");
+  const [selectedPackageId, setSelectedPackageId] = useState("all");
   const [activeSection, setActiveSection] = useState<SectionType>("per_class");
 
   // ── Section data ────────────────────────────────────────────────────────
@@ -177,6 +177,11 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
       const res = await fetch(
         `/api/report/school-sections?school_id=${schoolId}&category_id=${categoryId}&section=${section}`
       );
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        window.location.href = "/login";
+        return;
+      }
       if (!res.ok) throw new Error((await res.json()).error || "Server error");
       const json = await res.json();
       if (section === "per_class") setClassCards(json.data ?? []);
@@ -208,6 +213,11 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
     setIsLoadingData(true);
     try {
       const res = await fetch(`/api/report/school-data?school_id=${schoolId}&category_id=${pkgId}`);
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        window.location.href = "/login";
+        return;
+      }
       if (!res.ok) throw new Error((await res.json()).error || "Server error");
       const json = await res.json();
       setReportData(json.data ?? []);
@@ -217,6 +227,13 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
       setIsLoadingData(false);
     }
   }, [activeSection, schoolId, fetchSectionData, showError]);
+
+  // ── Initial Fetch ───────────────────────────────────────────────────────
+  React.useEffect(() => {
+    if (packages.length > 0) {
+      handlePackageChange("all");
+    }
+  }, [packages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Handle Section Switch ───────────────────────────────────────────────
   const handleSectionChange = useCallback(async (section: SectionType) => {
@@ -346,15 +363,15 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
               </label>
               <SearchableSelect
                 name="category_id"
-                options={packages.map((p) => ({ value: p.id, label: p.name }))}
+                options={[{ value: "all", label: "Semua Kategori (Semua Ujian)" }, ...packages.map((p) => ({ value: p.id, label: p.name }))]}
                 value={selectedPackageId}
-                onChange={handlePackageChange}
-                placeholder="- Pilih Kategori Ujian -"
+                onChange={(val) => handlePackageChange(val as string)}
+                placeholder="Pilih Kategori Ujian"
               />
             </div>
             <div style={{ fontSize: "0.8rem", color: "#6b7280", paddingTop: "1.5rem" }}>
               {selectedPackageId
-                ? `${packages.find(p => p.id === selectedPackageId)?.name} dipilih`
+                ? `${selectedPackageId === "all" ? "Semua Kategori" : packages.find(p => p.id === selectedPackageId)?.name} dipilih`
                 : "Pilih kategori untuk menampilkan data."}
             </div>
           </div>

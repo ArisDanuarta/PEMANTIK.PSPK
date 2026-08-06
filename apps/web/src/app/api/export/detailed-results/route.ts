@@ -360,8 +360,11 @@ export async function GET(request: Request) {
       final_score, time_spent_sec, attempt_number, is_void,
       current_level_id, final_level_number, passing_threshold
     `)
-    .eq("category_id", category_id)
     .not("session_id", "is", null);
+
+  if (category_id !== "all") {
+    viewQuery = viewQuery.eq("category_id", category_id);
+  }
 
   // ── Keamanan Hirarki (RLS / Isolation) ────────────────────────────────────
   if (userRole === "community") {
