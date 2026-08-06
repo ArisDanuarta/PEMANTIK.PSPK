@@ -311,7 +311,6 @@ class SyncService {
               final reason = result['reason'];
 
               if (action == 'advance') {
-                final nextLevelId = result['next_level_id'];
                 final nextLevelNumber = result['next_level_number'];
                 log('[Sync] Sesi ${session.id}: NAIK ke Level $nextLevelNumber (score: $levelScore%)');
               } else if (action == 'complete') {

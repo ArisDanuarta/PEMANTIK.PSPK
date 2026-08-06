@@ -222,12 +222,47 @@ export async function submitInterventionAction(
       .select("id, submitted_by, users(id, role)")
       .eq("stage_id", payload.stageId);
 
-    if (!allIntErr && allInterventions) {
-      const hasCommunitySubmission = allInterventions.some((i: any) => i.users?.role === 'community' || i.users?.role === 'super_admin');
-      const hasSchoolSubmission = allInterventions.some((i: any) => i.users?.role === 'school' || i.users?.role === 'teacher');
+    // Ambil semua guru aktif di sekolah ini
+    const { data: activeTeachers } = await (supabase as any)
+      .from("users")
+      .select("id")
+      .eq("school_id", payload.schoolId)
+      .eq("role", "teacher")
+      .eq("is_active", true);
 
+    const requiredTeacherIds = (activeTeachers || []).map((t: any) => t.id);
+
+    if (!allIntErr && allInterventions) {
       const isIndependentSchool = !stage.community_id;
-      const shouldCompleteStage = isIndependentSchool ? hasSchoolSubmission : (hasCommunitySubmission && hasSchoolSubmission);
+
+      // Cek apakah ada perwakilan komunitas / super_admin yang submit (untuk sekolah binaan)
+      const hasCommunitySubmission = allInterventions.some(
+        (i: any) => i.users?.role === "community" || i.users?.role === "super_admin"
+      );
+      
+      // Cek apakah ada perwakilan sekolah (admin sekolah) yang submit
+      const hasSchoolSubmission = allInterventions.some(
+        (i: any) => i.users?.role === "school" || i.users?.role === "super_admin"
+      );
+
+      // Cek apakah SEMUA guru aktif sudah submit
+      const submittedTeacherIds = allInterventions
+        .filter((i: any) => i.users?.role === "teacher")
+        .map((i: any) => i.submitted_by);
+      
+      const allTeachersSubmitted = requiredTeacherIds.length === 0
+        ? true
+        : requiredTeacherIds.every((tid: string) => submittedTeacherIds.includes(tid));
+
+      let shouldCompleteStage = false;
+
+      if (isIndependentSchool) {
+        // Sekolah Independen: Wajib isi form (Sekolah) + Semua Guru aktif wajib isi
+        shouldCompleteStage = hasSchoolSubmission && allTeachersSubmitted;
+      } else {
+        // Sekolah Binaan: Wajib isi form (Komunitas) + Wajib isi form (Sekolah) + Semua Guru aktif wajib isi
+        shouldCompleteStage = hasCommunitySubmission && hasSchoolSubmission && allTeachersSubmitted;
+      }
 
       if (shouldCompleteStage) {
         const { error: stageUpdateErr } = await (supabase as any)
