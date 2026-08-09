@@ -302,17 +302,8 @@ export default async function AssessmentLevelsPage({ params }: { params: Promise
                 <Link
                   href={level.session?.id ? `/siswa/asesmen/${level.session.id}/hasil` : '/siswa/dashboard'}
                   className="lv-action lv-action-gagal"
-                  style={{ marginBottom: '8px' }}
                 >
                   Lihat Hasil
-                </Link>
-                {/* Tombol coba lagi → lewat lobby untuk buat session baru */}
-                <Link
-                  href={`/siswa/asesmen/new/lobby?level=${level.id}`}
-                  className="lv-action"
-                  style={{ background: '#001934', color: '#fff', fontSize: '12px', padding: '7px 0' }}
-                >
-                  Coba Lagi
                 </Link>
               </div>
             );

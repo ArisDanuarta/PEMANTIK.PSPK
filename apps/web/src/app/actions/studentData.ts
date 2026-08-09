@@ -98,11 +98,37 @@ export async function getStudentLevelsData(studentId: string, categoryId: string
 
   if (levelsErr || !levelsData) return null;
 
+  // Find active phase for this student
+  const { data: student } = await supabase
+    .from('students')
+    .select('id, class_id, school_id, schools(community_id)')
+    .eq('id', studentId)
+    .single();
+
+  const targetIds = [studentId];
+  if (student?.class_id) targetIds.push(student.class_id);
+  if (student?.school_id) targetIds.push(student.school_id);
+  const communityId = (student?.schools as any)?.community_id;
+  if (communityId) targetIds.push(communityId);
+
+  const { data: accessData } = await supabase
+    .from('assessment_access')
+    .select('phase')
+    .in('target_id', targetIds)
+    .eq('category_id', categoryId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  const activePhase = accessData?.phase || 'Tahap 1';
+
   const { data: sessionsData } = await supabase
     .from('assessment_sessions')
     .select('*')
     .eq('student_id', studentId)
     .eq('category_id', categoryId)
+    .eq('phase', activePhase)
     .eq('is_void', false);
 
   const sessionMap = new Map();

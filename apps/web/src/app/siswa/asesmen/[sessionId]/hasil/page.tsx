@@ -274,8 +274,6 @@ export default async function AssessmentResultPage({ params }: { params: Promise
               : `Nilaimu belum mencapai batas kelulusan Level ${levelData?.level_number}. Pelajari kembali materinya dan coba lagi!`}
           </p>
 
-          {/* Score dihilangkan sesuai permintaan */}
-
           {/* Info box */}
           <div className="hl-info-box">
             <div className="hl-info-icon">

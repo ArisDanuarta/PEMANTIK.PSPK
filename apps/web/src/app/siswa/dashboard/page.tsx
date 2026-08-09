@@ -319,7 +319,7 @@ export default async function StudentDashboardPage() {
 
         <h2 className="db-hero-title">Halo, {firstName}!</h2>
         <p className="db-hero-sub">
-          Siap untuk menguji kemampuanmu hari ini? Pilih paket di bawah ini untuk memulai.
+          Siap untuk memetik potensimu hari ini? Pilih paket di bawah ini untuk memulai.
         </p>
 
         <div className="db-hero-actions">

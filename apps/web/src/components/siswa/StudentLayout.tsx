@@ -204,7 +204,6 @@ export default function StudentLayout({
               </div>
               <div className="sl-sidebar-name">Pemantik</div>
               <div className="sl-sidebar-sub">Student Assessment</div>
-              <button className="sl-start-btn">Start New Test</button>
             </div>
 
             <div className="sl-nav">
