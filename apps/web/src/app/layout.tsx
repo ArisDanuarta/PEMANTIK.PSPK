@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Lora, Inter } from "next/font/google";
+import { Lora, Inter, Rubik, Noto_Serif } from "next/font/google";
 import "./globals.css";
 import AppProviders from "./providers";
 import { headers } from "next/headers";
@@ -26,6 +26,21 @@ const inter = Inter({
   variable: "--font-inter",
   display: "swap",
   weight: ["300", "400", "500", "600", "700", "800"],
+});
+
+const notoSerif = Noto_Serif({
+  subsets: ["latin"],
+  variable: "--font-noto-serif",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+});
+
+const rubik = Rubik({
+  subsets: ["latin"],
+  variable: "--font-rubik",
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 // Resolves the canonical base URL:
@@ -104,6 +119,7 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
@@ -144,7 +160,7 @@ export default async function RootLayout({
   const showMaintenanceBlock = isMaintenanceActive && userRole !== "super_admin" && userRole !== "guest";
 
   return (
-    <html lang="id" className={`${lora.variable} ${inter.variable}`}>
+    <html lang="id" className={`${lora.variable} ${inter.variable} ${notoSerif.variable} ${rubik.variable}`}>
       <body>
         {showMaintenanceBlock ? (
           <div style={{

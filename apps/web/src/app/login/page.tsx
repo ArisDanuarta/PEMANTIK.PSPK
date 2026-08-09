@@ -2,6 +2,7 @@
 
 import React, { useState, useTransition } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { loginAction } from "../actions/auth";
 
 export default function LoginPage() {
@@ -98,16 +99,55 @@ export default function LoginPage() {
             ekosistem pendidikan dari komunitas hingga ke setiap siswa.
           </p>
 
-          {apkUrl && (
-            <div style={{ position: "relative", zIndex: 2, marginTop: "1rem" }}>
-              <a 
-                href={apkUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+          <div style={{ position: "relative", zIndex: 2, marginTop: "1rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
+              {apkUrl && (
+                <a 
+                  href={apkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ 
+                    backgroundColor: "#f59e0b",
+                    color: "#0f172a", 
+                    fontWeight: "700",
+                    fontSize: "1rem",
+                    padding: "0.875rem 1.75rem",
+                    borderRadius: "9999px",
+                    display: "inline-flex", 
+                    alignItems: "center", 
+                    gap: "0.75rem",
+                    textDecoration: "none",
+                    boxShadow: "0 4px 20px rgba(245, 158, 11, 0.4)",
+                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-3px)";
+                    e.currentTarget.style.boxShadow = "0 8px 25px rgba(245, 158, 11, 0.6)";
+                    e.currentTarget.style.backgroundColor = "#fbbf24";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 20px rgba(245, 158, 11, 0.4)";
+                    e.currentTarget.style.backgroundColor = "#f59e0b";
+                  }}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Download Aplikasi Siswa
+                </a>
+              )}
+              
+              <Link 
+                href="/siswa/login"
                 style={{ 
-                  backgroundColor: "#f59e0b",
-                  color: "#0f172a", 
-                  fontWeight: "700",
+                  backgroundColor: "rgba(255, 255, 255, 0.15)",
+                  color: "#ffffff", 
+                  fontWeight: "600",
                   fontSize: "1rem",
                   padding: "0.875rem 1.75rem",
                   borderRadius: "9999px",
@@ -115,37 +155,37 @@ export default function LoginPage() {
                   alignItems: "center", 
                   gap: "0.75rem",
                   textDecoration: "none",
-                  boxShadow: "0 4px 20px rgba(245, 158, 11, 0.4)",
-                  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                  border: "none",
-                  cursor: "pointer"
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  backdropFilter: "blur(10px)",
+                  transition: "all 0.2s ease"
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-3px)";
-                  e.currentTarget.style.boxShadow = "0 8px 25px rgba(245, 158, 11, 0.6)";
-                  e.currentTarget.style.backgroundColor = "#fbbf24";
+                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.25)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
                 }}
                 onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.15)";
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 20px rgba(245, 158, 11, 0.4)";
-                  e.currentTarget.style.backgroundColor = "#f59e0b";
                 }}
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                  <polyline points="10 17 15 12 10 7"></polyline>
+                  <line x1="15" y1="12" x2="3" y2="12"></line>
                 </svg>
-                Download Aplikasi Siswa
-              </a>
+                Login Siswa Web
+              </Link>
+            </div>
+            
+            {apkUrl && (
               <p style={{ 
                 fontSize: "0.85rem", 
                 color: "rgba(255,255,255,0.7)", 
-                marginTop: "0.75rem",
                 marginLeft: "0.75rem",
                 display: "flex",
                 alignItems: "center",
-                gap: "0.5rem"
+                gap: "0.5rem",
+                marginTop: "-0.25rem"
               }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
@@ -153,15 +193,32 @@ export default function LoginPage() {
                 </svg>
                 Tersedia untuk Android & Tablet
               </p>
+            )}
+          </div>
+        </div>
+
+        {/* Partner Logos Marquee */}
+        <div className="login-partners">
+          <p className="login-partners-title">Klien & Partner Pemantik:</p>
+          <div className="login-partners-marquee">
+            <div className="login-partners-track">
+              {[...Array(2)].map((_, idx) => (
+                <React.Fragment key={idx}>
+                  <img src="/images/Klien & Partner Pemantik/Logo-Inspirasi.png" alt="Inspirasi" />
+                  <img src="/images/Klien & Partner Pemantik/Logo-Sekolahmu.png" alt="Sekolahmu" />
+                  <img src="/images/Klien & Partner Pemantik/YSS.png" alt="YSS" />
+                  <img src="/images/Klien & Partner Pemantik/logoYGB.png" alt="YGB" />
+                </React.Fragment>
+              ))}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Footer branding */}
         <div className="login-left-footer">
           <span>#BerpihakKepadaAnak</span>
           <span className="login-left-footer-dot" aria-hidden="true">·</span>
-          <span>PSPK © 2025</span>
+          <span>PSPK © 2026</span>
         </div>
       </div>
 
@@ -380,10 +437,56 @@ export default function LoginPage() {
           font-style: italic;
         }
         .login-hero-desc {
-          font-size: 0.95rem;
-          color: rgba(255,255,255,0.65);
-          line-height: 1.75;
-          max-width: 400px;
+          font-size: 1.1rem;
+          color: rgba(255,255,255,0.75);
+          line-height: 1.6;
+          max-width: 480px;
+        }
+
+        /* Partner Marquee */
+        .login-partners {
+          position: relative;
+          z-index: 1;
+          margin-top: 1rem;
+          width: 100%;
+          overflow: hidden;
+        }
+        .login-partners-title {
+          font-size: 0.85rem;
+          color: rgba(255, 255, 255, 0.6);
+          margin-bottom: 0.75rem;
+          font-weight: 500;
+        }
+        .login-partners-marquee {
+          width: 100%;
+          overflow: hidden;
+          position: relative;
+          mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+          -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+        .login-partners-track {
+          display: flex;
+          align-items: center;
+          gap: 3rem;
+          width: max-content;
+          animation: marquee 25s linear infinite;
+        }
+        .login-partners-track img {
+          height: 70px;
+          object-fit: contain;
+          background: #ffffff;
+          padding: 0px 3px;
+          border-radius: 8px;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .login-partners-track img:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(calc(-50% - 1.5rem)); }
         }
 
         /* Feature items */

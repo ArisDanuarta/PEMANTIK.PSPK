@@ -3,9 +3,13 @@
     "supabase/functions",
     "apps/mobile/pemantik_mobile/supabase/functions"
   ],
-  "deno.unstable": true,
+  "deno.unstable": [],
   "deno.lint": true,
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "css.lint.unknownAtRules": "ignore",
+  "files.associations": {
+    "*.css": "tailwindcss"
   }
 }
