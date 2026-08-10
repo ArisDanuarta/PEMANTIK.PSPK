@@ -42,11 +42,32 @@ export default async function AssessmentExecutionPage({
   }
 
   // 2. Fetch Questions
-  const { data: questions } = await supabase
-    .from('questions')
-    .select('*')
-    .eq('level_id', session.level_id!)
-    .order('order_index', { ascending: true });
+  // NOTE: `options` is a JSONB column on the `questions` table itself - there is NO separate question_options table.
+  // Both `level_id` fields are checked since the session schema has both current_level_id and level_id.
+  const levelId = (session as any).level_id || (session as any).current_level_id;
+  
+  console.log('[Assessment] sessionId:', sessionId);
+  console.log('[Assessment] session.level_id:', (session as any).level_id);
+  console.log('[Assessment] session.current_level_id:', (session as any).current_level_id);
+  console.log('[Assessment] resolved levelId:', levelId);
+
+  let questions: any[] = [];
+  if (levelId) {
+    const { data: qs, error: questionsError } = await supabase
+      .from('questions')
+      .select('*')
+      .eq('level_id', levelId)
+      .order('order_index', { ascending: true });
+
+    if (questionsError) {
+      console.error('[Assessment] Failed to fetch questions:', questionsError.message);
+    } else {
+      console.log('[Assessment] Fetched questions count:', qs?.length ?? 0);
+      questions = qs || [];
+    }
+  } else {
+    console.error('[Assessment] level_id is null/undefined - cannot fetch questions!');
+  }
 
   // 3. Fetch Existing Answers
   const { data: answers } = await supabase
@@ -59,7 +80,7 @@ export default async function AssessmentExecutionPage({
       sessionId={sessionId} 
       levelData={session.question_levels}
       categoryData={(session.question_levels as any)?.question_categories}
-      questions={questions || []}
+      questions={questions}
       initialAnswers={answers || []}
       session={session}
     />

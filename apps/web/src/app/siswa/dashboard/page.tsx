@@ -16,10 +16,11 @@ export default async function StudentDashboardPage() {
 
   const student = session.student;
   const { activePackages, historyPackages } = await getStudentDashboardData(student);
-  const firstName = student.name ? student.name.split(' ')[0] : 'Siswa';
+  const studentNameStr = student.full_name || student.name || 'Siswa';
+  const firstName = studentNameStr !== 'Siswa' ? studentNameStr.split(' ')[0] : 'Siswa';
 
   return (
-    <StudentLayout studentName={student.name || 'Siswa'} studentNisn={student.nisn || '-'}>
+    <StudentLayout studentName={studentNameStr} studentNisn={student.nisn || '-'}>
       <style>{`
         /* ── Dashboard styles ── */
         .db-hero {
@@ -66,20 +67,19 @@ export default async function StudentDashboardPage() {
           z-index: 2;
         }
         .db-hero-btn {
-          width: 44px; height: 44px; border-radius: 50%;
-          background: rgba(255,255,255,0.12);
-          border: none; cursor: pointer; color: #ffffff;
-          display: flex; align-items: center; justify-content: center;
-          transition: background 0.15s;
+          height: 44px; border-radius: 22px; padding: 0 20px;
+          background: rgba(255,255,255,0.15);
+          border: 1px solid rgba(255,255,255,0.3);
+          cursor: pointer; color: #ffffff;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          transition: all 0.2s ease;
           position: relative;
+          font-weight: 500;
+          font-size: 14px;
         }
-        .db-hero-btn:hover { background: rgba(255,255,255,0.22); }
-        .db-notif-dot {
-          position: absolute;
-          top: 9px; right: 9px;
-          width: 7px; height: 7px;
-          background: #ba1a1a;
-          border-radius: 50%;
+        .db-hero-btn:hover { 
+          background: rgba(255,255,255,0.25); 
+          transform: translateY(-2px);
         }
 
         /* ── Content area ── */
@@ -323,12 +323,9 @@ export default async function StudentDashboardPage() {
         </p>
 
         <div className="db-hero-actions">
-          <button className="db-hero-btn" aria-label="Sync">
-            <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>sync</span>
-          </button>
-          <button className="db-hero-btn" aria-label="Notifikasi">
-            <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>notifications</span>
-            <span className="db-notif-dot" />
+          <button className="db-hero-btn" aria-label="Sinkronisasi">
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>sync</span>
+            <span>Sinkronisasi Data</span>
           </button>
         </div>
       </div>

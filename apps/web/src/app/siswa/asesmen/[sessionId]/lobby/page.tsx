@@ -80,11 +80,27 @@ export default async function AssessmentLobbyPage({
   const accentColor = isLiteracy ? '#0874AA' : '#DF632F';
   const subjectIcon = isLiteracy ? 'menu_book' : 'calculate';
 
-  // Hitung jumlah soal
-  const { count: questionsCount } = await supabase
+  // Hitung jumlah soal & jenis soal
+  const { data: questionsData } = await supabase
     .from('questions')
-    .select('*', { count: 'exact', head: true })
+    .select('question_type')
     .eq('level_id', levelData.id);
+
+  const questionsCount = questionsData?.length || 0;
+
+  const TYPE_LABELS: Record<string, string> = {
+    'multiple_choice': 'Pilihan Ganda',
+    'image_choice': 'Pilihan Gambar',
+    'audio_question': 'Soal Audio',
+    'video_question': 'Soal Video',
+    'drag_drop': 'Tarik & Lepas',
+    'voice_recording': 'Membaca / Suara'
+  };
+
+  const rawTypes = Array.from(new Set(questionsData?.map(q => q.question_type) || []));
+  const uniqueQuestionTypes = rawTypes.length > 0 
+    ? rawTypes.map(t => TYPE_LABELS[t as string] || (t as string).replace('_', ' '))
+    : ['Pilihan Ganda'];
 
   const durationMin = Math.round((levelData.time_limit_sec || 0) / 60);
 
@@ -262,17 +278,19 @@ export default async function AssessmentLobbyPage({
             </div>
             <div className="lobby-metric">
               <div className="lobby-metric-icon" style={{ background: 'rgba(16,185,129,0.12)' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#10B981' }}>verified</span>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#10B981' }}>lock_open</span>
               </div>
-              <div className="lobby-metric-label">Nilai Kelulusan</div>
-              <div className="lobby-metric-val">Min. {levelData.passing_threshold ?? 70}%</div>
+              <div className="lobby-metric-label">Status Level</div>
+              <div className="lobby-metric-val">Terbuka</div>
             </div>
             <div className="lobby-metric">
               <div className="lobby-metric-icon" style={{ background: `rgba(8,116,170,0.12)` }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '20px', color: accentColor }}>{subjectIcon}</span>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px', color: accentColor }}>category</span>
               </div>
-              <div className="lobby-metric-label">Mata Uji</div>
-              <div className="lobby-metric-val" style={{ fontSize: '15px' }}>{isLiteracy ? 'Literasi' : 'Numerasi'}</div>
+              <div className="lobby-metric-label">Jenis Soal</div>
+              <div className="lobby-metric-val" style={{ fontSize: '14px', display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px', textTransform: 'capitalize' }}>
+                {uniqueQuestionTypes.map(type => <span key={type}>{uniqueQuestionTypes.length > 1 ? '• ' : ''}{type}</span>)}
+              </div>
             </div>
           </div>
 
