@@ -6,6 +6,8 @@ import { saveStudentAnswer, submitAssessmentSession } from '@/app/actions/assess
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { getDB } from '@/lib/offline/db';
 import { runFullSync } from '@/lib/offline/sync';
+import StudentConfirmDialog from '@/components/siswa/StudentConfirmDialog';
+import DragDropChallenge from './DragDropChallenge';
 
 interface AssessmentFormProps {
   sessionId: string;
@@ -15,6 +17,42 @@ interface AssessmentFormProps {
   initialAnswers: any[];
   session: any;
 }
+
+const getMediaUrl = (path: string | undefined): string => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/question_media/${path}`;
+};
+
+const getParsedMediaUrls = (q: any) => {
+  const opts = q.options || {};
+  const rawAudio = q.question_audio_url || opts.audioUrl;
+  const rawVideo = q.question_video_url || opts.videoUrl;
+  const rawImage = q.question_image_url || opts.imageUrl;
+
+  let audioUrl: string | null = null;
+  let videoUrl: string | null = null;
+  let imageUrl: string | null = null;
+
+  const mediaUrl = [rawAudio, rawVideo, rawImage].find(url => url && url.trim() !== '');
+
+  if (mediaUrl) {
+    const urlLower = mediaUrl.toLowerCase();
+    if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) {
+      videoUrl = mediaUrl;
+    } else if (urlLower.includes('.mp3') || urlLower.includes('.wav') || urlLower.includes('.m4a') || urlLower.includes('.ogg') || urlLower.includes('.aac')) {
+      audioUrl = mediaUrl;
+    } else if (urlLower.includes('.mp4') || urlLower.includes('.webm') || urlLower.includes('.mov') || urlLower.includes('.avi')) {
+      videoUrl = mediaUrl;
+    } else {
+      if (mediaUrl === rawAudio) audioUrl = mediaUrl;
+      else if (mediaUrl === rawVideo) videoUrl = mediaUrl;
+      else imageUrl = mediaUrl;
+    }
+  }
+
+  return { audioUrl, videoUrl, imageUrl };
+};
 
 export default function AssessmentForm({ 
   sessionId, levelData, categoryData, questions, initialAnswers, session 
@@ -30,6 +68,8 @@ export default function AssessmentForm({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGridOpen, setIsGridOpen] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const timeLimitSec = levelData?.time_limit_sec || 3600;
   // Start with full time to avoid SSR hydration mismatch
   const [timeLeft, setTimeLeft] = useState<number>(timeLimitSec);
@@ -40,6 +80,9 @@ export default function AssessmentForm({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const [audioPlayback, setAudioPlayback] = useState<string | null>(null);
+  
+  const recognitionRef = useRef<any>(null);
+  const [transcript, setTranscript] = useState<string>('');
 
   // Sync real timer client-side after mount (fixes SSR hydration mismatch)
   useEffect(() => {
@@ -104,9 +147,12 @@ export default function AssessmentForm({
   const handleFinish = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
+    setShowConfirm(false);
     try {
-      if (isOnline) { await submitAssessmentSession(sessionId, levelData.id); }
-      else {
+      if (isOnline) { 
+        const res = await submitAssessmentSession(sessionId, levelData.id); 
+        if (!res.success) throw new Error(res.error);
+      } else {
         const db = await getDB();
         if (db) {
           const tx = db.transaction('assessment_sessions', 'readwrite');
@@ -114,10 +160,11 @@ export default function AssessmentForm({
           const s = await store.get(sessionId);
           if (s) { s.status = 'completed'; s.sync_status = 'pending'; await store.put(s); }
         }
-        router.push(`/siswa/asesmen/${sessionId}/hasil`);
       }
+      router.push(`/siswa/asesmen/${sessionId}/hasil`);
     } catch (e) {
-      alert('Gagal mengirim hasil. Hasil disimpan lokal.');
+      console.error(e);
+      // Fallback redirect (local save or normal failure)
       router.push(`/siswa/asesmen/${sessionId}/hasil`);
       setIsSubmitting(false);
     }
@@ -134,14 +181,64 @@ export default function AssessmentForm({
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         setAudioPlayback(URL.createObjectURL(blob));
         setRecordingDone(true);
-        handleSelectAnswer('voice_recorded');
         stream.getTracks().forEach(t => t.stop());
       };
       mr.start();
       setIsRecording(true);
-    } catch { alert('Tidak dapat mengakses mikrofon.'); }
+      setTranscript(''); // reset
+      
+      // Start Web Speech API for transcript
+      if (typeof window !== 'undefined') {
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (SpeechRecognition) {
+          const recognition = new SpeechRecognition();
+          recognition.lang = 'id-ID'; // bahasa indonesia
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          
+          let finalTranscript = '';
+          recognition.onresult = (e: any) => {
+            let interimTranscript = '';
+            for (let i = e.resultIndex; i < e.results.length; ++i) {
+              if (e.results[i].isFinal) {
+                finalTranscript += e.results[i][0].transcript;
+              } else {
+                interimTranscript += e.results[i][0].transcript;
+              }
+            }
+            setTranscript(finalTranscript + interimTranscript);
+          };
+          
+          recognition.onend = () => {
+            // Ketika recognition selesai, finalisasikan transcript
+          };
+          
+          recognitionRef.current = recognition;
+          recognition.start();
+        }
+      }
+    } catch(e) { console.error('Microphone err:', e); }
   };
-  const stopRecording = () => { mediaRecorderRef.current?.stop(); setIsRecording(false); };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsRecording(false);
+    
+    // Tunggu sesaat sebelum save, agar finalTranscript di state terupdate
+    setTimeout(() => {}, 500);
+  };
+  
+  // Update jawaban otomatis jika ada transcript final setelah rekaman selesai
+  useEffect(() => {
+    if (recordingDone) {
+      handleSelectAnswer(transcript || 'voice_recorded');
+    }
+  }, [recordingDone, transcript]);
 
   const answeredCount = Object.keys(answers).length;
   const progressPercent = Math.round((answeredCount / totalQuestions) * 100);
@@ -170,6 +267,8 @@ export default function AssessmentForm({
   const imgOptions = qType === 'image_choice'
     ? (Array.isArray(rawOptions) ? rawOptions as Array<{url: string; label: string}> : [])
     : [];
+
+  const parsedUrls = getParsedMediaUrls(currentQuestion);
 
   // ── Shared MC radio list component ──
   const McList = ({ opts }: { opts: string[] }) => (
@@ -245,9 +344,9 @@ export default function AssessmentForm({
         .as-ic-card{border:2px solid #c4c6cf;border-radius:14px;overflow:hidden;background:#fff;transition:border-color .15s,box-shadow .15s;position:relative;}
         .as-ic-label:hover .as-ic-card{border-color:#adc8f2;}
         .as-ic-radio:checked~.as-ic-card{border-color:#001934;box-shadow:0 0 0 1px #001934;}
-        .as-ic-img{width:100%;height:180px;object-fit:cover;display:block;}
+        .as-ic-img{width:100%;height:180px;object-fit:contain;background:#fff;display:block;padding:8px;}
         .as-ic-placeholder{height:180px;background:#e5eeff;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;color:#001934;}
-        .as-ic-footer{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8f9ff;}
+        .as-ic-footer{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 14px;background:#f8f9ff;}
         .as-ic-radio:checked~.as-ic-card .as-indicator{background:#feba48;border-color:#feba48;}
         .as-ic-text{font-size:14px;font-weight:600;color:#001934;}
         /* Media */
@@ -260,6 +359,20 @@ export default function AssessmentForm({
         .as-vr-btn{width:72px;height:72px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;}
         .as-vr-btn.start{background:#001934;color:#fff;} .as-vr-btn.stop{background:#ba1a1a;color:#fff;}
         .as-vr-btn:hover{transform:scale(1.06);box-shadow:0 4px 16px rgba(0,0,0,.18);}
+        /* Grid Modal */
+        .as-grid-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,25,52,.4);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+        .as-grid-overlay.open{opacity:1;pointer-events:auto;}
+        .as-grid-modal{background:#fff;width:90%;max-width:480px;border-radius:24px;box-shadow:0 12px 48px rgba(0,25,52,.2);transform:translateY(20px);transition:transform .3s cubic-bezier(0.175,0.885,0.32,1.275);padding:24px;display:flex;flex-direction:column;}
+        .as-grid-overlay.open .as-grid-modal{transform:translateY(0);}
+        .as-grid-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+        .as-grid-title{font-size:18px;font-weight:700;color:#001934;}
+        .as-grid-close{width:32px;height:32px;border-radius:50%;border:none;background:#f0f4ff;color:#43474e;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+        .as-grid-close:hover{background:#dce9ff;}
+        .as-grid-items{display:grid;grid-template-columns:repeat(auto-fill, minmax(44px, 1fr));gap:10px;max-height:60vh;overflow-y:auto;}
+        .as-grid-item{height:44px;border-radius:10px;border:2px solid #c4c6cf;background:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#43474e;cursor:pointer;transition:all .15s;}
+        .as-grid-item.answered{background:#feba48;border-color:#feba48;color:#714b00;}
+        .as-grid-item.current{border-color:#001934;color:#001934;transform:scale(1.1);}
+        .as-grid-item:hover{transform:scale(1.05);box-shadow:0 2px 8px rgba(0,0,0,.1);}
         /* Footer */
         .as-footer{background:#e5eeff;border-top:1px solid rgba(196,198,207,.3);padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
         @media(min-width:768px){.as-footer{padding:24px 48px;}}
@@ -271,35 +384,64 @@ export default function AssessmentForm({
         .as-btn-finish{background:#10B981;color:#fff;} .as-btn-finish:hover{filter:brightness(.92);} .as-btn-finish:disabled{background:#c4c6cf;cursor:not-allowed;}
       `}</style>
 
+      <div className={`as-grid-overlay ${isGridOpen ? 'open' : ''}`} onClick={() => setIsGridOpen(false)}>
+        <div className="as-grid-modal" onClick={e => e.stopPropagation()}>
+          <div className="as-grid-header">
+            <h3 className="as-grid-title">Navigasi Soal</h3>
+            <button className="as-grid-close" onClick={() => setIsGridOpen(false)}>
+              <span className="material-symbols-outlined" style={{fontSize:'20px'}}>close</span>
+            </button>
+          </div>
+          <div className="as-grid-items">
+            {questions.map((q, i) => {
+              const isAnswered = answers[q.id] !== undefined && answers[q.id] !== '';
+              const isCurrent = currentQIndex === i;
+              let classes = 'as-grid-item';
+              if (isAnswered) classes += ' answered';
+              if (isCurrent) classes += ' current';
+              return (
+                <button 
+                  key={q.id} 
+                  className={classes}
+                  onClick={() => { setCurrentQIndex(i); setIsGridOpen(false); }}
+                >
+                  {i + 1}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       <div className="as-page">
         <header className="as-header">
           <div className="as-header-inner">
             <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
               <div className="as-brand">
-                <img 
-                  src="/images/LOGO_PEMANTIK_BERWARNA.png" 
-                  alt="Pemantik" 
-                  style={{ height: '50px', width: 'auto', display: 'block' }} 
-                />
+                <img src="/images/LOGO_PEMANTIK_BERWARNA.png" alt="Pemantik" style={{height: '32px', width: 'auto'}} />
               </div>
-              <div className="as-sync-badge">
-                <div className={`as-dot${isSaving?' saving':!isOnline?' offline':''}`}></div>
-                <span>{!isOnline?'Offline: Ready':isSaving?'Menyimpan...':'Tersimpan (Sinkron)'}</span>
+              <div className={`as-sync-badge ${!isOnline?'offline':''}`}>
+                <div className={`as-dot ${!isOnline?'offline':isSaving?'saving':''}`}></div>
+                {!isOnline ? 'Offline' : isSaving ? 'Menyimpan...' : 'Tersimpan (Sinkron)'}
               </div>
             </div>
+
             <div className="as-progress-wrap">
               <div className="as-prog-row">
                 <span className="as-prog-label">Soal {currentQIndex+1} dari {totalQuestions}</span>
                 <span className="as-prog-pct">{progressPercent}%</span>
               </div>
-              <div className="as-prog-bg"><div className="as-prog-fill" style={{width:`${progressPercent}%`}}></div></div>
-            </div>
-            <div className="as-actions">
-              <div className={`as-timer${isDanger?' danger':''}`} suppressHydrationWarning>
-                <span className="material-symbols-outlined" style={{fontVariationSettings:"'FILL' 1",fontSize:'20px'}}>timer</span>
-                <span suppressHydrationWarning>{formatTime(timeLeft)}</span>
+              <div className="as-prog-bg">
+                <div className="as-prog-fill" style={{width:`${progressPercent}%`}}></div>
               </div>
-              <button aria-label="Peta Soal" className="as-grid-btn">
+            </div>
+
+            <div className="as-actions">
+              <div className={`as-timer ${isDanger?'danger':''}`}>
+                <span className="material-symbols-outlined" style={{fontSize:'20px'}}>timer</span>
+                {timerReady ? formatTime(timeLeft) : '--:--'}
+              </div>
+              <button type="button" className="as-grid-btn" onClick={() => setIsGridOpen(true)}>
                 <span className="material-symbols-outlined" style={{fontSize:'20px'}}>grid_view</span>
               </button>
             </div>
@@ -309,7 +451,6 @@ export default function AssessmentForm({
         <main className="as-main">
           <div className="as-card">
             <div className="as-card-body">
-              {/* Meta */}
               <div className="as-q-meta">
                 <span className="as-q-num">{currentQIndex+1}</span>
                 <span className="as-q-cat">{categoryData?.subject_area==='literasi'?'Literasi':'Numerasi'}</span>
@@ -322,18 +463,36 @@ export default function AssessmentForm({
                 <p className="as-q-instruction">{currentQuestion.question_instruction}</p>
               )}
 
+              {/* Video Stimulus */}
+              {parsedUrls.videoUrl && (
+                <div className="as-video-wrap">
+                  <video className="as-video-player" controls src={getMediaUrl(parsedUrls.videoUrl)}>Browser tidak mendukung video.</video>
+                </div>
+              )}
+
+              {/* Audio Stimulus */}
+              {parsedUrls.audioUrl && (
+                <div className="as-media-wrap" style={{marginBottom: '24px'}}>
+                  <span className="material-symbols-outlined as-media-icon" style={{fontVariationSettings:"'FILL' 1"}}>headphones</span>
+                  <p className="as-media-label">Dengarkan audio berikut.</p>
+                  <audio className="as-audio-player" controls src={getMediaUrl(parsedUrls.audioUrl)}>Browser tidak mendukung audio.</audio>
+                </div>
+              )}
+
+              {/* Question Image (stimulus for MC) */}
+              {parsedUrls.imageUrl && qType !== 'image_choice' && (
+                <div className="as-q-image"><img src={getMediaUrl(parsedUrls.imageUrl)} alt="Gambar Soal" /></div>
+              )}
+
               {/* Question Text */}
               {currentQuestion.question_text && (
                 <h2 className="as-q-text" dangerouslySetInnerHTML={{__html: currentQuestion.question_text}}></h2>
               )}
 
-              {/* Question Image (stimulus for MC) */}
-              {currentQuestion.question_image_url && qType !== 'image_choice' && (
-                <div className="as-q-image"><img src={currentQuestion.question_image_url} alt="Gambar Soal" /></div>
+              {/* ═══ MULTIPLE CHOICE (And fallback for audio/video) ═══ */}
+              {(qType === 'multiple_choice' || qType === 'audio_question' || qType === 'video_question') && mcOptions.length > 0 && (
+                <McList opts={mcOptions} />
               )}
-
-              {/* ═══ MULTIPLE CHOICE ═══ */}
-              {qType === 'multiple_choice' && mcOptions.length > 0 && <McList opts={mcOptions} />}
 
               {/* ═══ IMAGE CHOICE ═══ */}
               {qType === 'image_choice' && imgOptions.length > 0 && (
@@ -346,12 +505,12 @@ export default function AssessmentForm({
                         <input className="as-ic-radio" type="radio" name={`q_${currentQuestion.id}`} value={opt.url} checked={isSelected} onChange={() => handleSelectAnswer(opt.url)} disabled={isSaving} />
                         <div className="as-ic-card">
                           {opt.url
-                            ? <img className="as-ic-img" src={opt.url} alt={opt.label || `Pilihan ${lbl}`} />
+                            ? <img className="as-ic-img" src={getMediaUrl(opt.url)} alt={opt.label || `Pilihan ${lbl}`} />
                             : <div className="as-ic-placeholder">{lbl}</div>
                           }
                           <div className="as-ic-footer">
                             <div className="as-indicator">{isSelected && <span className="material-symbols-outlined" style={{fontSize:'14px',color:'#fff'}}>check</span>}</div>
-                            <span className="as-ic-text">{opt.label || `Pilihan ${lbl}`}</span>
+                            {opt.label && <span className="as-ic-text">{opt.label}</span>}
                           </div>
                         </div>
                       </label>
@@ -360,35 +519,15 @@ export default function AssessmentForm({
                 </div>
               )}
 
-              {/* ═══ AUDIO QUESTION ═══ */}
-              {qType === 'audio_question' && (
-                <>
-                  <div className="as-media-wrap">
-                    <span className="material-symbols-outlined as-media-icon" style={{fontVariationSettings:"'FILL' 1"}}>headphones</span>
-                    <p className="as-media-label">Dengarkan audio berikut, lalu jawab soal di bawahnya.</p>
-                    {currentQuestion.question_audio_url
-                      ? <audio className="as-audio-player" controls src={currentQuestion.question_audio_url}>Browser tidak mendukung audio.</audio>
-                      : <p style={{color:'#74777f',fontStyle:'italic',fontSize:'14px'}}>File audio tidak tersedia.</p>
-                    }
-                  </div>
-                  {mcOptions.length > 0 && <McList opts={mcOptions} />}
-                </>
-              )}
-
-              {/* ═══ VIDEO QUESTION ═══ */}
-              {qType === 'video_question' && (
-                <>
-                  {currentQuestion.question_video_url
-                    ? <div className="as-video-wrap"><video className="as-video-player" controls src={currentQuestion.question_video_url}>Browser tidak mendukung video.</video></div>
-                    : <div className="as-media-wrap"><span className="material-symbols-outlined as-media-icon">videocam_off</span><p className="as-media-label" style={{color:'#74777f'}}>File video tidak tersedia.</p></div>
-                  }
-                  {mcOptions.length > 0 && <McList opts={mcOptions} />}
-                </>
-              )}
-
               {/* ═══ VOICE RECORDING ═══ */}
               {qType === 'voice_recording' && (
                 <div className="as-media-wrap">
+                  {(currentQuestion as any).target_text && (
+                    <div style={{ padding: '16px', background: '#f8f9fa', borderRadius: '8px', borderLeft: '4px solid var(--clr-biru)', marginBottom: '24px', textAlign: 'center', width: '100%', maxWidth: '600px' }}>
+                      <p style={{ fontSize: '14px', color: '#6c757d', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Teks yang harus dibaca:</p>
+                      <h3 style={{ fontSize: '24px', color: '#001934', lineHeight: 1.5, margin: 0 }}>{(currentQuestion as any).target_text}</h3>
+                    </div>
+                  )}
                   <span className="material-symbols-outlined as-media-icon" style={{fontVariationSettings:"'FILL' 1"}}>mic</span>
                   <p className="as-media-label">
                     {recordingDone ? '✅ Rekaman tersimpan! Kamu bisa merekam ulang jika perlu.' : isRecording ? '🔴 Sedang merekam...' : 'Tekan tombol untuk mulai merekam jawaban suara kamu.'}
@@ -397,14 +536,23 @@ export default function AssessmentForm({
                     <span className="material-symbols-outlined" style={{fontSize:'32px',fontVariationSettings:"'FILL' 1"}}>{isRecording?'stop':'mic'}</span>
                   </button>
                   {audioPlayback && <audio className="as-vr-playback" controls src={audioPlayback}>Browser tidak mendukung audio.</audio>}
+                  
+                  {transcript && (
+                    <div style={{ marginTop: '16px', padding: '12px', background: '#f0f4ff', borderRadius: '8px', border: '1px solid #c4c6cf', width: '100%', maxWidth: '600px', textAlign: 'left' }}>
+                      <p style={{ fontSize: '13px', color: '#6c757d', marginBottom: '4px', fontWeight: 600 }}>Teks Terdeteksi:</p>
+                      <p style={{ fontSize: '15px', color: '#001934', lineHeight: 1.5, margin: 0 }}>{transcript}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* ═══ DRAG DROP ═══ (shown as unsupported on web for now) */}
+              {/* ═══ DRAG AND DROP ═══ */}
               {qType === 'drag_drop' && (
-                <div style={{padding:'24px',background:'#fff3cd',borderRadius:'12px',color:'#856404',fontSize:'14px',lineHeight:'1.6'}}>
-                  ⚠️ Soal tipe <strong>Drag & Drop</strong> tidak dapat ditampilkan di versi web. Gunakan aplikasi mobile untuk mengerjakan soal ini.
-                </div>
+                <DragDropChallenge 
+                  options={currentQuestion.options} 
+                  initialAnswer={selectedAnswer ? (typeof selectedAnswer === 'string' ? JSON.parse(selectedAnswer) : selectedAnswer) : undefined}
+                  onChange={(ans) => handleSelectAnswer(ans)} 
+                />
               )}
 
               {/* ═══ UNSUPPORTED ═══ */}
@@ -422,15 +570,23 @@ export default function AssessmentForm({
               </button>
               {currentQIndex < totalQuestions-1
                 ? <button type="button" onClick={handleNext} className="as-btn-next">Lanjut<span className="material-symbols-outlined" style={{fontSize:'20px'}}>arrow_forward</span></button>
-                : <button type="button" onClick={handleFinish} disabled={isSubmitting} className="as-btn-finish">
-                    {isSubmitting ? 'Memproses...' : 'Selesai & Kumpulkan'}
-                    <span className="material-symbols-outlined" style={{fontSize:'20px'}}>check_circle</span>
-                  </button>
+                : <button type="button" onClick={() => setShowConfirm(true)} disabled={isSubmitting} className="as-btn-finish">Selesai<span className="material-symbols-outlined" style={{fontSize:'20px'}}>check_circle</span></button>
               }
             </div>
           </div>
         </main>
       </div>
+
+      <StudentConfirmDialog 
+        isOpen={showConfirm}
+        title="Kumpulkan Jawaban?"
+        description="Apakah kamu yakin dengan semua jawabanmu? Jawaban tidak dapat diubah setelah dikirim."
+        confirmText={isSubmitting ? 'Mengirim...' : 'Kumpulkan Sekarang'}
+        cancelText="Cek Kembali"
+        onConfirm={handleFinish}
+        onCancel={() => setShowConfirm(false)}
+        loading={isSubmitting}
+      />
     </>
   );
 }

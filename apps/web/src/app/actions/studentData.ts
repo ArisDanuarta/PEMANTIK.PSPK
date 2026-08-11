@@ -5,6 +5,10 @@ import { createServerClient } from "@pemantik/supabase";
 export async function getStudentDashboardData(student: any) {
   const supabase = createServerClient();
 
+  // Fetch updated student name
+  const { data: latestStudent } = await supabase.from('students').select('full_name').eq('id', student.id).single();
+  const updatedStudentName = latestStudent ? (latestStudent.full_name || 'Siswa') : (student.full_name || student.name || 'Siswa');
+
   const targetIds = [student.id];
   if (student.class_id) targetIds.push(student.class_id);
   if (student.school_id) targetIds.push(student.school_id);
@@ -18,7 +22,7 @@ export async function getStudentDashboardData(student: any) {
     .eq('is_active', true);
 
   if (accessErr || !accessData || accessData.length === 0) {
-    return { activePackages: [], historyPackages: [] };
+    return { activePackages: [], historyPackages: [], updatedStudentName };
   }
 
   const uniqueCategories = new Map();
@@ -76,7 +80,7 @@ export async function getStudentDashboardData(student: any) {
     else activePackages.push(pkg);
   }
 
-  return { activePackages, historyPackages };
+  return { activePackages, historyPackages, updatedStudentName };
 }
 
 export async function getStudentLevelsData(studentId: string, categoryId: string) {

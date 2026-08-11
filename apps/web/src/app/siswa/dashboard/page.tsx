@@ -15,8 +15,8 @@ export default async function StudentDashboardPage() {
   if (!session) redirect('/siswa/login');
 
   const student = session.student;
-  const { activePackages, historyPackages } = await getStudentDashboardData(student);
-  const studentNameStr = student.full_name || student.name || 'Siswa';
+  const { activePackages, historyPackages, updatedStudentName } = await getStudentDashboardData(student);
+  const studentNameStr = updatedStudentName || student.full_name || student.name || 'Siswa';
   const firstName = studentNameStr !== 'Siswa' ? studentNameStr.split(' ')[0] : 'Siswa';
 
   return (

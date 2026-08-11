@@ -297,7 +297,7 @@ export default async function AssessmentLevelsPage({ params }: { params: Promise
                 </div>
                 <div className="lv-circle">{num}</div>
                 <div className="lv-level-name">Level {num}</div>
-                <div className="lv-level-sub">Gagal · Perlu Diulang</div>
+                <div className="lv-level-sub">Maaf Tidak Bisa Lanjut Level Berikutnya</div>
                 {/* Lihat hasil ujian yang gagal */}
                 <Link
                   href={level.session?.id ? `/siswa/asesmen/${level.session.id}/hasil` : '/siswa/dashboard'}

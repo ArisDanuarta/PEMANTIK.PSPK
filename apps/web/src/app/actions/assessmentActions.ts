@@ -68,6 +68,36 @@ export async function startAssessmentSession(levelId: string, categoryId: string
   redirect(`/siswa/asesmen/${sessionId}`);
 }
 
+// Fungsi pembantu untuk Voice Recording
+function levenshteinDistance(a: string, b: string): number {
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+        );
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+function calculateSimilarity(actual: string, target: string): number {
+  const a = actual.toLowerCase().trim();
+  const t = target.toLowerCase().trim();
+  if (t.length === 0) return 0;
+  const distance = levenshteinDistance(a, t);
+  const maxLen = Math.max(a.length, t.length);
+  if (maxLen === 0) return 100;
+  return ((maxLen - distance) / maxLen) * 100;
+}
+
 export async function submitAssessmentSession(sessionId: string, currentLevelId: string) {
   const supabase = createServerClient();
   
@@ -79,21 +109,50 @@ export async function submitAssessmentSession(sessionId: string, currentLevelId:
 
   if (error) {
     console.error("Gagal mengirim hasil asesmen:", error);
-    throw new Error("Gagal menyimpan hasil asesmen.");
+    return { success: false, error: "Gagal menyimpan hasil asesmen." };
   }
 
-  // Redirect ke halaman hasil
-  redirect(`/siswa/asesmen/${sessionId}/hasil`);
+  return { success: true };
 }
 
 export async function saveStudentAnswer(sessionId: string, questionId: string, answerData: any) {
   const supabase = createServerClient();
   
-  // Upsert jawaban
+  // 1. Fetch question info to evaluate correctness
+  const { data: qData } = await supabase.from('questions').select('question_type, correct_answer').eq('id', questionId).single();
+  
+  let is_correct: boolean | null = null;
+  if (qData && qData.correct_answer !== null && qData.correct_answer !== undefined) {
+    const qt = qData.question_type;
+    const ca = qData.correct_answer;
+    
+    if (qt === 'voice_recording') {
+      // Evaluasi menggunakan Levenshtein distance (mencocokkan transkripsi dengan target_text)
+      if (typeof answerData === 'string' && (ca as any).target_text) {
+        const similarity = calculateSimilarity(answerData, (ca as any).target_text);
+        const threshold = (ca as any).threshold_pct ?? 80;
+        is_correct = similarity >= threshold;
+      } else {
+        is_correct = false;
+      }
+    } else if (qt === 'drag_drop') {
+      const isMatching = Array.isArray((ca as any).pairs);
+      const targetOrder = isMatching ? (ca as any).pairs.map((p: any) => p.id) : (ca as any).order;
+      is_correct = JSON.stringify(answerData) === JSON.stringify(targetOrder);
+    } else if (qt === 'image_choice') {
+      is_correct = (answerData === (ca as any).url);
+    } else {
+      // multiple_choice, audio_question, video_question
+      is_correct = (answerData === ca);
+    }
+  }
+
+  // 2. Upsert jawaban
   const { error } = await supabase.from('student_answers').upsert({
     session_id: sessionId,
     question_id: questionId,
     answer_data: answerData,
+    is_correct: is_correct,
     status: 'answered',
     sync_status: 'synced',
     answered_at: new Date().toISOString(),

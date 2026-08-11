@@ -64,17 +64,15 @@ export async function syncPendingSessions() {
     if (session.status === 'completed') {
       try {
         // Need to submit session
-        await submitAssessmentSession(session.id, session.level_id);
-        // If it doesn't throw NEXT_REDIRECT, it means it didn't redirect.
-        // But typically redirect() throws, so it will go to catch.
-      } catch (e: any) {
-        if (e && e.digest && e.digest.startsWith('NEXT_REDIRECT')) {
-          // Success
+        const res = await submitAssessmentSession(session.id, session.level_id);
+        if (res.success) {
           session.sync_status = 'synced';
           await store.put(session);
         } else {
-          console.error('Error syncing completed session:', e);
+          console.error('Error syncing completed session:', res.error);
         }
+      } catch (e: any) {
+        console.error('Exception syncing completed session:', e);
       }
     }
   }

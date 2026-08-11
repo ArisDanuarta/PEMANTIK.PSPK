@@ -241,29 +241,40 @@ function buildRawSheet(
       umurSiswa = `${diffYears >= 0 ? diffYears : 0}`;
     }
 
-    const baseRow: Record<string, any> = {
-      id:                   row.session_id        ?? "-",
-      id_user:              row.student_username  || row.nisn || row.student_id || "-",
-      nama_siswa:           row.student_name      ?? "-",
-      gender:               row.gender            ?? "-",
-      tgl_lahir_siswa:      row.birth_date        ?? "-",
-      umur_siswa:           umurSiswa,
-      kelas:                row.grade ? `Kelas ${row.grade} - ${row.class_name ?? ""}`.trim() : row.class_name ?? "-",
-      asal_sekolah:         row.school_name       ?? "-",
-      asal_komunitas:       row.community_name    ?? "-",
-      "asal_kelurahan/desa":row.student_village || row.village || "-",
-      asal_kecamatan:       row.student_district || row.district || "-",
-      asal_kabupaten_kota:  row.student_city || row.city || "-",
-      asal_provinsi:        row.student_province || row.province || "-",
-      pendidikan_ayah:      pendAyah,
-      pendidikan_ibu:       pendIbu,
-      pekerjaan_ayah:       kerjAyah,
-      pekerjaan_ibu:        kerjIbu,
-      SES:                  row.ses_class ? `${row.ses_class}${row.ses_score != null ? ` (${row.ses_score})` : ""}` : "-",
-      category:             row.category_name     ?? "-",
-      type_soal:            row.subject_area || (allQuestions[0]?.question_type ?? "-"),
-      level:                row.final_level_number != null ? `Level ${row.final_level_number}` : "-",
-      attempt:              row.attempt_number    ?? 1,
+      // Cari level_number asli dari jawaban soal di sesi ini agar tidak tertukar dengan level hasil promosi
+      let testedLevelNum = row.final_level_number; // fallback
+      const sessionAnswers = answers.filter(a => a.session_id === row.session_id);
+      if (sessionAnswers.length > 0) {
+        const q = Array.isArray(sessionAnswers[0].questions) ? sessionAnswers[0].questions[0] : sessionAnswers[0].questions;
+        const ln = Array.isArray(q?.question_levels) ? q?.question_levels[0]?.level_number : q?.question_levels?.level_number;
+        if (ln != null) {
+          testedLevelNum = ln;
+        }
+      }
+
+      const baseRow: Record<string, any> = {
+        id:                   row.session_id        ?? "-",
+        id_user:              row.student_username  || row.nisn || row.student_id || "-",
+        nama_siswa:           row.student_name      ?? "-",
+        gender:               row.gender            ?? "-",
+        tgl_lahir_siswa:      row.birth_date        ?? "-",
+        umur_siswa:           umurSiswa,
+        kelas:                row.grade ? `Kelas ${row.grade} - ${row.class_name ?? ""}`.trim() : row.class_name ?? "-",
+        asal_sekolah:         row.school_name       ?? "-",
+        asal_komunitas:       row.community_name    ?? "-",
+        "asal_kelurahan/desa":row.student_village || row.village || "-",
+        asal_kecamatan:       row.student_district || row.district || "-",
+        asal_kabupaten_kota:  row.student_city || row.city || "-",
+        asal_provinsi:        row.student_province || row.province || "-",
+        pendidikan_ayah:      pendAyah,
+        pendidikan_ibu:       pendIbu,
+        pekerjaan_ayah:       kerjAyah,
+        pekerjaan_ibu:        kerjIbu,
+        SES:                  row.ses_class ? `${row.ses_class}${row.ses_score != null ? ` (${row.ses_score})` : ""}` : "-",
+        category:             row.category_name     ?? "-",
+        type_soal:            row.subject_area || (allQuestions[0]?.question_type ?? "-"),
+        level:                testedLevelNum != null ? `Level ${testedLevelNum}` : "-",
+        attempt:              row.attempt_number    ?? 1,
     };
 
     allQuestions.forEach((q, idx) => {

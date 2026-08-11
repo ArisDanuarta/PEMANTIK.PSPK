@@ -55,7 +55,7 @@ export default async function AssessmentExecutionPage({
   if (levelId) {
     const { data: qs, error: questionsError } = await supabase
       .from('questions')
-      .select('*')
+      .select('id, question_type, question_text, question_audio_url, question_video_url, question_image_url, question_instruction, options, level_id, correct_answer')
       .eq('level_id', levelId)
       .eq('is_published', true)
       .order('order_index', { ascending: true });
@@ -63,8 +63,14 @@ export default async function AssessmentExecutionPage({
     if (questionsError) {
       console.error('[Assessment] Failed to fetch questions:', questionsError.message);
     } else {
-      console.log('[Assessment] Fetched questions count:', qs?.length ?? 0);
-      questions = qs || [];
+      questions = (qs || []).map((q: any) => {
+        const sanitized = { ...(q as Record<string, any>) };
+        if (sanitized.question_type === 'voice_recording' && sanitized.correct_answer) {
+          sanitized.target_text = sanitized.correct_answer.target_text;
+        }
+        delete sanitized.correct_answer;
+        return sanitized;
+      });
     }
   } else {
     console.error('[Assessment] level_id is null/undefined - cannot fetch questions!');
