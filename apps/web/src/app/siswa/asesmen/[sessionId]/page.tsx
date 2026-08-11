@@ -9,6 +9,31 @@ export const metadata = {
   description: 'Halaman pengerjaan soal asesmen siswa.',
 };
 
+function hashString(str: string) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = Math.imul(31, hash) + str.charCodeAt(i) | 0;
+  }
+  return hash;
+}
+
+function mulberry32(a: number) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+
+function shuffleArray(array: any[], rng: () => number) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+
 export default async function AssessmentExecutionPage({ 
   params,
   searchParams
@@ -63,14 +88,38 @@ export default async function AssessmentExecutionPage({
     if (questionsError) {
       console.error('[Assessment] Failed to fetch questions:', questionsError.message);
     } else {
+      const rng = mulberry32(hashString(sessionId));
       questions = (qs || []).map((q: any) => {
         const sanitized = { ...(q as Record<string, any>) };
         if (sanitized.question_type === 'voice_recording' && sanitized.correct_answer) {
           sanitized.target_text = sanitized.correct_answer.target_text;
         }
+
+        // Randomize options if they exist
+        if (sanitized.options) {
+          if (Array.isArray(sanitized.options)) {
+            // For multiple_choice, audio, video
+            shuffleArray(sanitized.options, rng);
+          } else if (typeof sanitized.options === 'object') {
+            // For drag_drop
+            if (Array.isArray(sanitized.options.word_bank)) {
+              shuffleArray(sanitized.options.word_bank, rng);
+            }
+            if (Array.isArray(sanitized.options.items)) {
+              shuffleArray(sanitized.options.items, rng);
+            }
+            if (Array.isArray(sanitized.options.pairs)) {
+              shuffleArray(sanitized.options.pairs, rng);
+            }
+          }
+        }
+
         delete sanitized.correct_answer;
         return sanitized;
       });
+      
+      // Randomize the order of questions
+      shuffleArray(questions, rng);
     }
   } else {
     console.error('[Assessment] level_id is null/undefined - cannot fetch questions!');
