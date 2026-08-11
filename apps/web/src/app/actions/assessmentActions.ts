@@ -3,9 +3,18 @@
 import { createServerClient } from "@pemantik/supabase";
 import { redirect } from "next/navigation";
 
-export async function startAssessmentSession(levelId: string, categoryId: string, student: any) {
+export async function startAssessmentSession(levelId: string, categoryId: string, student: any, password?: string) {
   const supabase = createServerClient();
   const sessionId = crypto.randomUUID();
+
+  // Validasi password jika level memiliki access_code
+  const { data: level } = await supabase.from('question_levels').select('access_code').eq('id', levelId).single();
+  
+  if (level?.access_code) {
+    if (password !== level.access_code) {
+      return { success: false, error: 'Password yang Anda masukkan salah.' };
+    }
+  }
 
   // 1. Get access phase and id
   const targetIds = [student.id];
@@ -53,10 +62,10 @@ export async function startAssessmentSession(levelId: string, categoryId: string
 
   if (error) {
     console.error("Gagal membuat sesi asesmen:", error);
-    throw new Error("Gagal membuat sesi asesmen.");
+    return { success: false, error: "Gagal membuat sesi asesmen." };
   }
 
-  redirect(`/siswa/asesmen/${sessionId}/lobby`);
+  redirect(`/siswa/asesmen/${sessionId}`);
 }
 
 export async function submitAssessmentSession(sessionId: string, currentLevelId: string) {

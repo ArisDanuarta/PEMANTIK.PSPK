@@ -57,6 +57,7 @@ export default async function AssessmentExecutionPage({
       .from('questions')
       .select('*')
       .eq('level_id', levelId)
+      .eq('is_published', true)
       .order('order_index', { ascending: true });
 
     if (questionsError) {

@@ -3,6 +3,7 @@
 import { createServerClient } from "@pemantik/supabase";
 import { getStudentSession } from "./studentAuth";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 export async function updateStudentProfile(formData: FormData) {
   const userSession = await getStudentSession();
@@ -43,6 +44,28 @@ export async function updateStudentProfile(formData: FormData) {
     return { success: false, error: error.message };
   }
 
+  // Update cookie data so the UI (like navbar/header) reflects the new name
+  const cookieStore = await cookies();
+  const studentDataCookie = cookieStore.get('student_data');
+  if (studentDataCookie) {
+    try {
+      const studentData = JSON.parse(studentDataCookie.value);
+      if (updates.full_name) studentData.full_name = updates.full_name;
+      
+      cookieStore.set('student_data', JSON.stringify(studentData), {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/siswa',
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    } catch (e) {
+      console.error('Failed to update student_data cookie', e);
+    }
+  }
+
   revalidatePath('/siswa/profil');
+  revalidatePath('/siswa/dashboard');
+  
   return { success: true };
 }

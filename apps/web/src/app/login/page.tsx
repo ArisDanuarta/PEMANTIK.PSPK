@@ -89,7 +89,7 @@ export default function LoginPage() {
 
         {/* Hero copy */}
         <div className="login-hero">
-          <div className="login-hero-eyebrow">Platform Asesmen</div>
+          <div className="login-hero-eyebrow">Platform Asesmen Pemantik by PSPK</div>
           <h1 className="login-hero-title">
             Literasi &amp;<br />
             <em>Numerasi</em>

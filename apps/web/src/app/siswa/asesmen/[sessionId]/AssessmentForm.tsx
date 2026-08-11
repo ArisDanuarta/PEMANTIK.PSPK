@@ -276,8 +276,11 @@ export default function AssessmentForm({
           <div className="as-header-inner">
             <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
               <div className="as-brand">
-                <span className="material-symbols-outlined" style={{color:'#feba48',fontVariationSettings:"'FILL' 1",fontSize:'24px'}}>local_fire_department</span>
-                Pemantik
+                <img 
+                  src="/images/LOGO_PEMANTIK_BERWARNA.png" 
+                  alt="Pemantik" 
+                  style={{ height: '50px', width: 'auto', display: 'block' }} 
+                />
               </div>
               <div className="as-sync-badge">
                 <div className={`as-dot${isSaving?' saving':!isOnline?' offline':''}`}></div>

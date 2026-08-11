@@ -5,6 +5,7 @@ import { getStudentSession } from '../../../../actions/studentAuth';
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@pemantik/supabase';
 import { startAssessmentSession } from '../../../../actions/assessmentActions';
+import StartSessionForm from './StartSessionForm';
 
 export const metadata = {
   title: 'Persiapan Asesmen - Pemantik',
@@ -84,7 +85,8 @@ export default async function AssessmentLobbyPage({
   const { data: questionsData } = await supabase
     .from('questions')
     .select('question_type')
-    .eq('level_id', levelData.id);
+    .eq('level_id', levelData.id)
+    .eq('is_published', true);
 
   const questionsCount = questionsData?.length || 0;
 
@@ -103,6 +105,7 @@ export default async function AssessmentLobbyPage({
     : ['Pilihan Ganda'];
 
   const durationMin = Math.round((levelData.time_limit_sec || 0) / 60);
+  const isLocked = !existingSession && !!levelData.access_code;
 
   return (
     <StudentLayout studentName={student.name || 'Siswa'} studentNisn={student.nisn || '-'}>
@@ -277,11 +280,13 @@ export default async function AssessmentLobbyPage({
               <div className="lobby-metric-val">{durationMin || '–'} mnt</div>
             </div>
             <div className="lobby-metric">
-              <div className="lobby-metric-icon" style={{ background: 'rgba(16,185,129,0.12)' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#10B981' }}>lock_open</span>
+              <div className="lobby-metric-icon" style={{ background: isLocked ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px', color: isLocked ? '#EF4444' : '#10B981' }}>
+                  {isLocked ? 'lock' : 'lock_open'}
+                </span>
               </div>
               <div className="lobby-metric-label">Status Level</div>
-              <div className="lobby-metric-val">Terbuka</div>
+              <div className="lobby-metric-val">{isLocked ? 'Terkunci' : 'Terbuka'}</div>
             </div>
             <div className="lobby-metric">
               <div className="lobby-metric-icon" style={{ background: `rgba(8,116,170,0.12)` }}>
@@ -328,17 +333,12 @@ export default async function AssessmentLobbyPage({
             </Link>
           ) : (
             /* Mulai session baru */
-            <form action={async () => {
-              'use server';
-              const s = await getStudentSession();
-              if (!s || !levelId) return;
-              await startAssessmentSession(levelData.id, categoryData.id, s.student);
-            }}>
-              <button type="submit" className="lobby-start-btn">
-                Mulai Ujian Sekarang
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
-              </button>
-            </form>
+            <StartSessionForm 
+              levelId={levelData.id} 
+              categoryId={categoryData.id} 
+              student={student} 
+              isLocked={isLocked} 
+            />
           )}
         </div>
       </div>
