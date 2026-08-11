@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getStudentSession } from '../../../../actions/studentAuth';
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@pemantik/supabase';
+import PemantikLogoProgress from '@/components/shared/Unitprogressbar';
 
 export const metadata = {
   title: 'Hasil Asesmen - Pemantik',
@@ -255,15 +256,13 @@ export default async function AssessmentResultPage({ params }: { params: Promise
         <main className="hl-card">
           {/* Illustration */}
           <div className="hl-illustration">
-            {isPass ? (
-              <span className="material-symbols-outlined" style={{ fontSize: '110px', color: '#feba48', fontVariationSettings: "'FILL' 1" }}>
-                emoji_events
-              </span>
-            ) : (
-              <span className="material-symbols-outlined" style={{ fontSize: '110px', color: '#ba1a1a' }}>
-                sentiment_dissatisfied
-              </span>
-            )}
+            <PemantikLogoProgress 
+              value={isPass ? 100 : 0} 
+              max={100} 
+              size={120} 
+              showLabel={false}
+              startFull={!isPass}
+            />
           </div>
 
           {/* Heading */}

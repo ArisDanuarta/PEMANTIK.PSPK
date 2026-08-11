@@ -18,9 +18,9 @@ interface PemantikLogoProgressProps {
   emptyColor?: string;
   showLabel?: boolean;
   /** Dipertahankan untuk kompatibilitas prop lama; tidak lagi dipakai (lihat catatan di bawah). */
-  waveAmplitude?: number;
   waveSpeedSec?: number;
   className?: string;
+  startFull?: boolean;
 }
 
 /**
@@ -49,12 +49,13 @@ export default function PemantikLogoProgress({
   emptyColor = "#d3d1c7",
   showLabel = true,
   className,
+  startFull = false,
 }: PemantikLogoProgressProps) {
   const percent = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
 
   // Animasi dari nilai sebelumnya ke nilai baru, bukan loncat langsung,
-  // supaya efek "fill" kelihatan naik pelan-pelan.
-  const [displayPercent, setDisplayPercent] = useState(0);
+  // supaya efek "fill" kelihatan naik pelan-pelan (atau turun jika startFull).
+  const [displayPercent, setDisplayPercent] = useState(startFull ? 100 : 0);
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -84,13 +85,30 @@ export default function PemantikLogoProgress({
   // Potong layer ABU-ABU dari bawah sebesar displayPercent%, sehingga
   // layer WARNA di baliknya kelihatan untuk bagian yang sudah "terisi".
   const grayClip = `inset(0 0 ${displayPercent}% 0)`;
+  
+  const isFullAndSuccess = displayPercent >= 99.9 && percent === 100 && !startFull;
 
   return (
     <div
       className={className}
       style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 8 }}
     >
-      <div style={{ position: "relative", width: size, height: size }}>
+      <style>{`
+        @keyframes logo-success-pop {
+          0% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(246, 199, 22, 0)); }
+          40% { transform: scale(1.15); filter: drop-shadow(0 0 25px rgba(246, 199, 22, 0.9)); }
+          60% { transform: scale(0.95); filter: drop-shadow(0 0 15px rgba(246, 199, 22, 0.6)); }
+          80% { transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(246, 199, 22, 0.8)); }
+          100% { transform: scale(1); filter: drop-shadow(0 0 16px rgba(246, 199, 22, 0.7)); }
+        }
+        .logo-celebrate {
+          animation: logo-success-pop 0.8s ease-in-out forwards;
+        }
+      `}</style>
+      <div 
+        className={isFullAndSuccess ? 'logo-celebrate' : ''}
+        style={{ position: "relative", width: size, height: size }}
+      >
         {/* Layer bawah: warna asli, selalu penuh */}
         <svg
           viewBox="0 0 768 768"
