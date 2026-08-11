@@ -18,6 +18,7 @@ interface PemantikLogoProgressProps {
   emptyColor?: string;
   showLabel?: boolean;
   /** Dipertahankan untuk kompatibilitas prop lama; tidak lagi dipakai (lihat catatan di bawah). */
+  waveAmplitude?: number;
   waveSpeedSec?: number;
   className?: string;
   startFull?: boolean;
