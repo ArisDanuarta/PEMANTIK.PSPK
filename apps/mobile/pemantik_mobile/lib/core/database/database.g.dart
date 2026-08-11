@@ -2177,6 +2177,18 @@ class $LocalSessionsTable extends LocalSessions
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _cheatStrikesMeta = const VerificationMeta(
+    'cheatStrikes',
+  );
+  @override
+  late final GeneratedColumn<int> cheatStrikes = GeneratedColumn<int>(
+    'cheat_strikes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _accessIdMeta = const VerificationMeta(
     'accessId',
   );
@@ -2236,6 +2248,7 @@ class $LocalSessionsTable extends LocalSessions
     startedAt,
     completedAt,
     timeSpentSec,
+    cheatStrikes,
     accessId,
     currentLevelId,
     syncStatus,
@@ -2342,6 +2355,15 @@ class $LocalSessionsTable extends LocalSessions
         ),
       );
     }
+    if (data.containsKey('cheat_strikes')) {
+      context.handle(
+        _cheatStrikesMeta,
+        cheatStrikes.isAcceptableOrUnknown(
+          data['cheat_strikes']!,
+          _cheatStrikesMeta,
+        ),
+      );
+    }
     if (data.containsKey('access_id')) {
       context.handle(
         _accessIdMeta,
@@ -2428,6 +2450,10 @@ class $LocalSessionsTable extends LocalSessions
         DriftSqlType.int,
         data['${effectivePrefix}time_spent_sec'],
       ),
+      cheatStrikes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cheat_strikes'],
+      )!,
       accessId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}access_id'],
@@ -2466,6 +2492,7 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
   final DateTime? startedAt;
   final DateTime? completedAt;
   final int? timeSpentSec;
+  final int cheatStrikes;
   final String? accessId;
   final String? currentLevelId;
   final String syncStatus;
@@ -2483,6 +2510,7 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
     this.startedAt,
     this.completedAt,
     this.timeSpentSec,
+    required this.cheatStrikes,
     this.accessId,
     this.currentLevelId,
     required this.syncStatus,
@@ -2511,6 +2539,7 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
     if (!nullToAbsent || timeSpentSec != null) {
       map['time_spent_sec'] = Variable<int>(timeSpentSec);
     }
+    map['cheat_strikes'] = Variable<int>(cheatStrikes);
     if (!nullToAbsent || accessId != null) {
       map['access_id'] = Variable<String>(accessId);
     }
@@ -2544,6 +2573,7 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
       timeSpentSec: timeSpentSec == null && nullToAbsent
           ? const Value.absent()
           : Value(timeSpentSec),
+      cheatStrikes: Value(cheatStrikes),
       accessId: accessId == null && nullToAbsent
           ? const Value.absent()
           : Value(accessId),
@@ -2575,6 +2605,7 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
       startedAt: serializer.fromJson<DateTime?>(json['startedAt']),
       completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
       timeSpentSec: serializer.fromJson<int?>(json['timeSpentSec']),
+      cheatStrikes: serializer.fromJson<int>(json['cheatStrikes']),
       accessId: serializer.fromJson<String?>(json['accessId']),
       currentLevelId: serializer.fromJson<String?>(json['currentLevelId']),
       syncStatus: serializer.fromJson<String>(json['syncStatus']),
@@ -2597,6 +2628,7 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
       'startedAt': serializer.toJson<DateTime?>(startedAt),
       'completedAt': serializer.toJson<DateTime?>(completedAt),
       'timeSpentSec': serializer.toJson<int?>(timeSpentSec),
+      'cheatStrikes': serializer.toJson<int>(cheatStrikes),
       'accessId': serializer.toJson<String?>(accessId),
       'currentLevelId': serializer.toJson<String?>(currentLevelId),
       'syncStatus': serializer.toJson<String>(syncStatus),
@@ -2617,6 +2649,7 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
     Value<DateTime?> startedAt = const Value.absent(),
     Value<DateTime?> completedAt = const Value.absent(),
     Value<int?> timeSpentSec = const Value.absent(),
+    int? cheatStrikes,
     Value<String?> accessId = const Value.absent(),
     Value<String?> currentLevelId = const Value.absent(),
     String? syncStatus,
@@ -2634,6 +2667,7 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
     startedAt: startedAt.present ? startedAt.value : this.startedAt,
     completedAt: completedAt.present ? completedAt.value : this.completedAt,
     timeSpentSec: timeSpentSec.present ? timeSpentSec.value : this.timeSpentSec,
+    cheatStrikes: cheatStrikes ?? this.cheatStrikes,
     accessId: accessId.present ? accessId.value : this.accessId,
     currentLevelId: currentLevelId.present
         ? currentLevelId.value
@@ -2665,6 +2699,9 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
       timeSpentSec: data.timeSpentSec.present
           ? data.timeSpentSec.value
           : this.timeSpentSec,
+      cheatStrikes: data.cheatStrikes.present
+          ? data.cheatStrikes.value
+          : this.cheatStrikes,
       accessId: data.accessId.present ? data.accessId.value : this.accessId,
       currentLevelId: data.currentLevelId.present
           ? data.currentLevelId.value
@@ -2691,6 +2728,7 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
           ..write('startedAt: $startedAt, ')
           ..write('completedAt: $completedAt, ')
           ..write('timeSpentSec: $timeSpentSec, ')
+          ..write('cheatStrikes: $cheatStrikes, ')
           ..write('accessId: $accessId, ')
           ..write('currentLevelId: $currentLevelId, ')
           ..write('syncStatus: $syncStatus, ')
@@ -2713,6 +2751,7 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
     startedAt,
     completedAt,
     timeSpentSec,
+    cheatStrikes,
     accessId,
     currentLevelId,
     syncStatus,
@@ -2734,6 +2773,7 @@ class LocalSession extends DataClass implements Insertable<LocalSession> {
           other.startedAt == this.startedAt &&
           other.completedAt == this.completedAt &&
           other.timeSpentSec == this.timeSpentSec &&
+          other.cheatStrikes == this.cheatStrikes &&
           other.accessId == this.accessId &&
           other.currentLevelId == this.currentLevelId &&
           other.syncStatus == this.syncStatus &&
@@ -2753,6 +2793,7 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
   final Value<DateTime?> startedAt;
   final Value<DateTime?> completedAt;
   final Value<int?> timeSpentSec;
+  final Value<int> cheatStrikes;
   final Value<String?> accessId;
   final Value<String?> currentLevelId;
   final Value<String> syncStatus;
@@ -2771,6 +2812,7 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
     this.startedAt = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.timeSpentSec = const Value.absent(),
+    this.cheatStrikes = const Value.absent(),
     this.accessId = const Value.absent(),
     this.currentLevelId = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -2790,6 +2832,7 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
     this.startedAt = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.timeSpentSec = const Value.absent(),
+    this.cheatStrikes = const Value.absent(),
     this.accessId = const Value.absent(),
     this.currentLevelId = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -2813,6 +2856,7 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
     Expression<DateTime>? startedAt,
     Expression<DateTime>? completedAt,
     Expression<int>? timeSpentSec,
+    Expression<int>? cheatStrikes,
     Expression<String>? accessId,
     Expression<String>? currentLevelId,
     Expression<String>? syncStatus,
@@ -2833,6 +2877,7 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
       if (startedAt != null) 'started_at': startedAt,
       if (completedAt != null) 'completed_at': completedAt,
       if (timeSpentSec != null) 'time_spent_sec': timeSpentSec,
+      if (cheatStrikes != null) 'cheat_strikes': cheatStrikes,
       if (accessId != null) 'access_id': accessId,
       if (currentLevelId != null) 'current_level_id': currentLevelId,
       if (syncStatus != null) 'sync_status': syncStatus,
@@ -2854,6 +2899,7 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
     Value<DateTime?>? startedAt,
     Value<DateTime?>? completedAt,
     Value<int?>? timeSpentSec,
+    Value<int>? cheatStrikes,
     Value<String?>? accessId,
     Value<String?>? currentLevelId,
     Value<String>? syncStatus,
@@ -2873,6 +2919,7 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
       startedAt: startedAt ?? this.startedAt,
       completedAt: completedAt ?? this.completedAt,
       timeSpentSec: timeSpentSec ?? this.timeSpentSec,
+      cheatStrikes: cheatStrikes ?? this.cheatStrikes,
       accessId: accessId ?? this.accessId,
       currentLevelId: currentLevelId ?? this.currentLevelId,
       syncStatus: syncStatus ?? this.syncStatus,
@@ -2920,6 +2967,9 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
     if (timeSpentSec.present) {
       map['time_spent_sec'] = Variable<int>(timeSpentSec.value);
     }
+    if (cheatStrikes.present) {
+      map['cheat_strikes'] = Variable<int>(cheatStrikes.value);
+    }
     if (accessId.present) {
       map['access_id'] = Variable<String>(accessId.value);
     }
@@ -2953,6 +3003,7 @@ class LocalSessionsCompanion extends UpdateCompanion<LocalSession> {
           ..write('startedAt: $startedAt, ')
           ..write('completedAt: $completedAt, ')
           ..write('timeSpentSec: $timeSpentSec, ')
+          ..write('cheatStrikes: $cheatStrikes, ')
           ..write('accessId: $accessId, ')
           ..write('currentLevelId: $currentLevelId, ')
           ..write('syncStatus: $syncStatus, ')
@@ -4815,6 +4866,7 @@ typedef $$LocalSessionsTableCreateCompanionBuilder =
       Value<DateTime?> startedAt,
       Value<DateTime?> completedAt,
       Value<int?> timeSpentSec,
+      Value<int> cheatStrikes,
       Value<String?> accessId,
       Value<String?> currentLevelId,
       Value<String> syncStatus,
@@ -4835,6 +4887,7 @@ typedef $$LocalSessionsTableUpdateCompanionBuilder =
       Value<DateTime?> startedAt,
       Value<DateTime?> completedAt,
       Value<int?> timeSpentSec,
+      Value<int> cheatStrikes,
       Value<String?> accessId,
       Value<String?> currentLevelId,
       Value<String> syncStatus,
@@ -4908,6 +4961,11 @@ class $$LocalSessionsTableFilterComposer
 
   ColumnFilters<int> get timeSpentSec => $composableBuilder(
     column: $table.timeSpentSec,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cheatStrikes => $composableBuilder(
+    column: $table.cheatStrikes,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5001,6 +5059,11 @@ class $$LocalSessionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get cheatStrikes => $composableBuilder(
+    column: $table.cheatStrikes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get accessId => $composableBuilder(
     column: $table.accessId,
     builder: (column) => ColumnOrderings(column),
@@ -5077,6 +5140,11 @@ class $$LocalSessionsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get cheatStrikes => $composableBuilder(
+    column: $table.cheatStrikes,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get accessId =>
       $composableBuilder(column: $table.accessId, builder: (column) => column);
 
@@ -5137,6 +5205,7 @@ class $$LocalSessionsTableTableManager
                 Value<DateTime?> startedAt = const Value.absent(),
                 Value<DateTime?> completedAt = const Value.absent(),
                 Value<int?> timeSpentSec = const Value.absent(),
+                Value<int> cheatStrikes = const Value.absent(),
                 Value<String?> accessId = const Value.absent(),
                 Value<String?> currentLevelId = const Value.absent(),
                 Value<String> syncStatus = const Value.absent(),
@@ -5155,6 +5224,7 @@ class $$LocalSessionsTableTableManager
                 startedAt: startedAt,
                 completedAt: completedAt,
                 timeSpentSec: timeSpentSec,
+                cheatStrikes: cheatStrikes,
                 accessId: accessId,
                 currentLevelId: currentLevelId,
                 syncStatus: syncStatus,
@@ -5175,6 +5245,7 @@ class $$LocalSessionsTableTableManager
                 Value<DateTime?> startedAt = const Value.absent(),
                 Value<DateTime?> completedAt = const Value.absent(),
                 Value<int?> timeSpentSec = const Value.absent(),
+                Value<int> cheatStrikes = const Value.absent(),
                 Value<String?> accessId = const Value.absent(),
                 Value<String?> currentLevelId = const Value.absent(),
                 Value<String> syncStatus = const Value.absent(),
@@ -5193,6 +5264,7 @@ class $$LocalSessionsTableTableManager
                 startedAt: startedAt,
                 completedAt: completedAt,
                 timeSpentSec: timeSpentSec,
+                cheatStrikes: cheatStrikes,
                 accessId: accessId,
                 currentLevelId: currentLevelId,
                 syncStatus: syncStatus,

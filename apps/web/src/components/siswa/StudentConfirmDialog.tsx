@@ -5,7 +5,7 @@ import React, { useEffect } from 'react';
 interface StudentConfirmDialogProps {
   isOpen: boolean;
   title: string;
-  description: string;
+  description: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
   onConfirm: () => void;
@@ -140,14 +140,14 @@ export default function StudentConfirmDialog({
           {title}
         </h3>
         
-        <p style={{
+        <div style={{
           margin: '0 0 32px',
           fontSize: '15px',
           color: '#43474e',
           lineHeight: 1.6
         }}>
           {description}
-        </p>
+        </div>
 
         <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
           <button 

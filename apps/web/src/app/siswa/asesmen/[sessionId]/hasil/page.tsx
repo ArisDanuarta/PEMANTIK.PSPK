@@ -28,7 +28,10 @@ export default async function AssessmentResultPage({ params }: { params: Promise
   const categoryData = (levelData as any)?.question_categories;
   const score = session.score ?? 0;
   const passingThreshold = levelData?.passing_threshold ?? 70;
-  const isPass = score >= passingThreshold;
+  
+  // Anti-cheat flag
+  const isCheatFailed = ((session as any).cheat_strikes ?? 0) >= 3;
+  const isPass = !isCheatFailed && (score >= passingThreshold);
   
   // URL untuk tombol kembali ke paket list
   const paketHref = categoryData?.id
@@ -271,26 +274,36 @@ export default async function AssessmentResultPage({ params }: { params: Promise
           </div>
 
           {/* Heading */}
-          <h1 className="hl-title">{isPass ? 'Luar Biasa!' : 'Tetap Semangat!'}</h1>
+          <h1 className="hl-title">
+            {isPass ? 'Luar Biasa!' : (isCheatFailed ? 'Asesmen Dibatalkan' : 'Tetap Semangat!')}
+          </h1>
           <p className="hl-desc">
             {isPass
               ? `Kamu telah menyelesaikan Level ${levelData?.level_number} dengan hasil yang sangat baik!`
-              : `Nilaimu belum mencapai batas kelulusan Level ${levelData?.level_number}. Pelajari kembali materinya dan coba lagi!`}
+              : (isCheatFailed
+                ? 'Sesi digagalkan secara otomatis karena kamu terdeteksi keluar dari aplikasi/layar saat asesmen berlangsung.'
+                : `Nilaimu belum mencapai batas kelulusan Level ${levelData?.level_number}. Pelajari kembali materinya dan coba lagi!`)
+            }
           </p>
 
           {/* Info box */}
-          <div className="hl-info-box">
+          <div className="hl-info-box" style={isCheatFailed ? { backgroundColor: '#FCE8E8', border: '1px solid #BA1A1A' } : {}}>
             <div className="hl-info-icon">
-              <span className="material-symbols-outlined" style={{ fontSize: '22px', color: '#001934', fontVariationSettings: "'FILL' 1" }}>
-                {isPass ? 'insights' : 'auto_stories'}
+              <span className="material-symbols-outlined" style={{ fontSize: '22px', color: isCheatFailed ? '#BA1A1A' : '#001934', fontVariationSettings: "'FILL' 1" }}>
+                {isPass ? 'insights' : (isCheatFailed ? 'warning' : 'auto_stories')}
               </span>
             </div>
             <div>
-              <div className="hl-info-heading">{isPass ? 'Status: Lulus ✓' : 'Status: Belum Lulus'}</div>
-              <p className="hl-info-text">
+              <div className="hl-info-heading" style={isCheatFailed ? { color: '#BA1A1A' } : {}}>
+                {isPass ? 'Status: Lulus ✓' : (isCheatFailed ? 'Status: Pelanggaran Anti-Cheat' : 'Status: Belum Lulus')}
+              </div>
+              <p className="hl-info-text" style={isCheatFailed ? { color: '#BA1A1A' } : {}}>
                 {isPass
                   ? (levelData?.success_message || 'Selamat! Level berikutnya kini terbuka. Terus tingkatkan kemampuanmu.')
-                  : (levelData?.failure_message || 'Kamu perlu mengulang level ini. Pelajari kembali materi dan tingkatkan fokusmu sebelum mencoba lagi.')}
+                  : (isCheatFailed
+                    ? 'Kamu telah melakukan pelanggaran batas toleransi (3 kali) dengan meminimalkan aplikasi atau berpindah tab.'
+                    : (levelData?.failure_message || 'Kamu perlu mengulang level ini. Pelajari kembali materi dan tingkatkan fokusmu sebelum mencoba lagi.'))
+                }
               </p>
             </div>
           </div>

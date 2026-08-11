@@ -80,6 +80,12 @@ export default function AssessmentForm({
   const [isSaving, setIsSaving] = useState(false);
   const [isGridOpen, setIsGridOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  
+  // Anti-Cheat states
+  const [cheatStrikes, setCheatStrikes] = useState(0);
+  const [showCheatWarning, setShowCheatWarning] = useState(false);
+  const [showCheatFailed, setShowCheatFailed] = useState(false);
+  
   const timeLimitSec = levelData?.time_limit_sec || 3600;
   // Start with full time to avoid SSR hydration mismatch
   const [timeLeft, setTimeLeft] = useState<number>(timeLimitSec);
@@ -111,6 +117,48 @@ export default function AssessmentForm({
     const timer = setInterval(() => setTimeLeft(p => p > 1 ? p - 1 : 0), 1000);
     return () => clearInterval(timer);
   }, [timerReady, timeLeft]);
+
+  // Anti-Cheat: Blur & Visibility change listener
+  const handleFinishRef = useRef<any>(null);
+  const lastStrikeTimeRef = useRef<number>(0);
+  const cheatStrikesRef = useRef(cheatStrikes);
+  
+  useEffect(() => {
+    handleFinishRef.current = handleFinish;
+    cheatStrikesRef.current = cheatStrikes;
+  });
+
+  useEffect(() => {
+    const handleCheatEvent = () => {
+      const now = Date.now();
+      // Cooldown 2 detik untuk menghindari penghitungan ganda antara event blur dan visibilitychange
+      if (now - lastStrikeTimeRef.current < 2000) return;
+      
+      lastStrikeTimeRef.current = now;
+      const currentStrikes = cheatStrikesRef.current;
+      const newStrikes = currentStrikes + 1;
+      
+      setCheatStrikes(newStrikes);
+      
+      if (newStrikes >= 3) {
+        setShowCheatFailed(true);
+      } else {
+        setShowCheatWarning(true);
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') handleCheatEvent();
+    };
+
+    window.addEventListener('blur', handleCheatEvent);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    
+    return () => {
+      window.removeEventListener('blur', handleCheatEvent);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     async function initOffline() {
@@ -154,15 +202,17 @@ export default function AssessmentForm({
 
   const handleNext = () => { if (currentQIndex < totalQuestions - 1) setCurrentQIndex(p => p + 1); };
   const handlePrev = () => { if (currentQIndex > 0) setCurrentQIndex(p => p - 1); };
-  const handleFinish = async () => {
+  const handleFinish = async (isForced = false) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     setShowConfirm(false);
+    setShowCheatWarning(false);
     try {
       const timeSpentSec = Math.max(0, timeLimitSec - timeLeft);
+      const finalStrikes = isForced === true ? 3 : cheatStrikes;
 
       if (isOnline) { 
-        const res = await submitAssessmentSession(sessionId, levelData.id, timeSpentSec); 
+        const res = await submitAssessmentSession(sessionId, levelData.id, timeSpentSec, finalStrikes); 
         if (!res.success) throw new Error(res.error);
       } else {
         const db = await getDB();
@@ -174,6 +224,7 @@ export default function AssessmentForm({
             s.status = 'completed'; 
             s.sync_status = 'pending'; 
             s.time_spent_sec = timeSpentSec;
+            s.cheat_strikes = finalStrikes;
             await store.put(s); 
           }
         }
@@ -430,7 +481,36 @@ export default function AssessmentForm({
         </div>
       </div>
 
-      <div className="as-page">
+      <StudentConfirmDialog 
+        isOpen={showCheatWarning}
+        title="Peringatan Pelanggaran!"
+        description={`Kamu terdeteksi keluar dari layar ujian. Jangan berpindah tab atau mengecilkan browser!\n\n(Peringatan ${cheatStrikes} dari 3)`}
+        confirmText="Saya Mengerti"
+        onConfirm={() => setShowCheatWarning(false)}
+        onCancel={() => setShowCheatWarning(false)}
+      />
+
+      <StudentConfirmDialog 
+        isOpen={showCheatFailed}
+        title="Aktivitas Mencurigakan"
+        description="Kamu telah keluar dari aplikasi/layar ujian sebanyak 3 kali. Sesi ujian ini otomatis digagalkan karena aktivitas mencurigakan."
+        confirmText="Kembali"
+        onConfirm={() => handleFinish(true)}
+        onCancel={() => handleFinish(true)}
+      />
+
+      <div 
+        className="as-page"
+        onContextMenu={e => e.preventDefault()}
+        onCopy={e => e.preventDefault()}
+        onCut={e => e.preventDefault()}
+        onPaste={e => e.preventDefault()}
+        onKeyDown={e => {
+          if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <header className="as-header">
           <div className="as-header-inner">
             <div style={{display:'flex',alignItems:'center',gap:'12px'}}>

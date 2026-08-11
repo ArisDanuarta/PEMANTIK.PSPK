@@ -98,11 +98,15 @@ function calculateSimilarity(actual: string, target: string): number {
   return ((maxLen - distance) / maxLen) * 100;
 }
 
-export async function submitAssessmentSession(sessionId: string, currentLevelId: string, timeSpentSec?: number) {
+export async function submitAssessmentSession(sessionId: string, currentLevelId: string, timeSpentSec?: number, cheatStrikes?: number) {
   const supabase = createServerClient();
   
-  if (timeSpentSec !== undefined) {
-    await supabase.from('assessment_sessions').update({ time_spent_sec: timeSpentSec }).eq('id', sessionId);
+  const updatePayload: any = {};
+  if (timeSpentSec !== undefined) updatePayload.time_spent_sec = timeSpentSec;
+  if (cheatStrikes !== undefined) updatePayload.cheat_strikes = cheatStrikes;
+
+  if (Object.keys(updatePayload).length > 0) {
+    await supabase.from('assessment_sessions').update(updatePayload).eq('id', sessionId);
   }
   
   // Panggil RPC advance_student_level untuk menilai ujian

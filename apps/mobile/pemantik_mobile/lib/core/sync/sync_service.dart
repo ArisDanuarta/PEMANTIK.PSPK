@@ -229,6 +229,7 @@ class SyncService {
             'sync_status': 'synced',
             'synced_at': DateTime.now().toIso8601String(),
             'attempt_number': session.attemptNumber,
+            'cheat_strikes': session.cheatStrikes,
             if (session.accessId != null) 'access_id': session.accessId,
             if (session.currentLevelId != null || session.levelId != null)
               'current_level_id': session.currentLevelId ?? session.levelId,

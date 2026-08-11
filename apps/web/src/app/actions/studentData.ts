@@ -173,9 +173,9 @@ export async function getStudentHistoryData(studentId: string) {
   const { data: sessions, error } = await supabase
     .from('assessment_sessions')
     .select(`
-      id, score, status, phase, attempt_number, started_at, created_at, sync_status,
+      id, score, status, phase, attempt_number, started_at, created_at, sync_status, cheat_strikes,
       question_levels!assessment_sessions_level_id_fkey (
-        id, level_number, passing_threshold,
+        id, level_number, passing_threshold, success_message, failure_message,
         question_categories ( id, name, subject_area )
       )
     `)
@@ -188,17 +188,21 @@ export async function getStudentHistoryData(studentId: string) {
     return [];
   }
 
-  return (sessions || []).map((s) => {
+  return ((sessions || []) as any[]).map((s) => {
     const level = s.question_levels as any;
     const category = level?.question_categories as any;
     const score = s.score ?? 0;
     const passingThreshold = level?.passing_threshold ?? 70;
-    const isPass = score >= passingThreshold;
+    const cheatStrikes = s.cheat_strikes ?? 0;
+    const isCheatFailed = cheatStrikes >= 3;
+    const isPass = !isCheatFailed && (score >= passingThreshold);
     return {
       id: s.id,
       score,
       passingThreshold,
       isPass,
+      isCheatFailed,
+      cheatStrikes,
       phase: s.phase || 'Tahap 1',
       attemptNumber: s.attempt_number || 1,
       startedAt: s.started_at || s.created_at,
@@ -208,6 +212,8 @@ export async function getStudentHistoryData(studentId: string) {
       categoryId: category?.id ?? '',
       categoryName: category?.name ?? 'Tidak diketahui',
       subjectArea: category?.subject_area ?? 'literasi',
+      successMessage: level?.success_message || null,
+      failureMessage: level?.failure_message || null,
     };
   });
 }

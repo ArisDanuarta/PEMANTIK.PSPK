@@ -41,9 +41,33 @@ class _QuestionPageState extends ConsumerState<QuestionPage> with WidgetsBinding
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if ((state == AppLifecycleState.paused || state == AppLifecycleState.inactive) && !_isFailing) {
+    if (state == AppLifecycleState.paused && !_isFailing) {
+      _handlePausedState();
+    }
+  }
+
+  Future<void> _handlePausedState() async {
+    final db = ref.read(databaseProvider);
+    final session = await db.sessionDao.getSessionById(widget.sessionId);
+    if (session == null) return;
+
+    final currentStrikes = session.cheatStrikes;
+    final newStrikes = currentStrikes + 1;
+    await db.sessionDao.updateCheatStrikes(widget.sessionId, newStrikes);
+
+    if (newStrikes >= 3) {
       _isFailing = true;
       _handleCheat();
+    } else {
+      if (mounted) {
+        showPspkDialog(
+          context,
+          title: 'Peringatan Pelanggaran!',
+          message: 'Kamu terdeteksi keluar dari aplikasi saat ujian berlangsung. Jangan membuka aplikasi lain!\n\n(Peringatan $newStrikes dari 3)',
+          isError: true,
+          confirmText: 'Saya Mengerti',
+        );
+      }
     }
   }
 
@@ -55,7 +79,7 @@ class _QuestionPageState extends ConsumerState<QuestionPage> with WidgetsBinding
       showPspkDialog(
         context,
         title: 'Aktivitas Mencurigakan',
-        message: 'Kamu keluar dari aplikasi saat asesmen berlangsung. Sesi ini otomatis digagalkan.',
+        message: 'Kamu telah keluar dari aplikasi sebanyak 3 kali. Sesi ujian ini otomatis digagalkan karena aktivitas mencurigakan.',
         isError: true,
         confirmText: 'Kembali',
         onConfirm: () => _navigateToResult(isPassed),

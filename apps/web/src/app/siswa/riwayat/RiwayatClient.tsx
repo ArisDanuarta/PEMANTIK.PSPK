@@ -5,9 +5,11 @@ import Link from 'next/link';
 
 type HistoryItem = {
   id: string; score: number; passingThreshold: number; isPass: boolean;
+  isCheatFailed: boolean; cheatStrikes: number;
   phase: string; attemptNumber: number; startedAt: string | null;
   syncStatus: string; levelNumber: number; levelId: string;
   categoryId: string; categoryName: string; subjectArea: string;
+  successMessage: string | null; failureMessage: string | null;
 };
 
 const PHASE_ACCENT_COLORS = ['#60a5fa','#818cf8','#34d399','#fbbf24','#f87171','#a78bfa','#f472b6'];
@@ -211,9 +213,11 @@ export default function RiwayatClient({ history }: { history: HistoryItem[] }) {
                   {Math.round(selected.score)}
                 </div>
 
-                <span style={{ display:'inline-flex', alignItems:'center', gap:'6px', borderRadius:'50px', padding:'5px 14px', marginBottom:'20px', background: selected.isPass ? '#d1fae5' : '#ffe4e6', color: selected.isPass ? '#065f46' : '#9f1239', fontSize:'13px', fontWeight:700 }}>
-                  <span className="material-symbols-outlined" style={{ fontSize:'16px', fontVariationSettings:"'FILL' 1" }}>{selected.isPass ? 'check_circle' : 'cancel'}</span>
-                  {selected.isPass ? 'Lulus' : 'Tidak Lulus'}
+                <span style={{ display:'inline-flex', alignItems:'center', gap:'6px', borderRadius:'50px', padding:'5px 14px', marginBottom:'20px', background: selected.isCheatFailed ? '#ffe4e6' : (selected.isPass ? '#d1fae5' : '#ffe4e6'), color: selected.isCheatFailed ? '#9f1239' : (selected.isPass ? '#065f46' : '#9f1239'), fontSize:'13px', fontWeight:700 }}>
+                  <span className="material-symbols-outlined" style={{ fontSize:'16px', fontVariationSettings:"'FILL' 1" }}>
+                    {selected.isCheatFailed ? 'gpp_bad' : (selected.isPass ? 'check_circle' : 'cancel')}
+                  </span>
+                  {selected.isCheatFailed ? 'Pelanggaran Anti-Cheat' : (selected.isPass ? 'Lulus' : 'Tidak Lulus')}
                 </span>
 
                 <div className="rw-info-box">
@@ -234,6 +238,29 @@ export default function RiwayatClient({ history }: { history: HistoryItem[] }) {
                   <div className="rw-divider">
                     <div className="rw-info-lbl">Status Sinkronisasi</div>
                     <div style={{ marginTop:'6px' }}><SyncBadge status={selected.syncStatus} /></div>
+                  </div>
+                  {/* Pesan hasil asesmen */}
+                  <div className="rw-divider">
+                    <div className="rw-info-lbl" style={{ marginBottom: '8px' }}>
+                      {selected.isCheatFailed ? '⚠️ Alasan Pembatalan' : (selected.isPass ? '✅ Pesan Keberhasilan' : '📌 Pesan Evaluasi')}
+                    </div>
+                    <div style={{
+                      background: selected.isCheatFailed ? '#FCE8E8' : (selected.isPass ? '#d1fae5' : '#fef3c7'),
+                      border: `1px solid ${selected.isCheatFailed ? '#BA1A1A' : (selected.isPass ? '#10B981' : '#f59e0b')}`,
+                      borderRadius: '10px',
+                      padding: '10px 12px',
+                      fontSize: '13px',
+                      lineHeight: 1.5,
+                      color: selected.isCheatFailed ? '#BA1A1A' : (selected.isPass ? '#065f46' : '#92400e'),
+                      fontWeight: 500,
+                    }}>
+                      {selected.isCheatFailed
+                        ? `Sesi digagalkan karena terdeteksi ${selected.cheatStrikes} kali keluar dari aplikasi/layar saat asesmen berlangsung.`
+                        : (selected.isPass
+                          ? (selected.successMessage || 'Selamat! Level berikutnya kini terbuka. Terus tingkatkan kemampuanmu.')
+                          : (selected.failureMessage || 'Kamu perlu mengulang level ini. Pelajari kembali materi dan tingkatkan fokusmu sebelum mencoba lagi.')
+                        )}
+                    </div>
                   </div>
                 </div>
               </div>

@@ -16,6 +16,7 @@ class LocalSessions extends Table {
   DateTimeColumn get startedAt   => dateTime().nullable()();
   DateTimeColumn get completedAt => dateTime().nullable()();
   IntColumn      get timeSpentSec => integer().nullable()();
+  IntColumn      get cheatStrikes => integer().withDefault(const Constant(0))();
 
   // ── Tambahan Minggu 2 ─────────────────────────────────────────────────────
   // access_id: mengikat sesi ke assessment_access yang spesifik.

@@ -91,7 +91,19 @@ export default function StartSessionForm({ levelId, categoryId, student, isLocke
       <StudentConfirmDialog
         isOpen={showConfirm}
         title="Mulai Ujian?"
-        description="Apakah Anda yakin ingin memulai ujian sekarang? Waktu pengerjaan akan langsung berjalan dan tidak dapat dihentikan."
+        description={
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ marginBottom: '12px' }}>
+              Apakah Anda yakin ingin memulai ujian sekarang? Waktu pengerjaan akan langsung berjalan dan tidak dapat dihentikan.
+            </p>
+            <div style={{ backgroundColor: '#FCE8E8', border: '1px solid #BA1A1A', borderRadius: '12px', padding: '12px', marginTop: '16px', display: 'flex', gap: '8px', textAlign: 'left', alignItems: 'flex-start' }}>
+              <span className="material-symbols-outlined" style={{ color: '#BA1A1A', fontSize: '20px' }}>warning</span>
+              <p style={{ color: '#BA1A1A', fontSize: '13px', fontWeight: 600, margin: 0, lineHeight: 1.4 }}>
+                PERINGATAN ANTI-CHEAT: Jangan keluar dari halaman ujian, menutup aplikasi, atau pindah tab. Pelanggaran sebanyak 3 kali akan menyebabkan ujian otomatis dibatalkan/gagal!
+              </p>
+            </div>
+          </div>
+        }
         onConfirm={executeSessionStart}
         onCancel={() => setShowConfirm(false)}
         loading={loading}

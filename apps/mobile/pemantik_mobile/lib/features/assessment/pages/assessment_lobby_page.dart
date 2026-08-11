@@ -420,7 +420,7 @@ class _AssessmentLobbyPageState extends ConsumerState<AssessmentLobbyPage> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'PERINGATAN: Jangan meminimalkan atau keluar dari aplikasi selama asesmen berlangsung, atau Anda akan otomatis dinyatakan GAGAL!',
+                                'PERINGATAN: Jangan meminimalkan atau keluar dari aplikasi selama asesmen berlangsung. Pelanggaran sebanyak 3 kali akan membuat asesmen otomatis dinyatakan GAGAL!',
                                 style: AppTextStyles.bodySmall.copyWith(color: AppColors.merahMarun, fontWeight: FontWeight.bold),
                               ),
                             ),

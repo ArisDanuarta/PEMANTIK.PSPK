@@ -90,6 +90,12 @@ class SessionDao extends DatabaseAccessor<AppDatabase> with _$SessionDaoMixin {
     );
   }
 
+  Future<void> updateCheatStrikes(String id, int strikes) {
+    return (update(localSessions)..where((t) => t.id.equals(id))).write(
+      LocalSessionsCompanion(cheatStrikes: Value(strikes)),
+    );
+  }
+
   // Fungsi baru: Mendapatkan skor tertinggi dari sesi yang selesai untuk suatu level
   Future<int> getHighestCorrectAnswersForLevel(
     String studentId,
