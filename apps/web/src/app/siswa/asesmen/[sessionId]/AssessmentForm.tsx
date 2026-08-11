@@ -26,32 +26,42 @@ const getMediaUrl = (path: string | undefined): string => {
 
 const getParsedMediaUrls = (q: any) => {
   const opts = q.options || {};
-  const rawAudio = q.question_audio_url || opts.audioUrl;
-  const rawVideo = q.question_video_url || opts.videoUrl;
-  const rawImage = q.question_image_url || opts.imageUrl;
+  
+  // Ambil dari kolom utama
+  let audioUrl = q.question_audio_url || opts.audioUrl || null;
+  let videoUrl = q.question_video_url || opts.videoUrl || null;
+  let imageUrl = q.question_image_url || opts.imageUrl || null;
 
-  let audioUrl: string | null = null;
-  let videoUrl: string | null = null;
-  let imageUrl: string | null = null;
+  // Pastikan kalau url file video nyasar ke imageUrl, kita koreksi otomatis
+  if (imageUrl && imageUrl.match(/\.(mp4|webm|mov|avi)$/i)) {
+    videoUrl = imageUrl;
+    imageUrl = null;
+  }
+  if (imageUrl && imageUrl.match(/\.(mp3|wav|m4a|ogg|aac)$/i)) {
+    audioUrl = imageUrl;
+    imageUrl = null;
+  }
 
-  const mediaUrl = [rawAudio, rawVideo, rawImage].find(url => url && url.trim() !== '');
+  // Sebaliknya, jika ada gambar yang nyasar di videoUrl atau audioUrl, pindahkan ke imageUrl
+  if (videoUrl && videoUrl.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i)) {
+    imageUrl = videoUrl;
+    videoUrl = null;
+  }
+  if (audioUrl && audioUrl.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i)) {
+    imageUrl = audioUrl;
+    audioUrl = null;
+  }
 
-  if (mediaUrl) {
-    const urlLower = mediaUrl.toLowerCase();
-    if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) {
-      videoUrl = mediaUrl;
-    } else if (urlLower.includes('.mp3') || urlLower.includes('.wav') || urlLower.includes('.m4a') || urlLower.includes('.ogg') || urlLower.includes('.aac')) {
-      audioUrl = mediaUrl;
-    } else if (urlLower.includes('.mp4') || urlLower.includes('.webm') || urlLower.includes('.mov') || urlLower.includes('.avi')) {
-      videoUrl = mediaUrl;
-    } else {
-      if (mediaUrl === rawAudio) audioUrl = mediaUrl;
-      else if (mediaUrl === rawVideo) videoUrl = mediaUrl;
-      else imageUrl = mediaUrl;
+  let isYoutube = false;
+  if (videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'))) {
+    isYoutube = true;
+    const match = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    if (match && match[1]) {
+      videoUrl = `https://www.youtube.com/embed/${match[1]}`;
     }
   }
 
-  return { audioUrl, videoUrl, imageUrl };
+  return { audioUrl, videoUrl, imageUrl, isYoutube };
 };
 
 export default function AssessmentForm({ 
@@ -149,8 +159,10 @@ export default function AssessmentForm({
     setIsSubmitting(true);
     setShowConfirm(false);
     try {
+      const timeSpentSec = Math.max(0, timeLimitSec - timeLeft);
+
       if (isOnline) { 
-        const res = await submitAssessmentSession(sessionId, levelData.id); 
+        const res = await submitAssessmentSession(sessionId, levelData.id, timeSpentSec); 
         if (!res.success) throw new Error(res.error);
       } else {
         const db = await getDB();
@@ -158,7 +170,12 @@ export default function AssessmentForm({
           const tx = db.transaction('assessment_sessions', 'readwrite');
           const store = tx.objectStore('assessment_sessions');
           const s = await store.get(sessionId);
-          if (s) { s.status = 'completed'; s.sync_status = 'pending'; await store.put(s); }
+          if (s) { 
+            s.status = 'completed'; 
+            s.sync_status = 'pending'; 
+            s.time_spent_sec = timeSpentSec;
+            await store.put(s); 
+          }
         }
       }
       router.push(`/siswa/asesmen/${sessionId}/hasil`);
@@ -465,8 +482,19 @@ export default function AssessmentForm({
 
               {/* Video Stimulus */}
               {parsedUrls.videoUrl && (
-                <div className="as-video-wrap">
-                  <video className="as-video-player" controls src={getMediaUrl(parsedUrls.videoUrl)}>Browser tidak mendukung video.</video>
+                <div className="as-video-wrap" style={parsedUrls.isYoutube ? { position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' } : {}}>
+                  {parsedUrls.isYoutube ? (
+                    <iframe 
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                      src={parsedUrls.videoUrl} 
+                      title="YouTube video player" 
+                      frameBorder="0" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen 
+                    />
+                  ) : (
+                    <video className="as-video-player" controls src={getMediaUrl(parsedUrls.videoUrl)}>Browser tidak mendukung video.</video>
+                  )}
                 </div>
               )}
 
@@ -479,8 +507,8 @@ export default function AssessmentForm({
                 </div>
               )}
 
-              {/* Question Image (stimulus for MC) */}
-              {parsedUrls.imageUrl && qType !== 'image_choice' && (
+              {/* Question Image (stimulus) */}
+              {parsedUrls.imageUrl && (
                 <div className="as-q-image"><img src={getMediaUrl(parsedUrls.imageUrl)} alt="Gambar Soal" /></div>
               )}
 

@@ -25,6 +25,7 @@ interface PemantikDB extends DBSchema {
       status: string;
       phase: string;
       attempt_number: number;
+      time_spent_sec?: number;
       sync_status?: 'synced' | 'pending';
     };
   };

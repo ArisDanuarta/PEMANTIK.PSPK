@@ -22,6 +22,7 @@ interface PemantikLogoProgressProps {
   waveSpeedSec?: number;
   className?: string;
   startFull?: boolean;
+  delayMs?: number;
 }
 
 /**
@@ -51,6 +52,7 @@ export default function PemantikLogoProgress({
   showLabel = true,
   className,
   startFull = false,
+  delayMs = 0,
 }: PemantikLogoProgressProps) {
   const percent = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
 
@@ -67,7 +69,15 @@ export default function PemantikLogoProgress({
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
     const tick = (now: number) => {
-      const t = Math.min(1, (now - startTime) / durationMs);
+      const elapsed = now - startTime - delayMs;
+      
+      // Tunggu sampai masa delay habis
+      if (elapsed < 0) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      const t = Math.min(1, elapsed / durationMs);
       // easeOutCubic biar akhir animasinya kerasa halus melambat
       const eased = 1 - Math.pow(1 - t, 3);
       setDisplayPercent(start + delta * eased);
@@ -88,6 +98,11 @@ export default function PemantikLogoProgress({
   const grayClip = `inset(0 0 ${displayPercent}% 0)`;
   
   const isFullAndSuccess = displayPercent >= 99.9 && percent === 100 && !startFull;
+  const isEmptyAndFail = displayPercent <= 0.1 && percent === 0 && startFull;
+
+  let animationClass = '';
+  if (isFullAndSuccess) animationClass = 'logo-celebrate';
+  if (isEmptyAndFail) animationClass = 'logo-shake';
 
   return (
     <div
@@ -102,12 +117,23 @@ export default function PemantikLogoProgress({
           80% { transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(246, 199, 22, 0.8)); }
           100% { transform: scale(1); filter: drop-shadow(0 0 16px rgba(246, 199, 22, 0.7)); }
         }
+        @keyframes logo-fail-shake {
+          0% { transform: translateX(0); }
+          20% { transform: translateX(-8px) rotate(-5deg); filter: grayscale(50%); }
+          40% { transform: translateX(8px) rotate(5deg); filter: grayscale(100%); }
+          60% { transform: translateX(-8px) rotate(-5deg); filter: grayscale(100%); }
+          80% { transform: translateX(8px) rotate(5deg); filter: grayscale(100%); }
+          100% { transform: translateX(0); filter: grayscale(0%); }
+        }
         .logo-celebrate {
           animation: logo-success-pop 0.8s ease-in-out forwards;
         }
+        .logo-shake {
+          animation: logo-fail-shake 0.5s ease-in-out forwards;
+        }
       `}</style>
       <div 
-        className={isFullAndSuccess ? 'logo-celebrate' : ''}
+        className={animationClass}
         style={{ position: "relative", width: size, height: size }}
       >
         {/* Layer bawah: warna asli, selalu penuh */}

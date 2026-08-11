@@ -138,7 +138,7 @@ export default function LoginPage() {
                     <polyline points="7 10 12 15 17 10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
                   </svg>
-                  Download Aplikasi Siswa
+                  Download Aplikasi Asesmen Anak
                 </a>
               )}
               
@@ -173,7 +173,7 @@ export default function LoginPage() {
                   <polyline points="10 17 15 12 10 7"></polyline>
                   <line x1="15" y1="12" x2="3" y2="12"></line>
                 </svg>
-                Login Siswa Web
+                Login Web Asesmen Anak
               </Link>
             </div>
             

@@ -41,6 +41,9 @@ export default async function AssessmentResultPage({ params }: { params: Promise
   const scoreColor = isPass ? '#10B981' : '#ba1a1a';
   const borderColor = isPass ? '#feba48' : '#ba1a1a';
 
+  const hasNextLevel = isPass && session.current_level_id !== session.level_id;
+  const nextLevelHref = `/siswa/asesmen/new/lobby?level=${session.current_level_id}`;
+
   return (
     <>
       <link
@@ -262,11 +265,13 @@ export default async function AssessmentResultPage({ params }: { params: Promise
               size={120} 
               showLabel={false}
               startFull={!isPass}
+              delayMs={800}
+              durationMs={2000}
             />
           </div>
 
           {/* Heading */}
-          <h1 className="hl-title">{isPass ? '🎉 Luar Biasa!' : 'Tetap Semangat!'}</h1>
+          <h1 className="hl-title">{isPass ? 'Luar Biasa!' : 'Tetap Semangat!'}</h1>
           <p className="hl-desc">
             {isPass
               ? `Kamu telah menyelesaikan Level ${levelData?.level_number} dengan hasil yang sangat baik!`
@@ -293,11 +298,19 @@ export default async function AssessmentResultPage({ params }: { params: Promise
           {/* Action buttons */}
           <div className="hl-actions">
             {isPass ? (
-              /* Lulus: kembali ke paket list untuk lanjut ke level berikutnya */
-              <Link href={paketHref} className="hl-btn-secondary">
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
-                Lanjut ke Level Berikutnya
-              </Link>
+              hasNextLevel ? (
+                /* Lulus dan ada level berikutnya: langsung ke lobby persiapan level selanjutnya */
+                <Link href={nextLevelHref} className="hl-btn-secondary">
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
+                  Lanjut ke Level Berikutnya
+                </Link>
+              ) : (
+                /* Lulus tapi ini level terakhir */
+                <Link href={paketHref} className="hl-btn-secondary">
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
+                  Selesaikan Topik
+                </Link>
+              )
             ) : (
               /* Gagal: tombol diubah menjadi lihat riwayat */
               <Link href="/siswa/riwayat" className="hl-btn-primary">

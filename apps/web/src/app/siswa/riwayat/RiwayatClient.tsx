@@ -42,12 +42,28 @@ export default function RiwayatClient({ history }: { history: HistoryItem[] }) {
   const [selected, setSelected] = useState<HistoryItem | null>(history[0] ?? null);
   const [open, setOpen] = useState(history.length > 0);
 
-  const grouped = new Map<string, HistoryItem[]>();
+  const [collapsedPhases, setCollapsedPhases] = useState<Record<string, boolean>>({});
+
+  const groupedPhases = new Map<string, Map<string, HistoryItem[]>>();
   for (const item of history) {
-    if (!grouped.has(item.phase)) grouped.set(item.phase, []);
-    grouped.get(item.phase)!.push(item);
+    if (!groupedPhases.has(item.phase)) groupedPhases.set(item.phase, new Map());
+    const phaseMap = groupedPhases.get(item.phase)!;
+    if (!phaseMap.has(item.categoryName)) phaseMap.set(item.categoryName, []);
+    phaseMap.get(item.categoryName)!.push(item);
   }
-  const phases = Array.from(grouped.entries());
+
+  const phases = Array.from(groupedPhases.entries()).map(([phase, catMap]) => {
+    let count = 0;
+    const categories = Array.from(catMap.entries()).map(([categoryName, items]) => {
+      count += items.length;
+      return { categoryName, items };
+    });
+    return { phase, count, categories };
+  });
+
+  function togglePhase(phase: string) {
+    setCollapsedPhases(prev => ({ ...prev, [phase]: !prev[phase] }));
+  }
 
   function handleCard(item: HistoryItem) {
     if (selected?.id === item.id && open) { setOpen(false); }
@@ -62,10 +78,12 @@ export default function RiwayatClient({ history }: { history: HistoryItem[] }) {
         .rw-main.rw-open { padding-right:380px; }
         .rw-h1 { font-family:var(--font-noto-serif),Georgia,serif; font-size:32px; font-weight:700; color:#001934; margin-bottom:6px; }
         .rw-sub { font-size:15px; color:#43474e; margin-bottom:36px; }
-        .rw-phase-hdr { position:sticky; top:0; z-index:10; background:rgba(248,249,255,.92); backdrop-filter:blur(8px); padding:14px 0; border-bottom:2px solid #dce9ff; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+        .rw-phase-hdr { position:sticky; top:0; z-index:10; background:rgba(248,249,255,.92); backdrop-filter:blur(8px); padding:14px 10px; border-bottom:2px solid #dce9ff; display:flex; align-items:center; gap:10px; margin-bottom:16px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+        .rw-phase-hdr:hover { background: rgba(229, 238, 255, 0.9); }
         .rw-phase-dot { width:8px; height:24px; border-radius:4px; flex-shrink:0; }
         .rw-phase-title { font-family:var(--font-noto-serif),Georgia,serif; font-size:22px; font-weight:700; color:#001934; }
-        .rw-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-bottom:40px; }
+        .rw-category-title { font-family:var(--font-noto-serif),Georgia,serif; font-size:18px; font-weight:600; color:#001934; margin-bottom:12px; padding-left:14px; border-left:4px solid; display: flex; align-items: center; }
+        .rw-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-bottom:32px; }
         .rw-card { background:#fff; border-radius:20px; padding:22px 20px 18px; border-top:4px solid #e5eeff; box-shadow:0 4px 20px rgba(16,46,80,.07); cursor:pointer; transition:transform .2s,box-shadow .2s; display:flex; flex-direction:column; }
         .rw-card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(16,46,80,.12); }
         .rw-card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px; }
@@ -119,35 +137,57 @@ export default function RiwayatClient({ history }: { history: HistoryItem[] }) {
                 Ke Dashboard
               </Link>
             </div>
-          ) : phases.map(([phase, items], pi) => (
-            <section key={phase}>
-              <div className="rw-phase-hdr">
-                <div className="rw-phase-dot" style={{ background: PHASE_ACCENT_COLORS[pi % PHASE_ACCENT_COLORS.length] }} />
-                <span className="rw-phase-title">{phase}</span>
-                <span style={{ fontSize:'12px', color:'#74777f', fontWeight:600, marginLeft:'auto' }}>{items.length} sesi</span>
-              </div>
-              <div className="rw-grid">
-                {items.map((item) => (
-                  <div key={item.id} className="rw-card" style={{ borderTopColor: item.isPass ? '#34d399' : '#fb7185' }} onClick={() => handleCard(item)}>
-                    <div className="rw-card-top">
-                      <div className="rw-card-title">{item.categoryName}</div>
-                      <div className="rw-card-level">Level {item.levelNumber}</div>
-                    </div>
-                    <div className="rw-card-date">
-                      <span className="material-symbols-outlined" style={{ fontSize:'14px' }}>calendar_month</span>
-                      {formatDate(item.startedAt)}
-                    </div>
-                    <div className="rw-card-footer">
-                      <SyncBadge status={item.syncStatus} />
-                      <div className="rw-chevron">
-                        <span className="material-symbols-outlined" style={{ fontSize:'20px' }}>chevron_right</span>
+          ) : phases.map((phaseData, pi) => {
+            const isCollapsed = collapsedPhases[phaseData.phase];
+            const phaseColor = PHASE_ACCENT_COLORS[pi % PHASE_ACCENT_COLORS.length];
+            return (
+              <section key={phaseData.phase} style={{ marginBottom: '32px' }}>
+                <div className="rw-phase-hdr" onClick={() => togglePhase(phaseData.phase)}>
+                  <div className="rw-phase-dot" style={{ background: phaseColor }} />
+                  <span className="rw-phase-title">{phaseData.phase}</span>
+                  <span style={{ fontSize:'13px', color:'#74777f', fontWeight:600, marginLeft:'auto' }}>{phaseData.count} sesi</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '24px', color: '#001934', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0)', transition: 'transform 0.2s', marginLeft: '8px' }}>
+                    expand_more
+                  </span>
+                </div>
+                
+                {!isCollapsed && (
+                  <div>
+                    {phaseData.categories.map((cat) => (
+                      <div key={cat.categoryName}>
+                        <h4 className="rw-category-title" style={{ borderLeftColor: phaseColor }}>
+                          {cat.categoryName}
+                          <span style={{ fontSize: '13px', color: '#74777f', fontWeight: 600, marginLeft: '8px', background: '#e5eeff', padding: '2px 8px', borderRadius: '50px' }}>
+                            {cat.items.length} Sesi
+                          </span>
+                        </h4>
+                        <div className="rw-grid">
+                          {cat.items.map((item) => (
+                            <div key={item.id} className="rw-card" style={{ borderTopColor: item.isPass ? '#34d399' : '#fb7185' }} onClick={() => handleCard(item)}>
+                              <div className="rw-card-top">
+                                <div className="rw-card-title">{item.categoryName}</div>
+                                <div className="rw-card-level">Level {item.levelNumber}</div>
+                              </div>
+                              <div className="rw-card-date">
+                                <span className="material-symbols-outlined" style={{ fontSize:'14px' }}>calendar_month</span>
+                                {formatDate(item.startedAt)}
+                              </div>
+                              <div className="rw-card-footer">
+                                <SyncBadge status={item.syncStatus} />
+                                <div className="rw-chevron">
+                                  <span className="material-symbols-outlined" style={{ fontSize:'20px' }}>chevron_right</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </section>
-          ))}
+                )}
+              </section>
+            );
+          })}
         </div>
 
         {/* PANEL */}

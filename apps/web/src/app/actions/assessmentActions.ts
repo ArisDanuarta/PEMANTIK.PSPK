@@ -98,8 +98,12 @@ function calculateSimilarity(actual: string, target: string): number {
   return ((maxLen - distance) / maxLen) * 100;
 }
 
-export async function submitAssessmentSession(sessionId: string, currentLevelId: string) {
+export async function submitAssessmentSession(sessionId: string, currentLevelId: string, timeSpentSec?: number) {
   const supabase = createServerClient();
+  
+  if (timeSpentSec !== undefined) {
+    await supabase.from('assessment_sessions').update({ time_spent_sec: timeSpentSec }).eq('id', sessionId);
+  }
   
   // Panggil RPC advance_student_level untuk menilai ujian
   const { data, error } = await supabase.rpc('advance_student_level', {
