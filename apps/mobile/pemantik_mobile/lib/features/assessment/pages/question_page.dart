@@ -93,16 +93,37 @@ class _QuestionPageState extends ConsumerState<QuestionPage> with WidgetsBinding
     final db = ref.read(databaseProvider);
     final session = await db.sessionDao.getSessionById(widget.sessionId);
     String? customMessage;
+    Map<String, dynamic>? nextLevelArgs;
     
     if (session != null) {
       if (session.timeSpentSec == -1) {
         customMessage = 'Sesi digagalkan secara otomatis karena anak terdeteksi keluar dari aplikasi saat asesmen berlangsung.';
       } else {
-        // Cek fallback currentLevelId jika levelId null (untuk asesmen adaptif)
         final effectiveLevelId = session.levelId ?? session.currentLevelId;
         if (effectiveLevelId != null) {
           final level = await db.levelDao.getLevelById(effectiveLevelId);
           customMessage = isPassed ? level?.successMessage : level?.failureMessage;
+
+          // Cari level berikutnya jika lulus
+          if (isPassed) {
+            final nextLevel = await db.levelDao.getNextLevel(effectiveLevelId);
+            if (nextLevel != null) {
+              // Hitung jumlah soal di level berikutnya
+              final nextQuestions = await db.questionDao.getQuestionsForLevel(nextLevel.id);
+              nextLevelArgs = {
+                'categoryId': session.categoryId,
+                'levelId': nextLevel.id,
+                'levelNumber': nextLevel.levelNumber,
+                'accessCode': nextLevel.accessCode,
+                'totalQuestions': nextQuestions.length,
+                'passingThreshold': nextLevel.passingThreshold,
+                'timeLimitSec': nextLevel.timeLimitSec ?? 60,
+                'learningObjective': nextLevel.learningObjective,
+                'successMessage': nextLevel.successMessage,
+                'failureMessage': nextLevel.failureMessage,
+              };
+            }
+          }
         }
       }
     }
@@ -114,6 +135,7 @@ class _QuestionPageState extends ConsumerState<QuestionPage> with WidgetsBinding
         arguments: {
           'isPassed': isPassed,
           'customMessage': customMessage,
+          'nextLevelArgs': nextLevelArgs,
         },
       );
     }
@@ -163,9 +185,31 @@ class _QuestionPageState extends ConsumerState<QuestionPage> with WidgetsBinding
           final db = ref.read(databaseProvider);
           final session = await db.sessionDao.getSessionById(widget.sessionId);
           String? customMessage;
-          if (session != null && session.levelId != null) {
-            final level = await db.levelDao.getLevelById(session.levelId!);
-            customMessage = isPassed ? level?.successMessage : level?.failureMessage;
+          Map<String, dynamic>? nextLevelArgs;
+          if (session != null) {
+            final effectiveLevelId = session.levelId ?? session.currentLevelId;
+            if (effectiveLevelId != null) {
+              final level = await db.levelDao.getLevelById(effectiveLevelId);
+              customMessage = isPassed ? level?.successMessage : level?.failureMessage;
+              if (isPassed) {
+                final nextLevel = await db.levelDao.getNextLevel(effectiveLevelId);
+                if (nextLevel != null) {
+                  final nextQuestions = await db.questionDao.getQuestionsForLevel(nextLevel.id);
+                  nextLevelArgs = {
+                    'categoryId': session.categoryId,
+                    'levelId': nextLevel.id,
+                    'levelNumber': nextLevel.levelNumber,
+                    'accessCode': nextLevel.accessCode,
+                    'totalQuestions': nextQuestions.length,
+                    'passingThreshold': nextLevel.passingThreshold,
+                    'timeLimitSec': nextLevel.timeLimitSec ?? 60,
+                    'learningObjective': nextLevel.learningObjective,
+                    'successMessage': nextLevel.successMessage,
+                    'failureMessage': nextLevel.failureMessage,
+                  };
+                }
+              }
+            }
           }
           
           if (context.mounted) {
@@ -175,6 +219,7 @@ class _QuestionPageState extends ConsumerState<QuestionPage> with WidgetsBinding
               arguments: {
                 'isPassed': isPassed,
                 'customMessage': customMessage,
+                'nextLevelArgs': nextLevelArgs,
               },
             );
           }

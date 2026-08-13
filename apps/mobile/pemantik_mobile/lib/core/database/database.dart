@@ -33,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -84,6 +84,15 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(localLevels, localLevels.learningObjective);
         await m.addColumn(localLevels, localLevels.successMessage);
         await m.addColumn(localLevels, localLevels.failureMessage);
+      }
+      if (from < 13) {
+        // Tambah cheat_strikes ke local_sessions (kolom yang sebelumnya tidak di-migrate)
+        // Gunakan try-catch karena mungkin beberapa device sudah punya kolom ini
+        try {
+          await m.addColumn(localSessions, localSessions.cheatStrikes);
+        } catch (_) {
+          // Kolom sudah ada di device ini, tidak perlu migrasi
+        }
       }
     },
   );

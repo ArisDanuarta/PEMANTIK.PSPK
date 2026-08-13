@@ -7,11 +7,20 @@ import 'package:lottie/lottie.dart';
 class ResultPage extends StatelessWidget {
   final bool isPassed;
   final String? customMessage;
+  final Map<String, dynamic>? nextLevelArgs;
 
-  const ResultPage({super.key, required this.isPassed, this.customMessage});
+  const ResultPage({
+    super.key,
+    required this.isPassed,
+    this.customMessage,
+    this.nextLevelArgs,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final hasNextLevel = isPassed && nextLevelArgs != null;
+    final nextLevelNumber = nextLevelArgs?['levelNumber'] as int?;
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -94,7 +103,7 @@ class ResultPage extends StatelessWidget {
                               top: -40,
                               right: -40,
                               child: Transform.rotate(
-                                angle: isPassed ? 0 : 0.2, // ~12 degrees
+                                angle: isPassed ? 0 : 0.2,
                                 child: Icon(
                                   Icons.local_fire_department,
                                   size: 120,
@@ -176,31 +185,81 @@ class ResultPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 48),
 
-                      // --- Tombol Kembali ---
+                      // --- Tombol Level Berikutnya ---
+                      // Hanya muncul jika anak lulus DAN ada level berikutnya yang tersedia
+                      if (hasNextLevel) ...[
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              AppRouter.assessmentLobby,
+                              // Hapus semua route sampai ke halaman daftar level
+                              (route) => route.settings.name == AppRouter.assessmentLevels,
+                              arguments: nextLevelArgs,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.kuningEmas,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 56),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                            elevation: 8,
+                            shadowColor: AppColors.kuningEmas.withValues(alpha: 0.4),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.arrow_forward_rounded, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                nextLevelNumber != null
+                                    ? 'Lanjut ke Level $nextLevelNumber'
+                                    : 'Level Berikutnya',
+                                style: AppTextStyles.labelLarge.copyWith(color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // --- Tombol Kembali ke Beranda ---
                       ElevatedButton(
                         onPressed: () {
-                          Navigator.of(
-                            context,
-                          ).pushNamedAndRemoveUntil(AppRouter.home, (_) => false);
+                          Navigator.of(context)
+                              .pushNamedAndRemoveUntil(AppRouter.home, (_) => false);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.onPrimary,
+                          // Jika ada tombol next level, jadikan tombol home lebih subtle
+                          backgroundColor: hasNextLevel ? Colors.white : AppColors.primary,
+                          foregroundColor:
+                              hasNextLevel ? AppColors.primary : AppColors.onPrimary,
                           minimumSize: const Size(double.infinity, 56),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(100), // rounded-full
+                            borderRadius: BorderRadius.circular(100),
+                            side: hasNextLevel
+                                ? BorderSide(
+                                    color: AppColors.primary.withValues(alpha: 0.3))
+                                : BorderSide.none,
                           ),
-                          elevation: 8,
+                          elevation: hasNextLevel ? 0 : 8,
                           shadowColor: AppColors.primaryContainer.withValues(alpha: 0.3),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.home, size: 20),
+                            Icon(
+                              Icons.home,
+                              size: 20,
+                              color: hasNextLevel ? AppColors.primary : Colors.white,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'Kembali ke Beranda',
-                              style: AppTextStyles.labelLarge.copyWith(color: Colors.white),
+                              style: AppTextStyles.labelLarge.copyWith(
+                                color: hasNextLevel ? AppColors.primary : Colors.white,
+                              ),
                             ),
                           ],
                         ),

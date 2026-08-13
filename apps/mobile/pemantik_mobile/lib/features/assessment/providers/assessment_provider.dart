@@ -149,7 +149,7 @@ class AssessmentController extends _$AssessmentController {
 
     // Tarik soal real dari database lokal berdasarkan levelId
     final rawQuestions = await db.questionDao.getQuestionsForLevel(
-      session.levelId!,
+      session.levelId ?? session.currentLevelId ?? "",
     );
 
     // Shuffle deterministik per session (jika mode ujian biasa)

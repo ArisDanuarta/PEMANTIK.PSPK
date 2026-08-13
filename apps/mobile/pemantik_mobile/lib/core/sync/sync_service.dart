@@ -356,6 +356,11 @@ class SyncService {
 
       log('Memulai Sinkronisasi Tarik Data Lama (Sync Down)...');
 
+      // ✅ FIX CORRUPT DB (Migrasi/Cleanup on-the-fly):
+      // Bersihkan nilai NULL di kolom yang tidak boleh NULL akibat bug sebelumnya.
+      await _db.customUpdate('UPDATE local_answers SET is_correct = 0 WHERE is_correct IS NULL');
+      await _db.customUpdate("UPDATE local_sessions SET status = 'pending' WHERE status IS NULL");
+
       // ✅ FIX #5 & #8: Tarik semua sesi, termasuk yang di-void.
       // Jika di-void oleh admin (ujian ulang), kita harus menariknya ke lokal
       // dan mengubah statusnya menjadi 'void' agar tidak dihitung lagi sebagai attempt.
@@ -374,7 +379,15 @@ class SyncService {
         //    Solusi: jika ada sesi lokal dengan ID yang sama DAN syncStatus != 'synced',
         //    itu berarti data lokal adalah ground truth. Skip, jangan ditimpa.
         final sessionId = row['id'] as String;
-        final existingLocal = await _db.sessionDao.getSessionById(sessionId);
+        LocalSession? existingLocal;
+        try {
+          existingLocal = await _db.sessionDao.getSessionById(sessionId);
+        } catch (e) {
+          log('[SyncDown] Sesi $sessionId corrupt di lokal ($e). Akan ditimpa.');
+          // Jika mapping gagal (misal karena ada kolom NOT NULL yang null di SQLite lama),
+          // anggap tidak ada agar kita menimpanya dengan data server yang valid.
+        }
+
         if (existingLocal != null && existingLocal.syncStatus != 'synced') {
           log('[SyncDown] Skip sesi $sessionId — ada data lokal yang belum tersinkron (${existingLocal.syncStatus}). Data lokal dipertahankan.');
           continue;
@@ -383,7 +396,7 @@ class SyncService {
         // ✅ FIX #8: Jika sesi di-void di Supabase (karena request ujian ulang), 
         // pastikan status lokalnya menjadi 'void'.
         final isVoid = row['is_void'] == true;
-        final effectiveStatus = isVoid ? 'void' : row['status'];
+        final effectiveStatus = isVoid ? 'void' : (row['status'] ?? 'pending');
 
         await _db.sessionDao.upsertSession(
           LocalSessionsCompanion(
@@ -419,7 +432,7 @@ class SyncService {
               sessionId: Value(ans['session_id']),
               questionId: Value(ans['question_id']),
               answerData: Value(jsonEncode(ans['answer_data'] ?? {})),
-              isCorrect: Value(ans['is_correct']),
+              isCorrect: Value(ans['is_correct'] ?? false),
               score: Value(scoreValue),
               timeSpentSec: Value(ans['time_spent_sec']),
               answeredAt: Value(ans['answered_at'] != null ? DateTime.parse(ans['answered_at']) : DateTime.now()),

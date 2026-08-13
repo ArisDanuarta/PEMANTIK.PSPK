@@ -77,8 +77,13 @@ class AppRouter {
         final args = settings.arguments as Map<String, dynamic>? ?? {};
         final isPassed = args['isPassed'] as bool? ?? false;
         final customMessage = args['customMessage'] as String?;
+        final nextLevelArgs = args['nextLevelArgs'] as Map<String, dynamic>?;
         return MaterialPageRoute(
-          builder: (_) => ResultPage(isPassed: isPassed, customMessage: customMessage),
+          builder: (_) => ResultPage(
+            isPassed: isPassed,
+            customMessage: customMessage,
+            nextLevelArgs: nextLevelArgs,
+          ),
         );
       default:
         return MaterialPageRoute(builder: (_) => const LoginPage());

@@ -38,6 +38,21 @@ class LevelDao extends DatabaseAccessor<AppDatabase> with _$LevelDaoMixin {
     )..where((l) => l.id.equals(id))).getSingleOrNull();
   }
 
+  /// Mengembalikan level berikutnya (berdasarkan levelNumber) dalam kategori yang sama.
+  Future<LocalLevel?> getNextLevel(String currentLevelId) async {
+    final current = await getLevelById(currentLevelId);
+    if (current == null) return null;
+    return (select(localLevels)
+          ..where((l) =>
+              l.categoryId.equals(current.categoryId) &
+              l.levelNumber.isBiggerThanValue(current.levelNumber))
+          ..orderBy([
+            (l) => OrderingTerm(expression: l.levelNumber, mode: OrderingMode.asc),
+          ])
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   Future<void> clearLevels() {
     return delete(localLevels).go();
   }
