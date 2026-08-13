@@ -9,6 +9,7 @@ export interface StudentDemographicRow {
   socioeconomic_status?: string | null;
   ses_class?: string | null;
   grade_level?: string | null;
+  birth_date?: string | null;
 }
 
 export interface DemographicsSectionProps {
@@ -88,7 +89,7 @@ export default function DemographicsSection({
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "2rem", alignItems: "center" }}>
         {/* Gender Donut Chart */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <h4 style={{ fontSize: "0.95rem", color: "#374151", marginBottom: "1rem", fontWeight: 600 }}>Komposisi Gender</h4>
+          <h4 style={{ fontSize: "0.95rem", color: "#374151", marginBottom: "1rem", fontWeight: 600 }}>Sebaran Gender</h4>
           <div style={{ width: "100%", height: 250 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
