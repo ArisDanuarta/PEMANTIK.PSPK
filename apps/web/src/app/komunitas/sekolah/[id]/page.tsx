@@ -65,10 +65,10 @@ export default async function SchoolDetailPage({ params }: PageProps) {
     .order("score", { ascending: true });
   const sesVariables = sesData || [];
 
-  const { data: sessions = [] } = await supabase
+  const { data: statsData = [] } = await supabase
     .from("assessment_sessions")
     .select(`
-      id, status, phase, score, started_at, completed_at,
+      id, status, phase, score, started_at, completed_at, student_id, current_level_id,
       students(full_name, nisn),
       question_categories(name, subject_area)
     `)
@@ -76,6 +76,21 @@ export default async function SchoolDetailPage({ params }: PageProps) {
     .eq("status", "completed")
     .eq("is_void", false)
     .order("completed_at", { ascending: false });
+
+  let sessions = statsData || [];
+  if (sessions.length > 0) {
+    const allLvlIds = [...new Set(sessions.map((s: any) => s.current_level_id).filter(Boolean))];
+    if (allLvlIds.length > 0) {
+      const { data: lvlData } = await supabase.from("question_levels").select("id, level_number").in("id", allLvlIds);
+      const qlMap = new Map((lvlData || []).map((l: any) => [l.id, l.level_number]));
+      sessions = sessions.map((s: any) => ({
+        ...s,
+        level_number: qlMap.get(s.current_level_id) || 0
+      }));
+    } else {
+      sessions = sessions.map((s: any) => ({ ...s, level_number: 0 }));
+    }
+  }
 
   return (
     <div className="animate-fade-in">

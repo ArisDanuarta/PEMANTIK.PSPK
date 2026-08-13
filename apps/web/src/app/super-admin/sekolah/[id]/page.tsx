@@ -3,6 +3,7 @@ import { createServerClient } from "@pemantik/supabase";
 import { notFound } from "next/navigation";
 import React from "react";
 import SchoolDetailClient from "./SchoolDetailClient";
+import { getStagesForSchool, type SchoolAssessmentStageRow } from "@/app/actions/stages";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   return {
@@ -26,6 +27,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
     { data: schoolAdmin },
     { data: studentUsers },
     { data: sesVariables },
+    { data: statsData },
   ] = await Promise.all([
     supabase
       .from("schools")
@@ -74,10 +76,39 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
     (supabase as any)
       .from("ses_variables")
       .select("*")
-      .order("score", { ascending: true })
+      .order("score", { ascending: true }),
+    supabase
+      .from("assessment_sessions")
+      .select(`
+        id, status, phase, score, started_at, completed_at, student_id, current_level_id,
+        students(full_name, nisn),
+        question_categories(name, subject_area)
+      `)
+      .eq("school_id", id)
+      .eq("status", "completed")
+      .eq("is_void", false)
+      .order("completed_at", { ascending: false })
   ]);
 
   if (!school) return notFound();
+
+  const stagesRes = await getStagesForSchool(id);
+  const stages: SchoolAssessmentStageRow[] = stagesRes.success ? (stagesRes.data || []) : [];
+
+  let sessions = statsData || [];
+  if (sessions.length > 0) {
+    const allLvlIds = [...new Set(sessions.map((s: any) => s.current_level_id).filter(Boolean))];
+    if (allLvlIds.length > 0) {
+      const { data: lvlData } = await supabase.from("question_levels").select("id, level_number").in("id", allLvlIds);
+      const qlMap = new Map((lvlData || []).map((l: any) => [l.id, l.level_number]));
+      sessions = sessions.map((s: any) => ({
+        ...s,
+        level_number: qlMap.get(s.current_level_id) || 0
+      }));
+    } else {
+      sessions = sessions.map((s: any) => ({ ...s, level_number: 0 }));
+    }
+  }
 
   // Attach username to students
   const enrichedStudents = (students || []).map((student: any) => {
@@ -87,6 +118,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
       users: { username: matchedUser?.username || "" }
     };
   });
+
 
   return (
     <div className="animate-fade-in">
@@ -112,6 +144,8 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
         communities={communities || []}
         schoolAdmin={schoolAdmin}
         sesVariables={sesVariables || []}
+        stages={stages}
+        sessions={sessions}
       />
     </div>
   );

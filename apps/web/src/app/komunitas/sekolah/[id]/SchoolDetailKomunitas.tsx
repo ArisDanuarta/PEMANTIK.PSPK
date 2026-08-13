@@ -55,6 +55,9 @@ export default function SchoolDetailKomunitas({
   const { confirm } = useConfirm();
   const [isPending, startTransition] = useTransition();
   const classes = propsClasses || [];
+  
+  const activeStage = stages?.find((s: any) => s.current_stage !== "selesai" && s.current_stage !== "persiapan_akun") || stages?.[stages.length - 1];
+  const activePhase = activeStage?.phase || "-";
 
   const sesColorMap: Record<string, string> = {
     Atas: "#22c55e",
@@ -750,7 +753,7 @@ export default function SchoolDetailKomunitas({
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
                 <thead>
                   <tr style={{ background: "#f9fafb" }}>
-                    {["Nama Anak", "L/P", "NISN", "Kelas", "SES", "Sumber", "Status", "Aksi"].map((h) => (
+                    {["Nama Anak", "L/P", "Fase Aktif", "Kelas", "SES", "Level Terakhir yang Dicapai", "Status", "Aksi"].map((h) => (
                       <th key={h} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.8rem", fontWeight: 600, color: "#374151", borderBottom: "1px solid #e5e7eb" }}>{h}</th>
                     ))}
                   </tr>
@@ -760,7 +763,11 @@ export default function SchoolDetailKomunitas({
                     <tr key={s.id} style={{ borderBottom: i < paginatedStudents.length - 1 ? "1px solid #f3f4f6" : "none" }}>
                       <td style={{ padding: "0.875rem 1rem", fontWeight: 500 }}>{s.full_name}</td>
                       <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>{s.gender === "perempuan" || s.gender === "P" ? "P" : "L"}</td>
-                      <td style={{ padding: "0.875rem 1rem", fontFamily: "monospace", fontSize: "0.8rem", color: "#6b7280" }}>{s.nisn || "-"}</td>
+                      <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem", color: "#374151" }}>
+                        <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: 999, background: "#eff6ff", color: "#1d4ed8", fontWeight: 500 }}>
+                          {activePhase}
+                        </span>
+                      </td>
                       <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>{(s.classes as any)?.name || <span style={{ color: "#9ca3af" }}>-</span>}</td>
                       <td style={{ padding: "0.875rem 1rem" }}>
                         {s.socioeconomic_status || s.ses_class ? (
@@ -770,9 +777,28 @@ export default function SchoolDetailKomunitas({
                         ) : <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>-</span>}
                       </td>
                       <td style={{ padding: "0.875rem 1rem" }}>
-                        <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: 999, background: s.import_source === "dapodik" ? "#e0f2fe" : "#f3f4f6", color: s.import_source === "dapodik" ? "#0369a1" : "#6b7280" }}>
-                          {s.import_source === "dapodik" ? "Dapodik" : "Manual"}
-                        </span>
+                        {(() => {
+                          const studentSessions = (sessions || []).filter((session: any) => 
+                            session.student_id === s.id && session.phase === activePhase
+                          );
+                          let maxLit = 0;
+                          let maxNum = 0;
+                          studentSessions.forEach((session: any) => {
+                            const subj = session.question_categories?.subject_area;
+                            const lvl = session.level_number || 0;
+                            if (subj === "literasi" && lvl > maxLit) maxLit = lvl;
+                            if (subj === "numerasi" && lvl > maxNum) maxNum = lvl;
+                          });
+                          if (maxLit === 0 && maxNum === 0) {
+                             return <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>-</span>;
+                          }
+                          return (
+                            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                              {maxLit > 0 && <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: 4, background: "#e0f2fe", color: "#0369a1", fontWeight: 600 }}>Lit: Lv.{maxLit}</span>}
+                              {maxNum > 0 && <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: 4, background: "#ffedd5", color: "#c2410c", fontWeight: 600 }}>Num: Lv.{maxNum}</span>}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td style={{ padding: "0.875rem 1rem" }}>
                         <Badge variant={s.is_active !== false ? "success" : "danger"}>{s.is_active !== false ? "Aktif" : "Nonaktif"}</Badge>
@@ -932,7 +958,7 @@ export default function SchoolDetailKomunitas({
 
       {/* MODAL TAMBAH/EDIT GURU */}
       <Modal open={isTeacherModalOpen} onClose={() => { setIsTeacherModalOpen(false); setEditingTeacher(null); }} title={editingTeacher ? "Edit Guru" : "Tambah Guru Baru"}>
-        <form onSubmit={handleTeacherSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <form key={editingTeacher?.id || "new"} onSubmit={handleTeacherSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {/* ── Identitas ── */}
           <div>
             <label className="form-label">Nama Lengkap *</label>
@@ -1065,7 +1091,7 @@ export default function SchoolDetailKomunitas({
 
       {/* MODAL TAMBAH/EDIT ANAK */}
       <Modal open={isStudentModalOpen} onClose={() => { setIsStudentModalOpen(false); setEditingStudent(null); }} title={editingStudent ? "Edit Anak" : "Tambah Anak Baru"}>
-        <form onSubmit={handleStudentSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <form key={editingStudent?.id || "new"} onSubmit={handleStudentSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {/* ── Identitas Siswa ── */}
           <div>
             <label className="form-label">Nama Lengkap *</label>
@@ -1215,7 +1241,7 @@ export default function SchoolDetailKomunitas({
 
       {/* MODAL TAMBAH/EDIT KELAS */}
       <Modal open={isClassModalOpen} onClose={() => setIsClassModalOpen(false)} title={editingClass ? "Edit Kelas" : "Tambah Kelas Baru"}>
-        <form onSubmit={handleClassSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <form key={editingClass?.id || "new"} onSubmit={handleClassSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
             <label className="form-label">Nama Kelas *</label>
             <input name="name" className="form-input" required placeholder="Contoh: 1A, 2B, dll" defaultValue={editingClass?.name} style={{ width: "100%" }} />
