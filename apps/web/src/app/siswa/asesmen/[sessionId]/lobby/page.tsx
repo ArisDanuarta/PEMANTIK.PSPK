@@ -66,7 +66,7 @@ export default async function AssessmentLobbyPage({
 
   if (!levelData || !categoryData) {
     return (
-      <StudentLayout studentName={student.name || 'Siswa'} studentNisn={student.nisn || '-'}>
+      <StudentLayout studentName={student.full_name || student.name || 'Siswa'} studentNisn={student.nisn || '-'}>
         <div style={{ padding: '80px 40px', textAlign: 'center', fontFamily: 'var(--font-rubik)' }}>
           <p style={{ fontSize: '18px', color: '#74777f' }}>Data level tidak ditemukan.</p>
           <Link href="/siswa/dashboard" style={{ color: '#001934', fontWeight: 700, display: 'inline-block', marginTop: '16px' }}>
@@ -108,7 +108,7 @@ export default async function AssessmentLobbyPage({
   const isLocked = !existingSession && !!levelData.access_code;
 
   return (
-    <StudentLayout studentName={student.name || 'Siswa'} studentNisn={student.nisn || '-'}>
+    <StudentLayout studentName={student.full_name || student.name || 'Siswa'} studentNisn={student.nisn || '-'}>
       <style>{`
         .lobby-page {
           max-width: 900px;

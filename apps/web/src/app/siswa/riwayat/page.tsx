@@ -22,7 +22,7 @@ export default async function RiwayatPage() {
   const historyData = await getStudentHistoryData(student.id);
 
   return (
-    <StudentLayout studentName={student.name || 'Siswa'} studentNisn={student.nisn || '-'}>
+    <StudentLayout studentName={student.full_name || student.name || 'Siswa'} studentNisn={student.nisn || '-'}>
       <RiwayatClient history={historyData} />
     </StudentLayout>
   );

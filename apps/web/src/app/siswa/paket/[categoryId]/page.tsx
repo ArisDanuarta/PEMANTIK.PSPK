@@ -20,7 +20,7 @@ export default async function AssessmentLevelsPage({ params }: { params: Promise
 
   if (!levelsData) {
     return (
-      <StudentLayout studentName={student.name || 'Siswa'} studentNisn={student.nisn || '-'}>
+      <StudentLayout studentName={student.full_name || student.name || 'Siswa'} studentNisn={student.nisn || '-'}>
         <div style={{ padding: '80px 40px', textAlign: 'center' }}>
           <p style={{ fontSize: '18px', color: '#74777f', fontFamily: 'var(--font-rubik)' }}>Paket Asesmen tidak ditemukan.</p>
           <Link href="/siswa/dashboard" style={{ color: '#001934', fontWeight: 700, display: 'inline-block', marginTop: '16px', fontFamily: 'var(--font-rubik)' }}>
@@ -39,7 +39,7 @@ export default async function AssessmentLevelsPage({ params }: { params: Promise
   const subjectLabel = isLiteracy ? 'Literasi' : 'Numerasi';
 
   return (
-    <StudentLayout studentName={student.name || 'Siswa'} studentNisn={student.nisn || '-'}>
+    <StudentLayout studentName={student.full_name || student.name || 'Siswa'} studentNisn={student.nisn || '-'}>
       <style>{`
         /* ── Level page ── */
         .lv-page {

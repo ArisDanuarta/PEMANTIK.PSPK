@@ -4,6 +4,7 @@ import StudentLayout from '../../../components/siswa/StudentLayout';
 import { getStudentSession } from '../../actions/studentAuth';
 import { getStudentDashboardData } from '../../actions/studentData';
 import { redirect } from 'next/navigation';
+import SyncButton from './SyncButton';
 
 export const metadata = {
   title: 'Dashboard Siswa - Pemantik',
@@ -323,10 +324,7 @@ export default async function StudentDashboardPage() {
         </p>
 
         <div className="db-hero-actions">
-          <button className="db-hero-btn" aria-label="Sinkronisasi">
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>sync</span>
-            <span>Sinkronisasi Data</span>
-          </button>
+          <SyncButton />
         </div>
       </div>
 
@@ -346,7 +344,7 @@ export default async function StudentDashboardPage() {
           ) : (
             <div className="db-grid">
               {activePackages.map((pkg) => {
-                const isLit = pkg.subject === 'literacy';
+                const isLit = pkg.subject === 'literasi';
                 const cls = isLit ? 'lit' : 'num';
                 const icon = isLit ? 'menu_book' : 'calculate';
                 const total = pkg.levelsTotal || 5;
