@@ -51,7 +51,7 @@ export default async function AssessmentLobbyPage({
       }
     }
   } else if (levelId) {
-    // Sesi baru — ambil data level
+    // Sesi baru - ambil data level
     const { data: l } = await supabase
       .from('question_levels')
       .select('*, question_categories(*)')
@@ -277,7 +277,7 @@ export default async function AssessmentLobbyPage({
                 <span className="material-symbols-outlined" style={{ fontSize: '20px', color: '#805600' }}>timer</span>
               </div>
               <div className="lobby-metric-label">Durasi</div>
-              <div className="lobby-metric-val">{durationMin || '–'} mnt</div>
+              <div className="lobby-metric-val">{durationMin || '-'} mnt</div>
             </div>
             <div className="lobby-metric">
               <div className="lobby-metric-icon" style={{ background: isLocked ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)' }}>

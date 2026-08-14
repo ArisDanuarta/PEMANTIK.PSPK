@@ -381,9 +381,8 @@ export default function LoginPage() {
       </div>
 
       <style>{`
-        /* -- Page Layout ------------------------------------------- */
         .login-page {
-          height: 100vh;
+          height: 100dvh;
           overflow: hidden;
           display: grid;
           grid-template-columns: 55% 45%;
@@ -754,7 +753,7 @@ export default function LoginPage() {
 
         /* -- Responsive ------------------------------------------- */
         @media (max-width: 900px) {
-          .login-page { height: auto; min-height: 100vh; overflow: visible; grid-template-columns: 1fr; }
+          .login-page { height: auto; min-height: 100dvh; overflow: visible; grid-template-columns: 1fr; }
           .login-left {
             padding: 2.5rem 2rem;
             min-height: 45vh;

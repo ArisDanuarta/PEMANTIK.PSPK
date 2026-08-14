@@ -26,9 +26,9 @@ export default async function SuperAdminDashboard() {
       { data: stData },
       { data: sessData }
     ] = await Promise.all([
-      supabase.from("communities").select("id, name, code, is_active, created_at").order("name", { ascending: true }),
+      supabase.from("communities").select("id, name, code, is_active, created_at, is_sandbox").order("name", { ascending: true }),
       supabase.from("schools").select("id, name, community_id"),
-      supabase.from("users").select("id, school_id").eq("role", "teacher"),
+      supabase.from("users").select("id, school_id, community_id").eq("role", "teacher"),
       supabase.from("students").select("id, school_id, gender, birth_date, ses_class"),
       supabase.from("assessment_sessions").select(`
         id,
@@ -36,17 +36,34 @@ export default async function SuperAdminDashboard() {
         score,
         completed_at,
         created_at,
-        school:schools(province, city, name),
+        school_id,
+        school:schools(province, city, name, community_id),
         student:students(gender, birth_date, ses_class, ses_score, full_name, village, district, city, province, father_education_id, mother_education_id, father_occupation_id, mother_occupation_id),
         package:question_categories(name, subject_area)
       `).order("created_at", { ascending: false })
     ]);
 
-    communities = cData || [];
-    schools = scData || [];
-    teachers = tData || [];
-    students = stData || [];
-    sessions = sessData || [];
+    const allCommunities = cData || [];
+    const validCommunityIds = new Set(allCommunities.filter((c: any) => !c.is_sandbox).map((c: any) => c.id));
+
+    communities = allCommunities.filter((c: any) => validCommunityIds.has(c.id));
+    
+    // School is valid if independent or belongs to valid community
+    schools = (scData || []).filter((s: any) => !s.community_id || validCommunityIds.has(s.community_id));
+    const validSchoolIds = new Set(schools.map((s: any) => s.id));
+    
+    // Teacher is valid if both community and school (if present) are valid
+    teachers = (tData || []).filter((t: any) => {
+      const isCommunityValid = !t.community_id || validCommunityIds.has(t.community_id);
+      const isSchoolValid = !t.school_id || validSchoolIds.has(t.school_id);
+      return isCommunityValid && isSchoolValid;
+    });
+    
+    // Student is valid if school is valid
+    students = (stData || []).filter((s: any) => !s.school_id || validSchoolIds.has(s.school_id));
+    
+    // Session is valid if school is valid
+    sessions = (sessData || []).filter((s: any) => s.school_id && validSchoolIds.has(s.school_id));
 
   } catch (err) {
     console.error("Failed to fetch superadmin dashboard data:", err);

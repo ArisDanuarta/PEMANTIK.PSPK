@@ -869,7 +869,7 @@ export default function QuestionFormClient({ initialData }: { initialData?: any 
                 Threshold Toleransi: <span style={{ color: "var(--clr-biru)", fontFamily: "monospace" }}>{vrThreshold}%</span>
               </label>
               <small style={{ color: "black", display: "block", marginBottom: "0.5rem" }}>
-                Rekomendasi: 75–85% untuk toleransi ejaan/dialek.
+                Rekomendasi: 75-85% untuk toleransi ejaan/dialek.
               </small>
               <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
                 <input

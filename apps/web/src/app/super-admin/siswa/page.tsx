@@ -23,7 +23,7 @@ export default async function SiswaPage() {
       { data: sesData },
       { data: clData }
     ] = await Promise.all([
-      supabase.from("students").select("*, schools(name, communities(name)), classes(name, users!class_teachers(full_name))").order("created_at", { ascending: false }),
+      supabase.from("students").select("*, schools(name, communities(name, is_sandbox)), classes(name, users!class_teachers(full_name))").order("created_at", { ascending: false }),
       supabase.from("schools").select("id, name").eq("is_active", true).order("name", { ascending: true }),
       (supabase as any).from("ses_variables").select("*").order("name", { ascending: true }),
       supabase.from("classes").select("id, name, school_id").order("name", { ascending: true })

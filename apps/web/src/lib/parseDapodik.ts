@@ -286,7 +286,7 @@ function extractHeaderInfoFallback(
 
   let schoolName = extractMatch(/(?:nama\s+sekolah|sekolah)[\s:：\|=-]+([^\|]+)/i);
   if (!schoolName) {
-    const titleMatch = rawHeaderText.match(/DAFTAR PESERTA DIDIK\s*[-–]\s*([^\(\|]+)/i);
+    const titleMatch = rawHeaderText.match(/DAFTAR PESERTA DIDIK\s*[--]\s*([^\(\|]+)/i);
     if (titleMatch) schoolName = titleMatch[1].trim();
   }
 

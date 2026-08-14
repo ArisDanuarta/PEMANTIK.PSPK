@@ -517,7 +517,7 @@ export default function CommunityReportDashboard({ schools, packages, communityI
                       <DataCard
                         key={card.phase}
                         title={card.phase}
-                        subtitle={card.valid_from ? `${fmt(card.valid_from)} – ${fmt(card.valid_until)}` : undefined}
+                        subtitle={card.valid_from ? `${fmt(card.valid_from)} - ${fmt(card.valid_until)}` : undefined}
                         count={card.student_count}
                         total={card.total_students}
                         countLabel="siswa mengerjakan"

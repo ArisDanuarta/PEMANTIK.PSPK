@@ -46,6 +46,7 @@ export default function CommunitiesManager({
 }: CommunitiesManagerProps) {
   const [communities, setCommunities] = useState<Community[]>(initialCommunities);
   const [search, setSearch] = useState("");
+  const [showSandbox, setShowSandbox] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editingComm, setEditingComm] = useState<Community | null>(null);
@@ -57,9 +58,10 @@ export default function CommunitiesManager({
   // Filter communities based on search query
   const filteredCommunities = communities.filter(
     (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (showSandbox ? true : !c.is_sandbox) &&
+      (c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.code.toLowerCase().includes(search.toLowerCase()) ||
-      (c.contact_name?.toLowerCase() || "").includes(search.toLowerCase())
+      (c.contact_name?.toLowerCase() || "").includes(search.toLowerCase()))
   );
 
   const {
@@ -322,7 +324,28 @@ export default function CommunitiesManager({
             style={{ width: "100%" }}
           />
         </div>
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 500, color: "#4b5563", marginRight: "0.5rem" }}>
+            <div style={{ position: "relative", width: "36px", height: "20px" }}>
+              <input 
+                type="checkbox" 
+                checked={showSandbox} 
+                onChange={(e) => setShowSandbox(e.target.checked)} 
+                style={{ opacity: 0, width: 0, height: 0, position: "absolute" }}
+              />
+              <div style={{ 
+                position: "absolute", top: 0, left: 0, right: 0, bottom: 0, 
+                backgroundColor: showSandbox ? "#f59e0b" : "#e5e7eb", 
+                borderRadius: "999px", transition: "0.3s" 
+              }} />
+              <div style={{ 
+                position: "absolute", top: "2px", left: showSandbox ? "18px" : "2px", 
+                width: "16px", height: "16px", backgroundColor: "white", 
+                borderRadius: "50%", transition: "0.3s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" 
+              }} />
+            </div>
+            Tampilkan Data Uji Coba (Sandbox)
+          </label>
           <Button variant="outline" onClick={handleDownloadTemplate} style={{ color: "#0874aa", borderColor: "#0874aa" }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "0.4rem", display: "inline-block", verticalAlign: "middle" }}>
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />

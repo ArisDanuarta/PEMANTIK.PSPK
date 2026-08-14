@@ -19,7 +19,7 @@ interface Student {
   is_active: boolean;
   schools: {
     name: string;
-    communities: { name: string } | null;
+    communities: { name: string; is_sandbox?: boolean } | null;
   } | null;
   classes?: any;
   ses_class?: string | null;
@@ -46,6 +46,7 @@ interface StudentsManagerProps {
 export default function StudentsManager({ initialStudents, schools, sesVariables = [], classes = [] }: StudentsManagerProps) {
   const [search, setSearch] = useState("");
   const [selectedSchoolId, setSelectedSchoolId] = useState("");
+  const [showSandbox, setShowSandbox] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -63,10 +64,11 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
 
   const filteredStudents = initialStudents.filter(
     (s) =>
-      s.full_name.toLowerCase().includes(search.toLowerCase()) ||
+      (showSandbox ? true : !(s.schools?.communities?.is_sandbox)) &&
+      (s.full_name.toLowerCase().includes(search.toLowerCase()) ||
       s.username.toLowerCase().includes(search.toLowerCase()) ||
       (s.nisn?.toLowerCase() || "").includes(search.toLowerCase()) ||
-      (s.schools?.name?.toLowerCase() || "").includes(search.toLowerCase())
+      (s.schools?.name?.toLowerCase() || "").includes(search.toLowerCase()))
   );
 
   const {
@@ -203,7 +205,28 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
           className="form-input"
           style={{ flex: "1 1 200px", maxWidth: "400px" }}
         />
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 500, color: "#4b5563", marginRight: "0.5rem" }}>
+            <div style={{ position: "relative", width: "36px", height: "20px" }}>
+              <input 
+                type="checkbox" 
+                checked={showSandbox} 
+                onChange={(e) => setShowSandbox(e.target.checked)} 
+                style={{ opacity: 0, width: 0, height: 0, position: "absolute" }}
+              />
+              <div style={{ 
+                position: "absolute", top: 0, left: 0, right: 0, bottom: 0, 
+                backgroundColor: showSandbox ? "#f59e0b" : "#e5e7eb", 
+                borderRadius: "999px", transition: "0.3s" 
+              }} />
+              <div style={{ 
+                position: "absolute", top: "2px", left: showSandbox ? "18px" : "2px", 
+                width: "16px", height: "16px", backgroundColor: "white", 
+                borderRadius: "50%", transition: "0.3s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" 
+              }} />
+            </div>
+            Tampilkan Data Uji Coba (Sandbox)
+          </label>
           <Button variant="outline" onClick={handleDownloadTemplate} style={{ color: "#0874aa", borderColor: "#0874aa" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: "0.5rem", display: "inline-block", verticalAlign: "middle" }}>
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />

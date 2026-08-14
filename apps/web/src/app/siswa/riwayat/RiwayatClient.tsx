@@ -15,11 +15,11 @@ type HistoryItem = {
 const PHASE_ACCENT_COLORS = ['#60a5fa','#818cf8','#34d399','#fbbf24','#f87171','#a78bfa','#f472b6'];
 
 function formatDate(iso: string | null) {
-  if (!iso) return '–';
+  if (!iso) return '-';
   return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 function formatDateTime(iso: string | null) {
-  if (!iso) return '–';
+  if (!iso) return '-';
   const d = new Date(iso);
   return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) +
     ', ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });

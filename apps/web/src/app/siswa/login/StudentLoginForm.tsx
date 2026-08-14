@@ -88,7 +88,7 @@ export default function StudentLoginForm() {
       />
 
       <style>{`
-        .login-page { height: 100vh; overflow: hidden; display: flex; background: #f8f9ff; }
+        .login-page { height: 100dvh; overflow: hidden; display: flex; background: #f8f9ff; }
         .left-panel {
           width: 45%;
           height: 100%;
@@ -351,7 +351,7 @@ export default function StudentLoginForm() {
 
         /* Mobile */
         @media (max-width: 767px) {
-          .login-page { height: auto; min-height: 100vh; overflow: visible; flex-direction: column; }
+          .login-page { height: auto; min-height: 100dvh; overflow: visible; flex-direction: column; }
           .left-panel { width: 100%; min-height: auto; padding: 24px 20px; }
           .left-blob { width: 90%; padding-bottom: 90%; }
           .left-headline { font-size: 28px; }

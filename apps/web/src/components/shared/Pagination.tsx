@@ -88,7 +88,7 @@ export default function Pagination({
         >
           Menampilkan{" "}
           <strong style={{ color: "#102e50" }}>
-            {totalItems === 0 ? 0 : startIndex + 1}–{endIndex}
+            {totalItems === 0 ? 0 : startIndex + 1}-{endIndex}
           </strong>{" "}
           dari <strong style={{ color: "#102e50" }}>{totalItems}</strong> data
         </p>

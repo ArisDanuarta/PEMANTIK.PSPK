@@ -162,7 +162,7 @@ export default async function RootLayout({
   return (
     <html lang="id" className={`${lora.variable} ${inter.variable} ${notoSerif.variable} ${rubik.variable}`}>
       <head>
-        {/* Material Symbols Outlined – must be loaded via <link> because next/font doesn't support it */}
+        {/* Material Symbols Outlined - must be loaded via <link> because next/font doesn't support it */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

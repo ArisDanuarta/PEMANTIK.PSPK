@@ -371,7 +371,7 @@ export default function AksesUjianKomunitasClient({
                         textDecoration: expired ? "line-through" : "none",
                       }}
                     >
-                      {formatDate(acc.valid_from)} – {formatDate(acc.valid_until)}
+                      {formatDate(acc.valid_from)} - {formatDate(acc.valid_until)}
                     </td>
                     <td style={{ padding: "0.75rem 0.5rem" }}>
                       {expired ? (
@@ -597,7 +597,7 @@ export default function AksesUjianKomunitasClient({
                                   color: expired ? "#9ca3af" : "#4b5563",
                                 }}
                               >
-                                {formatDate(log.valid_from)} – {formatDate(log.valid_until)}
+                                {formatDate(log.valid_from)} - {formatDate(log.valid_until)}
                               </td>
                               <td style={{ padding: "0.75rem 1rem" }}>
                                 {expired ? (
@@ -678,7 +678,7 @@ export default function AksesUjianKomunitasClient({
                     {pr.target_school_ids?.length || 0} Sekolah
                   </td>
                   <td style={{ fontSize: "0.85rem", color: "#4b5563" }}>
-                    {formatDate(pr.valid_from)} – {formatDate(pr.valid_until)}
+                    {formatDate(pr.valid_from)} - {formatDate(pr.valid_until)}
                   </td>
                   <td>
                     {pr.status === "approved" ? (
