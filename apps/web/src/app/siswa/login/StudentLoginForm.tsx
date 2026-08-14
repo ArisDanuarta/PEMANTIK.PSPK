@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { loginStudent } from '../../actions/studentAuth';
+import PemantikLogoProgress from '../../../components/shared/Unitprogressbar';
 
 export default function StudentLoginForm() {
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isNavigatingAdmin, setIsNavigatingAdmin] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const router = useRouter();
   const maxLen = 6;
@@ -44,6 +48,18 @@ export default function StudentLoginForm() {
     }
   };
 
+  const handleAdminLoginClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    setIsNavigatingAdmin(true);
+    
+    // Tunggu animasi overlay masuk (500ms) + durasi fill logo (1200ms) + sedikit ekstra (500ms) = 2200ms
+    setTimeout(() => {
+      startTransition(() => {
+        router.push("/login");
+      });
+    }, 2200);
+  };
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
@@ -72,10 +88,10 @@ export default function StudentLoginForm() {
       />
 
       <style>{`
-        .login-page { min-height: 100vh; display: flex; background: #f8f9ff; }
+        .login-page { height: 100vh; overflow: hidden; display: flex; background: #f8f9ff; }
         .left-panel {
           width: 45%;
-          min-height: 100vh;
+          height: 100%;
           background: #102e50;
           position: relative;
           overflow: hidden;
@@ -306,17 +322,21 @@ export default function StudentLoginForm() {
         .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .submit-arrow { font-size: 18px; line-height: 1; }
 
-        .help-link {
-          display: block;
-          text-align: center;
-          margin-top: 14px;
+        .back-link {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          margin-top: 18px;
           font-family: var(--font-rubik), system-ui, sans-serif;
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 500;
-          color: #001934;
+          color: #43474e;
           text-decoration: none;
+          transition: color 0.2s;
         }
-        .help-link:hover { text-decoration: underline; }
+        .back-link:hover { color: #0b1c30; }
+        .back-link span { font-size: 18px; }
 
         .error-box {
           background: #ffdad6;
@@ -331,7 +351,7 @@ export default function StudentLoginForm() {
 
         /* Mobile */
         @media (max-width: 767px) {
-          .login-page { flex-direction: column; }
+          .login-page { height: auto; min-height: 100vh; overflow: visible; flex-direction: column; }
           .left-panel { width: 100%; min-height: auto; padding: 24px 20px; }
           .left-blob { width: 90%; padding-bottom: 90%; }
           .left-headline { font-size: 28px; }
@@ -340,7 +360,58 @@ export default function StudentLoginForm() {
           .right-panel { width: 100%; padding: 24px 16px 40px; }
           .form-card { max-width: 100%; border-radius: 20px; }
         }
+
+        /* -- Page Transition Animation -- */
+        .page-transition-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: #102e50;
+          z-index: 9999;
+          transform-origin: left center; /* Reverse fold direction */
+          transform: perspective(1500px) rotateY(-90deg); 
+          transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #ffffff;
+        }
+        .page-transition-overlay.active {
+          transform: perspective(1500px) rotateY(0deg);
+        }
+        .page-transition-inner {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          opacity: 0;
+          transition: opacity 0.3s ease 0.4s;
+        }
+        .page-transition-overlay.active .page-transition-inner {
+          opacity: 1;
+        }
       `}</style>
+
+      {/* -- Animasi Transisi Halaman (Efek Buka Buku) -- */}
+      <div className={`page-transition-overlay ${isNavigatingAdmin ? 'active' : ''}`}>
+         <div className="page-transition-inner">
+           {isNavigatingAdmin && (
+             <PemantikLogoProgress
+               value={100}
+               max={100}
+               size={140}
+               durationMs={1200}
+               delayMs={500}
+               showLabel={false}
+               emptyColor="rgba(255, 255, 255, 0.15)"
+             />
+           )}
+           <p style={{ fontWeight: 600, fontSize: "1.1rem", letterSpacing: "0.5px", marginTop: "1rem", fontFamily: "var(--font-rubik), system-ui, sans-serif" }}>
+             Menyiapkan Portal Utama...
+           </p>
+         </div>
+      </div>
 
       <div className="login-page">
         {/* ── Left Panel ── */}
@@ -439,7 +510,10 @@ export default function StudentLoginForm() {
                 )}
               </button>
 
-              <a href="#" className="help-link">Need help logging in?</a>
+              <Link href="/login" onClick={handleAdminLoginClick} className="back-link">
+                <span className="material-symbols-outlined">arrow_back</span>
+                Kembali ke Portal Utama
+              </Link>
             </form>
           </div>
         </div>

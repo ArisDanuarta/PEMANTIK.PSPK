@@ -42,9 +42,9 @@ export default function LoginPage() {
         .order("version_code", { ascending: false })
         .limit(1)
         .maybeSingle()
-        .then(({ data }) => {
+        .then(({ data }: { data: any }) => {
           if (data) {
-            let url = (data as any).download_url;
+            let url = data.download_url;
             // Convert Google Drive /view link to direct download link
             if (url && url.includes("drive.google.com/file/d/")) {
               const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -383,7 +383,8 @@ export default function LoginPage() {
       <style>{`
         /* -- Page Layout ------------------------------------------- */
         .login-page {
-          min-height: 100vh;
+          height: 100vh;
+          overflow: hidden;
           display: grid;
           grid-template-columns: 55% 45%;
         }
@@ -511,6 +512,7 @@ export default function LoginPage() {
         }
         .login-partners-track img {
           height: 70px;
+          width: auto;
           object-fit: contain;
           background: #ffffff;
           padding: 0px 3px;
@@ -752,7 +754,7 @@ export default function LoginPage() {
 
         /* -- Responsive ------------------------------------------- */
         @media (max-width: 900px) {
-          .login-page { grid-template-columns: 1fr; }
+          .login-page { height: auto; min-height: 100vh; overflow: visible; grid-template-columns: 1fr; }
           .login-left {
             padding: 2.5rem 2rem;
             min-height: 45vh;

@@ -4,11 +4,21 @@ import type { Database } from "./types";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
+let browserClient: any;
+
 /**
  * Browser-side Supabase client (singleton pattern).
  * Use this in Client Components and browser-side code.
  */
 export function createBrowserClient() {
+  // Hanya gunakan cache jika berjalan di browser (menghindari memory leak di server)
+  if (typeof window !== "undefined") {
+    if (!browserClient) {
+      browserClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
+    }
+    return browserClient;
+  }
+  
   return createClient<Database>(supabaseUrl, supabaseAnonKey);
 }
 
