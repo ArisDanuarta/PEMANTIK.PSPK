@@ -129,12 +129,25 @@ class SyncService {
         }
       }
 
-      // Hapus kategori lokal yang sudah tidak ada di Supabase (akses dicabut atau kedaluwarsa)
+      // Tandai kategori lokal yang sudah tidak ada di Supabase (akses dicabut) sebagai kedaluwarsa,
+      // agar tidak hilang dari riwayat (namanya tetap muncul).
       final allLocalCategories = await _db.categoryDao.getAllCategories();
       for (final localCat in allLocalCategories) {
         if (!activeCategoryIds.contains(localCat.id)) {
-          await _db.categoryDao.deleteCategory(localCat.id);
-          log('Kategori ${localCat.name} dihapus dari lokal karena akses tidak valid lagi.');
+          final now = DateTime.now();
+          if (localCat.validUntil == null || localCat.validUntil!.isAfter(now)) {
+             await _db.categoryDao.upsertCategory(
+                LocalCategoriesCompanion(
+                  id: Value(localCat.id),
+                  name: Value(localCat.name),
+                  subjectArea: Value(localCat.subjectArea),
+                  phase: Value(localCat.phase),
+                  validUntil: Value(now.subtract(const Duration(seconds: 1))),
+                  accessId: Value(localCat.accessId),
+                ),
+             );
+             log('Kategori ${localCat.name} ditandai kedaluwarsa dari lokal karena akses dicabut admin.');
+          }
         }
       }
 

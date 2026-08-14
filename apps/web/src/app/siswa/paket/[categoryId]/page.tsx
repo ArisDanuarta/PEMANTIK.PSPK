@@ -184,6 +184,14 @@ export default async function AssessmentLevelsPage({ params }: { params: Promise
         .lv-action-gagal:hover { background: #fcc9c5; }
         .lv-badge-gagal { background: #ba1a1a; }
 
+        /* ── KEDALUWARSA card ── */
+        .lv-card-kedaluwarsa { opacity: 0.8; border-color: #e3e3e3; background: #f8f9fa; }
+        .lv-card-kedaluwarsa .lv-circle { background: #e9ecef; color: #6c757d; }
+        .lv-card-kedaluwarsa .lv-level-name { color: #495057; }
+        .lv-card-kedaluwarsa .lv-level-sub { color: #6c757d; font-weight: 500; }
+        .lv-action-kedaluwarsa { background: #e9ecef; color: #6c757d; cursor: not-allowed; }
+        .lv-badge-kedaluwarsa { background: #6c757d; }
+
         /* ── AKTIF card ── */
         .lv-card-aktif {
           border: 2px solid #feba48;
@@ -332,6 +340,19 @@ export default async function AssessmentLevelsPage({ params }: { params: Promise
                 </div>
               );
             }
+
+            /* ── KEDALUWARSA ── */
+            if (level.status === 'Kedaluwarsa') return (
+              <div key={level.id} className="lv-card lv-card-kedaluwarsa">
+                <div className="lv-card-badge lv-badge-kedaluwarsa">
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fff' }}>timer_off</span>
+                </div>
+                <div className="lv-circle">{num}</div>
+                <div className="lv-level-name">Level {num}</div>
+                <div className="lv-level-sub">Masa asesmen telah berakhir</div>
+                <button disabled className="lv-action lv-action-kedaluwarsa">Kedaluwarsa</button>
+              </div>
+            );
 
             /* ── TERKUNCI ── */
             return (

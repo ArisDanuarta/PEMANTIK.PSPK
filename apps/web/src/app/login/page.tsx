@@ -83,6 +83,7 @@ export default function LoginPage() {
             width={240}
             height={93}
             priority
+            sizes="(max-width: 768px) 180px, 240px"
             className="login-logo-img"
           />
         </div>
@@ -204,10 +205,10 @@ export default function LoginPage() {
             <div className="login-partners-track">
               {[...Array(2)].map((_, idx) => (
                 <React.Fragment key={idx}>
-                  <img src="/images/Klien & Partner Pemantik/Logo-Inspirasi.png" alt="Inspirasi" />
-                  <img src="/images/Klien & Partner Pemantik/Logo-Sekolahmu.png" alt="Sekolahmu" />
-                  <img src="/images/Klien & Partner Pemantik/YSS.png" alt="YSS" />
-                  <img src="/images/Klien & Partner Pemantik/logoYGB.png" alt="YGB" />
+                  <Image src="/images/Klien & Partner Pemantik/Logo-Inspirasi.png" alt="Inspirasi" width={150} height={70} />
+                  <Image src="/images/Klien & Partner Pemantik/Logo-Sekolahmu.png" alt="Sekolahmu" width={150} height={70} />
+                  <Image src="/images/Klien & Partner Pemantik/YSS.png" alt="YSS" width={150} height={70} />
+                  <Image src="/images/Klien & Partner Pemantik/logoYGB.png" alt="YGB" width={150} height={70} />
                 </React.Fragment>
               ))}
             </div>

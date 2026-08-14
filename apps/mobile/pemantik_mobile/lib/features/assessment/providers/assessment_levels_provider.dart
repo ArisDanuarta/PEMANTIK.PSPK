@@ -13,6 +13,7 @@ class LevelInfo {
   final int highestScore;
   final int totalQuestions;
   final bool isForcedExit;
+  final bool isExpired;
 
   LevelInfo({
     required this.level,
@@ -22,6 +23,7 @@ class LevelInfo {
     required this.highestScore,
     required this.totalQuestions,
     required this.isForcedExit,
+    this.isExpired = false,
   });
 }
 
@@ -63,6 +65,7 @@ final assessmentLevelsProvider = StreamProvider.family<List<LevelInfo>, String>(
 
     final category = await db.categoryDao.getCategoryById(categoryId);
     final String currentPhase = category?.phase ?? 'Tahap 1';
+    final bool isExpired = category?.validUntil != null ? DateTime.now().isAfter(category!.validUntil!) : false;
 
     final result = <LevelInfo>[];
     bool nextLevelUnlocked =
@@ -131,6 +134,7 @@ final assessmentLevelsProvider = StreamProvider.family<List<LevelInfo>, String>(
           highestScore: highestCorrectAnswers,
           totalQuestions: questions.length,
           isForcedExit: isForcedExit,
+          isExpired: isExpired,
         ),
       );
 

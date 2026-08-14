@@ -17,9 +17,9 @@ export async function getStudentDashboardData(student: any) {
 
   const { data: accessData, error: accessErr } = await supabase
     .from('assessment_access')
-    .select(`id, valid_until, phase, category_id, question_categories (id, name, subject_area)`)
+    .select(`id, valid_until, phase, is_active, category_id, question_categories (id, name, subject_area)`)
     .in('target_id', targetIds)
-    .eq('is_active', true);
+    .order('created_at', { ascending: false });
 
   if (accessErr || !accessData || accessData.length === 0) {
     return { activePackages: [], historyPackages: [], updatedStudentName };
@@ -48,7 +48,7 @@ export async function getStudentDashboardData(student: any) {
 
   const { data: sessionsData } = await supabase
     .from('assessment_sessions')
-    .select('category_id, level_id, status')
+    .select('category_id, level_id, status, phase')
     .eq('student_id', student.id)
     .in('category_id', categoryIds);
 
@@ -56,8 +56,14 @@ export async function getStudentDashboardData(student: any) {
   if (sessionsData) {
     for (const session of sessionsData) {
       const catId = session.category_id;
-      if (!completedCounts[catId]) completedCounts[catId] = 0;
-      if (session.status === 'completed') completedCounts[catId]++;
+      const latestAccess = uniqueCategories.get(catId);
+      const sessionPhase = session.phase || 'Tahap 1';
+      const accessPhase = latestAccess?.phase || 'Tahap 1';
+      
+      if (sessionPhase === accessPhase) {
+        if (!completedCounts[catId]) completedCounts[catId] = 0;
+        if (session.status === 'completed') completedCounts[catId]++;
+      }
     }
   }
 
@@ -75,8 +81,9 @@ export async function getStudentDashboardData(student: any) {
     if (completed > 0) statusLabel = 'Aktif';
     if (total > 0 && completed >= total) statusLabel = 'Selesai';
     const isExpired = access.valid_until ? new Date(access.valid_until) < now : false;
+    const isAccessValid = access.is_active && !isExpired;
     const pkg = { id: catId, title: cat.name, subject: cat.subject_area, validUntil: access.valid_until, levelsTotal: total, levelsCompleted: completed, status: statusLabel };
-    if (statusLabel === 'Selesai' || isExpired) historyPackages.push(pkg);
+    if (statusLabel === 'Selesai' || !isAccessValid) historyPackages.push(pkg);
     else activePackages.push(pkg);
   }
 
@@ -117,15 +124,17 @@ export async function getStudentLevelsData(studentId: string, categoryId: string
 
   const { data: accessData } = await supabase
     .from('assessment_access')
-    .select('phase')
+    .select('phase, is_active, valid_until')
     .in('target_id', targetIds)
     .eq('category_id', categoryId)
-    .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(1)
     .single();
 
   const activePhase = accessData?.phase || 'Tahap 1';
+  const now = new Date();
+  const isExpired = accessData?.valid_until ? new Date(accessData.valid_until) < now : false;
+  const isAccessValid = accessData ? (accessData.is_active && !isExpired) : false;
 
   const { data: sessionsData } = await supabase
     .from('assessment_sessions')
@@ -153,11 +162,14 @@ export async function getStudentLevelsData(studentId: string, categoryId: string
         if (passed) { status = 'Selesai'; nextUnlocked = true; }
         else { status = 'Perlu Diulang'; nextUnlocked = false; hasFailed = true; }
       } else {
-        status = 'Aktif';
+        status = isAccessValid ? 'Aktif' : 'Kedaluwarsa';
         nextUnlocked = false;
       }
     } else {
-      if (nextUnlocked && !hasFailed) { status = 'Aktif'; nextUnlocked = false; }
+      if (nextUnlocked && !hasFailed) { 
+        status = isAccessValid ? 'Aktif' : 'Kedaluwarsa'; 
+        nextUnlocked = false; 
+      }
       else { status = 'Terkunci'; }
     }
 

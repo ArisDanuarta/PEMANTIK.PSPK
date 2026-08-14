@@ -283,9 +283,15 @@ class _LevelRow extends ConsumerWidget {
       indicator = _buildIndicator(levelNumStr, AppColors.primary, softMaroon, Colors.white);
       card = _buildFailedCard(context, ref, title, level.id);
     } else if (!isLocked) {
-      // Active
-      indicator = _buildActiveIndicator(levelNumStr, AppColors.primary, Colors.white, gold);
-      card = _buildActiveCard(context, title, level, info.totalQuestions);
+      if (info.isExpired) {
+        // Expired/Kedaluwarsa
+        indicator = _buildIndicator(levelNumStr, const Color(0xFF6C757D), const Color(0xFFF8F9FA), const Color(0xFFE3E3E3));
+        card = _buildExpiredCard(title);
+      } else {
+        // Active
+        indicator = _buildActiveIndicator(levelNumStr, AppColors.primary, Colors.white, gold);
+        card = _buildActiveCard(context, title, level, info.totalQuestions);
+      }
     } else {
       // Locked
       indicator = _buildIndicator(levelNumStr, const Color(0xFF74777F), AppColors.surfaceContainer, Colors.white);
@@ -501,6 +507,52 @@ class _LevelRow extends ConsumerWidget {
             child: Text(
               'Cek Riwayat',
               style: AppTextStyles.labelLarge.copyWith(color: AppColors.primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpiredCard(String title) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE3E3E3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: AppTextStyles.heading2.copyWith(color: const Color(0xFF495057)),
+              ),
+              const Icon(Icons.timer_off, color: Color(0xFF6C757D), size: 28),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Masa asesmen telah berakhir',
+            style: AppTextStyles.bodyMedium.copyWith(color: const Color(0xFF6C757D)),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: null,
+            style: ElevatedButton.styleFrom(
+              disabledBackgroundColor: const Color(0xFFE9ECEF),
+              disabledForegroundColor: const Color(0xFF6C757D),
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
+            ),
+            child: Text(
+              'Kedaluwarsa',
+              style: AppTextStyles.labelLarge.copyWith(color: const Color(0xFF6C757D)),
             ),
           ),
         ],
