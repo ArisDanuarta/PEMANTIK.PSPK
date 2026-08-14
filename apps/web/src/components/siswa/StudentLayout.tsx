@@ -17,6 +17,11 @@ export default function StudentLayout({
   const pathname = usePathname();
   const router = useRouter();
   const initial = studentName.charAt(0).toUpperCase();
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [pathname]);
 
   const handleLogout = async () => {
     await logoutStudent();
@@ -74,17 +79,27 @@ export default function StudentLayout({
           font-weight: 700; font-size: 13px; color: #ffffff;
         }
 
+        /* ── Sidebar Overlay ── */
+        .sl-sidebar-overlay {
+          display: none;
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 55;
+        }
+
         /* ── Sidebar ── */
         .sl-sidebar {
-          display: none;
+          display: flex;
           flex-direction: column;
           position: fixed;
           top: 0; left: 0;
           width: 240px; height: 100vh;
           background: #001934;
-          z-index: 40;
+          z-index: 60;
           box-shadow: 4px 0 20px rgba(0,0,0,0.15);
           overflow-y: auto;
+          transition: transform 0.3s ease;
         }
         .sl-sidebar-top {
           padding: 28px 24px 20px;
@@ -162,7 +177,7 @@ export default function StudentLayout({
 
         @media (min-width: 768px) {
           .sl-topbar { display: none !important; }
-          .sl-sidebar { display: flex; }
+          .sl-sidebar { transform: translateX(0) !important; }
           .sl-body { padding-top: 0; }
           .sl-main { margin-left: 240px; }
           .sl-root .sl-body { padding-top: 0; }
@@ -170,13 +185,31 @@ export default function StudentLayout({
         @media (max-width: 767px) {
           .sl-topbar { display: flex; }
           .sl-body { padding-top: 64px; }
+          .sl-sidebar {
+            transform: translateX(-100%);
+          }
+          .sl-sidebar.mobile-open {
+            transform: translateX(0);
+          }
+          .sl-sidebar-overlay.mobile-open {
+            display: block;
+          }
         }
       `}</style>
 
       <div className="sl-root">
         {/* TopBar mobile */}
         <header className="sl-topbar">
-          <span className="sl-topbar-brand">Pemantik</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button 
+              className="sl-icon-btn" 
+              aria-label="Menu"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>menu</span>
+            </button>
+            <span className="sl-topbar-brand">Pemantik</span>
+          </div>
           <div className="sl-topbar-actions">
             <button className="sl-icon-btn" aria-label="Sync">
               <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>sync</span>
@@ -188,9 +221,15 @@ export default function StudentLayout({
           </div>
         </header>
 
+        {/* Overlay */}
+        <div 
+          className={`sl-sidebar-overlay ${isSidebarOpen ? 'mobile-open' : ''}`}
+          onClick={() => setIsSidebarOpen(false)}
+        />
+
         <div className="sl-body">
           {/* Sidebar */}
-          <nav className="sl-sidebar">
+          <nav className={`sl-sidebar ${isSidebarOpen ? 'mobile-open' : ''}`}>
             <div className="sl-sidebar-top">
               <div className="sl-sidebar-logo">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
