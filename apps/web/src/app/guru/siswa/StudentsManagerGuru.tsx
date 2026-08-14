@@ -166,15 +166,34 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
                     <td>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                         {s.active_sessions && s.active_sessions.length > 0 ? (
-                          s.active_sessions.map((sess: any) => (
+                          Object.values(
+                            s.active_sessions.reduce((acc: any, sess: any) => {
+                              const subject = sess.question_categories?.subject_area || "unknown";
+                              if (!acc[subject]) {
+                                acc[subject] = {
+                                  subject_area: subject,
+                                  maxLevel: sess.current_level?.level_number || 0,
+                                  totalScore: sess.score || 0,
+                                  status: sess.status,
+                                };
+                              } else {
+                                acc[subject].maxLevel = Math.max(acc[subject].maxLevel, sess.current_level?.level_number || 0);
+                                acc[subject].totalScore += sess.score || 0;
+                                if (sess.status === "in_progress") {
+                                  acc[subject].status = "in_progress";
+                                }
+                              }
+                              return acc;
+                            }, {})
+                          ).map((grp: any, idx: number) => (
                             <div 
-                              key={sess.id} 
-                              className={`badge ${sess.status === "completed" ? "badge-success" : "badge-warning"}`}
+                              key={idx} 
+                              className={`badge ${grp.status === "completed" ? "badge-success" : "badge-warning"}`}
                               style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-start", padding: "0.3rem 0.5rem" }}
                             >
-                              <span>{sess.question_categories?.subject_area === 'literasi' ? '📖 Literasi' : '🔢 Numerasi'}</span>
+                              <span>{grp.subject_area === 'literasi' ? '📖 Literasi' : grp.subject_area === 'numerasi' ? '🔢 Numerasi' : 'Lainnya'}</span>
                               <span style={{ fontSize: "0.7rem", marginTop: "0.15rem", opacity: 0.9 }}>
-                                Level Terakhir: {sess.current_level?.level_number || 0}
+                                Level Terakhir: {grp.maxLevel} | Skor: {Math.round(grp.totalScore)}
                               </span>
                             </div>
                           ))

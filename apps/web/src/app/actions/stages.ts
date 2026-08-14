@@ -299,22 +299,29 @@ export async function getActiveStagesForCommunity(includeCompleted = true): Prom
  * Dipanggil setiap kali dashboard Komunitas di-render (Server Component).
  * Aman dijalankan berulang karena hanya UPDATE stages yang memenuhi syarat.
  */
-export async function checkAndAutoTransitionStages(communityId: string): Promise<void> {
+export async function checkAndAutoTransitionStages(targetId: string, targetType: "community" | "school" = "community"): Promise<void> {
   try {
     const supabase = await createServerClient();
 
     // Cari stages yang masih di 'proses_asesmen' dan phase_request_id-nya
     // punya valid_until sudah terlewat
-    const { data: activeStages } = await (supabase as any)
+    let query = (supabase as any)
       .from("school_assessment_stages")
       .select("id, phase_request_id, school_id, phase, community_id")
-      .eq("community_id", communityId)
       .eq("current_stage", "proses_asesmen")
       .not("phase_request_id", "is", null);
+      
+    if (targetType === "community") {
+      query = query.eq("community_id", targetId);
+    } else {
+      query = query.eq("school_id", targetId);
+    }
+
+    const { data: activeStages } = await query;
 
     if (!activeStages || activeStages.length === 0) return;
 
-    const requestIds = (activeStages as Array<{ id: string; phase_request_id: string | null; school_id: string; phase: string; community_id: string }>)
+    const requestIds = (activeStages as Array<{ id: string; phase_request_id: string | null; school_id: string; phase: string; community_id: string | null }>)
       .map((s) => s.phase_request_id)
       .filter(Boolean) as string[];
 
@@ -328,7 +335,7 @@ export async function checkAndAutoTransitionStages(communityId: string): Promise
     if (!expiredRequests || expiredRequests.length === 0) return;
 
     const expiredRequestIds = new Set((expiredRequests as Array<{ id: string }>).map((r) => r.id));
-    const stagesToTransition = (activeStages as Array<{ id: string; phase_request_id: string | null; school_id: string; phase: string; community_id: string }>)
+    const stagesToTransition = (activeStages as Array<{ id: string; phase_request_id: string | null; school_id: string; phase: string; community_id: string | null }>)
       .filter((s) => s.phase_request_id && expiredRequestIds.has(s.phase_request_id));
 
     if (stagesToTransition.length === 0) return;
@@ -337,16 +344,21 @@ export async function checkAndAutoTransitionStages(communityId: string): Promise
     const phasesToCheck = new Set<string>();
     for (const stage of stagesToTransition) {
       await deactivateAssessmentAccessAdmin("school", stage.school_id, stage.phase);
-      phasesToCheck.add(stage.phase);
+      if (stage.community_id) {
+        phasesToCheck.add(stage.phase);
+      }
     }
 
-    // Matikan juga akses komunitas jika semua sekolah di fase tsb sudah ditutup
-    for (const phase of Array.from(phasesToCheck)) {
-      const remainingInPhase = (activeStages as Array<{ id: string; phase_request_id: string | null; school_id: string; phase: string; community_id: string }>)
-        .filter(s => s.phase === phase && (!s.phase_request_id || !expiredRequestIds.has(s.phase_request_id)));
-      
-      if (remainingInPhase.length === 0) {
-        await deactivateAssessmentAccessAdmin("community", communityId, phase);
+    // Matikan juga akses komunitas jika semua sekolah di fase tsb sudah ditutup (hanya jika targetType = community atau ada community_id)
+    const communityIdForCheck = targetType === "community" ? targetId : (stagesToTransition[0]?.community_id || null);
+    if (communityIdForCheck) {
+      for (const phase of Array.from(phasesToCheck)) {
+        const remainingInPhase = (activeStages as Array<{ id: string; phase_request_id: string | null; school_id: string; phase: string; community_id: string | null }>)
+          .filter(s => s.phase === phase && (!s.phase_request_id || !expiredRequestIds.has(s.phase_request_id)));
+        
+        if (remainingInPhase.length === 0) {
+          await deactivateAssessmentAccessAdmin("community", communityIdForCheck, phase);
+        }
       }
     }
 
@@ -361,9 +373,7 @@ export async function checkAndAutoTransitionStages(communityId: string): Promise
       })
       .in("id", stageIdsToTransition);
 
-    console.log(`[AutoTransition] ${stageIdsToTransition.length} stage(s) diubah ke 'intervensi'.`);
-
-    console.log(`[AutoTransition] ${stagesToTransition.length} stage(s) diubah ke 'intervensi'.`);
+    console.log(`[AutoTransition] ${stageIdsToTransition.length} stage(s) diubah ke 'intervensi' (target: ${targetType} ${targetId}).`);
   } catch (err: any) {
     // Gagal silent - tidak boleh crash dashboard
     console.error("[checkAndAutoTransitionStages]", err);

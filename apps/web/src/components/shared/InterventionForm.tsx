@@ -45,11 +45,20 @@ export default function InterventionForm({
   }, []);
 
   const handleAddTag = (tagName: string) => {
-    const trimmed = tagName.trim();
-    if (!trimmed) return;
-    if (!selectedTags.some((t) => t.toLowerCase() === trimmed.toLowerCase())) {
-      setSelectedTags([...selectedTags, trimmed]);
-    }
+    const tagsToAdd = tagName.split(",").map(t => t.trim()).filter(Boolean);
+    if (tagsToAdd.length === 0) return;
+
+    setSelectedTags(prev => {
+      const newSelected = [...prev];
+      let changed = false;
+      tagsToAdd.forEach(t => {
+        if (!newSelected.some((existing) => existing.toLowerCase() === t.toLowerCase())) {
+          newSelected.push(t);
+          changed = true;
+        }
+      });
+      return changed ? newSelected : prev;
+    });
     setTagInput("");
   };
 
@@ -195,7 +204,7 @@ export default function InterventionForm({
           🏷️ Tag &amp; Kata Kunci Intervensi <span style={{ color: "#ef4444" }}>*</span>
         </label>
         <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "0 0 0.5rem 0" }}>
-          Ketik kata kunci lalu tekan <kbd style={{ background: "#e2e8f0", padding: "0.1rem 0.3rem", borderRadius: 4 }}>Enter</kbd> atau pilih dari daftar rekomendasi.
+          Ketik kata kunci lalu tekan <kbd style={{ background: "#e2e8f0", padding: "0.1rem 0.3rem", borderRadius: 4 }}>Enter</kbd> atau <kbd style={{ background: "#e2e8f0", padding: "0.1rem 0.3rem", borderRadius: 4 }}>Koma</kbd>. Anda juga bisa menyalin (paste) banyak tag sekaligus.
         </p>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "0.5rem" }}>

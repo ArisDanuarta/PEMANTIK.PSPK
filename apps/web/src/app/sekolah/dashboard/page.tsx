@@ -8,7 +8,7 @@ import StageTimeline from "@/components/shared/StageTimeline";
 import SchoolInteractiveTimeline from "@/components/shared/SchoolInteractiveTimeline";
 import DemographicsSection from "@/components/shared/DemographicsSection";
 import PhaseComparisonChart from "@/components/shared/PhaseComparisonChart";
-import { getStagesForSchool, type SchoolAssessmentStageRow } from "@/app/actions/stages";
+import { getStagesForSchool, checkAndAutoTransitionStages, type SchoolAssessmentStageRow } from "@/app/actions/stages";
 import AchievementChartsSection from "@/components/shared/AchievementChartsSection";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +62,9 @@ export default async function SekolahDashboard() {
     } else if (school?.communities) {
       communityName = (school.communities as any)?.name ?? null;
     }
+
+    // Auto-transition tahap asesmen jika waktunya kadaluarsa
+    await checkAndAutoTransitionStages(schoolId, "school");
 
     const stagesRes = await getStagesForSchool(schoolId);
     if (stagesRes.success && stagesRes.data) {

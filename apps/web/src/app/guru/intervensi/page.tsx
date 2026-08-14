@@ -120,6 +120,7 @@ export default async function GuruIntervensiPage() {
         schoolName={schoolName}
         activeStages={activeStages}
         initialInterventions={interventions}
+        currentUserId={teacherId}
       />
     </div>
   );

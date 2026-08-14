@@ -10,6 +10,7 @@ import {
   advanceStageToNewPhaseAction,
   type SchoolAssessmentStageRow
 } from "@/app/actions/stages";
+import { getInterventionProgress } from "@/app/actions/interventions";
 import { StatGrid } from "@/components/ui/responsive/StatGrid";
 
 interface SchoolInteractiveTimelineProps {
@@ -96,6 +97,17 @@ export default function SchoolInteractiveTimeline({
 
   const [selectedStepIndex, setSelectedStepIndex] = useState<number>(() => computeInitialStepIndex(currentStageKey));
   const [isPending, startTransition] = useTransition();
+  const [interventionProgress, setInterventionProgress] = useState<{ submitted: number; required: number } | null>(null);
+
+  React.useEffect(() => {
+    if (currentStageRow && currentStageKey === "intervensi") {
+      getInterventionProgress(currentStageRow.id, schoolId, isIndependent).then(res => {
+        if (res.success) {
+          setInterventionProgress({ submitted: res.submittedCount || 0, required: res.requiredCount || 0 });
+        }
+      });
+    }
+  }, [currentStageRow, currentStageKey, schoolId, isIndependent]);
 
   React.useEffect(() => {
     setSelectedStepIndex(computeInitialStepIndex(currentStageKey));
@@ -488,16 +500,32 @@ export default function SchoolInteractiveTimeline({
                 onClick={() => router.push("/sekolah/intervensi")}
                 style={{ backgroundColor: "#df632f", color: "white", padding: "0.65rem 1.4rem", fontWeight: 700 }}
               >
-                📝 Buka Form Intervensi & Laporan →
+                Buka Form Intervensi & Laporan →
               </Button>
-              {currentStageKey === "intervensi" && (
-                <Button
-                  onClick={handleMarkIntervensiSelesai}
-                  disabled={isPending}
-                  style={{ backgroundColor: "#10b981", color: "white", padding: "0.65rem 1.4rem", fontWeight: 600 }}
-                >
-                  {isPending ? "Memproses..." : "✅ Tandai Form Intervensi Selesai"}
-                </Button>
+              {currentStageKey === "intervensi" && interventionProgress && (
+                <div style={{ marginTop: "1rem", padding: "0.75rem", backgroundColor: "#fef3c7", borderLeft: "4px solid #d97706", borderRadius: "0 0.5rem 0.5rem 0" }}>
+                  <div style={{ fontSize: "0.85rem", color: "#92400e", fontWeight: 600, marginBottom: "0.25rem" }}>
+                    Progres Pengisian Form Intervensi:
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <div style={{ flex: 1, height: "8px", backgroundColor: "#fde68a", borderRadius: "4px", overflow: "hidden" }}>
+                      <div 
+                        style={{ 
+                          height: "100%", 
+                          backgroundColor: "#d97706", 
+                          width: `${Math.min(100, (interventionProgress.submitted / interventionProgress.required) * 100)}%`,
+                          transition: "width 0.5s ease"
+                        }} 
+                      />
+                    </div>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#d97706" }}>
+                      {interventionProgress.submitted} / {interventionProgress.required}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#92400e", marginTop: "0.25rem", opacity: 0.9 }}>
+                    Tahap ini akan otomatis selesai jika semua {interventionProgress.required} pihak wajib (Semua Guru Aktif & Admin) telah mengisi laporan.
+                  </div>
+                </div>
               )}
             </>
           )}

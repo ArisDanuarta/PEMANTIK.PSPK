@@ -66,7 +66,7 @@ export default function IntervensiSekolahClient({
             {activeStages.map((st) => {
               const isSubmittedByUs = initialInterventions.some((i: any) => 
                 i.stage_id === st.id && 
-                (i.users?.role === 'school' || i.users?.role === 'teacher')
+                (i.users?.role === 'school' || i.users?.role === 'super_admin')
               );
               
               const hasCommunity = !!st.community_id;
@@ -142,7 +142,11 @@ export default function IntervensiSekolahClient({
                     <td>
                       <div style={{ fontWeight: 700, color: "#102e50" }}>{item.phase}</div>
                       <div style={{ fontSize: "0.78rem", color: "#6b7280", marginTop: "0.15rem" }}>
-                        Oleh: {item.communities?.name || "Admin / Sekolah"}
+                        Oleh: {(item as any).users?.role === "teacher" 
+                          ? `Guru (${(item as any).users?.full_name || "Tanpa Nama"})` 
+                          : (item as any).users?.role === "community"
+                            ? `Komunitas (${item.communities?.name || "Tanpa Nama"})`
+                            : "Admin Sekolah"}
                       </div>
                     </td>
                     <td style={{ maxWidth: "220px" }}>

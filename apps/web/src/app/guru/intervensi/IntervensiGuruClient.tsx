@@ -8,8 +8,8 @@ interface IntervensiGuruClientProps {
   initialInterventions: any[];
   schoolId: string;
   schoolName: string;
-  /** Stages yang sedang di fase 'intervensi' - bisa lebih dari satu jika ada multi-fase */
   activeStages?: any[];
+  currentUserId: string;
 }
 
 function formatDate(iso: string) {
@@ -25,6 +25,7 @@ export default function IntervensiGuruClient({
   schoolId,
   schoolName,
   activeStages = [],
+  currentUserId,
 }: IntervensiGuruClientProps) {
   const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
   const [selectedStageForForm, setSelectedStageForForm] = useState<any | null>(null);
@@ -54,7 +55,7 @@ export default function IntervensiGuruClient({
         )}
       </div>
 
-      {/* Daftar Tahap Intervensi Aktif - sama dengan pola SekolahClient */}
+      {/* Daftar Tahap Intervensi Aktif */}
       {activeStages.length > 0 && (
         <div style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a", padding: "1.25rem 1.5rem", borderRadius: "1rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
@@ -69,7 +70,7 @@ export default function IntervensiGuruClient({
             {activeStages.map((st) => {
               const isSubmittedByUs = initialInterventions.some((i: any) =>
                 i.stage_id === st.id &&
-                (i.users?.role === "school" || i.users?.role === "teacher")
+                i.submitted_by === currentUserId
               );
               const hasCommunity = !!st.community_id;
 
@@ -144,7 +145,11 @@ export default function IntervensiGuruClient({
                     <td>
                       <div style={{ fontWeight: 700, color: "#102e50" }}>{item.phase}</div>
                       <div style={{ fontSize: "0.78rem", color: "#6b7280", marginTop: "0.15rem" }}>
-                        Oleh: {(item as any).users?.role === "teacher" ? "Guru" : item.communities?.name || "Admin Sekolah"}
+                        Oleh: {(item as any).users?.role === "teacher" 
+                          ? `Guru (${(item as any).users?.full_name || "Tanpa Nama"})` 
+                          : (item as any).users?.role === "community"
+                            ? `Komunitas (${item.communities?.name || "Tanpa Nama"})`
+                            : "Admin Sekolah"}
                       </div>
                     </td>
                     <td style={{ maxWidth: "220px" }}>

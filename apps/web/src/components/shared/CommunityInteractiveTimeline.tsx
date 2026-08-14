@@ -3,6 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Badge, useToast, useConfirm } from "@pemantik/ui";
+import { getInterventionProgress } from "@/app/actions/interventions";
 import {
   markPersiapanSelesaiAction,
   bulkMarkPersiapanSelesaiAction,
@@ -115,6 +116,32 @@ export default function CommunityInteractiveTimeline({
 
   const [selectedStepIndex, setSelectedStepIndex] = useState<number>(() => computeInitialStepIndex(uniqueStages));
   const [isPending, startTransition] = useTransition();
+
+  const [progressMap, setProgressMap] = useState<Record<string, { submitted: number; required: number }>>({});
+
+  React.useEffect(() => {
+    if (selectedStepIndex === 3) {
+      const fetchProgress = async () => {
+        const promises = schoolsSummary
+          .filter(sc => sc.current_stage === "intervensi" && sc.stageId)
+          .map(async sc => {
+            const res = await getInterventionProgress(sc.stageId!, sc.school_id, false);
+            if (res.success && res.submittedCount !== undefined && res.requiredCount !== undefined) {
+               return { id: sc.school_id, progress: { submitted: res.submittedCount, required: res.requiredCount }};
+            }
+            return null;
+          });
+          
+        const results = await Promise.all(promises);
+        const newMap: Record<string, { submitted: number; required: number }> = {};
+        results.forEach(r => {
+          if (r) newMap[r.id] = r.progress;
+        });
+        setProgressMap(newMap);
+      };
+      fetchProgress();
+    }
+  }, [selectedStepIndex, schoolsSummary]);
 
   React.useEffect(() => {
     if (uniqueStages.length > 0) {
@@ -656,19 +683,36 @@ export default function CommunityInteractiveTimeline({
                           </span>
                         </div>
                       </div>
+                      
+                      {isInIntervensiStage && progressMap[sc.school_id] && (
+                        <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px dashed #cbd5e1" }}>
+                          <div style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600, marginBottom: "0.25rem" }}>
+                            Total Progres Keseluruhan (Sekolah, Komunitas & Guru):
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            <div style={{ flex: 1, height: "6px", backgroundColor: "#e2e8f0", borderRadius: "3px", overflow: "hidden" }}>
+                              <div 
+                                style={{ 
+                                  height: "100%", 
+                                  backgroundColor: "#d97706", 
+                                  width: `${Math.min(100, (progressMap[sc.school_id].submitted / progressMap[sc.school_id].required) * 100)}%`,
+                                  transition: "width 0.5s ease"
+                                }} 
+                              />
+                            </div>
+                            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#d97706" }}>
+                              {progressMap[sc.school_id].submitted} / {progressMap[sc.school_id].required}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Tombol Kendali: Isi Form & Lanjut ke Tahap Selesai (Hanya Komunitas yang punya kendali Lanjut & Selesai) */}
+                    {/* Tombol Kendali: Isi Form (Lanjut ke Tahap Selesai terjadi otomatis) */}
                     <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", borderTop: "1px solid #f1f5f9", paddingTop: "0.65rem", flexWrap: "wrap" }}>
                       <Button size="sm" variant="outline" style={{ borderColor: "#df632f", color: "#df632f", fontSize: "0.78rem" }} onClick={() => router.push(`/komunitas/intervensi?schoolId=${sc.school_id}`)}>
                         💡 Isi / Lihat Form
                       </Button>
-
-                      {isInIntervensiStage && sc.stageId && (
-                        <Button size="sm" style={{ backgroundColor: "#2d9e5f", color: "white", fontSize: "0.78rem" }} onClick={() => handleMarkIntervensiSelesai(sc.stageId!)} disabled={isPending}>
-                          ✨ Selesai &amp; Lanjut Tahap 5
-                        </Button>
-                      )}
                     </div>
                   </div>
                 );

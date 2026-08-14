@@ -694,6 +694,72 @@ export async function getSchoolInterventionGraph(schoolId: string): Promise<{
   }
 }
 
+/**
+ * Cek progress pengisian intervensi (berapa yang sudah mengisi / berapa yang wajib).
+ */
+export async function getInterventionProgress(stageId: string, schoolId: string, isIndependentSchool: boolean): Promise<{
+  success: boolean;
+  submittedCount?: number;
+  requiredCount?: number;
+  error?: string;
+}> {
+  try {
+    const supabase = await createServerClient();
+
+    // 1. Ambil semua intervensi untuk stage ini
+    const { data: allInterventions, error: allIntErr } = await (supabase as any)
+      .from("interventions")
+      .select("id, submitted_by, users(id, role)")
+      .eq("stage_id", stageId);
+
+    if (allIntErr) throw allIntErr;
+
+    // 2. Ambil semua guru aktif di sekolah ini
+    const { data: activeTeachers } = await (supabase as any)
+      .from("users")
+      .select("id")
+      .eq("school_id", schoolId)
+      .eq("role", "teacher")
+      .eq("is_active", true);
+
+    const requiredTeacherIds = (activeTeachers || []).map((t: any) => t.id);
+    
+    let requiredCount = requiredTeacherIds.length;
+    let submittedCount = 0;
+
+    const hasCommunitySubmission = (allInterventions || []).some(
+      (i: any) => i.users?.role === "community" || i.users?.role === "super_admin"
+    );
+    const hasSchoolSubmission = (allInterventions || []).some(
+      (i: any) => i.users?.role === "school" || i.users?.role === "super_admin"
+    );
+
+    const submittedTeacherIds = (allInterventions || [])
+      .filter((i: any) => i.users?.role === "teacher")
+      .map((i: any) => i.submitted_by);
+      
+    // Hitung guru yang sudah submit (distinct)
+    const uniqueSubmittedTeachers = new Set(submittedTeacherIds);
+    submittedCount += uniqueSubmittedTeachers.size;
+
+    // Tambahkan mandatory admin submissions ke required & submitted
+    if (isIndependentSchool) {
+      requiredCount += 1; // Admin sekolah
+      if (hasSchoolSubmission) submittedCount += 1;
+    } else {
+      requiredCount += 2; // Admin sekolah + admin komunitas
+      if (hasSchoolSubmission) submittedCount += 1;
+      if (hasCommunitySubmission) submittedCount += 1;
+    }
+
+    return { success: true, submittedCount, requiredCount };
+  } catch (err: any) {
+    console.error("[getInterventionProgress]", err);
+    return { success: false, error: err.message };
+  }
+}
+
+
 // ─── Types untuk Cluster Overview (OECD-style) ─────────────────────────────
 
 export interface TagCluster {

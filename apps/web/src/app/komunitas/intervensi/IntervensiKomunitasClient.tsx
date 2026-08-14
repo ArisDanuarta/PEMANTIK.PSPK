@@ -144,7 +144,16 @@ export default function IntervensiKomunitasClient({
                     <tr key={item.id}>
                       <td>
                         <div style={{ fontWeight: 700, color: "#102e50" }}>{item.schools?.name || "Sekolah"}</div>
-                        <div style={{ marginTop: "0.2rem" }}><Badge variant="info">{item.phase}</Badge></div>
+                        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.2rem" }}>
+                          <Badge variant="info">{item.phase}</Badge>
+                        </div>
+                        <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.4rem" }}>
+                          Oleh: {(item as any).users?.role === "teacher" 
+                            ? `Guru (${(item as any).users?.full_name || "Tanpa Nama"})` 
+                            : (item as any).users?.role === "community"
+                              ? `Komunitas (${item.communities?.name || "Tanpa Nama"})`
+                              : "Admin Sekolah"}
+                        </div>
                       </td>
                       <td style={{ maxWidth: "200px" }}>
                         <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>

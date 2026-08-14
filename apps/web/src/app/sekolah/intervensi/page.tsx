@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import React from "react";
 import IntervensiSekolahClient from "./IntervensiSekolahClient";
 import { getInterventionsForSchool } from "@/app/actions/interventions";
-import { getStagesForSchool } from "@/app/actions/stages";
+import { getStagesForSchool, checkAndAutoTransitionStages } from "@/app/actions/stages";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -20,6 +20,9 @@ export default async function SekolahIntervensiPage() {
   if (!schoolId) {
     redirect("/login");
   }
+
+  // Auto-transition tahap asesmen jika waktunya kadaluarsa
+  await checkAndAutoTransitionStages(schoolId, "school");
 
   const stagesRes = await getStagesForSchool(schoolId);
   const stages = stagesRes.success ? (stagesRes.data || []) : [];
