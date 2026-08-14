@@ -92,10 +92,6 @@ export default function PemantikLogoProgress({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [percent, durationMs]);
-
-  // Potong layer ABU-ABU dari bawah sebesar displayPercent%, sehingga
-  // layer WARNA di baliknya kelihatan untuk bagian yang sudah "terisi".
-  const grayClip = `inset(0 0 ${displayPercent}% 0)`;
   
   const isFullAndSuccess = displayPercent >= 99.9 && percent === 100 && !startFull;
   const isEmptyAndFail = displayPercent <= 0.1 && percent === 0 && startFull;
@@ -136,7 +132,7 @@ export default function PemantikLogoProgress({
         className={animationClass}
         style={{ position: "relative", width: size, height: size }}
       >
-        {/* Layer bawah: warna asli, selalu penuh */}
+        {/* Layer bawah: empty (abu-abu/transparan), selalu penuh */}
         <svg
           viewBox="0 0 768 768"
           width={size}
@@ -147,23 +143,23 @@ export default function PemantikLogoProgress({
           aria-label={`Progres ${Math.round(percent)} persen`}
         >
           <g transform="translate(249,73)">
-            <path fill="#f6c716" d={PATH_YELLOW} />
-            <path fill="#e97e0e" d={PATH_ORANGE} />
+            <path fill={emptyColor} d={PATH_YELLOW} />
+            <path fill={emptyColor} d={PATH_ORANGE} />
           </g>
         </svg>
 
-        {/* Layer atas: abu-abu, dipotong dari bawah sesuai progres via CSS clip-path */}
+        {/* Layer atas: warna asli, dipotong dari ATAS agar terlihat mengisi dari bawah */}
         <svg
           viewBox="0 0 768 768"
           width={size}
           height={size}
           xmlns="http://www.w3.org/2000/svg"
-          style={{ position: "absolute", inset: 0, clipPath: grayClip, WebkitClipPath: grayClip }}
+          style={{ position: "absolute", inset: 0, clipPath: `inset(${100 - displayPercent}% 0 0 0)`, WebkitClipPath: `inset(${100 - displayPercent}% 0 0 0)` }}
           aria-hidden="true"
         >
           <g transform="translate(249,73)">
-            <path fill={emptyColor} d={PATH_YELLOW} />
-            <path fill={emptyColor} d={PATH_ORANGE} />
+            <path fill="#f6c716" d={PATH_YELLOW} />
+            <path fill="#e97e0e" d={PATH_ORANGE} />
           </g>
         </svg>
       </div>

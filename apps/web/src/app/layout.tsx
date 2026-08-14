@@ -64,7 +64,7 @@ export const metadata: Metadata = {
   },
 
   title: {
-    default: "Pemantik – Platform Asesmen Literasi & Numerasi",
+    default: "Pemantik - Platform Asesmen Literasi & Numerasi",
     template: "%s | Pemantik PSPK",
   },
   description:
@@ -85,7 +85,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Pemantik – Platform Asesmen Literasi & Numerasi",
+    title: "Pemantik - Platform Asesmen Literasi & Numerasi",
     description: "Sistem manajemen ujian berjenjang untuk asesmen literasi dan numerasi.",
     siteName: "Pemantik PSPK",
     locale: "id_ID",
@@ -94,17 +94,17 @@ export const metadata: Metadata = {
     // Path relatif dari metadataBase secara otomatis akan menjadi URL absolut.
     images: [
       {
-        url: "/images/LOGO_PEMANTIK_BERWARNA.png",
+        url: "/images/SEO_IMAGE.png",
         width: 1200,
         height: 630,
-        alt: "Logo Pemantik PSPK – Platform Asesmen Literasi & Numerasi",
+        alt: "Logo Pemantik PSPK - Platform Asesmen Literasi & Numerasi",
       },
     ],
   },
   // twitter:card metadata for Twitter/X sharing
   twitter: {
     card: "summary_large_image",
-    title: "Pemantik – Platform Asesmen Literasi & Numerasi",
+    title: "Pemantik - Platform Asesmen Literasi & Numerasi",
     description: "Sistem manajemen ujian berjenjang untuk asesmen literasi dan numerasi.",
     images: ["/images/LOGO_PEMANTIK_BERWARNA.png"],
   },

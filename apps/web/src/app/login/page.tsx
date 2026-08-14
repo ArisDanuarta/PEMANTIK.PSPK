@@ -3,7 +3,9 @@
 import React, { useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { loginAction } from "../actions/auth";
+import PemantikLogoProgress from "../../components/shared/Unitprogressbar";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -11,6 +13,8 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false); // State baru untuk toggle password
   const [isPending, startTransition] = useTransition();
+  const [isNavigatingSiswa, setIsNavigatingSiswa] = useState(false);
+  const router = useRouter();
 
   const [maintenanceData, setMaintenanceData] = useState<{ active: boolean; message: string } | null>(null);
   const [apkUrl, setApkUrl] = useState<string | null>(null);
@@ -64,6 +68,18 @@ export default function LoginPage() {
         setError(result.error);
       }
     });
+  };
+
+  const handleSiswaLoginClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    setIsNavigatingSiswa(true);
+    
+    // Tunggu animasi overlay masuk (500ms) + durasi fill logo (1200ms) + sedikit ekstra (500ms) = 2200ms
+    setTimeout(() => {
+      startTransition(() => {
+        router.push("/siswa/login");
+      });
+    }, 2200);
   };
 
   return (
@@ -145,6 +161,7 @@ export default function LoginPage() {
               
               <Link 
                 href="/siswa/login"
+                onClick={handleSiswaLoginClick}
                 style={{ 
                   backgroundColor: "rgba(255, 255, 255, 0.15)",
                   color: "#ffffff", 
@@ -221,6 +238,26 @@ export default function LoginPage() {
           <span className="login-left-footer-dot" aria-hidden="true">·</span>
           <span>PSPK © 2026</span>
         </div>
+      </div>
+
+      {/* -- Animasi Transisi Halaman (Efek Buka Buku) -- */}
+      <div className={`page-transition-overlay ${isNavigatingSiswa ? 'active' : ''}`}>
+         <div className="page-transition-inner">
+           {isNavigatingSiswa && (
+             <PemantikLogoProgress
+               value={100}
+               max={100}
+               size={140}
+               durationMs={1200}
+               delayMs={500}
+               showLabel={false}
+               emptyColor="rgba(255, 255, 255, 0.15)"
+             />
+           )}
+           <p style={{ fontWeight: 600, fontSize: "1.1rem", letterSpacing: "0.5px", marginTop: "1rem" }}>
+             Menyiapkan Portal Siswa...
+           </p>
+         </div>
       </div>
 
       {/* -- Panel Kanan (Form) ------------------------------------------------ */}
@@ -681,6 +718,37 @@ export default function LoginPage() {
           transition: opacity 150ms ease;
         }
         .login-role-pill:hover { opacity: 1; }
+
+        /* -- Page Transition Animation -- */
+        .page-transition-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: var(--clr-biru);
+          z-index: 9999;
+          transform-origin: right center;
+          transform: perspective(1500px) rotateY(90deg); /* starts folded away from screen */
+          transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #ffffff;
+        }
+        .page-transition-overlay.active {
+          transform: perspective(1500px) rotateY(0deg);
+        }
+        .page-transition-inner {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          opacity: 0;
+          transition: opacity 0.3s ease 0.4s;
+        }
+        .page-transition-overlay.active .page-transition-inner {
+          opacity: 1;
+        }
 
         /* -- Responsive ------------------------------------------- */
         @media (max-width: 900px) {

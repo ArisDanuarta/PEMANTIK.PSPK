@@ -369,7 +369,7 @@ export default function StudentLoginForm() {
             <div className="left-illustration">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                alt="Pemantik brand illustration — flame and book"
+                alt="Pemantik brand illustration - flame and book"
                 src="/images/LOGIN_PEMANTIK.png"
               />
             </div>
