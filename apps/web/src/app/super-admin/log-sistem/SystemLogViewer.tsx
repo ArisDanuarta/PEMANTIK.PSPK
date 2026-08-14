@@ -17,14 +17,14 @@ export default function SystemLogViewer({ initialLogs }: { initialLogs: any[] })
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "system_logs" },
-        (payload) => {
+        (payload: any) => {
           setLogs((prev) => [payload.new, ...prev].slice(0, 50));
         }
       )
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "system_logs" },
-        (payload) => {
+        (payload: any) => {
           setLogs((prev) =>
             prev.map((log) => (log.id === payload.new.id ? payload.new : log))
           );
