@@ -38,14 +38,14 @@ export default function NotificationBell() {
         .on(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${session.user.id}` },
-          (payload) => {
+          (payload: any) => {
             setNotifications((prev) => [payload.new as Notification, ...prev]);
           }
         )
         .on(
           "postgres_changes",
           { event: "UPDATE", schema: "public", table: "notifications", filter: `user_id=eq.${session.user.id}` },
-          (payload) => {
+          (payload: any) => {
             setNotifications((prev) => prev.map((n) => n.id === payload.new.id ? (payload.new as Notification) : n));
           }
         )
