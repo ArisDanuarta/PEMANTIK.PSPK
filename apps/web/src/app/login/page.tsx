@@ -391,11 +391,11 @@ export default function LoginPage() {
         /* -- Left Panel -------------------------------------------- */
         .login-left {
           background: var(--clr-biru);
-          padding: 3rem 3.5rem;
+          padding: clamp(1.5rem, 4vh, 3rem) 3.5rem;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          gap: 2.5rem;
+          gap: clamp(1rem, 2vh, 2rem);
           position: relative;
           overflow: hidden;
         }
@@ -438,7 +438,7 @@ export default function LoginPage() {
           width: fit-content;
         }
         .login-logo-img {
-          width: 220px;
+          width: clamp(160px, 15vw, 220px);
           height: auto;
           display: block;
         }
@@ -463,11 +463,11 @@ export default function LoginPage() {
         }
         .login-hero-title {
           font-family: var(--font-heading);
-          font-size: clamp(2.4rem, 4vw, 3.2rem);
+          font-size: clamp(2rem, min(4vw, 5vh), 3.2rem);
           font-weight: 700;
           color: #fff;
           line-height: 1.1;
-          margin-bottom: 1.25rem;
+          margin-bottom: clamp(0.5rem, 2vh, 1.25rem);
           letter-spacing: -0.02em;
         }
         .login-hero-title em {
@@ -475,7 +475,7 @@ export default function LoginPage() {
           font-style: italic;
         }
         .login-hero-desc {
-          font-size: 1.1rem;
+          font-size: clamp(0.95rem, 2vh, 1.1rem);
           color: rgba(255,255,255,0.75);
           line-height: 1.6;
           max-width: 480px;
@@ -485,7 +485,7 @@ export default function LoginPage() {
         .login-partners {
           position: relative;
           z-index: 1;
-          margin-top: 1rem;
+          margin-top: auto;
           width: 100%;
           overflow: hidden;
         }
@@ -510,7 +510,7 @@ export default function LoginPage() {
           animation: marquee 25s linear infinite;
         }
         .login-partners-track img {
-          height: 70px;
+          height: clamp(70px, 8vh, 80px);
           width: auto;
           object-fit: contain;
           background: #ffffff;
