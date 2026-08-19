@@ -55,6 +55,21 @@ export async function writeSystemLog(entry: LogEntry): Promise<void> {
 
     if (error) {
       console.error("[Logger Error] Failed to write system log:", error);
+    } else if (entry.level === "critical") {
+      try {
+        const { data: superAdmins } = await (admin as any).from("users").select("id").eq("role", "super_admin");
+        if (superAdmins && superAdmins.length > 0) {
+          const notifs = superAdmins.map((sa: any) => ({
+            user_id: sa.id,
+            title: "Error Kritis Sistem",
+            message: `Terjadi error kritis: ${entry.message.substring(0, 50)}${entry.message.length > 50 ? '...' : ''}. Segera periksa Log Sistem.`,
+            is_read: false
+          }));
+          await (admin as any).from("notifications").insert(notifs);
+        }
+      } catch (e) {
+        console.error("Failed to notify super_admin about critical error", e);
+      }
     }
   } catch (err) {
     console.error("[Logger Exception] Failed to write system log:", err);

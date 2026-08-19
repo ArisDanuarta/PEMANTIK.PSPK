@@ -365,7 +365,7 @@ export default function SuperAdminReportDashboard({
       {/* ── DATA TABLE ── */}
       {!isLoadingData && filteredData.length > 0 && (
         <div className="card" style={{ overflowX: "auto" }}>
-          <table className="data-table" style={{ whiteSpace: "nowrap" }}>
+          <table className="pemantik-table" style={{ whiteSpace: "nowrap" }}>
             <thead>
               <tr>
                 <th>Nama Anak / NISN</th>

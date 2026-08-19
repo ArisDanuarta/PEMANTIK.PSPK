@@ -129,7 +129,7 @@ serve(async (req) => {
       }
 
       const notificationsToInsert = [];
-      const { data: profiles } = await supabase.from('profiles').select('id, role, community_id');
+      const { data: profiles } = await supabase.from('users').select('id, role, community_id');
 
       if (profiles) {
         for (const [communityId, count] of Object.entries(communityGroups)) {
