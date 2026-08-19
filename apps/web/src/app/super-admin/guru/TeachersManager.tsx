@@ -60,7 +60,7 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
   const filteredTeachers = initialTeachers.filter(
     (t) => {
       const isSandbox = t.communities?.is_sandbox || t.schools?.communities?.is_sandbox;
-      return (showSandbox ? true : !isSandbox) &&
+      return (showSandbox ? !!isSandbox : !isSandbox) &&
         (t.full_name.toLowerCase().includes(search.toLowerCase()) ||
         t.username.toLowerCase().includes(search.toLowerCase()) ||
         (t.schools?.name?.toLowerCase() || "").includes(search.toLowerCase()));

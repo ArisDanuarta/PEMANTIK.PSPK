@@ -64,7 +64,7 @@ export default function StudentsManager({ initialStudents, schools, sesVariables
 
   const filteredStudents = initialStudents.filter(
     (s) =>
-      (showSandbox ? true : !(s.schools?.communities?.is_sandbox)) &&
+      (showSandbox ? !!(s.schools?.communities?.is_sandbox) : !(s.schools?.communities?.is_sandbox)) &&
       (s.full_name.toLowerCase().includes(search.toLowerCase()) ||
       s.username.toLowerCase().includes(search.toLowerCase()) ||
       (s.nisn?.toLowerCase() || "").includes(search.toLowerCase()) ||

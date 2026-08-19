@@ -58,7 +58,7 @@ export default function CommunitiesManager({
   // Filter communities based on search query
   const filteredCommunities = communities.filter(
     (c) =>
-      (showSandbox ? true : !c.is_sandbox) &&
+      (showSandbox ? !!c.is_sandbox : !c.is_sandbox) &&
       (c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.code.toLowerCase().includes(search.toLowerCase()) ||
       (c.contact_name?.toLowerCase() || "").includes(search.toLowerCase()))

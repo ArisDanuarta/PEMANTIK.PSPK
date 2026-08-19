@@ -61,7 +61,7 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
 
   const filteredSchools = initialSchools.filter(
     (s) =>
-      (showSandbox ? true : !(s.communities?.is_sandbox)) &&
+      (showSandbox ? !!(s.communities?.is_sandbox) : !(s.communities?.is_sandbox)) &&
       (s.name.toLowerCase().includes(search.toLowerCase()) ||
       (s.npsn?.toLowerCase() || "").includes(search.toLowerCase()) ||
       (s.communities?.name?.toLowerCase() || "").includes(search.toLowerCase()))
