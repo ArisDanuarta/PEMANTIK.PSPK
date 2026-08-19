@@ -462,8 +462,10 @@ export async function GET(request: Request) {
         ),
         question_categories ( id, name, subject_area )
       `)
-      .eq("category_id", category_id)
       .eq("is_void", false);
+    if (category_id !== "all") {
+      sessQuery = sessQuery.eq("category_id", category_id);
+    }
 
     if (fallbackSchoolIds.length > 0) {
       sessQuery = sessQuery.in("school_id", fallbackSchoolIds);
@@ -569,21 +571,27 @@ export async function GET(request: Request) {
   let levelMap = new Map<string, number>();
 
   if (sessionIds.length > 0) {
-    const { data: answersData } = await supabase
-      .from("student_answers")
-      .select(`
-        id, session_id, question_id,
-        is_correct, score, answer_data, time_spent_sec, answered_at,
-        recording_url,
-        questions (
-          id, question_code, question_text, question_type, subject_area, level_id,
-          order_index,
-          question_levels ( level_number )
-        )
-      `)
-      .in("session_id", sessionIds);
-
-    answers = answersData ?? [];
+    const chunkSize = 100;
+    for (let i = 0; i < sessionIds.length; i += chunkSize) {
+      const chunkIds = sessionIds.slice(i, i + chunkSize);
+      const { data: answersData } = await supabase
+        .from("student_answers")
+        .select(`
+          id, session_id, question_id,
+          is_correct, score, answer_data, time_spent_sec, answered_at,
+          recording_url,
+          questions (
+            id, question_code, question_text, question_type, subject_area, level_id,
+            order_index,
+            question_levels ( level_number )
+          )
+        `)
+        .in("session_id", chunkIds);
+      
+      if (answersData) {
+        answers.push(...answersData);
+      }
+    }
 
     const levelParam = searchParams.get("level");
     if (levelParam && levelParam !== "all") {

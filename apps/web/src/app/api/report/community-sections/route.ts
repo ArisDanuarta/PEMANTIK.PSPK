@@ -199,16 +199,31 @@ export async function GET(request: Request) {
     });
 
     // Ambil semua student_answers yang relevan, join questions → question_levels
-    const { data: answers, error: answersErr } = await supabase
-      .from("student_answers")
-      .select(`
-        session_id,
-        questions (
-          level_id,
-          question_levels ( level_number )
-        )
-      `)
-      .in("session_id", sessionIds);
+    
+    let answers: any[] = [];
+    let answersErr = null;
+    
+    // Chunk requests to avoid URL too long (414) in PostgREST
+    const CHUNK_SIZE = 100;
+    for (let i = 0; i < sessionIds.length; i += CHUNK_SIZE) {
+      const chunkIds = sessionIds.slice(i, i + CHUNK_SIZE);
+      const { data, error } = await supabase
+        .from("student_answers")
+        .select(`
+          session_id,
+          questions (
+            level_id,
+            question_levels ( level_number )
+          )
+        `)
+        .in("session_id", chunkIds);
+        
+      if (error) {
+        answersErr = error;
+        break;
+      }
+      if (data) answers.push(...data);
+    }
 
     if (answersErr) {
       return NextResponse.json({ error: "Gagal mengambil data jawaban." }, { status: 500 });

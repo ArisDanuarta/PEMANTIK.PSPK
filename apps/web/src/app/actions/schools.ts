@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { requireAuth } from "./auth";
 import { headers } from "next/headers";
+import { normalizeSesName } from "@/lib/utils/sesMatcher";
 
 export interface ActionResponse {
   success: boolean;
@@ -624,21 +625,24 @@ function generateStudentUsername(fullName: string, npsn?: string | null, nisn?: 
   return `${randomNamePart}${digits}`;
 }
 
-async function resolveOrCreateSesVariable(
+async function resolveSesVariable(
   supabase: any,
-  name: string,
+  rawName: string,
   type: "education" | "occupation",
   sesVariablesCache: Map<string, string>
 ): Promise<string | null> {
+  if (!rawName) return null;
+  const name = normalizeSesName(rawName, type);
   if (!name) return null;
-  const key = `${type}:${name.toLowerCase().trim()}`;
+  
+  const key = `${type}:${name}`;
   if (sesVariablesCache.has(key)) return sesVariablesCache.get(key)!;
 
   const { data: existing } = await supabase
     .from("ses_variables")
     .select("id")
     .eq("type", type)
-    .ilike("name", name.trim())
+    .ilike("name", name)
     .maybeSingle();
 
   if (existing) {
@@ -646,19 +650,7 @@ async function resolveOrCreateSesVariable(
     return existing.id;
   }
 
-  const { data: newVar, error } = await supabase
-    .from("ses_variables")
-    .insert({ type, name: name.trim(), score: 0, needs_review: true, source: "dapodik_auto" })
-    .select("id")
-    .single();
-
-  if (error || !newVar) {
-    console.error(`Failed to create ses_variable [${type}] "${name}":`, error);
-    return null;
-  }
-
-  sesVariablesCache.set(key, newVar.id);
-  return newVar.id;
+  throw new Error(`Data ${type === "education" ? "Pendidikan" : "Pekerjaan"} '${rawName}' tidak terdaftar di sistem. Mohon tambahkan dulu di pengaturan Variabel SES.`);
 }
 
 async function resolveSesIds(
@@ -682,10 +674,7 @@ async function resolveSesIds(
 
   const resolve = async (name: string | null, type: "education" | "occupation") => {
     if (!name) return null;
-    const id = await resolveOrCreateSesVariable(supabase, name, type, sesVariablesCache);
-    if (id && !sesVariablesCache.has(`existing:${id}`)) {
-      newSesNames.push(`${type}:${name}`);
-    }
+    const id = await resolveSesVariable(supabase, name, type, sesVariablesCache);
     return id;
   };
 
