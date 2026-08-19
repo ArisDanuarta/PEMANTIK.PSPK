@@ -421,9 +421,9 @@ export default function RawInterventionGraph({
       </div>
 
       {/* ── Main Graph + Inspector Panel ──────────────────────────────────── */}
-      <div style={{ display: "flex", gap: "1rem", flex: 1, minHeight: "600px" }}>
+      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", flex: 1, minHeight: "600px" }}>
         <div style={{
-          flex: 1, borderRadius: "1rem", overflow: "hidden",
+          flex: "1 1 300px", minWidth: 0, borderRadius: "1rem", overflow: "hidden",
           background: "linear-gradient(180deg, #060d1a 0%, #0d1b2e 100%)",
           border: "1px solid #1e3a5f",
           boxShadow: "inset 0 0 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(59,130,246,0.1)",
@@ -491,7 +491,7 @@ export default function RawInterventionGraph({
         {/* Inspector Panel */}
         {selectedNode && (
           <div style={{
-            width: "340px",
+            flex: "1 1 340px", maxWidth: "100%", width: "340px",
             background: "linear-gradient(180deg, #0f1f3a 0%, #0d172b 100%)",
             border: "1px solid #1e3a5f",
             borderRadius: "1rem",

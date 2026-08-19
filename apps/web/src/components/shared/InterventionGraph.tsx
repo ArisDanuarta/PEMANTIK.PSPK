@@ -381,8 +381,8 @@ function DrilldownView({
         ← Kembali ke Peta Utama
       </button>
 
-      <div style={{ display: "flex", gap: "1rem" }}>
-        <div style={{ flex: 1, background: CANVAS_BG, borderRadius: 16, border: `1px solid ${CANVAS_BORDER}`, position: "relative", overflow: "hidden" }}>
+      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 300px", minWidth: 0, background: CANVAS_BG, borderRadius: 16, border: `1px solid ${CANVAS_BORDER}`, position: "relative", overflow: "hidden" }}>
           <svg ref={svgRef} viewBox={`0 0 ${W1} ${H1}`} style={{ width: "100%", height: "auto", display: "block", minHeight: 520 }} />
           <ZoomControls accent={color} onZoomIn={() => zoomInOut(1.3)} onZoomOut={() => zoomInOut(0.75)} onReset={resetZoom} />
           <div style={{ position: "absolute", bottom: 10, left: 14, display: "flex", gap: 14, fontSize: 12, fontFamily: FONT_BODY, color: MUTED, flexWrap: "wrap" }}>
@@ -404,7 +404,7 @@ function DrilldownView({
           </div>
         </div>
 
-        <div style={{ width: 270, minHeight: 200, flexShrink: 0, fontFamily: FONT_BODY }}>
+        <div style={{ flex: "1 1 270px", maxWidth: "100%", width: 270, minHeight: 200, flexShrink: 0, fontFamily: FONT_BODY }}>
           {info ? (
             <div style={{ background: "white", border: `2px solid ${color}`, borderRadius: 14, padding: "1.25rem", fontSize: 13, boxShadow: "0 4px 14px -4px rgba(16,46,80,0.15)" }}>
               <div style={{ marginBottom: "0.75rem" }}>
