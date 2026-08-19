@@ -220,13 +220,13 @@ export default function LoginPage() {
           <p className="login-partners-title">Klien & Partner Pemantik:</p>
           <div className="login-partners-marquee">
             <div className="login-partners-track">
-              {[...Array(2)].map((_, idx) => (
-                <React.Fragment key={idx}>
+              {[...Array(4)].map((_, idx) => (
+                <div className="marquee-group" key={idx}>
                   <Image src="/images/Klien & Partner Pemantik/Logo-Inspirasi.png" alt="Inspirasi" width={150} height={70} />
                   <Image src="/images/Klien & Partner Pemantik/Logo-Sekolahmu.png" alt="Sekolahmu" width={150} height={70} />
                   <Image src="/images/Klien & Partner Pemantik/YSS.png" alt="YSS" width={150} height={70} />
                   <Image src="/images/Klien & Partner Pemantik/logoYGB.png" alt="YGB" width={150} height={70} />
-                </React.Fragment>
+                </div>
               ))}
             </div>
           </div>
@@ -504,12 +504,16 @@ export default function LoginPage() {
         }
         .login-partners-track {
           display: flex;
-          align-items: center;
-          gap: 3rem;
           width: max-content;
           animation: marquee 25s linear infinite;
         }
-        .login-partners-track img {
+        .marquee-group {
+          display: flex;
+          align-items: center;
+          gap: 3rem;
+          padding-right: 3rem;
+        }
+        .marquee-group img {
           height: clamp(70px, 8vh, 80px);
           width: auto;
           object-fit: contain;
@@ -519,13 +523,13 @@ export default function LoginPage() {
           box-shadow: 0 4px 15px rgba(0,0,0,0.1);
           transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .login-partners-track img:hover {
+        .marquee-group img:hover {
           transform: translateY(-4px);
           box-shadow: 0 8px 25px rgba(0,0,0,0.2);
         }
         @keyframes marquee {
           0% { transform: translateX(0); }
-          100% { transform: translateX(calc(-50% - 1.5rem)); }
+          100% { transform: translateX(-25%); }
         }
 
         /* Feature items */

@@ -1,0 +1,17 @@
+{
+  "name": "migrasi-kkn-ugm-pemantik",
+  "version": "1.0.0",
+  "description": "Migrasi data ujian KKN UGM (Excel) ke database Pemantik (Supabase)",
+  "main": "load.js",
+  "scripts": {
+    "dry-run": "node dryRun.js",
+    "load": "node load.js",
+    "migrate": "node load.js --execute"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "xlsx": "^0.18.5"
+  }
+}
