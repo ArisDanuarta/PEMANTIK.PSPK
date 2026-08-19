@@ -11,6 +11,32 @@ export const metadata = {
   description: 'Dashboard asesmen literasi dan numerasi siswa.',
 };
 
+const BALINESE_TITLES = new Set([
+  'i', 'ni', 'ida', 'anak', 'agung', 'gusti', 'dewa', 'sang', 'cokorda', 'tjokorda', 'desak', 'ngakan', 'bagus', 'ayu',
+  'wayan', 'made', 'nyoman', 'ketut', 'putu', 'gede', 'kadek', 'komang', 'luh', 'iluh', 'nengah', 'mase'
+]);
+
+function getFirstName(fullName: string): string {
+  if (!fullName || fullName === 'Siswa') return 'Siswa';
+  
+  const words = fullName.trim().split(/\s+/);
+  
+  for (const word of words) {
+    if (!BALINESE_TITLES.has(word.toLowerCase())) {
+      return word;
+    }
+  }
+
+  if (words.length > 1) {
+    if (words[0].toLowerCase() === 'i' || words[0].toLowerCase() === 'ni') {
+        return words[words.length > 2 ? 2 : 1];
+    }
+    return words[words.length - 1]; 
+  }
+  
+  return words[0];
+}
+
 export default async function StudentDashboardPage() {
   const session = await getStudentSession();
   if (!session) redirect('/siswa/login');
@@ -18,7 +44,7 @@ export default async function StudentDashboardPage() {
   const student = session.student;
   const { activePackages, historyPackages, updatedStudentName } = await getStudentDashboardData(student);
   const studentNameStr = updatedStudentName || student.full_name || student.name || 'Siswa';
-  const firstName = studentNameStr !== 'Siswa' ? studentNameStr.split(' ')[0] : 'Siswa';
+  const firstName = getFirstName(studentNameStr);
 
   return (
     <StudentLayout studentName={studentNameStr} studentNisn={student.nisn || '-'}>
