@@ -4,9 +4,10 @@ import React, { useState, useEffect, useTransition } from "react";
 import { Button, Badge, PhantomSkeleton } from "@pemantik/ui";
 import { useToast } from "@pemantik/ui";
 import { getSystemSettings, updateSystemSettings, getSystemLogs, triggerBackup } from "@/app/actions/settings";
+import MigrasiDataTab from "./MigrasiDataTab";
 
 export default function SuperAdminPengaturan() {
-  const [activeTab, setActiveTab] = useState<"general" | "permissions" | "backups">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "permissions" | "backups" | "migrasi">("general");
   const [isPending, startTransition] = useTransition();
   const { success: showSuccessToast, error: showErrorToast } = useToast();
 
@@ -17,6 +18,7 @@ export default function SuperAdminPengaturan() {
   const [maintenanceMessage, setMaintenanceMessage] = useState("Sistem sedang dalam perbaikan rutin. Silakan kembali beberapa saat lagi.");
   const [isLoading, setIsLoading] = useState(true);
   const [logs, setLogs] = useState<any[]>([]);
+  const [communities, setCommunities] = useState<{ id: string; name: string }[]>([]);
 
   // Fetch initial data
   useEffect(() => {
@@ -39,6 +41,15 @@ export default function SuperAdminPengaturan() {
       if (logsRes.success && logsRes.data) {
         setLogs(logsRes.data);
       }
+
+      // Fetch communities for migration tab
+      try {
+        const res = await fetch("/api/communities-list");
+        if (res.ok) {
+          const data = await res.json();
+          setCommunities(data.communities || []);
+        }
+      } catch { /* non-critical */ }
       
       setIsLoading(false);
     };
@@ -116,7 +127,8 @@ export default function SuperAdminPengaturan() {
           {[
             { id: "general", label: "Umum" },
             { id: "permissions", label: "Matriks Peran (Role)" },
-            { id: "backups", label: "Backup & Log Aktivitas" },
+            { id: "backups", label: "Log Aktivitas" },
+            { id: "migrasi", label: "🔄 Migrasi Data" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -332,6 +344,27 @@ export default function SuperAdminPengaturan() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+          {/* MIGRASI TAB */}
+          {activeTab === "migrasi" && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1.5rem" }}>
+              <div className="card" style={{ padding: "1.5rem" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "1.25rem" }}>
+                  <div>
+                    <h3 style={{ fontFamily: "Lora, serif", color: "#102e50", fontSize: "1.1rem", fontWeight: 700 }}>
+                      Migrasi Data dari Platform Lama
+                    </h3>
+                    <p style={{ fontSize: "0.82rem", color: "#6b7280", marginTop: "0.25rem" }}>
+                      Upload file Excel dari platform lama untuk memindahkan data siswa, nilai ujian, dan demografi orang tua ke platform Pemantik.
+                    </p>
+                  </div>
+                  <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "0.25rem 0.75rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 600, whiteSpace: "nowrap" }}>
+                    Super Admin Only
+                  </span>
+                </div>
+                <MigrasiDataTab communities={communities} />
               </div>
             </div>
           )}

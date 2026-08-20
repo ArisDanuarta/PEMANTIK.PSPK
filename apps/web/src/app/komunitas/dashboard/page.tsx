@@ -196,13 +196,13 @@ export default async function KomunitasDashboardPage() {
         sessionsDataForChart.forEach((s: any) => {
           const subject = s.question_categories?.subject_area;
           const level = s.level_number;
-          if (level > 0) {
+          if (level >= 0) {
             if (subject === "literasi") {
-              const currentMax = studentMaxLit.get(s.student_id) || 0;
-              if (level > currentMax) studentMaxLit.set(s.student_id, level);
+              const currentMax = studentMaxLit.get(s.student_id);
+              if (currentMax === undefined || level > currentMax) studentMaxLit.set(s.student_id, level);
             } else if (subject === "numerasi") {
-              const currentMax = studentMaxNum.get(s.student_id) || 0;
-              if (level > currentMax) studentMaxNum.set(s.student_id, level);
+              const currentMax = studentMaxNum.get(s.student_id);
+              if (currentMax === undefined || level > currentMax) studentMaxNum.set(s.student_id, level);
             }
           }
         });
@@ -214,6 +214,7 @@ export default async function KomunitasDashboardPage() {
         const numDistMap = new Map<number, number>();
         studentMaxNum.forEach(level => numDistMap.set(level, (numDistMap.get(level) || 0) + 1));
         numLevelDist = Array.from(numDistMap.entries()).map(([level, count]) => ({ level, count })).sort((a,b) => a.level - b.level);
+        console.log("DEBUG DASHBOARD -> studentMaxNum size:", studentMaxNum.size, "numLevelDist:", numLevelDist);
 
         const currentYear = new Date().getFullYear();
         const studentAges = new Map<string, number>();

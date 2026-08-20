@@ -13,7 +13,7 @@ export default async function KomunitasPage() {
 
   let communities: any[] = [];
   try {
-    const { data, error } = await supabase
+    const { data: commData, error } = await supabase
       .from("communities")
       .select("*")
       .neq("name", "SEKOLAH INDEPENDEN")
@@ -22,7 +22,15 @@ export default async function KomunitasPage() {
     if (error) {
       console.error("Failed to load communities:", error);
     } else {
-      communities = data ?? [];
+      const { data: adminData } = await supabase
+        .from("users")
+        .select("community_id, username")
+        .eq("role", "community");
+        
+      communities = (commData || []).map(c => {
+        const admin = adminData?.find(a => a.community_id === c.id);
+        return { ...c, username: admin?.username || `admin_${c.code}` };
+      });
     }
   } catch (err) {
     console.error("Unexpected error loading communities:", err);

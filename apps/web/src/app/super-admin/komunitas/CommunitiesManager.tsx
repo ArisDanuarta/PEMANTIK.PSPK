@@ -35,6 +35,7 @@ interface Community {
   is_sandbox?: boolean;
   created_at: string;
   allowed_categories?: string[] | null;
+  username?: string | null;
 }
 
 interface CommunitiesManagerProps {
@@ -239,11 +240,11 @@ export default function CommunitiesManager({
     {
       key: "code",
       label: "Akun Akses",
-      render: (val: any) => (
+      render: (val: any, row: any) => (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
           <div><span style={{ color: "black" }}>Kode:</span> <code style={{ background: "#f1f3f5", padding: "0.1rem 0.3rem", borderRadius: 4 }}>{String(val)}</code></div>
-          <div><span style={{ color: "black" }}>User:</span> <strong>admin_{String(val)}</strong></div>
-          <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code> <span style={{ fontSize: "0.7rem", color: "black" }}>(bawaan)</span></div>
+          <div><span style={{ color: "black" }}>Username:</span> <strong>{row.username || `admin_${String(val)}`}</strong></div>
+          <div><span style={{ color: "black" }}>Password:</span> <code style={{ color: "#a8281c" }}>Password123!</code> <span style={{ fontSize: "0.7rem", color: "black" }}>(bawaan)</span></div>
         </div>
       ),
     },
