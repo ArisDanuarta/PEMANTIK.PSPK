@@ -128,7 +128,7 @@ export default function SuperAdminPengaturan() {
             { id: "general", label: "Umum" },
             { id: "permissions", label: "Matriks Peran (Role)" },
             { id: "backups", label: "Log Aktivitas" },
-            { id: "migrasi", label: "🔄 Migrasi Data" },
+            { id: "migrasi", label: "Migrasi Data" },
           ].map((tab) => (
             <button
               key={tab.id}

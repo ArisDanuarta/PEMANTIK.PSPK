@@ -17,7 +17,8 @@ export default async function KomunitasPage() {
       .from("communities")
       .select("*")
       .neq("name", "SEKOLAH INDEPENDEN")
-      .order("name", { ascending: true });
+      .order("name", { ascending: true })
+      .limit(100000);
     
     if (error) {
       console.error("Failed to load communities:", error);

@@ -1001,7 +1001,7 @@ export default function MigrasiDataTab({ communities }: MigrasiDataTabProps) {
           {step === "done" && finalReport && (
             <div className="card" style={{ padding: "1.5rem" }}>
               <p style={{ fontWeight: 700, color: COLOR.navy, fontSize: "1rem", marginBottom: "1rem", fontFamily: "Lora, serif" }}>
-                📊 Laporan Hasil Migrasi
+                Laporan Hasil Migrasi
               </p>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem", marginBottom: "1rem" }}>

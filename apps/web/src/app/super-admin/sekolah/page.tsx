@@ -19,8 +19,8 @@ export default async function SekolahPage() {
       { data: scData },
       { data: commData }
     ] = await Promise.all([
-      supabase.from("schools").select("*, communities(id, name, is_sandbox), users(username, role), classes(id, name)").order("name", { ascending: true }),
-      supabase.from("communities").select("id, name").eq("is_active", true).neq("name", "SEKOLAH INDEPENDEN").order("name", { ascending: true })
+      supabase.from("schools").select("*, communities(id, name, is_sandbox), users(username, role), classes(id, name)").order("name", { ascending: true }).limit(100000),
+      supabase.from("communities").select("id, name").eq("is_active", true).neq("name", "SEKOLAH INDEPENDEN").order("name", { ascending: true }).limit(100000)
     ]);
     
     schools = scData ?? [];

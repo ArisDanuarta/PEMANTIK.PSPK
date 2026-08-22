@@ -120,7 +120,8 @@ export default async function Dashboard() {
           .select("score")
           .in("student_id", studentIds)
           .eq("status", "completed")
-          .eq("is_void", false);
+          .eq("is_void", false)
+          .limit(100000);
 
         if (sessions && sessions.length > 0) {
           stats.completedSessions = sessions.length;

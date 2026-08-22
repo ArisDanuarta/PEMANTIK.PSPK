@@ -26,10 +26,10 @@ export default async function SuperAdminDashboard() {
       { data: stData },
       { data: sessData }
     ] = await Promise.all([
-      supabase.from("communities").select("id, name, code, is_active, created_at, is_sandbox").order("name", { ascending: true }),
-      supabase.from("schools").select("id, name, community_id"),
-      supabase.from("users").select("id, school_id, community_id").eq("role", "teacher"),
-      supabase.from("students").select("id, school_id, gender, birth_date, ses_class"),
+      supabase.from("communities").select("id, name, code, is_active, created_at, is_sandbox").order("name", { ascending: true }).limit(100000),
+      supabase.from("schools").select("id, name, community_id").limit(100000),
+      supabase.from("users").select("id, school_id, community_id").eq("role", "teacher").limit(100000),
+      supabase.from("students").select("id, school_id, gender, birth_date, ses_class").limit(100000),
       supabase.from("assessment_sessions").select(`
         id,
         status,
@@ -40,7 +40,7 @@ export default async function SuperAdminDashboard() {
         school:schools(province, city, name, community_id),
         student:students(gender, birth_date, ses_class, ses_score, full_name, village, district, city, province, father_education_id, mother_education_id, father_occupation_id, mother_occupation_id),
         package:question_categories(name, subject_area)
-      `).order("created_at", { ascending: false })
+      `).order("created_at", { ascending: false }).limit(100000)
     ]);
 
     const allCommunities = cData || [];

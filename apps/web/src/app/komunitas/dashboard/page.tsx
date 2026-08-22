@@ -153,7 +153,8 @@ export default async function KomunitasDashboardPage() {
         `)
         .in("school_id", schoolIds)
         .eq("status", "completed")
-        .eq("is_void", false);
+        .eq("is_void", false)
+        .limit(100000);
         
       if (statsData && statsData.length > 0) {
         const allLvlIds = [...new Set(statsData.map((s: any) => s.current_level_id).filter(Boolean))];

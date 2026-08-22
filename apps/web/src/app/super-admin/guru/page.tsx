@@ -21,9 +21,9 @@ export default async function GuruPage() {
       { data: scData },
       { data: cData }
     ] = await Promise.all([
-      supabase.from("users").select("*, schools(name, communities(name, is_sandbox)), communities(name, is_sandbox), classes!class_teachers(name)").eq("role", "teacher").order("created_at", { ascending: false }),
-      supabase.from("schools").select("id, name").eq("is_active", true).order("name", { ascending: true }),
-      supabase.from("classes").select("id, name, school_id").eq("is_active", true).order("name", { ascending: true })
+      supabase.from("users").select("*, schools(name, communities(name, is_sandbox)), communities(name, is_sandbox), classes!class_teachers(name)").eq("role", "teacher").order("created_at", { ascending: false }).limit(100000),
+      supabase.from("schools").select("id, name").eq("is_active", true).order("name", { ascending: true }).limit(100000),
+      supabase.from("classes").select("id, name, school_id").eq("is_active", true).order("name", { ascending: true }).limit(100000)
     ]);
     
     teachers = tData ?? [];
