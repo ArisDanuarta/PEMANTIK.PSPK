@@ -10,6 +10,8 @@ import PhaseComparisonChart from "@/components/shared/PhaseComparisonChart";
 import { StatGrid } from "@/components/ui/responsive/StatGrid";
 import GenerateSekolahTrialModal from "@/components/shared/GenerateSekolahTrialModal";
 import AchievementChartsSection from "@/components/shared/AchievementChartsSection";
+import SchoolBenchmarkingChart from "@/components/shared/SchoolBenchmarkingChart";
+import ItemAnalysisChart from "@/components/shared/ItemAnalysisChart";
 
 export const metadata = {
   title: "Dashboard Komunitas | Pemantik",
@@ -46,6 +48,9 @@ export default async function KomunitasDashboardPage() {
   let numByAge: { age: number | string; avgLevel: number; count: number }[] = [];
   let litBySes: { ses: string; avgLevel: number; count: number }[] = [];
   let numBySes: { ses: string; avgLevel: number; count: number }[] = [];
+  
+  let schoolBenchmarkingData: any[] = [];
+  let itemAnalysisData: any[] = [];
 
   if (communityId) {
     const { data: commData } = await supabase.from("communities").select("is_sandbox").eq("id", communityId).maybeSingle();
@@ -148,6 +153,7 @@ export default async function KomunitasDashboardPage() {
           phase, 
           score,
           student_id,
+          school_id,
           current_level_id,
           question_categories!inner(subject_area)
         `)
@@ -283,7 +289,69 @@ export default async function KomunitasDashboardPage() {
           }
         });
         numBySes = Array.from(numBySesMap.entries()).map(([ses, data]) => ({ ses, avgLevel: data.sum / data.count, count: data.count }));
+
+        // Compute School Benchmarking Data
+        const schoolStatsMap = new Map<string, {
+          litSum: number; litCount: number;
+          numSum: number; numCount: number;
+          uniqueStudents: Set<string>;
+        }>();
+
+        statsData.forEach((s: any) => {
+          if (!s.school_id) return;
+          const subject = s.question_categories?.subject_area?.toLowerCase();
+          const levelNumber = s.current_level_id ? (qlMap.get(s.current_level_id) ?? 0) : 0;
+          
+          let schoolStat = schoolStatsMap.get(s.school_id);
+          if (!schoolStat) {
+            schoolStat = { litSum: 0, litCount: 0, numSum: 0, numCount: 0, uniqueStudents: new Set() };
+          }
+          
+          schoolStat.uniqueStudents.add(s.student_id);
+          
+          if (subject === 'literasi') {
+            schoolStat.litSum += levelNumber;
+            schoolStat.litCount += 1;
+          } else if (subject === 'numerasi') {
+            schoolStat.numSum += levelNumber;
+            schoolStat.numCount += 1;
+          }
+          
+          schoolStatsMap.set(s.school_id, schoolStat);
+        });
+
+        schoolBenchmarkingData = Array.from(schoolStatsMap.entries()).map(([schoolId, stats]) => {
+          const summary = schoolsSummary.find(sc => sc.school_id === schoolId);
+          const schoolName = summary ? summary.name : "Unknown School";
+          const totalStudents = summary ? summary.studentsCount : 0;
+          
+          const avgLiterasi = stats.litCount > 0 ? (stats.litSum / stats.litCount) : 0;
+          const avgNumerasi = stats.numCount > 0 ? (stats.numSum / stats.numCount) : 0;
+          const participationRate = totalStudents > 0 ? (stats.uniqueStudents.size / totalStudents) * 100 : 0;
+          
+          return {
+            schoolName,
+            avgLiterasi,
+            avgNumerasi,
+            participationRate,
+            totalStudents
+          };
+        });
+        
         // --- End New Analytics Data ---
+      }
+
+      // Fetch Item Analysis via RPC (Assuming 'fase_1' or active phase)
+      if (communityId) {
+        const activePhase = schoolsSummary.length > 0 ? schoolsSummary[0].phase : 'fase_1';
+        const { data: itemAnalysis, error: itemError } = await (supabase.rpc as any)("get_community_item_analysis", {
+          p_community_id: communityId,
+          p_phase: activePhase
+        });
+        
+        if (!itemError && itemAnalysis) {
+          itemAnalysisData = itemAnalysis;
+        }
       }
 
       // 5. Fetch 10 most recent sessions for table
@@ -426,6 +494,29 @@ export default async function KomunitasDashboardPage() {
       {/* SECTION 4: CHART BAR PERBANDINGAN NILAI & PARTISIPASI ANAK ANTAR FASE */}
       <div style={{ marginBottom: "2rem" }}>
         <PhaseComparisonChart sessions={sessionsDataForChart} />
+      </div>
+
+      {/* SECTION 4B: ANALISIS TINGKAT KESUKARAN BUTIR SOAL & BENCHMARKING SEKOLAH */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1.5rem", marginBottom: "2rem" }}>
+        <div style={{ backgroundColor: "white", padding: "1.75rem", borderRadius: "1.25rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
+          <h3 style={{ fontFamily: "Lora, serif", margin: "0 0 0.35rem 0", fontSize: "1.2rem", color: "#102e50", fontWeight: 700 }}>
+            Analisis Tingkat Kesukaran Butir Soal (Item Analysis)
+          </h3>
+          <p style={{ margin: "0 0 1.25rem 0", fontSize: "0.85rem", color: "#64748b" }}>
+            Memetakan persentase keberhasilan per butir soal untuk mengidentifikasi meteri mana yang paling sulit (Tingkat Keberhasilan rendah) bagi mayoritas anak.
+          </p>
+          <ItemAnalysisChart data={itemAnalysisData} />
+        </div>
+
+        <div style={{ backgroundColor: "white", padding: "1.75rem", borderRadius: "1.25rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)", border: "1px solid #e2e8f0" }}>
+          <h3 style={{ fontFamily: "Lora, serif", margin: "0 0 0.35rem 0", fontSize: "1.2rem", color: "#102e50", fontWeight: 700 }}>
+            Komparasi Kinerja Antar Sekolah (Benchmarking)
+          </h3>
+          <p style={{ margin: "0 0 1.25rem 0", fontSize: "0.85rem", color: "#64748b" }}>
+            Memetakan performa rata-rata (Literasi & Numerasi) beserta Tingkat Partisipasi asesmen setiap sekolah binaan (diurutkan dari rata-rata total tertinggi).
+          </p>
+          <SchoolBenchmarkingChart data={schoolBenchmarkingData} />
+        </div>
       </div>
 
       {/* SECTION 5: CAPAIAN RATA-RATA (LITERASI VS NUMERASI) & SESI TERBARU */}
