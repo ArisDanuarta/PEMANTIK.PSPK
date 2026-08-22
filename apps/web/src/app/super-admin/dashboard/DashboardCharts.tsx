@@ -64,14 +64,14 @@ export default function DashboardCharts({
         <div style={{ width: "100%", height: 250 }}>
           {isMounted ? (
             <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
-              <BarChart data={ageData}>
+              <BarChart data={ageData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#4b5563" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: "#4b5563" }} axisLine={false} tickLine={false} />
                 <Tooltip 
                   cursor={{ fill: "rgba(16, 46, 80, 0.05)" }}
                   contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
                 />
-                <Bar dataKey="value" fill="#f2af3e" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill="#f2af3e" radius={[6, 6, 0, 0]} barSize={40} />
               </BarChart>
             </ResponsiveContainer>
           ) : null}

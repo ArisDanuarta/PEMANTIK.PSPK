@@ -91,14 +91,20 @@ export default function IntegratedDashboardManager({
   const ageData = useMemo(() => {
     const map: Record<string, number> = {};
     const currentYear = new Date().getFullYear();
+    
     filteredStudents.forEach(s => {
       if (s.birth_date) {
         const age = currentYear - new Date(s.birth_date).getFullYear();
-        const key = age + " Thn";
-        map[key] = (map[key] || 0) + 1;
+        if (age >= 0 && age <= 100) { // filter out completely invalid ages
+          const key = age.toString();
+          map[key] = (map[key] || 0) + 1;
+        }
       }
     });
-    return Object.keys(map).sort().map(k => ({ name: k, value: map[k] }));
+
+    return Object.keys(map)
+      .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+      .map(k => ({ name: k, value: map[k] }));
   }, [filteredStudents]);
 
   // --- 4. COMMUNITY STATS PREPARATION (TOP 10) ---

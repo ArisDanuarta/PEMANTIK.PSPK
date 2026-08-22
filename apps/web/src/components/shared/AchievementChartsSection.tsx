@@ -130,7 +130,10 @@ export default function AchievementChartsSection({
 
       {/* 2. Capaian Berdasarkan Usia */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem" }}>
-        <ChartCard title="Rata-rata Level Literasi Berdasarkan Usia">
+        <ChartCard 
+          title="Rata-rata Level Literasi Berdasarkan Usia" 
+          description="Dihitung dengan menjumlahkan level akhir (0-8) tiap anak, lalu dibagi dengan total anak pada usia tersebut."
+        >
           {litByAge.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={litByAge} margin={{ top: 20, right: 30, left: 0, bottom: 25 }}>
@@ -139,8 +142,8 @@ export default function AchievementChartsSection({
                 <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} label={{ value: 'Level Rata-rata', angle: -90, position: 'insideLeft', offset: 15, fontSize: 12, fill: '#6b7280' }} />
                 <Tooltip 
                   formatter={(val: any, name: any) => [
-                    name === 'avgLevel' ? Number(val).toFixed(1) : val, 
-                    name === 'avgLevel' ? 'Rata-rata Level' : 'Jumlah Anak'
+                    name === 'Rata-rata Level' || name === 'avgLevel' ? Number(val).toFixed(2) : val, 
+                    name === 'Rata-rata Level' || name === 'avgLevel' ? 'Rata-rata Level' : 'Jumlah Anak'
                   ]} 
                   labelFormatter={(val) => `Usia: ${val} Tahun`}
                 />
@@ -153,7 +156,10 @@ export default function AchievementChartsSection({
           )}
         </ChartCard>
 
-        <ChartCard title="Rata-rata Level Numerasi Berdasarkan Usia">
+        <ChartCard 
+          title="Rata-rata Level Numerasi Berdasarkan Usia"
+          description="Dihitung dengan menjumlahkan level akhir (0-4) tiap anak, lalu dibagi dengan total anak pada usia tersebut."
+        >
           {numByAge.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={numByAge} margin={{ top: 20, right: 30, left: 0, bottom: 25 }}>
@@ -162,8 +168,8 @@ export default function AchievementChartsSection({
                 <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} label={{ value: 'Level Rata-rata', angle: -90, position: 'insideLeft', offset: 15, fontSize: 12, fill: '#6b7280' }} />
                 <Tooltip 
                   formatter={(val: any, name: any) => [
-                    name === 'avgLevel' ? Number(val).toFixed(1) : val, 
-                    name === 'avgLevel' ? 'Rata-rata Level' : 'Jumlah Anak'
+                    name === 'Rata-rata Level' || name === 'avgLevel' ? Number(val).toFixed(2) : val, 
+                    name === 'Rata-rata Level' || name === 'avgLevel' ? 'Rata-rata Level' : 'Jumlah Anak'
                   ]}
                   labelFormatter={(val) => `Usia: ${val} Tahun`}
                 />

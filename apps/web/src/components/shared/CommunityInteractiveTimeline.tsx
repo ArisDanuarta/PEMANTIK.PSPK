@@ -116,6 +116,7 @@ export default function CommunityInteractiveTimeline({
 
   const [selectedStepIndex, setSelectedStepIndex] = useState<number>(() => computeInitialStepIndex(uniqueStages));
   const [isPending, startTransition] = useTransition();
+  const [showAllTahap5, setShowAllTahap5] = useState(false);
 
   const [progressMap, setProgressMap] = useState<Record<string, { submitted: number; required: number }>>({});
 
@@ -731,24 +732,37 @@ export default function CommunityInteractiveTimeline({
                 Saat ini belum ada sekolah yang menyelesaikan seluruh tahapan siklus fase ini.
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "0.85rem" }}>
-                {schoolsInCurrentStep.map((stRow) => (
-                  <div key={stRow.id} style={{ backgroundColor: "white", padding: "1rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
-                      <div>
-                        <div style={{ fontWeight: 700, color: "#102e50", fontSize: "0.95rem" }}>{stRow.schools?.name}</div>
-                        <div style={{ fontSize: "0.78rem", color: "#64748b" }}>NPSN: {stRow.schools?.npsn || "-"} • Tuntas di: {stRow.phase}</div>
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "0.85rem" }}>
+                  {(showAllTahap5 ? schoolsInCurrentStep : schoolsInCurrentStep.slice(0, 3)).map((stRow) => (
+                    <div key={stRow.id} style={{ backgroundColor: "white", padding: "1rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+                        <div>
+                          <div style={{ fontWeight: 700, color: "#102e50", fontSize: "0.95rem" }}>{stRow.schools?.name}</div>
+                          <div style={{ fontSize: "0.78rem", color: "#64748b" }}>NPSN: {stRow.schools?.npsn || "-"} • Tuntas di: {stRow.phase}</div>
+                        </div>
+                        <Badge variant="success">Siklus Selesai</Badge>
                       </div>
-                      <Badge variant="success">Siklus Selesai</Badge>
+                      <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid #f1f5f9", paddingTop: "0.65rem" }}>
+                        <Button size="sm" style={{ backgroundColor: "#2d9e5f", color: "white", fontSize: "0.78rem" }} onClick={() => handleStartNewPhase(stRow.id, stRow.phase)} disabled={isPending}>
+                          🔄 Ajukan Fase Berikutnya
+                        </Button>
+                      </div>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid #f1f5f9", paddingTop: "0.65rem" }}>
-                      <Button size="sm" style={{ backgroundColor: "#2d9e5f", color: "white", fontSize: "0.78rem" }} onClick={() => handleStartNewPhase(stRow.id, stRow.phase)} disabled={isPending}>
-                        🔄 Ajukan Fase Berikutnya
-                      </Button>
-                    </div>
+                  ))}
+                </div>
+                {schoolsInCurrentStep.length > 3 && (
+                  <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem" }}>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowAllTahap5(!showAllTahap5)}
+                      style={{ color: "#0f766e", borderColor: "#0f766e", width: "100%", maxWidth: "300px" }}
+                    >
+                      {showAllTahap5 ? "Tampilkan Lebih Sedikit" : `Lihat Selengkapnya (${schoolsInCurrentStep.length - 3} Sekolah Lainnya)`}
+                    </Button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         )}

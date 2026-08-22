@@ -578,6 +578,9 @@ export async function POST(request: Request) {
                   .update(updatePayload).eq("id", sessionId);
               }
 
+              // Add a small delay to prevent fetch failed / socket hang up
+              await new Promise(resolve => setTimeout(resolve, 50));
+
               totalInserted++;
             } catch (err: any) {
               log("warning", `Error pada siswa (id_user ${sData.id_user}): ${err.message}`);

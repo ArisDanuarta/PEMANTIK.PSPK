@@ -39,10 +39,10 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
   ].filter(d => d.value > 0);
 
   const ageData = [
-    { name: "< 7 Thn", value: stats.demographics.age.under7 },
-    { name: "7-9 Thn", value: stats.demographics.age.age7to9 },
-    { name: "10-12 Thn", value: stats.demographics.age.age10to12 },
-    { name: "> 12 Thn", value: stats.demographics.age.over12 },
+    { name: "< 7", value: stats.demographics.age.under7 },
+    { name: "7-9", value: stats.demographics.age.age7to9 },
+    { name: "10-12", value: stats.demographics.age.age10to12 },
+    { name: "> 12", value: stats.demographics.age.over12 },
     { name: "Tidak Diketahui", value: stats.demographics.age.unknown }
   ].filter(d => d.value > 0);
 
@@ -120,11 +120,11 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
           <div style={{ width: "100%", height: 250 }}>
             {isMounted && ageData.length > 0 ? (
               <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
-                <BarChart data={ageData}>
+                <BarChart data={ageData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#4b5563" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 12, fill: "#4b5563" }} axisLine={false} tickLine={false} />
                   <Tooltip cursor={{ fill: "rgba(16, 46, 80, 0.05)" }} contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }} />
-                  <Bar dataKey="value" fill="#f2af3e" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill="#f2af3e" radius={[6, 6, 0, 0]} barSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
