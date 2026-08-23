@@ -10,6 +10,8 @@ import DemographicsSection from "@/components/shared/DemographicsSection";
 import PhaseComparisonChart from "@/components/shared/PhaseComparisonChart";
 import { getStagesForSchool, checkAndAutoTransitionStages, type SchoolAssessmentStageRow } from "@/app/actions/stages";
 import AchievementChartsSection from "@/components/shared/AchievementChartsSection";
+import RombelComparisonChart, { type RombelDataItem } from "@/components/shared/RombelComparisonChart";
+import SchoolGrowthTrendChart, { type PhaseTrendItem } from "@/components/shared/SchoolGrowthTrendChart";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +48,8 @@ export default async function SekolahDashboard() {
   let numByAge: { age: number | string; avgLevel: number; count: number }[] = [];
   let litBySes: { ses: string; avgLevel: number; count: number }[] = [];
   let numBySes: { ses: string; avgLevel: number; count: number }[] = [];
+  let rombelComparisonData: RombelDataItem[] = [];
+  let phaseTrendData: PhaseTrendItem[] = [];
 
   try {
     // 0. Nama sekolah, npsn, info komunitas, & stages data
@@ -121,7 +125,7 @@ export default async function SekolahDashboard() {
 
       sessionsDataForChart = statsData.map((s: any) => ({
         ...s,
-        level_number: qlMap.get(s.current_level_id) || 0
+        level_number: s.current_level_id ? (qlMap.get(s.current_level_id) ?? 0) : null
       }));
       totalSessions = statsData.length;
 
@@ -146,13 +150,13 @@ export default async function SekolahDashboard() {
       sessionsDataForChart.forEach((s: any) => {
         const subject = s.question_categories?.subject_area;
         const level = s.level_number;
-        if (level > 0) {
+        if (s.current_level_id && level !== null && level !== undefined) {
           if (subject === "literasi") {
-            const currentMax = studentMaxLit.get(s.student_id) || 0;
-            if (level > currentMax) studentMaxLit.set(s.student_id, level);
+            const currentMax = studentMaxLit.get(s.student_id);
+            if (currentMax === undefined || level > currentMax) studentMaxLit.set(s.student_id, level);
           } else if (subject === "numerasi") {
-            const currentMax = studentMaxNum.get(s.student_id) || 0;
-            if (level > currentMax) studentMaxNum.set(s.student_id, level);
+            const currentMax = studentMaxNum.get(s.student_id);
+            if (currentMax === undefined || level > currentMax) studentMaxNum.set(s.student_id, level);
           }
         }
       });
@@ -231,6 +235,80 @@ export default async function SekolahDashboard() {
         }
       });
       numBySes = Array.from(numBySesMap.entries()).map(([ses, data]) => ({ ses, avgLevel: data.sum / data.count, count: data.count }));
+
+      // --- Tren Pertumbuhan Global per Fase ---
+      const phaseMap = new Map<string, { sumLit: number; countLit: number; sumNum: number; countNum: number; students: Set<string> }>();
+      sessionsDataForChart.forEach((s: any) => {
+        const phase = s.phase || "Tahap 1";
+        if (!phaseMap.has(phase)) {
+          phaseMap.set(phase, { sumLit: 0, countLit: 0, sumNum: 0, countNum: 0, students: new Set() });
+        }
+        const p = phaseMap.get(phase)!;
+        if (s.student_id) p.students.add(s.student_id);
+        const subjectPhase = s.question_categories?.subject_area;
+        const scorePhase = typeof s.score === "number" ? s.score : 0;
+        if (subjectPhase === "literasi") { p.sumLit += scorePhase; p.countLit++; }
+        else if (subjectPhase === "numerasi") { p.sumNum += scorePhase; p.countNum++; }
+      });
+      phaseTrendData = Array.from(phaseMap.entries())
+        .map(([phase, p]) => ({
+          phase,
+          avgLit: p.countLit > 0 ? Math.round((p.sumLit / p.countLit) * 10) / 10 : 0,
+          avgNum: p.countNum > 0 ? Math.round((p.sumNum / p.countNum) * 10) / 10 : 0,
+          participantCount: p.students.size,
+        }))
+        .sort((a, b) => {
+          const extractNum = (s: string) => { const m = s.match(/\d+/); return m ? parseInt(m[0]) : 0; };
+          return extractNum(a.phase) - extractNum(b.phase);
+        });
+      // --- End Tren Pertumbuhan ---
+
+      // --- Komparasi Kinerja Antar Rombel ---
+      const { data: classesData } = await supabase
+        .from("classes")
+        .select("id, name, grade")
+        .eq("school_id", schoolId)
+        .eq("is_active", true);
+
+      const { data: studentsWithClass } = await supabase
+        .from("students")
+        .select("id, class_id")
+        .eq("school_id", schoolId);
+
+      const studentClassMap = new Map<string, string>();
+      (studentsWithClass ?? []).forEach((s: any) => {
+        if (s.class_id) studentClassMap.set(s.id, s.class_id);
+      });
+
+      const classStatsMap = new Map<string, { sumLit: number; countLit: number; sumNum: number; countNum: number; studentIds: Set<string> }>();
+      sessionsDataForChart.forEach((s: any) => {
+        const classId = studentClassMap.get(s.student_id);
+        if (!classId) return;
+        if (!classStatsMap.has(classId)) {
+          classStatsMap.set(classId, { sumLit: 0, countLit: 0, sumNum: 0, countNum: 0, studentIds: new Set() });
+        }
+        const stat = classStatsMap.get(classId)!;
+        stat.studentIds.add(s.student_id);
+        const subjectRombel = s.question_categories?.subject_area;
+        const scoreRombel = typeof s.score === "number" ? s.score : 0;
+        if (subjectRombel === "literasi") { stat.sumLit += scoreRombel; stat.countLit++; }
+        else if (subjectRombel === "numerasi") { stat.sumNum += scoreRombel; stat.countNum++; }
+      });
+
+      rombelComparisonData = (classesData ?? []).map((cls: any) => {
+        const stat = classStatsMap.get(cls.id);
+        return {
+          className: cls.name,
+          grade: cls.grade,
+          avgLit: stat && stat.countLit > 0 ? Math.round((stat.sumLit / stat.countLit) * 10) / 10 : 0,
+          avgNum: stat && stat.countNum > 0 ? Math.round((stat.sumNum / stat.countNum) * 10) / 10 : 0,
+          studentCount: stat?.studentIds.size ?? 0,
+        };
+      })
+      .filter((r: RombelDataItem) => r.studentCount > 0)
+      .sort((a: RombelDataItem, b: RombelDataItem) => a.grade - b.grade || a.className.localeCompare(b.className));
+      // --- End Komparasi Rombel ---
+
       // --- End New Analytics Data ---
     }
 
@@ -300,6 +378,16 @@ export default async function SekolahDashboard() {
           litBySes={litBySes}
           numBySes={numBySes}
         />
+      </div>
+
+      {/* ── Komparasi Kinerja Antar Rombel ── */}
+      <div style={{ marginBottom: "2rem" }}>
+        <RombelComparisonChart rombelData={rombelComparisonData} />
+      </div>
+
+      {/* ── Tren Pertumbuhan Global Sekolah ── */}
+      <div style={{ marginBottom: "2rem" }}>
+        <SchoolGrowthTrendChart trendData={phaseTrendData} />
       </div>
 
       {/* ── Perbandingan Nilai Antar Fase & Sebaran Asesmen ── */}

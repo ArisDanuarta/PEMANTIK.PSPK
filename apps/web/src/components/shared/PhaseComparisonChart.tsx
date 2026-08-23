@@ -135,14 +135,9 @@ export default function PhaseComparisonChart({
         if (lvlNum > map[p].maxLevelNum) {
           map[p].maxLevelNum = lvlNum;
         }
-      } else {
-        // Jika subject tidak diketahui, hitung ke Literasi/general
-        map[p].sumLit += sc;
-        map[p].countLit += 1;
-        if (lvlNum > map[p].maxLevelLit) {
-          map[p].maxLevelLit = lvlNum;
-        }
       }
+      // Sesi tanpa subject_area yang dikenali dilewati, tidak dihitung ke manapun
+
     });
 
     const phases = Object.values(map);

@@ -25,6 +25,8 @@ export default async function Dashboard() {
     totalStudents: 0,
     completedSessions: 0,
     avgScore: 0,
+    avgLit: 0,
+    avgNum: 0,
     demographics: {
       gender: { L: 0, P: 0 },
       ses: { I: 0, II: 0, III: 0, IV: 0, Uncategorized: 0 },
@@ -39,15 +41,13 @@ export default async function Dashboard() {
   let communityName: string | null = null;
 
   try {
-    // 1. Get classes taught by this teacher
-    const { data: classes } = await supabase
-      .from("classes")
-      .select("id")
-      .eq("school_id", schoolId)
-      .eq("teacher_id", teacherId)
-      .eq("is_active", true);
+    // 1. Get classes taught by this teacher via class_teachers junction table
+    const { data: classTeacherRows } = await (supabase as any)
+      .from("class_teachers")
+      .select("class_id")
+      .eq("teacher_id", teacherId);
 
-    const classIds = classes?.map((c) => c.id) || [];
+    const classIds = classTeacherRows?.map((r: any) => r.class_id) || [];
     stats.totalClasses = classIds.length;
     
     // Fetch Stages
@@ -114,10 +114,10 @@ export default async function Dashboard() {
       }
 
       if (studentIds.length > 0) {
-        // 3. Get session stats
+        // 3. Get session stats (split by subject)
         const { data: sessions } = await supabase
           .from("assessment_sessions")
-          .select("score")
+          .select("score, question_categories(subject_area)")
           .in("student_id", studentIds)
           .eq("status", "completed")
           .eq("is_void", false)
@@ -125,8 +125,17 @@ export default async function Dashboard() {
 
         if (sessions && sessions.length > 0) {
           stats.completedSessions = sessions.length;
-          const totalScore = sessions.reduce((sum, s) => sum + (Number(s.score) || 0), 0);
-          stats.avgScore = Math.round(totalScore / sessions.length);
+          let sumAll = 0, sumLit = 0, countLit = 0, sumNum = 0, countNum = 0;
+          sessions.forEach((s: any) => {
+            const score = Number(s.score) || 0;
+            sumAll += score;
+            const subject = (s.question_categories as any)?.subject_area;
+            if (subject === "literasi") { sumLit += score; countLit++; }
+            else if (subject === "numerasi") { sumNum += score; countNum++; }
+          });
+          stats.avgScore = Math.round(sumAll / sessions.length);
+          stats.avgLit = countLit > 0 ? Math.round((sumLit / countLit) * 10) / 10 : 0;
+          stats.avgNum = countNum > 0 ? Math.round((sumNum / countNum) * 10) / 10 : 0;
         }
 
         // 4. Get recent sessions

@@ -101,6 +101,7 @@ export default function LoginPage() {
             priority
             sizes="(max-width: 768px) 180px, 240px"
             className="login-logo-img"
+            style={{ height: "auto" }}
           />
         </div>
 
@@ -222,10 +223,10 @@ export default function LoginPage() {
             <div className="login-partners-track">
               {[...Array(4)].map((_, idx) => (
                 <div className="marquee-group" key={idx}>
-                  <Image src="/images/Klien & Partner Pemantik/Logo-Inspirasi.png" alt="Inspirasi" width={150} height={70} />
-                  <Image src="/images/Klien & Partner Pemantik/Logo-Sekolahmu.png" alt="Sekolahmu" width={150} height={70} />
-                  <Image src="/images/Klien & Partner Pemantik/YSS.png" alt="YSS" width={150} height={70} />
-                  <Image src="/images/Klien & Partner Pemantik/logoYGB.png" alt="YGB" width={150} height={70} />
+                  <Image src="/images/Klien & Partner Pemantik/Logo-Inspirasi.png" alt="Inspirasi" width={150} height={70} style={{ width: "auto" }} />
+                  <Image src="/images/Klien & Partner Pemantik/Logo-Sekolahmu.png" alt="Sekolahmu" width={150} height={70} style={{ width: "auto" }} />
+                  <Image src="/images/Klien & Partner Pemantik/YSS.png" alt="YSS" width={150} height={70} style={{ width: "auto" }} />
+                  <Image src="/images/Klien & Partner Pemantik/logoYGB.png" alt="YGB" width={150} height={70} style={{ width: "auto" }} />
                 </div>
               ))}
             </div>

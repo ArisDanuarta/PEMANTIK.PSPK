@@ -221,7 +221,7 @@ export default async function KomunitasDashboardPage() {
         const numDistMap = new Map<number, number>();
         studentMaxNum.forEach(level => numDistMap.set(level, (numDistMap.get(level) || 0) + 1));
         numLevelDist = Array.from(numDistMap.entries()).map(([level, count]) => ({ level, count })).sort((a,b) => a.level - b.level);
-        console.log("DEBUG DASHBOARD -> studentMaxNum size:", studentMaxNum.size, "numLevelDist:", numLevelDist);
+
 
         const currentYear = new Date().getFullYear();
         const studentAges = new Map<string, number>();
@@ -300,7 +300,7 @@ export default async function KomunitasDashboardPage() {
         statsData.forEach((s: any) => {
           if (!s.school_id) return;
           const subject = s.question_categories?.subject_area?.toLowerCase();
-          const levelNumber = s.current_level_id ? (qlMap.get(s.current_level_id) ?? 0) : 0;
+          const score = s.score ?? 0;
           
           let schoolStat = schoolStatsMap.get(s.school_id);
           if (!schoolStat) {
@@ -310,10 +310,10 @@ export default async function KomunitasDashboardPage() {
           schoolStat.uniqueStudents.add(s.student_id);
           
           if (subject === 'literasi') {
-            schoolStat.litSum += levelNumber;
+            schoolStat.litSum += score;
             schoolStat.litCount += 1;
           } else if (subject === 'numerasi') {
-            schoolStat.numSum += levelNumber;
+            schoolStat.numSum += score;
             schoolStat.numCount += 1;
           }
           

@@ -58,8 +58,9 @@ export default function SchoolBenchmarkingChart({ data }: SchoolBenchmarkingChar
           <YAxis 
             yAxisId="left" 
             tick={{ fontSize: 12, fill: "#64748b" }} 
-            label={{ value: 'Level Rata-rata', angle: -90, position: 'insideLeft', offset: 15, fontSize: 12, fill: '#64748b' }} 
-            domain={[0, 'dataMax + 1']}
+            tickFormatter={(val) => `${val}%`}
+            label={{ value: 'Rata-rata Skor (%)', angle: -90, position: 'insideLeft', offset: 15, fontSize: 12, fill: '#64748b' }} 
+            domain={[0, 100]}
           />
           <YAxis 
             yAxisId="right" 
@@ -71,8 +72,7 @@ export default function SchoolBenchmarkingChart({ data }: SchoolBenchmarkingChar
           <Tooltip 
             contentStyle={{ borderRadius: '0.75rem', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
             formatter={(value: any, name: any) => {
-              if (name === 'Partisipasi') return [`${Number(value).toFixed(1)}%`, name];
-              return [Number(value).toFixed(2), name];
+              return [`${Number(value).toFixed(1)}%`, name];
             }}
           />
           <Legend wrapperStyle={{ fontSize: 12, paddingTop: '10px' }} />

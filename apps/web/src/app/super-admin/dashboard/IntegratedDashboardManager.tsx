@@ -155,7 +155,8 @@ export default function IntegratedDashboardManager({
           <select value={filterSes} onChange={e => setFilterSes(e.target.value)} className="form-input">
             <option value="all">Semua SES</option>
             <option value="atas">Atas</option>
-            <option value="menengah">Menengah</option>
+            <option value="menengah_atas">Menengah Atas</option>
+            <option value="menengah_bawah">Menengah Bawah</option>
             <option value="bawah">Bawah</option>
           </select>
         </div>

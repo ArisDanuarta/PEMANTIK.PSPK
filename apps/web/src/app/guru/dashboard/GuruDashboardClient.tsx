@@ -12,6 +12,8 @@ interface GuruDashboardClientProps {
     totalStudents: number;
     completedSessions: number;
     avgScore: number;
+    avgLit: number;
+    avgNum: number;
     demographics: {
       gender: { L: number; P: number };
       ses: { I: number; II: number; III: number; IV: number; Uncategorized: number };
@@ -79,9 +81,21 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
         </div>
         <div className="card" style={{ padding: "1.5rem", borderLeft: "4px solid #a8281c" }}>
           <p style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Rata-rata Skor</p>
-          <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#a8281c", margin: "0.5rem 0", fontFamily: "var(--font-lora)" }}>
-            {stats.avgScore}
-          </h2>
+          <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem", alignItems: "baseline" }}>
+            <div>
+              <div style={{ fontSize: "0.72rem", color: "#2d9e5f", fontWeight: 700, textTransform: "uppercase" }}>Literasi</div>
+              <h2 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#2d9e5f", margin: 0, fontFamily: "var(--font-lora)" }}>
+                {stats.avgLit > 0 ? `${stats.avgLit}%` : "-"}
+              </h2>
+            </div>
+            <div style={{ width: 1, height: 32, backgroundColor: "#e2e8f0" }} />
+            <div>
+              <div style={{ fontSize: "0.72rem", color: "#0874aa", fontWeight: 700, textTransform: "uppercase" }}>Numerasi</div>
+              <h2 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#0874aa", margin: 0, fontFamily: "var(--font-lora)" }}>
+                {stats.avgNum > 0 ? `${stats.avgNum}%` : "-"}
+              </h2>
+            </div>
+          </div>
         </div>
       </StatGrid>
 
