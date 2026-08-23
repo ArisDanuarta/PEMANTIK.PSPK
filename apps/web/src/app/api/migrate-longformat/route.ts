@@ -116,9 +116,15 @@ function genUsername(fullName: string, idUser?: string): string {
   let validNames = words.filter(word => !balineseTitles.has(word) && word.length > 1);
   if (validNames.length === 0) validNames = words;
   
-  let randomNamePart = "siswa";
+  // Prefer idUser if it's already a good username-like string
+  if (idUser && typeof idUser === "string" && idUser.length > 2) {
+    const sanitizedId = idUser.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (sanitizedId.length > 2) return sanitizedId.slice(0, 30);
+  }
+
+  let namePart = "siswa";
   if (validNames.length > 0) {
-    randomNamePart = validNames[Math.floor(Math.random() * validNames.length)].slice(0, 10);
+    namePart = validNames[0].slice(0, 10); // ALWAYS use the first valid name part to be deterministic
   }
 
   const identifier = (idUser || "").replace(/[^0-9]/g, "");
@@ -126,10 +132,13 @@ function genUsername(fullName: string, idUser?: string): string {
   if (identifier.length >= 4) {
     digits = identifier.slice(-4);
   } else {
-    digits = Math.floor(1000 + Math.random() * 9000).toString();
+    // If no identifier, generate a pseudo-random digit based on name length to maintain some determinism
+    // In a real deterministic system we'd hash the name, but this suffices for fallback
+    const seed = (fullName || "").length + validNames.length;
+    digits = (1000 + (seed % 9000)).toString();
   }
 
-  return `${randomNamePart}_${digits}`;
+  return `${namePart}_${digits}`;
 }
 
 // ─── Data structures ──────────────────────────────────────────────────────────

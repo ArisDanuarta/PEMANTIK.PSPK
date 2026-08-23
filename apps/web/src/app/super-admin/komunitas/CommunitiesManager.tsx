@@ -10,7 +10,8 @@ import {
   resetCommunityPasswordAction,
   toggleCommunityActiveAction,
   bulkCreateCommunitiesAction,
-  deleteCommunityAction,
+  deepDeleteCommunityAction,
+  getCommunityDeletionStatsAction,
   bulkDeleteCommunitiesAction,
 } from "../../actions/communities";
 import * as XLSX from "xlsx";
@@ -52,6 +53,13 @@ export default function CommunitiesManager({
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editingComm, setEditingComm] = useState<Community | null>(null);
   
+  // States for Deep Delete functionality
+  const [deletingComm, setDeletingComm] = useState<Community | null>(null);
+  const [deleteStats, setDeleteStats] = useState<any>(null);
+  const [isFetchingStats, setIsFetchingStats] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [isPending, startTransition] = useTransition();
   const { success: showSuccessToast, error: showErrorToast } = useToast();
   const { confirm } = useConfirm();
@@ -163,25 +171,38 @@ export default function CommunitiesManager({
   };
 
   const handleDeleteCommunity = async (comm: Community) => {
-    const ok = await confirm({
-      title: "Hapus Komunitas?",
-      description: `Apakah Anda yakin ingin menghapus komunitas '${comm.name}' secara permanen? Peringatan: Proses ini tidak dapat dibatalkan, dan jika komunitas ini memiliki sekolah/akun tertaut, proses mungkin gagal.`,
-      confirmLabel: "Ya, Hapus",
-      cancelLabel: "Batal",
-      variant: "danger",
-    });
+    setDeletingComm(comm);
+    setIsFetchingStats(true);
+    setDeleteStats(null);
+    setDeleteConfirmText("");
+    
+    // Fetch stats
+    const res = await getCommunityDeletionStatsAction(comm.id);
+    setIsFetchingStats(false);
+    if (res.success) {
+      setDeleteStats(res.stats);
+    } else {
+      showErrorToast("Gagal mengambil data", res.error || "");
+      setDeletingComm(null);
+    }
+  };
 
-    if (!ok) return;
-
-    startTransition(async () => {
-      const result = await deleteCommunityAction(comm.id);
-      if (result.success) {
-        showSuccessToast("Berhasil", "Komunitas berhasil dihapus!");
-        window.location.reload();
-      } else {
-        showErrorToast("Gagal menghapus komunitas", result.error || "");
-      }
-    });
+  const executeDeepDelete = async () => {
+    if (!deletingComm) return;
+    if (deleteConfirmText !== deletingComm.name) return;
+    
+    setIsDeleting(true);
+    const result = await deepDeleteCommunityAction(deletingComm.id);
+    
+    if (result.success) {
+      showSuccessToast("Berhasil", "Komunitas beserta seluruh data di dalamnya telah dihapus secara permanen!");
+      setDeletingComm(null);
+      setIsDeleting(false);
+      window.location.reload();
+    } else {
+      showErrorToast("Gagal menghapus", result.error || "");
+      setIsDeleting(false);
+    }
   };
 
   const handleBulkUpload = async (data: any[]) => {
@@ -567,6 +588,103 @@ export default function CommunitiesManager({
           onClose={() => setIsBulkModalOpen(false)}
         />
       )}
+
+      {/* Deep Delete Double Confirmation Modal */}
+      <Modal
+        open={!!deletingComm}
+        onClose={() => !isDeleting && setDeletingComm(null)}
+        title="Hapus Komunitas Permanen"
+        size="md"
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          {isFetchingStats ? (
+            <div style={{ textAlign: "center", padding: "2rem" }}>
+              <div className="btn-spinner" style={{ borderColor: "#0874aa", borderRightColor: "transparent", width: 24, height: 24, margin: "0 auto 1rem" }} />
+              <p>Menganalisis data terkait...</p>
+            </div>
+          ) : deleteStats ? (
+            <>
+              <div style={{ 
+                backgroundColor: "#fef2f2", 
+                border: "1px solid #f87171", 
+                borderRadius: "0.5rem", 
+                padding: "1rem" 
+              }}>
+                <h4 style={{ color: "#991b1b", margin: "0 0 0.5rem 0", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  Peringatan: Tindakan Tidak Dapat Dibatalkan
+                </h4>
+                <p style={{ color: "#b91c1c", fontSize: "0.9rem", marginBottom: "1rem" }}>
+                  Anda akan menghapus komunitas <strong>{deletingComm?.name}</strong> secara permanen beserta seluruh data di dalamnya:
+                </p>
+                <ul style={{ color: "#7f1d1d", fontSize: "0.85rem", paddingLeft: "1.5rem", marginBottom: 0 }}>
+                  <li><strong>{deleteStats.schools}</strong> Sekolah Binaan</li>
+                  <li><strong>{deleteStats.users}</strong> Akun Guru / Admin</li>
+                  <li><strong>{deleteStats.students}</strong> Siswa</li>
+                  <li><strong>{deleteStats.sessions}</strong> Sesi Asesmen (beserta jawabannya)</li>
+                </ul>
+              </div>
+
+              <div className="form-group" style={{ marginTop: "0.5rem" }}>
+                <label className="form-label">
+                  Untuk melanjutkan, ketik persis nama komunitas: <strong>{deletingComm?.name}</strong>
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Ketik nama komunitas di sini..."
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  disabled={isDeleting}
+                  autoComplete="off"
+                />
+              </div>
+
+              {isDeleting && (
+                <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <div style={{ width: "100%", backgroundColor: "#e5e7eb", borderRadius: "999px", height: "8px", overflow: "hidden" }}>
+                    <div style={{ 
+                      width: "100%", 
+                      height: "100%", 
+                      backgroundColor: "#ef4444", 
+                      animation: "indeterminate-progress 1.5s infinite linear",
+                      transformOrigin: "left"
+                    }} />
+                  </div>
+                  <p style={{ fontSize: "0.8rem", color: "#6b7280", textAlign: "center", margin: 0 }}>
+                    Sedang memproses penghapusan... Mohon jangan tutup jendela ini.
+                  </p>
+                </div>
+              )}
+
+              <style>{`
+                @keyframes indeterminate-progress {
+                  0% { transform: translateX(-100%) scaleX(0.2); }
+                  50% { transform: translateX(0%) scaleX(0.5); }
+                  100% { transform: translateX(100%) scaleX(0.2); }
+                }
+              `}</style>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1rem" }}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setDeletingComm(null)} 
+                  disabled={isDeleting}
+                >
+                  Batal
+                </Button>
+                <Button 
+                  variant="danger" 
+                  onClick={executeDeepDelete}
+                  disabled={isDeleting || deleteConfirmText !== deletingComm?.name}
+                >
+                  {isDeleting ? "Menghapus..." : "Ya, Hapus Permanen"}
+                </Button>
+              </div>
+            </>
+          ) : null}
+        </div>
+      </Modal>
     </div>
   );
 }

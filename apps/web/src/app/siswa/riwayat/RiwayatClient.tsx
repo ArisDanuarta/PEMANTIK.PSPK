@@ -266,10 +266,7 @@ export default function RiwayatClient({ history }: { history: HistoryItem[] }) {
               </div>
 
               <div className="rw-foot">
-                <Link href={`/siswa/asesmen/${selected.id}/hasil`} className="rw-btn-primary">
-                  <span className="material-symbols-outlined" style={{ fontSize:'16px' }}>open_in_new</span>
-                  Lihat Hasil Lengkap
-                </Link>
+
                 <button className="rw-btn-ghost" onClick={() => setOpen(false)}>Tutup Detail</button>
               </div>
             </>

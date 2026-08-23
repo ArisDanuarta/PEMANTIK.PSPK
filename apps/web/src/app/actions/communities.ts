@@ -373,79 +373,152 @@ export async function bulkCreateCommunitiesAction(
   }
 }
 
-export async function deleteCommunityAction(id: string): Promise<ActionResponse> {
+export async function getCommunityDeletionStatsAction(communityId: string): Promise<ActionResponse & { stats?: any }> {
   try {
+    const { role } = await requireAuth(["super_admin"]);
+    if (role !== "super_admin") return { success: false, error: "Unauthorized" };
+
     const supabase = createServerClient();
     
-    // Check if there are schools attached
-    const { count, error: countError } = await supabase
-      .from("schools")
-      .select("id", { count: "exact", head: true })
-      .eq("community_id", id);
-      
-    if (countError) {
-      return { success: false, error: "Gagal mengecek data sekolah: " + countError.message };
-    }
+    // 1. Get Schools
+    const { data: schools } = await supabase.from("schools").select("id").eq("community_id", communityId);
+    const schoolIds = schools?.map(s => s.id) || [];
     
-    if (count && count > 0) {
-      return { success: false, error: `Komunitas tidak bisa dihapus karena masih memiliki ${count} sekolah yang terhubung.` };
+    // 2. Get Users (Community Admin + School Admins + Teachers)
+    let userCount = 0;
+    const { count: commAdminCount } = await supabase.from("users").select("id", { count: "exact", head: true }).eq("community_id", communityId);
+    userCount += commAdminCount || 0;
+    
+    if (schoolIds.length > 0) {
+      const { count: schoolUserCount } = await supabase.from("users").select("id", { count: "exact", head: true }).in("school_id", schoolIds);
+      userCount += schoolUserCount || 0;
     }
 
-    // Get all users associated with this community to delete their auth accounts
-    const { data: commUsers } = await supabase
-      .from("users")
-      .select("id")
-      .eq("community_id", id)
-      .eq("role", "community");
-      
-    if (commUsers && commUsers.length > 0) {
-      for (const user of commUsers) {
-        // Delete from public.users first to avoid FK issues if any
-        await supabase.from("users").delete().eq("id", user.id);
-        // Delete from auth.users (requires admin privilege, but createServerClient has service role)
-        await supabase.auth.admin.deleteUser(user.id);
+    // 3. Get Students
+    let studentCount = 0;
+    let studentIds: string[] = [];
+    if (schoolIds.length > 0) {
+      const { data: students } = await supabase.from("students").select("id").in("school_id", schoolIds);
+      studentIds = students?.map(s => s.id) || [];
+      studentCount = studentIds.length;
+    }
+
+    // 4. Get Assessment Sessions
+    let sessionCount = 0;
+    if (studentIds.length > 0) {
+      // Chunk the array if it's too large, but for stats we can do a simplified count using school_id if available on sessions
+      const { count: sCount } = await supabase.from("assessment_sessions").select("id", { count: "exact", head: true }).in("school_id", schoolIds);
+      sessionCount = sCount || 0;
+    }
+
+    return {
+      success: true,
+      stats: {
+        schools: schoolIds.length,
+        users: userCount,
+        students: studentCount,
+        sessions: sessionCount
+      }
+    };
+  } catch (err: any) {
+    console.error("Exception in getCommunityDeletionStatsAction:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function deepDeleteCommunityAction(communityId: string): Promise<ActionResponse> {
+  try {
+    const { role } = await requireAuth(["super_admin"]);
+    if (role !== "super_admin") return { success: false, error: "Unauthorized" };
+    
+    const supabase = createServerClient();
+    
+    // Gather IDs for bottom-up deletion
+    const { data: schools } = await supabase.from("schools").select("id").eq("community_id", communityId);
+    const schoolIds = schools?.map(s => s.id) || [];
+    
+    // Users to delete (Auth + Public)
+    const { data: users1 } = await supabase.from("users").select("id").eq("community_id", communityId);
+    const { data: users2 } = schoolIds.length > 0 
+      ? await supabase.from("users").select("id").in("school_id", schoolIds) 
+      : { data: [] };
+    const allUserIds = [...(users1?.map(u => u.id) || []), ...(users2?.map(u => u.id) || [])];
+    // Remove duplicates
+    const uniqueUserIds = Array.from(new Set(allUserIds));
+
+    const { data: classes } = schoolIds.length > 0 
+      ? await supabase.from("classes").select("id").in("school_id", schoolIds)
+      : { data: [] };
+    const classIds = classes?.map(c => c.id) || [];
+
+    const { data: students } = schoolIds.length > 0
+      ? await supabase.from("students").select("id").in("school_id", schoolIds)
+      : { data: [] };
+    const studentIds = students?.map(s => s.id) || [];
+    
+    const { data: sessions } = schoolIds.length > 0
+      ? await supabase.from("assessment_sessions").select("id").in("school_id", schoolIds)
+      : { data: [] };
+    const sessionIds = sessions?.map(s => s.id) || [];
+
+    // --- BOTTOM UP DELETION ---
+    
+    // 1. Delete Student Answers (Chunked by sessionIds)
+    if (sessionIds.length > 0) {
+      const chunkSize = 200;
+      for (let i = 0; i < sessionIds.length; i += chunkSize) {
+        const chunk = sessionIds.slice(i, i + chunkSize);
+        await supabase.from("student_answers").delete().in("session_id", chunk);
       }
     }
-    
-    // Attempt to delete community
-    const { error } = await supabase.from("communities").delete().eq("id", id);
-    
-    if (error) {
-      console.error("Failed to delete community:", error);
-      if (error.code === '23503') {
-        return { success: false, error: "Komunitas tidak bisa dihapus karena masih memiliki data yang terhubung." };
-      }
-      return { success: false, error: "Gagal menghapus komunitas: " + error.message };
+
+    // 2. Delete Assessment Sessions
+    if (schoolIds.length > 0) {
+      await supabase.from("assessment_sessions").delete().in("school_id", schoolIds);
     }
+
+    // 3. Delete Class Teachers
+    if (classIds.length > 0) {
+      await (supabase as any).from("class_teachers").delete().in("class_id", classIds);
+    }
+    
+    // 4. Delete Classes
+    if (schoolIds.length > 0) {
+      await supabase.from("classes").delete().in("school_id", schoolIds);
+    }
+
+    // 5. Delete Students
+    if (schoolIds.length > 0) {
+      await supabase.from("students").delete().in("school_id", schoolIds);
+    }
+
+    // 6. Delete Users (Auth and Public)
+    if (uniqueUserIds.length > 0) {
+      for (const uid of uniqueUserIds) {
+        await supabase.from("users").delete().eq("id", uid);
+        await supabase.auth.admin.deleteUser(uid);
+      }
+    }
+
+    // 7. Delete Schools
+    if (schoolIds.length > 0) {
+      await supabase.from("schools").delete().in("id", schoolIds);
+    }
+
+    // 8. Delete Community
+    const { error: commError } = await supabase.from("communities").delete().eq("id", communityId);
+    if (commError) throw commError;
     
     revalidatePath("/super-admin/komunitas");
     revalidatePath("/super-admin/dashboard");
     return { success: true };
   } catch (err: any) {
-    console.error("Exception in deleteCommunityAction:", err);
-    return { success: false, error: "Terjadi kesalahan sistem: " + (err.message || String(err)) };
+    console.error("Exception in deepDeleteCommunityAction:", err);
+    return { success: false, error: "Terjadi kesalahan saat menghapus: " + (err.message || String(err)) };
   }
 }
 
 export async function bulkDeleteCommunitiesAction(ids: string[]) {
-  const { role } = await requireAuth(["super_admin"]);
-  if (role !== "super_admin") {
-    return { success: false, error: "Unauthorized" };
-  }
-  if (!ids || ids.length === 0) return { success: true };
-  
-  try {
-    const supabase = createServerClient();
-    const { data: users } = await supabase.from("users").select("id").in("community_id", ids);
-    if (users && users.length > 0) {
-      for (const u of users) {
-        await supabase.auth.admin.deleteUser(u.id);
-      }
-    }
-    await supabase.from("communities").delete().in("id", ids);
-    
-    return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message };
-  }
+  // Not supporting deep delete for bulk action to avoid timeout/rate limits
+  return { success: false, error: "Bulk delete with deep cascading is disabled for safety. Please delete communities individually." };
 }

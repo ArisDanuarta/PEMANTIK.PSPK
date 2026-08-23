@@ -139,7 +139,7 @@ export default function AchievementChartsSection({
               <LineChart data={litByAge} margin={{ top: 20, right: 30, left: 0, bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis type="number" dataKey="age" domain={['dataMin', 'dataMax']} tick={{ fontSize: 12, fill: "#6b7280" }} label={{ value: 'Usia (Tahun)', position: 'insideBottom', offset: -5, fontSize: 12, fill: '#6b7280' }} />
-                <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} label={{ value: 'Level Rata-rata', angle: -90, position: 'insideLeft', offset: 15, fontSize: 12, fill: '#6b7280' }} />
+                <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} domain={[0, 8]} tickCount={9} label={{ value: 'Level Rata-rata', angle: -90, position: 'insideLeft', offset: 15, fontSize: 12, fill: '#6b7280' }} />
                 <Tooltip 
                   formatter={(val: any, name: any) => [
                     name === 'Rata-rata Level' || name === 'avgLevel' ? Number(val).toFixed(2) : val, 
@@ -165,7 +165,7 @@ export default function AchievementChartsSection({
               <LineChart data={numByAge} margin={{ top: 20, right: 30, left: 0, bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis type="number" dataKey="age" domain={['dataMin', 'dataMax']} tick={{ fontSize: 12, fill: "#6b7280" }} label={{ value: 'Usia (Tahun)', position: 'insideBottom', offset: -5, fontSize: 12, fill: '#6b7280' }} />
-                <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} label={{ value: 'Level Rata-rata', angle: -90, position: 'insideLeft', offset: 15, fontSize: 12, fill: '#6b7280' }} />
+                <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} domain={[0, 4]} tickCount={5} label={{ value: 'Level Rata-rata', angle: -90, position: 'insideLeft', offset: 15, fontSize: 12, fill: '#6b7280' }} />
                 <Tooltip 
                   formatter={(val: any, name: any) => [
                     name === 'Rata-rata Level' || name === 'avgLevel' ? Number(val).toFixed(2) : val, 
@@ -191,7 +191,7 @@ export default function AchievementChartsSection({
               <BarChart data={combinedSesData} margin={{ top: 20, right: 30, left: 0, bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis dataKey="sesLabel" tick={{ fontSize: 12, fill: "#6b7280" }} />
-                <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} label={{ value: 'Level Rata-rata', angle: -90, position: 'insideLeft', offset: 15, fontSize: 12, fill: '#6b7280' }} />
+                <YAxis tick={{ fontSize: 12, fill: "#6b7280" }} domain={[0, 8]} tickCount={9} label={{ value: 'Level Rata-rata', angle: -90, position: 'insideLeft', offset: 15, fontSize: 12, fill: '#6b7280' }} />
                 <Tooltip 
                   formatter={(val: any, name: any) => [
                     Number(val).toFixed(1),
@@ -199,8 +199,8 @@ export default function AchievementChartsSection({
                   ]}
                 />
                 <Legend wrapperStyle={{ fontSize: 12, paddingTop: '10px' }} />
-                <Bar dataKey="avgLit" name="Rata-rata Literasi" fill={LIT_COLOR} radius={[4, 4, 0, 0]} barSize={40} />
-                <Bar dataKey="avgNum" name="Rata-rata Numerasi" fill={NUM_COLOR} radius={[4, 4, 0, 0]} barSize={40} />
+                <Bar dataKey="avgLit" name="Rata-rata Literasi" fill={LIT_COLOR} radius={[4, 4, 0, 0]} barSize={40} minPointSize={5} />
+                <Bar dataKey="avgNum" name="Rata-rata Numerasi" fill={NUM_COLOR} radius={[4, 4, 0, 0]} barSize={40} minPointSize={5} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
