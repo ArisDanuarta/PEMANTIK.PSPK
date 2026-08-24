@@ -116,24 +116,24 @@ function genUsername(fullName: string, idUser?: string): string {
   let validNames = words.filter(word => !balineseTitles.has(word) && word.length > 1);
   if (validNames.length === 0) validNames = words;
   
-  // Prefer idUser if it's already a good username-like string
+  // Only use idUser directly as username if it contains at least one letter (e.g., "qurrahman_3889")
+  // Purely numeric idUser (e.g., "325") must NOT be used as-is
   if (idUser && typeof idUser === "string" && idUser.length > 2) {
     const sanitizedId = idUser.toLowerCase().replace(/[^a-z0-9_]/g, "");
-    if (sanitizedId.length > 2) return sanitizedId.slice(0, 30);
+    if (sanitizedId.length > 2 && /[a-z]/.test(sanitizedId)) return sanitizedId.slice(0, 30);
   }
 
   let namePart = "siswa";
   if (validNames.length > 0) {
-    namePart = validNames[0].slice(0, 10); // ALWAYS use the first valid name part to be deterministic
+    namePart = validNames[0].slice(0, 10);
   }
 
-  const identifier = (idUser || "").replace(/[^0-9]/g, "");
-  let digits = "";
-  if (identifier.length >= 4) {
-    digits = identifier.slice(-4);
+  // Use the numeric portion of idUser as a suffix, padded to at least 4 digits for readability
+  const numericId = (idUser || "").replace(/[^0-9]/g, "");
+  let digits: string;
+  if (numericId.length > 0) {
+    digits = numericId.padStart(4, "0");
   } else {
-    // If no identifier, generate a pseudo-random digit based on name length to maintain some determinism
-    // In a real deterministic system we'd hash the name, but this suffices for fallback
     const seed = (fullName || "").length + validNames.length;
     digits = (1000 + (seed % 9000)).toString();
   }
@@ -149,9 +149,19 @@ interface StudentAnswerEntry {
   level_num: number;
 }
 
+/**
+ * Represents ONE assessment session from the old platform.
+ * Key insight: each unique `id` column value in the Excel = one distinct session.
+ * One student (id_user) can have MANY sessions across different levels and categories.
+ */
 interface StudentSessionData {
-  answers: Map<string, StudentAnswerEntry>; // kolom_data → answer (deduplicated)
-  max_level: number;
+  old_session_id: string;    // The `id` column from Excel (old platform session ID)
+  subject_area: string;      // 'literasi' or 'numerasi'
+  level_num: number;         // The level tested in this specific session (0-8)
+  attempt_number: number;    // The attempt number for this session (from 'attempt' column)
+  started_at: string;        // From 'waktu_mulai' column
+  time_spent_sec: number;    // From 'durasi_detik' column
+  answers: Map<string, StudentAnswerEntry>; // kolom_data -> answer entry
 }
 
 interface StudentGroupedData {
@@ -171,15 +181,28 @@ interface StudentGroupedData {
   ses_class: string;
   asal_sekolah: string;
   organisasi_user: string;
-  sessions: Map<string, StudentSessionData>; // subject_area → session
+  // Key = old_session_id (the `id` column from Excel)
+  // Each entry = one distinct assessment session with its own level, time, and answers
+  sessions: Map<string, StudentSessionData>;
 }
 
 // ─── Grouping function ────────────────────────────────────────────────────────
 
+/**
+ * Groups Excel rows into a student-centric structure.
+ *
+ * CORRECT LOGIC:
+ * - Primary grouping: by `id_user` (student)
+ * - Secondary grouping: by `id` column (old platform session ID)
+ *   Each unique `id` value = one distinct DB assessment_session record
+ *   One student can have many sessions (e.g., Level 0, Level 1, Level 2 each as separate sessions)
+ *
+ * The `id` column is guaranteed unique per session (verified: no `id` spans multiple id_users).
+ */
 function groupLongFormatRows(rows: any[]): {
   students: Map<string, StudentGroupedData>;
   uniqueCommunities: Set<string>;
-  uniqueSchools: Map<string, string>; // school_name → community_name
+  uniqueSchools: Map<string, string>; // school_name -> community_name
 } {
   const students = new Map<string, StudentGroupedData>();
   const uniqueCommunities = new Set<string>();
@@ -189,16 +212,22 @@ function groupLongFormatRows(rows: any[]): {
     const idUser = String(row.id_user || "").trim();
     if (!idUser) continue;
 
+    const oldSessionId = String(row.id || "").trim();
+    if (!oldSessionId) continue; // skip rows without old session id
+
     const kolomData = String(row.kolom_data || "").trim();
     const questionCode = kolomDataToQuestionCode(kolomData);
-    if (!questionCode) continue; // skip baris tanpa soal valid
+    if (!questionCode) continue; // skip rows without a valid question code
 
     const mapel = String(row.mapel || row.category || "").trim();
     const subjectArea = normalizeSubjectArea(mapel);
     const isCorrect = Number(row.benar || 0) === 1;
     const levelNum = extractLevelFromKolomData(kolomData);
+    const attemptNumber = parseInt(String(row.attempt || "1"), 10) || 1;
+    const startedAt = String(row.waktu_mulai || "").trim() || new Date().toISOString();
+    const timeSpentSec = parseInt(String(row.durasi_detik || "0"), 10) || 0;
 
-    // Inisialisasi student jika belum ada
+    // Initialize student record if not present
     if (!students.has(idUser)) {
       const community = normalizeText(row.organisasi_user) || "";
       const school = normalizeText(row.asal_sekolah) || "";
@@ -230,16 +259,24 @@ function groupLongFormatRows(rows: any[]): {
 
     const student = students.get(idUser)!;
 
-    // Inisialisasi session jika belum ada
-    if (!student.sessions.has(subjectArea)) {
-      student.sessions.set(subjectArea, { answers: new Map(), max_level: 0 });
+    // Initialize session record if not present for this old_session_id
+    if (!student.sessions.has(oldSessionId)) {
+      student.sessions.set(oldSessionId, {
+        old_session_id: oldSessionId,
+        subject_area: subjectArea,
+        level_num: levelNum,
+        attempt_number: attemptNumber,
+        started_at: startedAt,
+        time_spent_sec: timeSpentSec,
+        answers: new Map(),
+      });
     }
 
-    const session = student.sessions.get(subjectArea)!;
+    const session = student.sessions.get(oldSessionId)!;
 
-    // Simpan jawaban — jika duplikat (attempt berbeda), OVERWRITE (ambil yang terakhir)
+    // Store the answer. kolom_data is unique within a session (L0_I1, L0_I2, etc.)
+    // If the same kolom_data appears twice within the same session_id, keep the last value.
     session.answers.set(kolomData, { question_code: questionCode, is_correct: isCorrect, level_num: levelNum });
-    if (levelNum > session.max_level) session.max_level = levelNum;
   }
 
   return { students, uniqueCommunities, uniqueSchools };
@@ -520,26 +557,52 @@ export async function POST(request: Request) {
               }
 
               // Insert sessions & answers
-              for (const [subjectArea, sessData] of sData.sessions) {
-                const categoryId = categoryMap.get(subjectArea);
+              // CORRECT: iterate by old_session_id, each old platform session = one DB assessment_session
+              for (const [oldSessId, sessData] of sData.sessions) {
+                const categoryId = categoryMap.get(sessData.subject_area);
                 if (!categoryId || sessData.answers.size === 0) continue;
 
-                // Find or create session
+                // Resolve level_id for this specific session level
+                const sessionLevelKey = `${sessData.subject_area}:${sessData.level_num}`;
+                const sessionLevelId = levelKeyMap.get(sessionLevelKey) || null;
+
+                // Idempotent check: find existing session tagged with this old platform session id
+                // stored in device_info->migrated_session_id to safely detect re-migrations
                 let sessionId: string;
                 const { data: existSess } = await (supabase as any).from("assessment_sessions")
-                  .select("id").eq("student_id", student.id).eq("category_id", categoryId).eq("phase", phaseName).maybeSingle();
+                  .select("id")
+                  .eq("student_id", student.id)
+                  .eq("category_id", categoryId)
+                  .filter("device_info->>migrated_session_id", "eq", oldSessId)
+                  .maybeSingle();
 
                 if (existSess) {
                   sessionId = existSess.id;
                 } else {
+                  // Normalize started_at to ISO format
+                  let startedAtIso: string;
+                  try { startedAtIso = new Date(sessData.started_at).toISOString(); }
+                  catch { startedAtIso = new Date().toISOString(); }
+
                   const { data: newSess, error: sessErr } = await (supabase as any).from("assessment_sessions").insert({
-                    student_id: student.id, school_id: schoolId, category_id: categoryId,
-                    phase: phaseName, is_void: false, status: "completed",
-                    started_at: new Date().toISOString(), completed_at: new Date().toISOString()
+                    student_id: student.id,
+                    school_id: schoolId,
+                    category_id: categoryId,
+                    phase: phaseName,
+                    is_void: false,
+                    status: "completed",
+                    sync_status: "synced",
+                    attempt_number: sessData.attempt_number,
+                    started_at: startedAtIso,
+                    completed_at: startedAtIso,
+                    time_spent_sec: sessData.time_spent_sec,
+                    level_id: sessionLevelId,
+                    current_level_id: sessionLevelId,
+                    device_info: { migrated: true, migrated_session_id: oldSessId },
                   }).select("id").single();
-                  
+
                   if (sessErr || !newSess) {
-                    log("warning", `Gagal insert sesi untuk siswa ${student.id}: ${sessErr?.message}`);
+                    log("warning", `Gagal insert sesi (old_id ${oldSessId}) untuk siswa ${student.id}: ${sessErr?.message}`);
                     continue;
                   }
                   sessionId = newSess.id;
@@ -557,11 +620,16 @@ export async function POST(request: Request) {
                     question_id: qInfo.id,
                     is_correct: entry.is_correct,
                     score: entry.is_correct ? 1 : 0,
-                    answer_data: { migrated: true, from_level: entry.level_num },
+                    status: "answered",
+                    answer_data: {
+                      migrated: true,
+                      migrated_session_id: oldSessId,
+                      from_level: entry.level_num,
+                    },
                   });
                 }
 
-                // Insert answers in chunks
+                // Insert answers in chunks (upsert to be idempotent on re-run)
                 for (let j = 0; j < answersPayload.length; j += ANSWER_CHUNK) {
                   const chunk = answersPayload.slice(j, j + ANSWER_CHUNK);
                   const { error: ansErr } = await (supabase as any).from("student_answers")
@@ -571,20 +639,13 @@ export async function POST(request: Request) {
                   }
                 }
 
-                // Calculate score
+                // Calculate and update session score
                 let totalCorrect = 0;
                 answersPayload.forEach(a => { if (a.is_correct) totalCorrect++; });
                 const finalScore = answersPayload.length > 0 ? Math.round((totalCorrect / answersPayload.length) * 100) : 0;
 
-                // Set current_level_id dari max level yang dijawab dan update score
-                const levelKey = `${subjectArea}:${sessData.max_level}`;
-                const currentLevelId = levelKeyMap.get(levelKey);
-                
-                const updatePayload: any = { score: finalScore };
-                if (currentLevelId) updatePayload.current_level_id = currentLevelId;
-
                 await (supabase as any).from("assessment_sessions")
-                  .update(updatePayload).eq("id", sessionId);
+                  .update({ score: finalScore }).eq("id", sessionId);
               }
 
               // Add a small delay to prevent fetch failed / socket hang up
