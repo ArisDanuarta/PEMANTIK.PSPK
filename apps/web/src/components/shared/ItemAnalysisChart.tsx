@@ -95,10 +95,10 @@ export default function ItemAnalysisChart({ data }: ItemAnalysisChartProps) {
               labelFormatter={(label, payload) => {
                 const item = payload[0]?.payload;
                 return (
-                  <div>
-                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Soal: {label} ({item?.subject_area})</div>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Dijawab oleh: {item?.total_answers} siswa</div>
-                  </div>
+                  <span style={{ display: 'block' }}>
+                    <span style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Soal: {label} ({item?.subject_area})</span>
+                    <span style={{ display: 'block', fontSize: '0.8rem', color: '#64748b' }}>Dijawab oleh: {item?.total_answers} siswa</span>
+                  </span>
                 );
               }}
             />

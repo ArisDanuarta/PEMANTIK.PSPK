@@ -112,6 +112,9 @@ serve(async (req) => {
 
     const token = await create({ alg: "HS256", typ: "JWT" }, payload, key);
 
+    // Update last_login_at (menggunakan service role sehingga bisa bypass RLS)
+    await supabase.from("students").update({ last_login_at: new Date().toISOString() }).eq("id", student.id);
+
     // Hapus pin_hash dari response - JANGAN pernah kirim ke client
     const { pin_hash: _removed, ...studentData } = student as any;
 

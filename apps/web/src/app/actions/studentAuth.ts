@@ -21,6 +21,24 @@ export async function loginStudent(username: string, pin: string) {
     }
 
     if (data?.token && data?.student) {
+      // ----------------------------------------------------------------------
+      // UPDATE LAST_LOGIN_AT (Bypass RLS dengan Service Role Key)
+      // Hal ini memastikan metrik DAU Super Admin tetap berjalan meskipun 
+      // Edge Function belum sempat di-deploy ulang oleh pengguna.
+      // ----------------------------------------------------------------------
+      try {
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (supabaseServiceKey) {
+          const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+          await supabaseAdmin
+            .from("students")
+            .update({ last_login_at: new Date().toISOString() })
+            .eq("id", data.student.id);
+        }
+      } catch (err) {
+        console.error("Gagal update last_login_at siswa:", err);
+      }
+
       // Simpan JWT di httpOnly cookie
       const cookieStore = await cookies();
       cookieStore.set('student_jwt', data.token, {

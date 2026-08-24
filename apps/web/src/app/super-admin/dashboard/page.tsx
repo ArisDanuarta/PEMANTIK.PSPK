@@ -17,6 +17,7 @@ export default async function SuperAdminDashboard() {
   let teachers: any[] = [];
   let students: any[] = [];
   let sessions: any[] = [];
+  let isSystemHealthy = true;
 
   try {
     const [
@@ -67,6 +68,61 @@ export default async function SuperAdminDashboard() {
 
   } catch (err) {
     console.error("Failed to fetch superadmin dashboard data:", err);
+    isSystemHealthy = false;
+  }
+
+  // --- SYSTEM HEALTH & LOGS ---
+  // Get today's start and end date
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayIso = today.toISOString();
+
+  let todayErrorCount = 0;
+  let dauCommunity = 0;
+  let dauSchool = 0;
+  let dauTeacher = 0;
+  let dauStudent = 0;
+  let dauSuperAdmin = 0;
+
+  if (isSystemHealthy) {
+    try {
+      const { count, error: logErr } = await supabase
+        .from("system_logs")
+        .select("*", { count: "exact", head: true })
+        .in("level", ["error", "critical"])
+        .gte("created_at", todayIso);
+
+      if (!logErr && count !== null) {
+        todayErrorCount = count;
+      }
+
+      // Fetch DAU Students
+      // Pastikan ada error handling bila kolom last_login_at belum ada di tabel students.
+      const { count: cStudent, error: errStudent } = await supabase
+        .from('students')
+        .select('*', { count: 'exact', head: true })
+        .gte('last_login_at', todayIso);
+      
+      if (!errStudent && cStudent !== null) {
+        dauStudent = cStudent;
+      }
+
+      // Fetch DAU Users (Community, School, Teacher, Super Admin)
+      const { data: dauUsers, error: errUsers } = await supabase
+        .from('users')
+        .select('role')
+        .gte('last_login_at', todayIso);
+        
+      if (!errUsers && dauUsers) {
+        dauTeacher = dauUsers.filter((u: any) => u.role === 'teacher').length;
+        dauSchool = dauUsers.filter((u: any) => u.role === 'school').length;
+        dauCommunity = dauUsers.filter((u: any) => u.role === 'community').length;
+        dauSuperAdmin = dauUsers.filter((u: any) => u.role === 'super_admin').length;
+      }
+
+    } catch (e) {
+      console.error("Failed to fetch system logs or DAU:", e);
+    }
   }
 
   return (
@@ -88,6 +144,13 @@ export default async function SuperAdminDashboard() {
         teachers={teachers}
         students={students}
         sessions={sessions}
+        todayErrorCount={todayErrorCount}
+        isSystemHealthy={isSystemHealthy}
+        dauCommunity={dauCommunity}
+        dauSchool={dauSchool}
+        dauTeacher={dauTeacher}
+        dauStudent={dauStudent}
+        dauSuperAdmin={dauSuperAdmin}
       />
     </div>
   );

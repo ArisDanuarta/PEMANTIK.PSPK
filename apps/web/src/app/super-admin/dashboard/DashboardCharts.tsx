@@ -6,15 +6,17 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCo
 export default function DashboardCharts({ 
   genderData, 
   assessmentData, 
-  ageData 
+  ageData,
+  sesData
 }: { 
   genderData: any[], 
   assessmentData: any[], 
-  ageData: any[] 
+  ageData: any[],
+  sesData: any[]
 }) {
   // Brand Guidelines PSPK Colors
   const COLORS_PRIMARY = ["#102e50", "#f2af3e"]; // Navy & Emas
-  const COLORS_SECONDARY = ["#0874aa", "#df632f", "#8e2d3f", "#f4b867"]; // Teal, Jingga, Merah Gelap, Kuning Muda
+  const COLORS_SECONDARY = ["#0874aa", "#df632f", "#8e2d3f", "#f4b867", "#4b5563"]; // Teal, Jingga, Merah Gelap, Kuning Muda, Gray
 
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -105,6 +107,32 @@ export default function DashboardCharts({
                 />
                 <Legend wrapperStyle={{ paddingTop: "20px" }} />
               </PieChart>
+            </ResponsiveContainer>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Chart SES */}
+      <div className="card" style={{ padding: "1.5rem", borderTop: "4px solid #0874aa" }}>
+        <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem", color: "#102e50", fontFamily: "var(--font-lora)" }}>
+          Sebaran Kategori SES
+        </h3>
+        <div style={{ width: "100%", height: 250 }}>
+          {isMounted ? (
+            <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
+              <BarChart data={sesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#4b5563" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: "#4b5563" }} axisLine={false} tickLine={false} />
+                <Tooltip 
+                  cursor={{ fill: "rgba(16, 46, 80, 0.05)" }}
+                  contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
+                />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={40}>
+                  {sesData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS_SECONDARY[index % COLORS_SECONDARY.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           ) : null}
         </div>
