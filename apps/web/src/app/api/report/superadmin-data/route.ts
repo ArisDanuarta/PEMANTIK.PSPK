@@ -45,7 +45,9 @@ export async function GET(request: Request) {
       category_id,
       school_id,
       school_name,
+      community_id,
       community_name,
+      is_sandbox,
       phase,
       session_status,
       final_score,
@@ -62,7 +64,8 @@ export async function GET(request: Request) {
       ses_class,
       ses_score
     `)
-    .not("session_id", "is", null);
+    .not("session_id", "is", null)
+    .eq("is_sandbox", false); // ← FILTER SANDBOX
 
   if (categoryId !== "all") {
     query = query.eq("category_id", categoryId);
@@ -87,7 +90,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Gagal mengambil data laporan." }, { status: 500 });
   }
 
-  // ── Fetch student_answers untuk hitung skor lit/num (tidak ada di VIEW) ───
+  // ── Fetch student_answers untuk hitung skor lit/num ──────────────────────
+  // Fetch dalam batch 500 untuk hindari URL overflow
   const sessionIds: string[] = [
     ...new Set(((viewData as any[]) ?? []).map((r: any) => r.session_id as string).filter(Boolean))
   ];
@@ -95,25 +99,29 @@ export async function GET(request: Request) {
   let answersBySession: Record<string, { scoreLit: number; scoreNum: number; totalCorrect: number; totalWrong: number; totalQ: number }> = {};
 
   if (sessionIds.length > 0) {
-    const { data: answers } = await supabase
-      .from("student_answers")
-      .select("session_id, is_correct, score, questions(subject_area)")
-      .in("session_id", sessionIds);
+    const BATCH_SIZE = 500;
+    for (let i = 0; i < sessionIds.length; i += BATCH_SIZE) {
+      const batch = sessionIds.slice(i, i + BATCH_SIZE);
+      const { data: answers } = await supabase
+        .from("student_answers")
+        .select("session_id, is_correct, score, questions(subject_area)")
+        .in("session_id", batch);
 
-    (answers || []).forEach((ans: any) => {
-      const sid = ans.session_id;
-      if (!answersBySession[sid]) {
-        answersBySession[sid] = { scoreLit: 0, scoreNum: 0, totalCorrect: 0, totalWrong: 0, totalQ: 0 };
-      }
-      const agg = answersBySession[sid];
-      agg.totalQ++;
-      const isCorrect   = ans.is_correct === true;
-      const pointValue  = ans.score ?? (isCorrect ? 1 : 0);
-      if (isCorrect) { agg.totalCorrect++; } else { agg.totalWrong++; }
-      const subjectArea = ans.questions?.subject_area;
-      if (subjectArea === "literasi")  agg.scoreLit += pointValue;
-      if (subjectArea === "numerasi")  agg.scoreNum += pointValue;
-    });
+      (answers || []).forEach((ans: any) => {
+        const sid = ans.session_id;
+        if (!answersBySession[sid]) {
+          answersBySession[sid] = { scoreLit: 0, scoreNum: 0, totalCorrect: 0, totalWrong: 0, totalQ: 0 };
+        }
+        const agg = answersBySession[sid];
+        agg.totalQ++;
+        const isCorrect   = ans.is_correct === true;
+        const pointValue  = ans.score ?? (isCorrect ? 1 : 0);
+        if (isCorrect) { agg.totalCorrect++; } else { agg.totalWrong++; }
+        const subjectArea = ans.questions?.subject_area;
+        if (subjectArea === "literasi")  agg.scoreLit += pointValue;
+        if (subjectArea === "numerasi")  agg.scoreNum += pointValue;
+      });
+    }
   }
 
   // ── Map ke format yang dipakai ReportData interface di client ────────────
