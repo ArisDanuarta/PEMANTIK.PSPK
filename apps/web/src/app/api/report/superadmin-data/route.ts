@@ -20,6 +20,12 @@ export async function GET(request: Request) {
   const categoryId  = searchParams.get('category_id');
   const communityId = searchParams.get('community_id');
   const schoolId    = searchParams.get('school_id');
+  const pageStr     = searchParams.get('page') || '1';
+  const limitStr    = searchParams.get('limit') || '50';
+
+  const page = parseInt(pageStr, 10);
+  const limit = parseInt(limitStr, 10);
+  const offset = (page - 1) * limit;
 
   if (!categoryId) {
     return NextResponse.json({ error: "category_id wajib diisi." }, { status: 400 });
@@ -81,7 +87,21 @@ export async function GET(request: Request) {
     query = query.eq("school_id", schoolId);
   }
 
-  query = query.order("completed_at", { ascending: false });
+  // Count & Pagination
+  const { count, error: countError } = await (supabase as any)
+    .from("v_assessment_report")
+    .select('*', { count: 'exact', head: true })
+    .not("session_id", "is", null)
+    .eq("is_sandbox", false)
+    .match(
+      Object.assign({}, 
+        categoryId !== "all" ? { category_id: categoryId } : {},
+        communityId && communityId !== "all" ? { community_id: communityId } : {},
+        schoolId && schoolId !== "all" ? { school_id: schoolId } : {}
+      )
+    );
+
+  query = query.order("completed_at", { ascending: false }).range(offset, offset + limit - 1);
 
   const { data: viewData, error } = await query;
 
@@ -100,27 +120,38 @@ export async function GET(request: Request) {
 
   if (sessionIds.length > 0) {
     const BATCH_SIZE = 500;
-    for (let i = 0; i < sessionIds.length; i += BATCH_SIZE) {
-      const batch = sessionIds.slice(i, i + BATCH_SIZE);
-      const { data: answers } = await supabase
-        .from("student_answers")
-        .select("session_id, is_correct, score, questions(subject_area)")
-        .in("session_id", batch);
+    const CONCURRENCY = 5; // Run 5 requests in parallel
 
-      (answers || []).forEach((ans: any) => {
-        const sid = ans.session_id;
-        if (!answersBySession[sid]) {
-          answersBySession[sid] = { scoreLit: 0, scoreNum: 0, totalCorrect: 0, totalWrong: 0, totalQ: 0 };
-        }
-        const agg = answersBySession[sid];
-        agg.totalQ++;
-        const isCorrect   = ans.is_correct === true;
-        const pointValue  = ans.score ?? (isCorrect ? 1 : 0);
-        if (isCorrect) { agg.totalCorrect++; } else { agg.totalWrong++; }
-        const subjectArea = ans.questions?.subject_area;
-        if (subjectArea === "literasi")  agg.scoreLit += pointValue;
-        if (subjectArea === "numerasi")  agg.scoreNum += pointValue;
-      });
+    const batches = [];
+    for (let i = 0; i < sessionIds.length; i += BATCH_SIZE) {
+      batches.push(sessionIds.slice(i, i + BATCH_SIZE));
+    }
+
+    for (let i = 0; i < batches.length; i += CONCURRENCY) {
+      const currentBatches = batches.slice(i, i + CONCURRENCY);
+      
+      await Promise.all(currentBatches.map(async (batch) => {
+        const { data: answers } = await supabase
+          .from("student_answers")
+          .select("session_id, is_correct, score, questions(subject_area)")
+          .in("session_id", batch)
+          .limit(50000);
+
+        (answers || []).forEach((ans: any) => {
+          const sid = ans.session_id;
+          if (!answersBySession[sid]) {
+            answersBySession[sid] = { scoreLit: 0, scoreNum: 0, totalCorrect: 0, totalWrong: 0, totalQ: 0 };
+          }
+          const agg = answersBySession[sid];
+          agg.totalQ++;
+          const isCorrect   = ans.is_correct === true;
+          const pointValue  = ans.score ?? (isCorrect ? 1 : 0);
+          if (isCorrect) { agg.totalCorrect++; } else { agg.totalWrong++; }
+          const subjectArea = ans.questions?.subject_area;
+          if (subjectArea === "literasi")  agg.scoreLit += pointValue;
+          if (subjectArea === "numerasi")  agg.scoreNum += pointValue;
+        });
+      }));
     }
   }
 
@@ -159,5 +190,21 @@ export async function GET(request: Request) {
     };
   });
 
-  return NextResponse.json({ data: reportData });
+  // ── 3. Ambil Global Stats via RPC ────────────────────────────────────────
+  let globalStats = { total_siswa: count || 0, avg_score_total: 0, avg_score_lit: 0, avg_score_num: 0 };
+  const { data: statsData } = await (supabase as any).rpc('get_superadmin_dashboard_stats', {
+    p_category_id: categoryId !== "all" ? categoryId : null,
+    p_community_id: (communityId && communityId !== "all") ? communityId : null,
+    p_school_id: (schoolId && schoolId !== "all") ? schoolId : null
+  });
+
+  if (statsData && Array.isArray(statsData) && statsData.length > 0) {
+    globalStats = statsData[0];
+  }
+
+  return NextResponse.json({ 
+    data: reportData, 
+    total: count || 0,
+    stats: globalStats
+  });
 }

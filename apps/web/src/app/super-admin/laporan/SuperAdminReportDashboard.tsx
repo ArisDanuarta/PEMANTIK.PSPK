@@ -4,6 +4,8 @@ import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Button, Badge, useToast } from "@pemantik/ui";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 import { createBrowserClient } from "@pemantik/supabase/client";
+import * as XLSX from "xlsx";
+import Pagination from "@/components/shared/Pagination";
 
 interface ReportData {
   id: string;
@@ -54,6 +56,12 @@ export default function SuperAdminReportDashboard({
   const [reportData, setReportData] = useState<ReportData[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [schools, setSchools] = useState<Option[]>([]);
+  
+  // Pagination & Stats State
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [globalStats, setGlobalStats] = useState({ total_siswa: 0, avg_score_total: 0, avg_score_lit: 0, avg_score_num: 0 });
 
   const { success: showSuccess, error: showError, info: showInfo } = useToast();
   const supabase = createBrowserClient();
@@ -77,7 +85,12 @@ export default function SuperAdminReportDashboard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCommunityId]);
 
-  // --- Fetch data on-demand when package, community, or school changes ---
+  // --- Reset page when filters change ---
+  useEffect(() => {
+    setPage(1);
+  }, [selectedPackageId, selectedCommunityId, selectedSchoolId]);
+
+  // --- Fetch data on-demand ---
   useEffect(() => {
     if (!selectedPackageId) {
       setReportData([]);
@@ -96,6 +109,8 @@ export default function SuperAdminReportDashboard({
         if (selectedSchoolId && selectedSchoolId !== "all") {
           url.searchParams.append("school_id", selectedSchoolId);
         }
+        url.searchParams.append("page", page.toString());
+        url.searchParams.append("limit", pageSize.toString());
 
         const res = await fetch(url.toString());
         const contentType = res.headers.get("content-type");
@@ -110,6 +125,8 @@ export default function SuperAdminReportDashboard({
         }
         const json = await res.json();
         setReportData(json.data || []);
+        if (json.total) setTotalRecords(json.total);
+        if (json.stats) setGlobalStats(json.stats);
       } catch (err) {
         showError("Kesalahan Jaringan", "Tidak dapat menghubungi server. Periksa koneksi Anda.");
       } finally {
@@ -119,7 +136,7 @@ export default function SuperAdminReportDashboard({
 
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPackageId, selectedCommunityId, selectedSchoolId]);
+  }, [selectedPackageId, selectedCommunityId, selectedSchoolId, page, pageSize]);
 
   // --- Filter Data client-side (search & gender) ---
   const filteredData = useMemo(() => {
@@ -139,17 +156,11 @@ export default function SuperAdminReportDashboard({
     });
   }, [reportData, selectedGender, search]);
 
-  // --- Aggregate Stats ---
-  const totalSiswa = filteredData.length;
-  const avgTotal = totalSiswa
-    ? (filteredData.reduce((acc, r) => acc + r.score_total, 0) / totalSiswa).toFixed(1)
-    : "0";
-  const avgLit = totalSiswa
-    ? (filteredData.reduce((acc, r) => acc + r.score_lit, 0) / totalSiswa).toFixed(1)
-    : "0";
-  const avgNum = totalSiswa
-    ? (filteredData.reduce((acc, r) => acc + r.score_num, 0) / totalSiswa).toFixed(1)
-    : "0";
+  // --- Stats Use Global Stats ---
+  const totalSiswa = globalStats.total_siswa || totalRecords;
+  const avgTotal = Number(globalStats.avg_score_total).toFixed(1);
+  const avgLit = Number(globalStats.avg_score_lit).toFixed(1);
+  const avgNum = Number(globalStats.avg_score_num).toFixed(1);
 
   // --- Export ---
   const handleExport = async () => {
@@ -310,8 +321,8 @@ export default function SuperAdminReportDashboard({
         </div>
       </div>
 
-      {/* ── LOADING STATE ── */}
-      {isLoadingData && (
+      {/* ── LOADING STATE (Initial) ── */}
+      {isLoadingData && reportData.length === 0 && (
         <div
           style={{
             display: "grid",
@@ -326,7 +337,7 @@ export default function SuperAdminReportDashboard({
       )}
 
       {/* ── STATS CARDS ── */}
-      {!isLoadingData && reportData.length > 0 && (
+      {reportData.length > 0 && (
         <div
           style={{
             display: "grid",
@@ -363,78 +374,97 @@ export default function SuperAdminReportDashboard({
       )}
 
       {/* ── DATA TABLE ── */}
-      {!isLoadingData && filteredData.length > 0 && (
-        <div className="card" style={{ overflowX: "auto" }}>
-          <table className="pemantik-table" style={{ whiteSpace: "nowrap" }}>
-            <thead>
-              <tr>
-                <th>Nama Anak / NISN</th>
-                <th>Sekolah</th>
-                <th>Fase</th>
-                <th style={{ textAlign: "center" }}>Percobaan</th>
-                <th style={{ textAlign: "center" }}>Soal</th>
-                <th style={{ textAlign: "center" }}>Benar</th>
-                <th style={{ textAlign: "center" }}>Salah</th>
-                <th style={{ textAlign: "center" }}>Skor Total</th>
-                <th style={{ textAlign: "center" }}>Literasi</th>
-                <th style={{ textAlign: "center" }}>Numerasi</th>
-                <th style={{ textAlign: "center" }}>Level Dicapai</th>
-                <th style={{ textAlign: "center" }}>Waktu (Menit)</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.map((row) => (
-                <tr key={row.id}>
-                  <td>
-                    <div style={{ fontWeight: 600, color: "#102e50" }}>{row.full_name}</div>
-                    <div style={{ fontSize: "0.8rem", color: "black" }}>{row.nisn || "-"}</div>
-                  </td>
-                  <td>
-                    <div>{row.school_name}</div>
-                    {row.community_name && (
-                      <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{row.community_name}</div>
-                    )}
-                  </td>
-                  <td>{row.phase || "-"}</td>
-                  <td style={{ textAlign: "center" }}>
-                    <span style={{ padding: "0.15rem 0.5rem", backgroundColor: (row.attempt_number ?? 1) > 1 ? "#fff7ed" : "#f3f4f6", color: (row.attempt_number ?? 1) > 1 ? "#ea580c" : "#4b5563", borderRadius: "999px", fontSize: "0.8rem", fontWeight: 600 }}>
-                      ke-{row.attempt_number ?? 1}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: "center", color: "black" }}>{row.total_questions}</td>
-                  <td style={{ textAlign: "center", fontWeight: 600, color: "#2d9e5f" }}>{row.total_correct}</td>
-                  <td style={{ textAlign: "center", fontWeight: 600, color: "#dc2626" }}>{row.total_wrong}</td>
-                  <td style={{ textAlign: "center", fontWeight: 600 }}>{row.score_total}</td>
-                  <td style={{ textAlign: "center" }}>{row.score_lit}</td>
-                  <td style={{ textAlign: "center" }}>{row.score_num}</td>
-                  <td style={{ textAlign: "center" }}>
-                    {row.final_level_number != null ? (
-                      <span style={{
-                        padding: "0.15rem 0.6rem",
-                        borderRadius: "999px",
-                        fontSize: "0.8rem",
-                        fontWeight: 700,
-                        backgroundColor: "#eff6ff",
-                        color: "#1d4ed8",
-                        border: "1px solid #bfdbfe",
-                      }}>
-                        Level {row.final_level_number}
-                      </span>
-                    ) : (
-                      <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>-</span>
-                    )}
-                  </td>
-                  <td style={{ textAlign: "center" }}>{(row.time_spent / 60).toFixed(1)}</td>
-                  <td>
-                    <Badge variant={row.status === "completed" ? "success" : "warning"}>
-                      {row.status === "completed" ? "Selesai" : "Proses"}
-                    </Badge>
-                  </td>
+      {filteredData.length > 0 && (
+        <div style={{ position: "relative", opacity: isLoadingData ? 0.6 : 1, transition: "opacity 0.2s ease-in-out" }}>
+          {isLoadingData && (
+            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 10 }}>
+              <span className="btn-spinner" style={{ width: "2rem", height: "2rem", borderWidth: "3px", borderColor: "#0874aa", borderBottomColor: "transparent" }}></span>
+            </div>
+          )}
+          <div className="card" style={{ overflowX: "auto", pointerEvents: isLoadingData ? "none" : "auto" }}>
+            <table className="pemantik-table" style={{ whiteSpace: "nowrap" }}>
+              <thead>
+                <tr>
+                  <th>Nama Anak / NISN</th>
+                  <th>Sekolah</th>
+                  <th>Fase</th>
+                  <th style={{ textAlign: "center" }}>Percobaan</th>
+                  <th style={{ textAlign: "center" }}>Soal</th>
+                  <th style={{ textAlign: "center" }}>Benar</th>
+                  <th style={{ textAlign: "center" }}>Salah</th>
+                  <th style={{ textAlign: "center" }}>Skor Total</th>
+                  <th style={{ textAlign: "center" }}>Literasi</th>
+                  <th style={{ textAlign: "center" }}>Numerasi</th>
+                  <th style={{ textAlign: "center" }}>Level Dicapai</th>
+                  <th style={{ textAlign: "center" }}>Waktu (Menit)</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredData.map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      <div style={{ fontWeight: 600, color: "#102e50" }}>{row.full_name}</div>
+                      <div style={{ fontSize: "0.8rem", color: "black" }}>{row.nisn || "-"}</div>
+                    </td>
+                    <td>
+                      <div>{row.school_name}</div>
+                      {row.community_name && (
+                        <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{row.community_name}</div>
+                      )}
+                    </td>
+                    <td>{row.phase || "-"}</td>
+                    <td style={{ textAlign: "center" }}>
+                      <span style={{ padding: "0.15rem 0.5rem", backgroundColor: (row.attempt_number ?? 1) > 1 ? "#fff7ed" : "#f3f4f6", color: (row.attempt_number ?? 1) > 1 ? "#ea580c" : "#4b5563", borderRadius: "999px", fontSize: "0.8rem", fontWeight: 600 }}>
+                        ke-{row.attempt_number ?? 1}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: "center", color: "black" }}>{row.total_questions}</td>
+                    <td style={{ textAlign: "center", fontWeight: 600, color: "#2d9e5f" }}>{row.total_correct}</td>
+                    <td style={{ textAlign: "center", fontWeight: 600, color: "#dc2626" }}>{row.total_wrong}</td>
+                    <td style={{ textAlign: "center", fontWeight: 600 }}>{row.score_total}</td>
+                    <td style={{ textAlign: "center" }}>{row.score_lit}</td>
+                    <td style={{ textAlign: "center" }}>{row.score_num}</td>
+                    <td style={{ textAlign: "center" }}>
+                      {row.final_level_number != null ? (
+                        <span style={{
+                          padding: "0.15rem 0.6rem",
+                          borderRadius: "999px",
+                          fontSize: "0.8rem",
+                          fontWeight: 700,
+                          backgroundColor: "#eff6ff",
+                          color: "#1d4ed8",
+                          border: "1px solid #bfdbfe",
+                        }}>
+                          Level {row.final_level_number}
+                        </span>
+                      ) : (
+                        <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>-</span>
+                      )}
+                    </td>
+                    <td style={{ textAlign: "center" }}>{(row.time_spent / 60).toFixed(1)}</td>
+                    <td>
+                      <Badge variant={row.status === "completed" ? "success" : "warning"}>
+                        {row.status === "completed" ? "Selesai" : "Proses"}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Pagination Controls */}
+          <div style={{ marginTop: "1.5rem", pointerEvents: isLoadingData ? "none" : "auto" }}>
+            <Pagination
+              currentPage={page}
+              totalPages={Math.ceil(totalRecords / pageSize)}
+              onPageChange={(newPage) => setPage(newPage)}
+              totalItems={totalRecords}
+              itemsPerPage={pageSize}
+              startIndex={(page - 1) * pageSize + 1}
+              endIndex={Math.min(page * pageSize, totalRecords)}
+            />
+          </div>
         </div>
       )}
     </div>
