@@ -14,6 +14,7 @@ const superAdminNav: NavSection[] = [
       { label: "Komunitas", href: "/super-admin/komunitas", icon: "users" },
       { label: "Sekolah", href: "/super-admin/sekolah", icon: "school" },
       { label: "Admin Soal", href: "/super-admin/admin-soal", icon: "class" },
+      { label: "Peneliti", href: "/super-admin/peneliti", icon: "activity" },
     ],
   },
   {

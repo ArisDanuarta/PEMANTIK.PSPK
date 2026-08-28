@@ -11,6 +11,7 @@ const ROLE_DASHBOARDS: Record<string, string> = {
   community: "/komunitas/dashboard",
   school: "/sekolah/dashboard",
   teacher: "/guru/dashboard",
+  peneliti: "/peneliti/dashboard",
 };
 
 // ─── Supabase admin client (service role) ─────────────────────────────────────

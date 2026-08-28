@@ -1,0 +1,211 @@
+"use client";
+
+import React, { useState } from "react";
+import { Table, Button, Modal, Badge, useToast, useConfirm } from "@pemantik/ui";
+import {
+  createPenelitiAdminAction,
+  updatePenelitiAdminAction,
+  deletePenelitiAdminAction,
+  resetPenelitiPasswordAction,
+} from "@/app/actions/penelitiAdmins";
+
+export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }) {
+  const [admins, setAdmins] = useState(initialAdmins);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const { success, error } = useToast();
+  const { confirm } = useConfirm();
+
+  const [editId, setEditId] = useState<string | null>(null);
+  
+  // Form State
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isActive, setIsActive] = useState(true);
+
+  const openAddModal = () => {
+    setEditId(null);
+    setFullName("");
+    setUsername("");
+    setPassword("");
+    setIsActive(true);
+    setErrorMsg("");
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (admin: any) => {
+    setEditId(admin.id);
+    setFullName(admin.full_name);
+    setUsername(admin.username);
+    setIsActive(admin.is_active);
+    setErrorMsg("");
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg("");
+
+    const formData = new FormData();
+    formData.append("full_name", fullName);
+    formData.append("username", username);
+    formData.append("is_active", isActive.toString());
+
+    let res;
+    if (editId) {
+      res = await updatePenelitiAdminAction(editId, formData);
+    } else {
+      res = await createPenelitiAdminAction(formData);
+    }
+
+    if (res.success) {
+      success("Berhasil", "Data peneliti berhasil disimpan!");
+      setIsModalOpen(false);
+      if (editId) {
+        setAdmins(prev => prev.map(a => a.id === editId ? { ...a, full_name: fullName, is_active: isActive } : a));
+      } else {
+        window.location.reload(); 
+      }
+    } else {
+      setErrorMsg(res.error || "Gagal menyimpan data.");
+    }
+    setLoading(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    const isConfirmed = await confirm({
+      title: "Hapus Peneliti",
+      description: "Apakah Anda yakin ingin menghapus akun peneliti ini? Tindakan ini tidak dapat dibatalkan.",
+      confirmLabel: "Hapus",
+      cancelLabel: "Batal",
+      variant: "danger",
+    });
+
+    if (isConfirmed) {
+      const res = await deletePenelitiAdminAction(id);
+      if (res.success) {
+        setAdmins((prev) => prev.filter((a) => a.id !== id));
+        success("Berhasil", "Akun peneliti berhasil dihapus.");
+      } else {
+        error("Gagal Menghapus", res.error || "Terjadi kesalahan.");
+      }
+    }
+  };
+
+  const handleResetPassword = async (id: string) => {
+    const isConfirmed = await confirm({
+      title: "Reset Password",
+      description: "Password akan direset menjadi 'Password123!'. Lanjutkan?",
+      confirmLabel: "Reset",
+      cancelLabel: "Batal",
+      variant: "danger",
+    });
+
+    if (isConfirmed) {
+      const res = await resetPenelitiPasswordAction(id);
+      if (res.success) {
+        success("Berhasil", res.message || "Password direset.");
+      } else {
+        error("Gagal Reset", res.error || "Terjadi kesalahan.");
+      }
+    }
+  };
+
+  const columns = [
+    { key: "full_name", label: "Nama Lengkap", render: (val: any) => <div style={{ fontWeight: 600, color: "#102e50" }}>{val}</div> },
+    { key: "username", label: "Username" },
+    { key: "is_active", label: "Status", render: (val: any) => <Badge variant={val ? "success" : "danger"}>{val ? "Aktif" : "Non-Aktif"}</Badge> },
+    { key: "actions", label: "Aksi", render: (_: any, admin: any) => (
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button onClick={() => openEditModal(admin)} className="action-btn-text" title="Edit">Edit</button>
+          <button onClick={() => handleResetPassword(admin.id)} className="action-btn-text" style={{ color: "#f59e0b" }} title="Reset Password">Reset</button>
+          <button onClick={() => handleDelete(admin.id)} className="action-btn-text" style={{ color: "#dc2626" }} title="Hapus">Hapus</button>
+        </div>
+      )
+    }
+  ];
+
+  return (
+    <div className="card">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+        <h2 style={{ margin: 0, fontSize: "1.25rem", color: "#102e50" }}>Daftar Akun Peneliti</h2>
+        <Button onClick={openAddModal} style={{ backgroundColor: "#0874aa", color: "white", gap: "0.5rem" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Tambah Peneliti
+        </Button>
+      </div>
+
+      <Table
+        columns={columns}
+        data={admins}
+        emptyMessage="Belum ada akun peneliti."
+      />
+
+      <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "Edit Peneliti" : "Tambah Peneliti"}>
+        <form onSubmit={handleSubmit}>
+          {errorMsg && (
+            <div style={{ padding: "0.75rem", backgroundColor: "#fef2f2", color: "#b91c1c", borderRadius: "0.375rem", marginBottom: "1rem", fontSize: "0.875rem" }}>
+              {errorMsg}
+            </div>
+          )}
+
+          <div style={{ marginBottom: "1rem" }}>
+            <label className="form-label" style={{ display: "block", marginBottom: "0.5rem" }}>Nama Lengkap</label>
+            <input
+              type="text"
+              className="form-input"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              placeholder="Cth: Dr. Budi Santoso"
+            />
+          </div>
+
+          <div style={{ marginBottom: "1rem" }}>
+            <label className="form-label" style={{ display: "block", marginBottom: "0.5rem" }}>Username</label>
+            <input
+              type="text"
+              className="form-input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              disabled={!!editId} // Username tak bisa diedit
+              placeholder="Cth: budi_s"
+              style={editId ? { backgroundColor: "#f3f4f6" } : {}}
+            />
+            {!editId && (
+              <p style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.25rem" }}>
+                Gunakan huruf kecil, angka, dan underscore (_). Password default: <b>Password123!</b>
+              </p>
+            )}
+          </div>
+
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label className="form-label" style={{ display: "block", marginBottom: "0.5rem" }}>Status Akun</label>
+            <select
+              className="form-input"
+              value={isActive ? "true" : "false"}
+              onChange={(e) => setIsActive(e.target.value === "true")}
+            >
+              <option value="true">Aktif (Bisa Login)</option>
+              <option value="false">Non-Aktif (Diblokir)</option>
+            </select>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
+            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Batal</Button>
+            <Button type="submit" disabled={loading} style={{ backgroundColor: "#0874aa", color: "white" }}>
+              {loading ? "Menyimpan..." : "Simpan"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}

@@ -29,7 +29,7 @@ export async function GET(request: Request) {
   const headersList = await headers();
   let userRole      = headersList.get("x-user-role") || "super_admin";
 
-  if (userRole !== "super_admin") {
+  if (userRole !== "super_admin" && userRole !== "peneliti") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

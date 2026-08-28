@@ -7,6 +7,7 @@ const ROLE_ROUTES: Record<string, string> = {
   community: "/komunitas",
   school: "/sekolah",
   teacher: "/guru",
+  peneliti: "/peneliti",
 };
 
 const PUBLIC_PATHS = ["/login", "/_next", "/api/auth", "/favicon.ico", "/images", "/icons", "/robots.txt", "/sitemap.xml"];
