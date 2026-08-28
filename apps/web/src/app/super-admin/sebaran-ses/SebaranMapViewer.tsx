@@ -50,7 +50,7 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
   const handleSelectCity = (name: string, stat: any, centroid?: [number, number]) => {
     setSelectedCity({ name, stat });
     const targetCentroid = centroid || centroidsRef.current[name] || [118, -2];
-    setMapPosition({ coordinates: targetCentroid, zoom: 6 }); // Zoom level 6 cukup dekat untuk melihat kabupaten
+    setMapPosition({ coordinates: targetCentroid, zoom: 10 }); // Zoom level 12 agar presisi pada level kabupaten
   };
 
   const handleResetMap = () => {
@@ -64,18 +64,18 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
     .sort((a, b) => cityStats[b].count - cityStats[a].count);
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative", display: "flex", flexWrap: "wrap", backgroundColor: "#f8fafc" }}>
+    <div style={{ width: "100%", height: "100%", position: "relative", display: "grid", gridTemplateColumns: "300px 1fr", backgroundColor: "#f8fafc" }}>
       
       {/* LEFT SIDEBAR: Agenda Kabupaten */}
       <div style={{
-        flex: "1 1 280px",
-        maxWidth: "100%",
         background: "white",
         borderRight: "1px solid #e2e8f0",
         boxShadow: "4px 0 15px rgba(0,0,0,0.02)",
         display: "flex",
         flexDirection: "column",
-        zIndex: 5
+        zIndex: 5,
+        height: "100%",
+        overflow: "hidden"
       }}>
         <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #e2e8f0", background: "#f1f5f9" }}>
           <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>
@@ -134,11 +134,38 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
         </div>
       </div>
 
-      <div style={{ flex: "2 1 400px", position: "relative", overflow: "hidden", minHeight: "400px" }}>
+      <div style={{ position: "relative", height: "100%", width: "100%", overflow: "hidden" }}>
+        
+        {/* Kontrol Zoom Manual */}
+        <div style={{
+          position: "absolute",
+          right: 20,
+          bottom: 20,
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.5rem",
+          zIndex: 10
+        }}>
+          <button 
+            onClick={() => setMapPosition(p => ({ ...p, zoom: Math.min(p.zoom * 1.5, 30) }))}
+            style={{ width: 40, height: 40, background: "white", border: "1px solid #cbd5e1", borderRadius: "8px", boxShadow: "0 2px 5px rgba(0,0,0,0.1)", cursor: "pointer", fontSize: "1.2rem", fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", color: "#334155" }}
+            title="Perbesar"
+          >+</button>
+          <button 
+            onClick={() => setMapPosition(p => ({ ...p, zoom: Math.max(p.zoom / 1.5, 1) }))}
+            style={{ width: 40, height: 40, background: "white", border: "1px solid #cbd5e1", borderRadius: "8px", boxShadow: "0 2px 5px rgba(0,0,0,0.1)", cursor: "pointer", fontSize: "1.2rem", fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", color: "#334155" }}
+            title="Perkecil"
+          >-</button>
+          <button 
+            onClick={handleResetMap}
+            style={{ width: 40, height: 40, background: "white", border: "1px solid #cbd5e1", borderRadius: "8px", boxShadow: "0 2px 5px rgba(0,0,0,0.1)", cursor: "pointer", fontSize: "1.2rem", display: "flex", alignItems: "center", justifyContent: "center", color: "#334155" }}
+            title="Reset Peta"
+          >⟲</button>
+        </div>
         <ComposableMap
         projection="geoMercator"
         projectionConfig={{
-          scale: 1200,
+          scale: 1000,
           center: [118, -2] // Titik tengah geografis Indonesia
         }}
         style={{ width: "100%", height: "100%" }}
@@ -146,10 +173,7 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
         <ZoomableGroup 
           center={mapPosition.coordinates} 
           zoom={mapPosition.zoom}
-          filterZoomEvent={(e: any) => {
-            // Mematikan semua event zoom dari mouse wheel atau trackpad
-            return false;
-          }}
+          onMoveEnd={(position: any) => setMapPosition(position)}
           style={{ transition: "transform 800ms cubic-bezier(0.25, 1, 0.5, 1)" }}
         >
           <Geographies geography={INDONESIA_KABKOTA_JSON}>
@@ -250,6 +274,10 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
       {/* Side Panel for Details */}
       {selectedCity && (
         <div style={{
+          position: "absolute",
+          right: 0,
+          top: 0,
+          height: "100%",
           width: 320,
           background: "white",
           borderLeft: "1px solid #e2e8f0",
@@ -257,7 +285,8 @@ export default function SebaranMapViewer({ provinceStats, cityStats = {} }: MapP
           display: "flex",
           flexDirection: "column",
           padding: "1.5rem",
-          animation: "slideInRight 0.3s ease-out"
+          animation: "slideInRight 0.3s ease-out",
+          zIndex: 20
         }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
             <h3 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0f172a", margin: 0, lineHeight: 1.2 }}>

@@ -74,8 +74,8 @@ export default async function SebaranSesPage() {
   }
 
   return (
-    <div className="animate-fade-in" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <div className="page-header">
+    <div className="animate-fade-in" style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      <div className="page-header" style={{ flexShrink: 0 }}>
         <div className="page-header-left">
           <h1 className="page-title">Peta Sebaran SES Pengguna</h1>
           <div className="page-breadcrumb">
@@ -86,7 +86,7 @@ export default async function SebaranSesPage() {
         </div>
       </div>
 
-      <div className="card" style={{ flex: 1, marginTop: "1rem", position: "relative", height: "calc(100vh - 250px)", overflow: "hidden", padding: 0, display: "flex" }}>
+      <div className="card" style={{ flex: 1, marginTop: "1rem", position: "relative", minHeight: 0, overflow: "hidden", padding: 0, display: "flex", flexDirection: "column" }}>
         <SebaranMapViewer provinceStats={provinceStats} cityStats={cityStats} />
       </div>
     </div>
