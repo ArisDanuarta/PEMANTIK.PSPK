@@ -27,21 +27,14 @@ export default async function SuperAdminDashboard() {
       { data: stData },
       { data: sessData }
     ] = await Promise.all([
-      supabase.from("communities").select("id, name, code, is_active, created_at, is_sandbox").order("name", { ascending: true }).limit(100000),
-      supabase.from("schools").select("id, name, community_id").limit(100000),
-      supabase.from("users").select("id, school_id, community_id").eq("role", "teacher").limit(100000),
-      supabase.from("students").select("id, school_id, gender, birth_date, ses_class").limit(100000),
-      supabase.from("assessment_sessions").select(`
-        id,
-        status,
-        score,
-        completed_at,
-        created_at,
-        school_id,
-        school:schools(province, city, name, community_id),
-        student:students(gender, birth_date, ses_class, ses_score, full_name, village, district, city, province, father_education_id, mother_education_id, father_occupation_id, mother_occupation_id),
-        package:question_categories(name, subject_area)
-      `).order("created_at", { ascending: false }).limit(100000)
+      supabase.from("communities").select("id, name, code, is_active, created_at, is_sandbox").order("name", { ascending: true }).limit(10000),
+      supabase.from("schools").select("id, name, community_id, province").limit(20000),
+      supabase.from("users").select("id, school_id, community_id").eq("role", "teacher").limit(10000),
+      supabase.from("students").select("id, school_id, gender, birth_date, ses_class, province").limit(50000),
+      supabase.from("v_assessment_report").select(`
+        session_id, completed_at, school_id, community_id, province, 
+        gender, birth_date, ses_class, subject_area
+      `).not("session_id", "is", null)
     ]);
 
     const allCommunities = cData || [];
@@ -63,15 +56,27 @@ export default async function SuperAdminDashboard() {
     // Student is valid if school is valid
     students = (stData || []).filter((s: any) => !s.school_id || validSchoolIds.has(s.school_id));
     
-    // Session is valid if school is valid
-    sessions = (sessData || []).filter((s: any) => s.school_id && validSchoolIds.has(s.school_id));
+    // Map v_assessment_report flat data to the nested shape expected by IntegratedDashboardManager
+    sessions = (sessData || []).map((s: any) => ({
+      created_at: s.completed_at || new Date().toISOString(), // Fallback for charts
+      school_id: s.school_id,
+      school: { 
+        province: s.province, 
+        community_id: s.community_id 
+      },
+      student: { 
+        ses_class: s.ses_class, 
+        gender: s.gender 
+      },
+      package: { 
+        subject_area: s.subject_area 
+      }
+    })).filter((s: any) => s.school_id && validSchoolIds.has(s.school_id));
 
   } catch (err) {
     console.error("Failed to fetch superadmin dashboard data:", err);
     isSystemHealthy = false;
   }
-
-  // --- SYSTEM HEALTH & LOGS ---
   // Get today's start and end date
   const today = new Date();
   today.setHours(0, 0, 0, 0);

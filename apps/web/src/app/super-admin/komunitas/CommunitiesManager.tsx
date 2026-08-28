@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useEffect } from "react";
 import { Table, Button, Modal, Badge } from "@pemantik/ui";
 import { useToast } from "@pemantik/ui";
 import { useConfirm } from "@pemantik/ui";
@@ -14,10 +14,10 @@ import {
   getCommunityDeletionStatsAction,
   bulkDeleteCommunitiesAction,
 } from "../../actions/communities";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import Pagination from "@/components/shared/Pagination";
-import { usePagination } from "@/lib/usePagination";
 
 interface Community {
   id: string;
@@ -41,17 +41,37 @@ interface Community {
 
 interface CommunitiesManagerProps {
   initialCommunities: Community[];
+  totalCount?: number;
+  currentPage?: number;
+  pageSize?: number;
+  currentSearch?: string;
+  currentSandbox?: boolean;
 }
 
 export default function CommunitiesManager({
   initialCommunities,
+  totalCount = 0,
+  currentPage = 1,
+  pageSize = 20,
+  currentSearch = "",
+  currentSandbox = false
 }: CommunitiesManagerProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [communities, setCommunities] = useState<Community[]>(initialCommunities);
-  const [search, setSearch] = useState("");
-  const [showSandbox, setShowSandbox] = useState(false);
+  
+  // Sync when initialCommunities changes (server side updates)
+  useEffect(() => {
+    setCommunities(initialCommunities);
+  }, [initialCommunities]);
+
+  const [search, setSearch] = useState(currentSearch);
+  const [showSandbox, setShowSandbox] = useState(currentSandbox);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editingComm, setEditingComm] = useState<Community | null>(null);
+  const [mounted, setMounted] = useState(false);
   
   // States for Deep Delete functionality
   const [deletingComm, setDeletingComm] = useState<Community | null>(null);
@@ -64,24 +84,37 @@ export default function CommunitiesManager({
   const { success: showSuccessToast, error: showErrorToast } = useToast();
   const { confirm } = useConfirm();
 
-  // Filter communities based on search query
-  const filteredCommunities = communities.filter(
-    (c) =>
-      (showSandbox ? !!c.is_sandbox : !c.is_sandbox) &&
-      (c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.code.toLowerCase().includes(search.toLowerCase()) ||
-      (c.contact_name?.toLowerCase() || "").includes(search.toLowerCase()))
-  );
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const {
-    paginatedData: paginatedCommunities,
-    currentPage,
-    totalPages,
-    totalItems,
-    setCurrentPage,
-    startIndex,
-    endIndex,
-  } = usePagination(filteredCommunities, 20);
+  // Sync state with URL when search or sandbox changes (with basic debounce for search)
+  useEffect(() => {
+    if (!mounted) return;
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (showSandbox) params.set("sandbox", "true");
+      // Reset page to 1 when search or filter changes
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search, showSandbox, mounted, pathname, router]);
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (showSandbox) params.set("sandbox", "true");
+    params.set("page", newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalCount);
+
+  const paginatedCommunities = communities;
 
   const handleOpenAddModal = () => {
     setEditingComm(null);
@@ -388,8 +421,8 @@ export default function CommunitiesManager({
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          totalItems={totalItems}
+          onPageChange={handlePageChange}
+          totalItems={totalCount}
           startIndex={startIndex}
           endIndex={endIndex}
           className="px-4 pb-4"

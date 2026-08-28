@@ -8,6 +8,7 @@ import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 import Pagination from "@/components/shared/Pagination";
 import { usePagination } from "@/lib/usePagination";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
 
 interface Teacher {
@@ -38,14 +39,31 @@ interface TeachersManagerProps {
   initialTeachers: Teacher[];
   schools: SchoolOption[];
   classes: ClassOption[];
+  totalCount?: number;
+  currentPage?: number;
+  pageSize?: number;
+  currentSearch?: string;
+  currentSandbox?: boolean;
 }
 
-export default function TeachersManager({ initialTeachers, schools, classes }: TeachersManagerProps) {
-  const [search, setSearch] = useState("");
+export default function TeachersManager({ 
+  initialTeachers, 
+  schools, 
+  classes,
+  totalCount = 0,
+  currentPage = 1,
+  pageSize = 25,
+  currentSearch = "",
+  currentSandbox = false
+}: TeachersManagerProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [search, setSearch] = useState(currentSearch);
+  const [showSandbox, setShowSandbox] = useState(currentSandbox);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [showSandbox, setShowSandbox] = useState(false);
   const [selectedSchoolId, setSelectedSchoolId] = useState("");
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
   
@@ -57,25 +75,33 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
     setMounted(true);
   }, []);
 
-  const filteredTeachers = initialTeachers.filter(
-    (t) => {
-      const isSandbox = t.communities?.is_sandbox || t.schools?.communities?.is_sandbox;
-      return (showSandbox ? !!isSandbox : !isSandbox) &&
-        (t.full_name.toLowerCase().includes(search.toLowerCase()) ||
-        t.username.toLowerCase().includes(search.toLowerCase()) ||
-        (t.schools?.name?.toLowerCase() || "").includes(search.toLowerCase()));
-    }
-  );
+  // Sync state with URL when search or sandbox changes (with basic debounce for search)
+  useEffect(() => {
+    if (!mounted) return;
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (showSandbox) params.set("sandbox", "true");
+      // Reset page to 1 when search or filter changes
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search, showSandbox, mounted, pathname, router]);
 
-  const {
-    paginatedData: paginatedTeachers,
-    currentPage,
-    totalPages,
-    totalItems,
-    setCurrentPage,
-    startIndex,
-    endIndex,
-  } = usePagination(filteredTeachers, 25);
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (showSandbox) params.set("sandbox", "true");
+    params.set("page", newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalCount);
+
+  const paginatedTeachers = initialTeachers;
 
   const handleManualSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -253,7 +279,7 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
           </tr>
         </thead>
         <tbody>
-          {filteredTeachers.length === 0 ? (
+          {paginatedTeachers.length === 0 ? (
             <tr>
               <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
                 Tidak ada data guru ditemukan.
@@ -304,8 +330,8 @@ export default function TeachersManager({ initialTeachers, schools, classes }: T
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        totalItems={totalCount}
         startIndex={startIndex}
         endIndex={endIndex}
       />

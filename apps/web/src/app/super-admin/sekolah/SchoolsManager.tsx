@@ -8,6 +8,7 @@ import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 import Pagination from "@/components/shared/Pagination";
 import { usePagination } from "@/lib/usePagination";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
 
 interface School {
@@ -39,11 +40,27 @@ interface CommunityOption {
 interface SchoolsManagerProps {
   initialSchools: School[];
   communities: CommunityOption[];
+  totalCount?: number;
+  currentPage?: number;
+  pageSize?: number;
+  currentSearch?: string;
+  currentSandbox?: boolean;
 }
 
-export default function SchoolsManager({ initialSchools, communities }: SchoolsManagerProps) {
-  const [search, setSearch] = useState("");
-  const [showSandbox, setShowSandbox] = useState(false);
+export default function SchoolsManager({ 
+  initialSchools, 
+  communities,
+  totalCount = 0,
+  currentPage = 1,
+  pageSize = 20,
+  currentSearch = "",
+  currentSandbox = false
+}: SchoolsManagerProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [search, setSearch] = useState(currentSearch);
+  const [showSandbox, setShowSandbox] = useState(currentSandbox);
   const [activeTab, setActiveTab] = useState<"list" | "dapodik">("list");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -59,23 +76,33 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
     setMounted(true);
   }, []);
 
-  const filteredSchools = initialSchools.filter(
-    (s) =>
-      (showSandbox ? !!(s.communities?.is_sandbox) : !(s.communities?.is_sandbox)) &&
-      (s.name.toLowerCase().includes(search.toLowerCase()) ||
-      (s.npsn?.toLowerCase() || "").includes(search.toLowerCase()) ||
-      (s.communities?.name?.toLowerCase() || "").includes(search.toLowerCase()))
-  );
+  // Sync state with URL when search or sandbox changes (with basic debounce for search)
+  useEffect(() => {
+    if (!mounted) return;
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (showSandbox) params.set("sandbox", "true");
+      // Reset page to 1 when search or filter changes
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search, showSandbox, mounted, pathname, router]);
 
-  const {
-    paginatedData: paginatedSchools,
-    currentPage,
-    totalPages,
-    totalItems,
-    setCurrentPage,
-    startIndex,
-    endIndex,
-  } = usePagination(filteredSchools, 20);
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (showSandbox) params.set("sandbox", "true");
+    params.set("page", newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalCount);
+
+  const paginatedSchools = initialSchools;
 
   const handleOpenAddModal = () => {
     setEditingSchool(null);
@@ -283,7 +310,7 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
             </tr>
           </thead>
           <tbody>
-            {filteredSchools.length === 0 ? (
+            {paginatedSchools.length === 0 ? (
               <tr>
                 <td colSpan={5} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
                   Tidak ada data ditemukan.
@@ -361,8 +388,8 @@ export default function SchoolsManager({ initialSchools, communities }: SchoolsM
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        totalItems={totalCount}
         startIndex={startIndex}
         endIndex={endIndex}
       />

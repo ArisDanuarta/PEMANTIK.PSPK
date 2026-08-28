@@ -42,11 +42,11 @@ export default async function PenelitiLayout({
   if (session?.user?.id) {
     const { data: userRecord } = await (supabase as any)
       .from("users")
-      .select("full_name")
+      .select("full_name, username")
       .eq("id", session.user.id)
       .maybeSingle();
-    if (userRecord?.full_name) {
-      userName = userRecord.full_name;
+    if (userRecord) {
+      userName = userRecord.full_name || userRecord.username || "Peneliti Nasional";
     }
   }
 

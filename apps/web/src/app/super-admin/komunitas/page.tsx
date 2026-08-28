@@ -8,25 +8,60 @@ export const metadata: Metadata = {
   description: "Manajemen data mitra dan komunitas pengelola sekolah",
 };
 
-export default async function KomunitasPage() {
+export default async function KomunitasPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const searchParams = await props.searchParams;
   const supabase = createServerClient();
 
+  // 1. Parse URL Params
+  const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) : 1;
+  const limit = 20; // 20 per page as per current setting in CommunitiesManager
+  const start = (page - 1) * limit;
+  const end = start + limit - 1;
+
+  const searchQuery = typeof searchParams.search === 'string' ? searchParams.search.toLowerCase() : "";
+  const showSandbox = searchParams.sandbox === "true";
+
   let communities: any[] = [];
+  let count = 0;
+  
   try {
-    const { data: commData, error } = await supabase
+    // 2. Build Query
+    let query = supabase
       .from("communities")
-      .select("*")
-      .neq("name", "SEKOLAH INDEPENDEN")
+      .select("*", { count: "exact" })
+      .neq("name", "SEKOLAH INDEPENDEN");
+
+    if (showSandbox) {
+      query = query.eq("is_sandbox", true);
+    } else {
+      query = query.eq("is_sandbox", false);
+    }
+    
+    if (searchQuery) {
+      query = query.or(`name.ilike.%${searchQuery}%,code.ilike.%${searchQuery}%,contact_name.ilike.%${searchQuery}%`);
+    }
+
+    const { data: commData, count: commCount, error } = await query
       .order("name", { ascending: true })
-      .limit(100000);
+      .range(start, end);
     
     if (error) {
       console.error("Failed to load communities:", error);
     } else {
-      const { data: adminData } = await supabase
-        .from("users")
-        .select("community_id, username")
-        .eq("role", "community");
+      count = commCount ?? 0;
+      
+      // Fetch admin users only for the communities in this page
+      const communityIds = (commData || []).map(c => c.id);
+      
+      let adminData: any[] = [];
+      if (communityIds.length > 0) {
+        const { data } = await supabase
+          .from("users")
+          .select("community_id, username")
+          .eq("role", "community")
+          .in("community_id", communityIds);
+        adminData = data || [];
+      }
         
       communities = (commData || []).map(c => {
         const admin = adminData?.find(a => a.community_id === c.id);
@@ -50,7 +85,14 @@ export default async function KomunitasPage() {
         </div>
       </div>
 
-      <CommunitiesManager initialCommunities={communities} />
+      <CommunitiesManager 
+        initialCommunities={communities} 
+        totalCount={count}
+        currentPage={page}
+        pageSize={limit}
+        currentSearch={searchQuery}
+        currentSandbox={showSandbox}
+      />
     </div>
   );
 }

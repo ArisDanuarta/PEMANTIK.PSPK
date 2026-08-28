@@ -114,22 +114,20 @@ export default async function Dashboard() {
       }
 
       if (studentIds.length > 0) {
-        // 3. Get session stats (split by subject)
+        // 3. Get session stats (split by subject) using view to avoid slow IN queries
         const { data: sessions } = await supabase
-          .from("assessment_sessions")
-          .select("score, question_categories(subject_area)")
-          .in("student_id", studentIds)
-          .eq("status", "completed")
-          .eq("is_void", false)
-          .limit(100000);
+          .from("v_assessment_report")
+          .select("final_score, subject_area")
+          .eq("teacher_id", teacherId)
+          .eq("session_status", "completed");
 
         if (sessions && sessions.length > 0) {
           stats.completedSessions = sessions.length;
           let sumAll = 0, sumLit = 0, countLit = 0, sumNum = 0, countNum = 0;
           sessions.forEach((s: any) => {
-            const score = Number(s.score) || 0;
+            const score = Number(s.final_score) || 0;
             sumAll += score;
-            const subject = (s.question_categories as any)?.subject_area;
+            const subject = s.subject_area;
             if (subject === "literasi") { sumLit += score; countLit++; }
             else if (subject === "numerasi") { sumNum += score; countNum++; }
           });
@@ -138,26 +136,21 @@ export default async function Dashboard() {
           stats.avgNum = countNum > 0 ? Math.round((sumNum / countNum) * 10) / 10 : 0;
         }
 
-        // 4. Get recent sessions
+        // 4. Get recent sessions using view
         const { data: recent } = await supabase
-          .from("assessment_sessions")
-          .select(`
-            id, score, completed_at,
-            question_categories(name),
-            students!inner(full_name, classes(name))
-          `)
-          .in("student_id", studentIds)
-          .eq("status", "completed")
-          .eq("is_void", false)
+          .from("v_assessment_report")
+          .select("session_id, final_score, completed_at, category_name, student_name, class_name")
+          .eq("teacher_id", teacherId)
+          .eq("session_status", "completed")
           .order("completed_at", { ascending: false })
           .limit(5);
 
         recentSessions = (recent || []).map((r: any) => ({
-          id: r.id,
-          student_name: r.students?.full_name || "Unknown",
-          class_name: r.students?.classes?.name || "Unknown",
-          package_name: r.question_categories?.name || "Unknown",
-          score: r.score,
+          id: r.session_id,
+          student_name: r.student_name || "Unknown",
+          class_name: r.class_name || "Unknown",
+          package_name: r.category_name || "Unknown",
+          score: r.final_score,
           completed_at: r.completed_at,
         }));
       }
