@@ -160,7 +160,7 @@ export default function AnalisisKomparatifClient({ initialData, communities }: {
             <thead>
               <tr>
                 <th style={{ textAlign: "left" }}>Komunitas</th>
-                <th style={{ textAlign: "center" }}>Level 0 (Gagal)</th>
+                <th style={{ textAlign: "center" }}>Level 0</th>
                 <th style={{ textAlign: "center" }}>Level 1</th>
                 <th style={{ textAlign: "center" }}>Level 2</th>
                 <th style={{ textAlign: "center" }}>Level 3</th>

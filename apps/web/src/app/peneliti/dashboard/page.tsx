@@ -70,10 +70,19 @@ export default async function PenelitiDashboardPage() {
       .sort((a, b) => a.month.localeCompare(b.month))
       .map(t => ({ month: t.month, avgScore: t.totalScore / t.count }));
 
-    // Level Distribution
-    const levelMap = new Map();
+    // Level Distribution — hitung per siswa unik, ambil level tertinggi per siswa
+    // (setiap siswa punya 2 sesi: lit + num, kita ambil max level-nya)
+    const studentMaxLevel = new Map<string, number>();
     completedSessions.forEach((s: any) => {
-      const lvl = s.final_level_number || 0;
+      if (!s.student_id) return;
+      const lvl = s.final_level_number ?? 0;
+      const existing = studentMaxLevel.get(s.student_id);
+      if (existing === undefined || lvl > existing) {
+        studentMaxLevel.set(s.student_id, lvl);
+      }
+    });
+    const levelMap = new Map<number, number>();
+    studentMaxLevel.forEach((lvl) => {
       levelMap.set(lvl, (levelMap.get(lvl) || 0) + 1);
     });
     data.levelDistribution = Array.from(levelMap.entries())

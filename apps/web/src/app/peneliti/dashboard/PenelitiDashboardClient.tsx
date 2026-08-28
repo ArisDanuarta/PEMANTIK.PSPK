@@ -73,7 +73,7 @@ export default function PenelitiDashboardClient({ data }: { data: any }) {
               return (
                 <div key={i}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "0.25rem", color: "#4b5563" }}>
-                    <span>{l.level === "Level 0" ? "Belum ada Level" : l.level}</span>
+                    <span>{l.level === "Level 0" ? "Level 0 (Dasar)" : l.level}</span>
                     <span style={{ fontWeight: 600 }}>{l.count.toLocaleString()} Siswa</span>
                   </div>
                   <div style={{ width: "100%", height: "8px", backgroundColor: "#f3f4f6", borderRadius: "4px", overflow: "hidden" }}>
