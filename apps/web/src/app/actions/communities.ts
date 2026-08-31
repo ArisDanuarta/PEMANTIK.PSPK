@@ -3,12 +3,18 @@
 import { createServerClient } from "@pemantik/supabase";
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "./auth";
+import { generateCommunityCredentials } from "@/lib/credentialGenerator";
 
 export interface ActionResponse {
   success: boolean;
   error?: string;
   message?: string;
   insertedIds?: string[];
+  credentials?: {
+    username?: string;
+    password?: string;
+    pin?: string;
+  };
 }
 
 export async function createCommunityAction(
@@ -79,15 +85,13 @@ export async function createCommunityAction(
   }
 
   // BUAT AKUN ADMIN KOMUNITAS SECARA OTOMATIS
-  const defaultPassword = "Password123!";
-  const namePart = name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 10);
-  const randomDigits = Math.floor(100 + Math.random() * 900).toString();
-  const username = `${namePart}${randomDigits}`;
+  const creds = generateCommunityCredentials(name, regency);
+  const { username, password: generatedPassword } = creds;
   const adminEmail = contactEmail || `${username}@pemantik.local`;
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: adminEmail,
-    password: defaultPassword,
+    password: generatedPassword,
     email_confirm: true,
     user_metadata: {
       full_name: `Admin ${name}`,
@@ -122,7 +126,8 @@ export async function createCommunityAction(
     revalidatePath("/super-admin/dashboard");
     return { 
       success: true, 
-      message: `Komunitas berhasil dibuat. Akun Admin: ${adminEmail} | Pass: ${defaultPassword}` 
+      message: `Komunitas berhasil dibuat.`,
+      credentials: { username, password: generatedPassword },
     };
   } catch (err: any) {
     console.error("Exception in createCommunityAction:", err);
@@ -222,10 +227,17 @@ export async function resetCommunityPasswordAction(communityId: string): Promise
   try {
     const supabase = createServerClient();
     
+    // Ambil data komunitas untuk generate password kontekstual
+    const { data: commData } = await supabase
+      .from("communities")
+      .select("name, city")
+      .eq("id", communityId)
+      .maybeSingle();
+
     // Find the admin user for this community
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select("id")
+      .select("id, username")
       .eq("community_id", communityId)
       .eq("role", "community")
       .maybeSingle();
@@ -234,8 +246,13 @@ export async function resetCommunityPasswordAction(communityId: string): Promise
       return { success: false, error: "Akun admin komunitas tidak ditemukan." };
     }
 
+    const creds = generateCommunityCredentials(
+      commData?.name || "komunitas",
+      commData?.city || null,
+    );
+
     const { error: authError } = await supabase.auth.admin.updateUserById(user.id, {
-      password: "Password123!"
+      password: creds.password
     });
     
     if (authError) {
@@ -243,7 +260,10 @@ export async function resetCommunityPasswordAction(communityId: string): Promise
     }
 
     revalidatePath("/super-admin/komunitas");
-    return { success: true };
+    return { 
+      success: true, 
+      credentials: { username: user.username, password: creds.password },
+    };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan sistem: " + (err.message || String(err)) };
   }
@@ -316,15 +336,13 @@ export async function bulkCreateCommunitiesAction(
         continue;
       }
 
-      const defaultPassword = "Password123!";
-      const namePart = name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 10);
-      const randomDigits = Math.floor(100 + Math.random() * 900).toString();
-      const username = `${namePart}${randomDigits}`;
+      const bulkCreds = generateCommunityCredentials(name, regency);
+      const { username, password: generatedPassword } = bulkCreds;
       const adminEmail = contactEmail || `${username}@pemantik.local`;
 
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: adminEmail,
-        password: defaultPassword,
+        password: generatedPassword,
         email_confirm: true,
         user_metadata: {
           full_name: `Admin ${name}`,

@@ -8,10 +8,16 @@ import {
   deletePenelitiAdminAction,
   resetPenelitiPasswordAction,
 } from "@/app/actions/penelitiAdmins";
+import CredentialModal, { Credentials } from "@/components/shared/CredentialModal";
 
 export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }) {
   const [admins, setAdmins] = useState(initialAdmins);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [credentialModal, setCredentialModal] = useState<{isOpen: boolean; creds: Credentials | null; title: string}>({
+    isOpen: false,
+    creds: null,
+    title: ""
+  });
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -63,12 +69,21 @@ export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }
     }
 
     if (res.success) {
-      success("Berhasil", "Data peneliti berhasil disimpan!");
       setIsModalOpen(false);
       if (editId) {
+        success("Berhasil", "Data peneliti berhasil disimpan!");
         setAdmins(prev => prev.map(a => a.id === editId ? { ...a, full_name: fullName, is_active: isActive } : a));
       } else {
-        window.location.reload(); 
+        if (res.credentials) {
+          setCredentialModal({
+            isOpen: true,
+            creds: res.credentials,
+            title: "Akun Peneliti Dibuat"
+          });
+        } else {
+          success("Berhasil", "Data peneliti berhasil disimpan!");
+          window.location.reload(); 
+        }
       }
     } else {
       setErrorMsg(res.error || "Gagal menyimpan data.");
@@ -99,7 +114,7 @@ export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }
   const handleResetPassword = async (id: string) => {
     const isConfirmed = await confirm({
       title: "Reset Password",
-      description: "Password akan direset menjadi 'Password123!'. Lanjutkan?",
+      description: "Password peneliti ini akan direset. Lanjutkan?",
       confirmLabel: "Reset",
       cancelLabel: "Batal",
       variant: "danger",
@@ -108,7 +123,15 @@ export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }
     if (isConfirmed) {
       const res = await resetPenelitiPasswordAction(id);
       if (res.success) {
-        success("Berhasil", res.message || "Password direset.");
+        if (res.credentials) {
+          setCredentialModal({
+            isOpen: true,
+            creds: res.credentials,
+            title: "Password Berhasil Direset"
+          });
+        } else {
+          success("Berhasil", res.message || "Password direset.");
+        }
       } else {
         error("Gagal Reset", res.error || "Terjadi kesalahan.");
       }
@@ -181,7 +204,7 @@ export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }
             />
             {!editId && (
               <p style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.25rem" }}>
-                Gunakan huruf kecil, angka, dan underscore (_). Password default: <b>Password123!</b>
+                Gunakan huruf kecil, angka, dan underscore (_). Password akan di-generate secara otomatis.
               </p>
             )}
           </div>
@@ -206,6 +229,17 @@ export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }
           </div>
         </form>
       </Modal>
+
+      {/* MODAL CREDENTIAL */}
+      <CredentialModal
+        isOpen={credentialModal.isOpen}
+        onClose={() => {
+          setCredentialModal({ isOpen: false, creds: null, title: "" });
+          window.location.reload();
+        }}
+        credentials={credentialModal.creds}
+        title={credentialModal.title}
+      />
     </div>
   );
 }

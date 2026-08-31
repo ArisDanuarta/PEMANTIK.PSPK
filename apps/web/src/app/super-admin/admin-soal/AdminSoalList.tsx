@@ -8,10 +8,16 @@ import {
   deleteQuestionAdminAction,
   resetQuestionAdminPasswordAction,
 } from "@/app/actions/questionAdmins";
+import CredentialModal, { Credentials } from "@/components/shared/CredentialModal";
 
 export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] }) {
   const [admins, setAdmins] = useState(initialAdmins);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [credentialModal, setCredentialModal] = useState<{isOpen: boolean; creds: Credentials | null; title: string}>({
+    isOpen: false,
+    creds: null,
+    title: ""
+  });
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -63,13 +69,22 @@ export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] 
     }
 
     if (res.success) {
-      success("Berhasil", "Data admin soal berhasil disimpan!");
       setIsModalOpen(false);
       // Untuk update lokal agar tak perlu reload (sementara, revalidatePath handle server)
       if (editId) {
+        success("Berhasil", "Data admin soal berhasil disimpan!");
         setAdmins(prev => prev.map(a => a.id === editId ? { ...a, full_name: fullName, is_active: isActive } : a));
       } else {
-        window.location.reload(); // Hard reload untuk simplifikasi nambah id baru
+        if (res.credentials) {
+          setCredentialModal({
+            isOpen: true,
+            creds: res.credentials,
+            title: "Akun Admin Soal Dibuat"
+          });
+        } else {
+          success("Berhasil", "Data admin soal berhasil disimpan!");
+          window.location.reload(); // Hard reload untuk simplifikasi nambah id baru
+        }
       }
     } else {
       setErrorMsg(res.error || "Gagal menyimpan data.");
@@ -109,7 +124,15 @@ export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] 
     if (isConfirmed) {
       const res = await resetQuestionAdminPasswordAction(id);
       if (res.success) {
-        success("Berhasil", "Kata sandi berhasil di-reset.");
+        if (res.credentials) {
+          setCredentialModal({
+            isOpen: true,
+            creds: res.credentials,
+            title: "Password Berhasil Direset"
+          });
+        } else {
+          success("Berhasil", "Kata sandi berhasil di-reset.");
+        }
       } else {
         error("Gagal Reset", res.error || "Terjadi kesalahan.");
       }
@@ -128,7 +151,7 @@ export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] 
       render: (val: any) => (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
           <div><span style={{ color: "black" }}>User:</span> <strong>{val}</strong></div>
-          <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code></div>
+          <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>(Otomatis)</code></div>
         </div>
       )
     },
@@ -228,6 +251,17 @@ export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] 
           </div>
         </form>
       </Modal>
+
+      {/* MODAL CREDENTIAL */}
+      <CredentialModal
+        isOpen={credentialModal.isOpen}
+        onClose={() => {
+          setCredentialModal({ isOpen: false, creds: null, title: "" });
+          window.location.reload();
+        }}
+        credentials={credentialModal.creds}
+        title={credentialModal.title}
+      />
     </div>
   );
 }

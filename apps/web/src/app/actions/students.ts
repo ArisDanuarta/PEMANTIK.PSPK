@@ -5,12 +5,18 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { requireAuth } from "./auth";
 import { parseFlexibleDate, normalizeIdentityNumber, normalizeSearchString, normalizeText, normalizeEducation, normalizeOccupation } from "@/lib/normalizationUtils";
+import { generateStudentCredentials } from "@/lib/credentialGenerator";
 
 export interface ActionResponse {
   success: boolean;
   error?: string;
   message?: string;
   insertedIds?: string[];
+  credentials?: {
+    username?: string;
+    password?: string;
+    pin?: string;
+  };
 }
 
 function generatePin(): string {
@@ -127,9 +133,8 @@ export async function createStudentAction(
     }
 
     // Create credentials
-    const pin = generatePin();
+    const { username, pin } = generateStudentCredentials(full_name, nisn, npsn);
     const pin_hash = bcrypt.hashSync(pin, 10);
-    const username = generateUsername(full_name, nisn);
 
     const { error } = await supabase.from("students").insert({
       school_id,
@@ -160,7 +165,8 @@ export async function createStudentAction(
     revalidatePath("/komunitas/siswa");
     return { 
       success: true, 
-      message: `Anak ditambahkan. Username: ${username} | PIN: ${pin}` 
+      message: `Anak ditambahkan.`,
+      credentials: { username, pin },
     };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan: " + (err.message || String(err)) };
@@ -294,10 +300,8 @@ export async function bulkCreateStudentsAction(
       }
 
       // Generate credentials
-      const pin = generatePin();
+      const { username, pin } = generateStudentCredentials(full_name as string, nisn, npsn);
       const pin_hash = bcrypt.hashSync(pin, 10);
-      const identifier = nisn || npsn || null;
-      const username = generateUsername(full_name as string, identifier);
       
       rowsToInsert.push({
         school_id,
@@ -504,8 +508,14 @@ export async function resetStudentPasswordAction(studentId: string): Promise<Act
     await requireAuth(["super_admin", "school", "community"]);
     const supabase = createServerClient();
     
-    const pin = generatePin();
+    const pin = "123456";
     const pin_hash = bcrypt.hashSync(pin, 10);
+
+    const { data: studentData } = await supabase
+      .from("students")
+      .select("username")
+      .eq("id", studentId)
+      .maybeSingle();
 
     const { error } = await supabase.from("students").update({
       pin_hash: pin_hash
@@ -517,7 +527,11 @@ export async function resetStudentPasswordAction(studentId: string): Promise<Act
 
     revalidatePath("/super-admin/siswa");
     revalidatePath("/komunitas/siswa");
-    return { success: true, message: `PIN berhasil di-reset menjadi ${pin}` };
+    return { 
+      success: true, 
+      message: `PIN berhasil di-reset menjadi ${pin}`,
+      credentials: { username: (studentData as any)?.username, pin },
+    };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan sistem: " + (err.message || String(err)) };
   }

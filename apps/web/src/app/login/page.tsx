@@ -93,13 +93,11 @@ export default function LoginPage() {
 
         {/* Logo utama Pemantik */}
         <div className="login-logo-wrap">
-          <Image
-            src="/images/LOGO_PEMANTIK_PUTIH_KUNING.png"
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/video/1. Logo PEMANTIK.gif"
             alt="Logo Pemantik - Pengukuran Mandiri Literasi dan Numerasi PSPK"
             width={240}
-            height={93}
-            priority
-            sizes="(max-width: 768px) 180px, 240px"
             className="login-logo-img"
             style={{ height: "auto" }}
           />

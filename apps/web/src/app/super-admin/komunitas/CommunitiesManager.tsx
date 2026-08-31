@@ -17,6 +17,7 @@ import {
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
+import CredentialModal, { Credentials } from "@/components/shared/CredentialModal";
 import Pagination from "@/components/shared/Pagination";
 
 interface Community {
@@ -70,6 +71,11 @@ export default function CommunitiesManager({
   const [showSandbox, setShowSandbox] = useState(currentSandbox);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [credentialModal, setCredentialModal] = useState<{isOpen: boolean; creds: Credentials | null; title: string}>({
+    isOpen: false,
+    creds: null,
+    title: ""
+  });
   const [editingComm, setEditingComm] = useState<Community | null>(null);
   const [mounted, setMounted] = useState(false);
   
@@ -141,14 +147,22 @@ export default function CommunitiesManager({
       if (result.success) {
         if (editingComm) {
           showSuccessToast("Komunitas berhasil diperbarui!");
+          setIsModalOpen(false);
+          setTimeout(() => window.location.reload(), 1000);
         } else {
-          showSuccessToast("Komunitas berhasil dibuat!", result.message || "Akun login admin komunitas telah dibuat.");
+          // If it's a new community, show the credential modal
+          setIsModalOpen(false);
+          if (result.credentials) {
+            setCredentialModal({
+              isOpen: true,
+              creds: result.credentials,
+              title: "Akun Komunitas Berhasil Dibuat"
+            });
+          } else {
+            showSuccessToast("Komunitas berhasil dibuat!");
+            setTimeout(() => window.location.reload(), 1000);
+          }
         }
-        setIsModalOpen(false);
-        // Tampilkan info sesaat sebelum reload
-        setTimeout(() => {
-          window.location.reload();
-        }, 3000);
       } else {
         showErrorToast("Gagal menyimpan komunitas", result.error || "");
       }
@@ -169,7 +183,15 @@ export default function CommunitiesManager({
     startTransition(async () => {
       const result = await resetCommunityPasswordAction(comm.id);
       if (result.success) {
-        showSuccessToast("Berhasil", "Kata sandi admin komunitas berhasil di-reset.");
+        if (result.credentials) {
+          setCredentialModal({
+            isOpen: true,
+            creds: result.credentials,
+            title: "Password Berhasil Direset"
+          });
+        } else {
+          showSuccessToast("Berhasil", "Kata sandi admin komunitas berhasil di-reset.");
+        }
       } else {
         showErrorToast("Gagal", result.error || "Terjadi kesalahan.");
       }
@@ -718,6 +740,16 @@ export default function CommunitiesManager({
           ) : null}
         </div>
       </Modal>
+      {/* MODAL CREDENTIAL */}
+      <CredentialModal
+        isOpen={credentialModal.isOpen}
+        onClose={() => {
+          setCredentialModal({ isOpen: false, creds: null, title: "" });
+          window.location.reload();
+        }}
+        credentials={credentialModal.creds}
+        title={credentialModal.title}
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Table, Button, Modal, Badge, useToast, useConfirm, SesBadge } from "@pemantik/ui";
 import { createStudentAction, bulkCreateStudentsAction, updateStudentAction, deleteStudentAction, resetStudentPasswordAction, bulkDeleteStudentsAction } from "../../actions/students";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
+import CredentialModal, { Credentials } from "@/components/shared/CredentialModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 import Pagination from "@/components/shared/Pagination";
 import { usePagination } from "@/lib/usePagination";
@@ -69,6 +70,11 @@ export default function StudentsManager({
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [credentialModal, setCredentialModal] = useState<{isOpen: boolean; creds: Credentials | null; title: string}>({
+    isOpen: false,
+    creds: null,
+    title: ""
+  });
   const [mounted, setMounted] = useState(false);
   
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -120,9 +126,24 @@ export default function StudentsManager({
         : await createStudentAction(formData);
         
       if (result.success) {
-        success("Berhasil", result.message || `Anak ${editingStudent ? 'diperbarui' : 'ditambahkan'}.`);
-        setIsManualModalOpen(false);
-        setEditingStudent(null);
+        if (editingStudent) {
+          success("Berhasil", result.message || `Anak diperbarui.`);
+          setIsManualModalOpen(false);
+          setEditingStudent(null);
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          setIsManualModalOpen(false);
+          if (result.credentials) {
+            setCredentialModal({
+              isOpen: true,
+              creds: result.credentials,
+              title: "Akun Anak Berhasil Dibuat"
+            });
+          } else {
+            success("Berhasil", result.message || `Anak ditambahkan.`);
+            setTimeout(() => window.location.reload(), 1000);
+          }
+        }
       } else {
         error("Gagal", result.error || `Gagal ${editingStudent ? 'memperbarui' : 'membuat'} siswa.`);
       }
@@ -158,8 +179,19 @@ export default function StudentsManager({
     
     startTransition(async () => {
       const result = await resetStudentPasswordAction(row.id);
-      if (result.success) success("Berhasil", "PIN siswa berhasil di-reset.");
-      else error("Gagal", result.error || "Terjadi kesalahan.");
+      if (result.success) {
+        if (result.credentials) {
+          setCredentialModal({
+            isOpen: true,
+            creds: result.credentials,
+            title: "PIN Berhasil Direset"
+          });
+        } else {
+          success("Berhasil", "PIN siswa berhasil di-reset.");
+        }
+      } else {
+        error("Gagal", result.error || "Terjadi kesalahan.");
+      }
     });
   };
 
@@ -502,6 +534,16 @@ export default function StudentsManager({
           onRollback={handleRollback}
         />
       )}
+      {/* MODAL CREDENTIAL */}
+      <CredentialModal
+        isOpen={credentialModal.isOpen}
+        onClose={() => {
+          setCredentialModal({ isOpen: false, creds: null, title: "" });
+          window.location.reload();
+        }}
+        credentials={credentialModal.creds}
+        title={credentialModal.title}
+      />
     </div>
   );
 }

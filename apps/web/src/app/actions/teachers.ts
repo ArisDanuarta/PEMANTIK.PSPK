@@ -5,12 +5,18 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { parseFlexibleDate, normalizeIdentityNumber, normalizeSearchString, normalizeText } from "@/lib/normalizationUtils";
 import { requireAuth } from "./auth";
+import { generateTeacherCredentials } from "@/lib/credentialGenerator";
 
 export interface ActionResponse {
   success: boolean;
   error?: string;
   message?: string;
   insertedIds?: string[];
+  credentials?: {
+    username?: string;
+    password?: string;
+    pin?: string;
+  };
 }
 
 function normalizeGender(val: any): "L" | "P" {
@@ -50,24 +56,14 @@ export async function createTeacherAction(
 
     const supabase = createServerClient();
 
-    const words = full_name.split(/\s+/).map((w: string) => w.replace(/[^a-zA-Z]/g, "").toLowerCase()).filter((w: string) => w.length > 0);
-    const balineseTitles = new Set(["i", "ni", "ida", "aa", "anak", "agung", "tjokorda", "cokorda", "dewa", "desak", "gusti", "ngakan", "bagus", "ayu", "putu", "wayan", "gede", "gde", "iluh", "luh", "made", "kadek", "nengah", "kdk", "md", "nyoman", "komang", "nym", "kmg", "ketut", "kt"]);
-    let validNames = words.filter((word: string) => !balineseTitles.has(word) && word.length > 1);
-    if (validNames.length === 0) validNames = words;
-    let randomNamePart = "guru";
-    if (validNames.length > 0) {
-      randomNamePart = validNames[Math.floor(Math.random() * validNames.length)].slice(0, 10);
-    }
-    const nipDigits = (nip || "").replace(/[^0-9]/g, "");
-    let digitsPart = nipDigits.length >= 3 ? nipDigits.slice(-3) : Math.floor(100 + Math.random() * 900).toString();
-    const username = `${randomNamePart}${digitsPart}`;
-    const defaultPassword = "Password123!";
+    const teacherCreds = generateTeacherCredentials(full_name, nip, birth_date);
+    const { username, password: generatedPassword } = teacherCreds;
     
     const adminEmail = email || `${username}@pemantik.local`;
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: adminEmail,
-      password: defaultPassword,
+      password: generatedPassword,
       email_confirm: true,
       user_metadata: {
         full_name,
@@ -113,7 +109,11 @@ export async function createTeacherAction(
 
     revalidatePath("/super-admin/guru");
     revalidatePath("/komunitas/guru");
-    return { success: true, message: `Guru berhasil ditambahkan. Username: ${username} | Pass: ${defaultPassword}` };
+    return { 
+      success: true, 
+      message: `Guru berhasil ditambahkan.`,
+      credentials: { username, password: generatedPassword },
+    };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan: " + (err.message || String(err)) };
   }
@@ -193,23 +193,16 @@ export async function bulkCreateTeachersAction(
       }
       birth_date = parsedDate;
 
-      const words = (full_name as string).split(/\s+/).map((w: string) => w.replace(/[^a-zA-Z]/g, "").toLowerCase()).filter((w: string) => w.length > 0);
-      const balineseTitles = new Set(["i", "ni", "ida", "aa", "anak", "agung", "tjokorda", "cokorda", "dewa", "desak", "gusti", "ngakan", "bagus", "ayu", "putu", "wayan", "gede", "gde", "iluh", "luh", "made", "kadek", "nengah", "kdk", "md", "nyoman", "komang", "nym", "kmg", "ketut", "kt"]);
-      let validNames = words.filter((word: string) => !balineseTitles.has(word) && word.length > 1);
-      if (validNames.length === 0) validNames = words;
-      let randomNamePart = "guru";
-      if (validNames.length > 0) {
-        randomNamePart = validNames[Math.floor(Math.random() * validNames.length)].slice(0, 10);
-      }
-      const nipDigits = (nip || "").replace(/[^0-9]/g, "");
-      let digitsPart = nipDigits.length >= 3 ? nipDigits.slice(-3) : Math.floor(100 + Math.random() * 900).toString();
-      const username = `${randomNamePart}${digitsPart}`;
+      const birth_date_val = birth_date;
+
+      const bulkTeacherCreds = generateTeacherCredentials(full_name as string, nip, birth_date_val);
+      const { username, password: generatedPassword } = bulkTeacherCreds;
       
       const adminEmail = email || `${username}@pemantik.local`;
       
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: adminEmail,
-        password: "Password123!",
+        password: generatedPassword,
         email_confirm: true,
         user_metadata: { full_name, role: "teacher" }
       });
@@ -352,9 +345,22 @@ export async function resetTeacherPasswordAction(teacherId: string): Promise<Act
     await requireAuth(["super_admin", "school", "community"]);
     const supabase = createServerClient();
     
+    // Ambil data guru untuk generate password kontekstual
+    const { data: teacherData } = await supabase
+      .from("users")
+      .select("username, full_name, nip, birth_date")
+      .eq("id", teacherId)
+      .maybeSingle();
+
+    const creds = generateTeacherCredentials(
+      (teacherData as any)?.full_name || "guru",
+      (teacherData as any)?.nip || null,
+      (teacherData as any)?.birth_date || null,
+    );
+
     // For teachers, teacherId is their auth user id
     const { error: authError } = await supabase.auth.admin.updateUserById(teacherId, {
-      password: "Password123!"
+      password: creds.password
     });
     
     if (authError) {
@@ -363,7 +369,10 @@ export async function resetTeacherPasswordAction(teacherId: string): Promise<Act
 
     revalidatePath("/super-admin/guru");
     revalidatePath("/komunitas/guru");
-    return { success: true };
+    return { 
+      success: true,
+      credentials: { username: (teacherData as any)?.username, password: creds.password },
+    };
   } catch (err: any) {
     return { success: false, error: "Terjadi kesalahan sistem: " + (err.message || String(err)) };
   }

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Badge, Button, useToast, useConfirm } from "@pemantik/ui";
 import { createTeacherAction, bulkCreateTeachersAction, updateTeacherAction, deleteTeacherAction, resetTeacherPasswordAction, bulkDeleteTeachersAction } from "../../actions/teachers";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
+import CredentialModal, { Credentials } from "@/components/shared/CredentialModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 import Pagination from "@/components/shared/Pagination";
 import { usePagination } from "@/lib/usePagination";
@@ -63,6 +64,11 @@ export default function TeachersManager({
   const [showSandbox, setShowSandbox] = useState(currentSandbox);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [credentialModal, setCredentialModal] = useState<{isOpen: boolean; creds: Credentials | null; title: string}>({
+    isOpen: false,
+    creds: null,
+    title: ""
+  });
   const [mounted, setMounted] = useState(false);
   const [selectedSchoolId, setSelectedSchoolId] = useState("");
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
@@ -113,9 +119,24 @@ export default function TeachersManager({
         : await createTeacherAction(formData);
         
       if (result.success) {
-        showSuccessToast("Berhasil", result.message || `Guru ${editingTeacher ? 'diperbarui' : 'ditambahkan'}.`);
-        setIsManualModalOpen(false);
-        setEditingTeacher(null);
+        if (editingTeacher) {
+          showSuccessToast("Berhasil", result.message || `Guru diperbarui.`);
+          setIsManualModalOpen(false);
+          setEditingTeacher(null);
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          setIsManualModalOpen(false);
+          if (result.credentials) {
+            setCredentialModal({
+              isOpen: true,
+              creds: result.credentials,
+              title: "Akun Guru Berhasil Dibuat"
+            });
+          } else {
+            showSuccessToast("Berhasil", result.message || `Guru ditambahkan.`);
+            setTimeout(() => window.location.reload(), 1000);
+          }
+        }
       } else {
         showErrorToast("Gagal", result.error || `Gagal ${editingTeacher ? 'memperbarui' : 'membuat'} guru.`);
       }
@@ -151,8 +172,19 @@ export default function TeachersManager({
 
     startTransition(async () => {
       const result = await resetTeacherPasswordAction(row.id);
-      if (result.success) showSuccessToast("Berhasil", "Kata sandi guru berhasil di-reset.");
-      else showErrorToast("Gagal", result.error || "Terjadi kesalahan.");
+      if (result.success) {
+        if (result.credentials) {
+          setCredentialModal({
+            isOpen: true,
+            creds: result.credentials,
+            title: "Password Berhasil Direset"
+          });
+        } else {
+          showSuccessToast("Berhasil", "Kata sandi guru berhasil di-reset.");
+        }
+      } else {
+        showErrorToast("Gagal", result.error || "Terjadi kesalahan.");
+      }
     });
   };
 
@@ -459,6 +491,16 @@ export default function TeachersManager({
           onRollback={handleRollback}
         />
       )}
+      {/* MODAL CREDENTIAL */}
+      <CredentialModal
+        isOpen={credentialModal.isOpen}
+        onClose={() => {
+          setCredentialModal({ isOpen: false, creds: null, title: "" });
+          window.location.reload();
+        }}
+        credentials={credentialModal.creds}
+        title={credentialModal.title}
+      />
     </div>
   );
 }

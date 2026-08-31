@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Badge, Button, useToast, useConfirm } from "@pemantik/ui";
 import { createSchoolAction, updateSchoolAction, deleteSchoolAction, bulkCreateSchoolsAction, resetSchoolPasswordAction, parseDapodikAction, importDapodikAction, bulkDeleteSchoolsAction } from "../../actions/schools";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
+import CredentialModal, { Credentials } from "@/components/shared/CredentialModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 import Pagination from "@/components/shared/Pagination";
 import { usePagination } from "@/lib/usePagination";
@@ -64,6 +65,11 @@ export default function SchoolsManager({
   const [activeTab, setActiveTab] = useState<"list" | "dapodik">("list");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [credentialModal, setCredentialModal] = useState<{isOpen: boolean; creds: Credentials | null; title: string}>({
+    isOpen: false,
+    creds: null,
+    title: ""
+  });
   const [editingSchool, setEditingSchool] = useState<School | null>(null);
   const [selectedCommunityId, setSelectedCommunityId] = useState("");
   const [mounted, setMounted] = useState(false);
@@ -129,8 +135,23 @@ export default function SchoolsManager({
       }
 
       if (result.success) {
-        showSuccessToast(editingSchool ? "Sekolah diperbarui" : "Sekolah ditambahkan", result.message || "");
-        setIsModalOpen(false);
+        if (editingSchool) {
+          showSuccessToast("Sekolah diperbarui", result.message || "");
+          setIsModalOpen(false);
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          setIsModalOpen(false);
+          if (result.credentials) {
+            setCredentialModal({
+              isOpen: true,
+              creds: result.credentials,
+              title: "Akun Sekolah Berhasil Dibuat"
+            });
+          } else {
+            showSuccessToast("Sekolah ditambahkan", result.message || "");
+            setTimeout(() => window.location.reload(), 1000);
+          }
+        }
       } else {
         showErrorToast("Gagal", result.error || "Terjadi kesalahan.");
       }
@@ -172,7 +193,15 @@ export default function SchoolsManager({
     startTransition(async () => {
       const result = await resetSchoolPasswordAction(school.id);
       if (result.success) {
-        showSuccessToast("Berhasil", "Kata sandi admin sekolah berhasil di-reset.");
+        if (result.credentials) {
+          setCredentialModal({
+            isOpen: true,
+            creds: result.credentials,
+            title: "Password Berhasil Direset"
+          });
+        } else {
+          showSuccessToast("Berhasil", "Kata sandi admin sekolah berhasil di-reset.");
+        }
       } else {
         showErrorToast("Gagal", result.error || "Terjadi kesalahan.");
       }
@@ -556,6 +585,16 @@ export default function SchoolsManager({
           onRollback={handleRollback}
         />
       )}
+      {/* MODAL CREDENTIAL */}
+      <CredentialModal
+        isOpen={credentialModal.isOpen}
+        onClose={() => {
+          setCredentialModal({ isOpen: false, creds: null, title: "" });
+          window.location.reload();
+        }}
+        credentials={credentialModal.creds}
+        title={credentialModal.title}
+      />
     </div>
   );
 }
