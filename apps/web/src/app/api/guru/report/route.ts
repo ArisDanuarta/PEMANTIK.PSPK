@@ -17,12 +17,22 @@ export async function GET(request: Request) {
 
   const supabase = createServerClient();
 
-  // 1. Dapatkan kelas-kelas yang diajar guru ini
+  // 1. Dapatkan kelas-kelas yang diajar guru ini melalui class_teachers
+  const { data: classTeacherRows } = await supabase
+    .from("class_teachers" as any)
+    .select("class_id")
+    .eq("teacher_id", teacherId);
+
+  const ctClassIds = classTeacherRows?.map((r: any) => r.class_id) || [];
+  if (ctClassIds.length === 0) {
+    return NextResponse.json({ data: [] });
+  }
+
   const { data: classes } = await supabase
     .from("classes")
     .select("id")
     .eq("school_id", schoolId)
-    .eq("teacher_id", teacherId);
+    .in("id", ctClassIds);
 
   const classIds = classes?.map((c) => c.id) || [];
   if (classIds.length === 0) {

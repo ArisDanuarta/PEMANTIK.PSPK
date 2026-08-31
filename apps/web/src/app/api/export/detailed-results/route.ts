@@ -329,6 +329,26 @@ export async function GET(request: Request) {
   let userId          = headersList.get("x-user-id");
 
   // ── Fallback jika header tidak terinjeksi oleh proxy ──────────────────────
+  if (!userRole || userRole === "teacher") {
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    let accessToken = cookieStore.get("sb-access-token")?.value;
+    if (!accessToken) {
+      const sessionCookie = cookieStore.get(`sb-bhrqorbjdmlewwmlajfg-auth-token`)?.value;
+      if (sessionCookie) {
+        try { accessToken = JSON.parse(sessionCookie).access_token; } catch {}
+      }
+    }
+    if (accessToken) {
+      try {
+        const b64 = accessToken.split(".")[1];
+        const payload = JSON.parse(Buffer.from(b64, "base64url").toString());
+        if (!userRole) userRole = payload.user_role ?? payload.role;
+        if (!userId || userId === "all") userId = payload.sub;
+      } catch {}
+    }
+  }
+
   if (!userRole) {
     if (target_type === "community") {
       userRole = "community";
@@ -338,7 +358,7 @@ export async function GET(request: Request) {
       userSchoolId = target_id;
     } else if (target_type === "teacher") {
       userRole = "teacher";
-      userId = target_id;
+      if (!userId || userId === "all") userId = target_id;
     } else if (target_type === "all") {
       userRole = "super_admin";
     }
@@ -388,11 +408,11 @@ export async function GET(request: Request) {
     viewQuery = viewQuery.eq("school_id", userSchoolId);
   } else if (userRole === "teacher") {
     if (!userId) return NextResponse.json({ error: "Teacher ID missing" }, { status: 403 });
-    const { data: teacherClasses } = await supabase
-      .from("classes")
-      .select("id")
+    const { data: classTeacherRows } = await supabase
+      .from("class_teachers" as any)
+      .select("class_id")
       .eq("teacher_id", userId);
-    const teacherClassIds = (teacherClasses ?? []).map((c: any) => c.id);
+    const teacherClassIds = (classTeacherRows ?? []).map((c: any) => c.class_id);
     if (teacherClassIds.length === 0) {
       return NextResponse.json({ data: [] });
     }
@@ -405,8 +425,8 @@ export async function GET(request: Request) {
   } else if (target_type === "community" && target_id !== "all") {
     viewQuery = viewQuery.eq("community_id", target_id);
   } else if (target_type === "teacher" && target_id !== "all") {
-    const { data: tClasses } = await supabase.from("classes").select("id").eq("teacher_id", target_id);
-    const tClassIds = (tClasses ?? []).map((c: any) => c.id);
+    const { data: ctRows } = await supabase.from("class_teachers" as any).select("class_id").eq("teacher_id", target_id);
+    const tClassIds = (ctRows ?? []).map((c: any) => c.class_id);
     if (tClassIds.length > 0) viewQuery = viewQuery.in("class_id", tClassIds);
     else return NextResponse.json({ data: [] });
   }
@@ -470,14 +490,14 @@ export async function GET(request: Request) {
     if (fallbackSchoolIds.length > 0) {
       sessQuery = sessQuery.in("school_id", fallbackSchoolIds);
     } else if (userRole === "teacher" && userId) {
-      const { data: tClasses } = await supabase.from("classes").select("id").eq("teacher_id", userId);
-      const tClassIds = (tClasses ?? []).map((c: any) => c.id);
+      const { data: ctRows } = await supabase.from("class_teachers" as any).select("class_id").eq("teacher_id", userId);
+      const tClassIds = (ctRows ?? []).map((c: any) => c.class_id);
       const { data: stIds } = await supabase.from("students").select("id").in("class_id", tClassIds);
       const validStIds = (stIds ?? []).map((st: any) => st.id);
       sessQuery = sessQuery.in("student_id", validStIds.length > 0 ? validStIds : ["00000000-0000-0000-0000-000000000000"]);
     } else if (target_type === "teacher" && target_id !== "all") {
-      const { data: tClasses } = await supabase.from("classes").select("id").eq("teacher_id", target_id);
-      const tClassIds = (tClasses ?? []).map((c: any) => c.id);
+      const { data: ctRows } = await supabase.from("class_teachers" as any).select("class_id").eq("teacher_id", target_id);
+      const tClassIds = (ctRows ?? []).map((c: any) => c.class_id);
       const { data: stIds } = await supabase.from("students").select("id").in("class_id", tClassIds);
       const validStIds = (stIds ?? []).map((st: any) => st.id);
       sessQuery = sessQuery.in("student_id", validStIds.length > 0 ? validStIds : ["00000000-0000-0000-0000-000000000000"]);

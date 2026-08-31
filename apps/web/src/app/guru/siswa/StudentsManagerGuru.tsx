@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useEffect, useMemo } from "react";
 import { Button, Badge, useToast, useConfirm } from "@pemantik/ui";
-import { resetStudentPasswordAction } from "@/app/actions/students";
+
 import Link from "next/link";
 import Pagination from "@/components/shared/Pagination";
 import { usePagination } from "@/lib/usePagination";
@@ -63,22 +63,7 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
     endIndex,
   } = usePagination(filtered, 20);
 
-  const handleResetPassword = async (s: StudentRow) => {
-    const ok = await confirm({
-      title: "Reset PIN Anak",
-      description: `PIN akses "${s.full_name}" akan direset ke PIN default "123456". Lanjutkan?`,
-      confirmLabel: "Ya, Reset",
-    });
-    if (!ok) return;
-    startTransition(async () => {
-      const res = await resetStudentPasswordAction(s.id);
-      if (res.success) {
-        showSuccess("Berhasil", res.message ?? "PIN direset ke default (123456).");
-      } else {
-        showError("Gagal", res.error ?? "Terjadi kesalahan.");
-      }
-    });
-  };
+
 
   if (!mounted) return null;
 
@@ -132,7 +117,6 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
                 <th>Kelas</th>
                 <th>Fase Ujian</th>
                 <th>Progres / Jenis Ujian</th>
-                <th style={{ textAlign: "center", width: "120px" }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -203,17 +187,6 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
                           <span style={{ color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic" }}>Belum mulai ujian</span>
                         )}
                       </div>
-                    </td>
-                    <td style={{ textAlign: "center" }}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        style={{ color: "#f59e0b", borderColor: "#f59e0b" }}
-                        onClick={() => handleResetPassword(s)}
-                        disabled={isPending}
-                      >
-                        Reset PIN
-                      </Button>
                     </td>
                   </tr>
                 ))

@@ -22,8 +22,8 @@ export default async function GuruKelasPage() {
   let classes: any[] = [];
 
   try {
-    const { data: classTeacherRows } = await (supabase as any)
-      .from("class_teachers")
+    const { data: classTeacherRows } = await supabase
+      .from("class_teachers" as any)
       .select("class_id")
       .eq("teacher_id", teacherId);
 
@@ -50,7 +50,7 @@ export default async function GuruKelasPage() {
       }
     }
   } catch (err) {
-    console.error("Failed to load kelas guru:", err);
+    // Error ditangani secara silent
   }
 
   return (

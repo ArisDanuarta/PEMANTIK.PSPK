@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { Button, useToast } from "@pemantik/ui";
 
 interface ClassOption {
   id: string;
@@ -15,6 +16,52 @@ interface Props {
 }
 
 export default function KelasManagerGuru({ classes }: Props) {
+  const [isExporting, setIsExporting] = useState<string | null>(null);
+  const { success: showSuccess, error: showError } = useToast();
+
+  const handleDownload = async (classId: string, className: string) => {
+    setIsExporting(classId);
+    try {
+      const url = new URL(window.location.origin + "/api/export/detailed-results");
+      url.searchParams.append("category_id", "all");
+      url.searchParams.append("target_type", "teacher");
+      url.searchParams.append("target_id", "all");
+      url.searchParams.append("class_id", classId);
+
+      const response = await fetch(url.toString());
+      if (!response.ok) {
+        const json = await response.json().catch(() => ({}));
+        throw new Error(json.error || "Server error");
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const json = await response.json();
+        if (json.data && json.data.length === 0) {
+          showError("Data Kosong", "Belum ada data ujian untuk kelas ini.");
+          return;
+        }
+        throw new Error(json.error || "Terjadi kesalahan pada server");
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `Hasil_Ujian_${className.replace(/\s+/g, '_')}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+      showSuccess("Berhasil", `Laporan untuk kelas ${className} berhasil diunduh.`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Terjadi kesalahan saat mengunduh data.";
+      showError("Gagal Export", msg);
+    } finally {
+      setIsExporting(null);
+    }
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
@@ -41,6 +88,7 @@ export default function KelasManagerGuru({ classes }: Props) {
                   <th>Tingkat (Grade)</th>
                   <th>Tahun Ajaran</th>
                   <th>Jumlah Anak</th>
+                  <th style={{ textAlign: "center" }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -50,6 +98,17 @@ export default function KelasManagerGuru({ classes }: Props) {
                     <td>Kelas {cls.grade}</td>
                     <td>{cls.academic_year}</td>
                     <td>{cls.student_count} Anak</td>
+                    <td style={{ textAlign: "center" }}>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        style={{ color: "#059669", borderColor: "#34d399", minWidth: "140px" }}
+                        onClick={() => handleDownload(cls.id, cls.name)}
+                        disabled={isExporting === cls.id}
+                      >
+                        {isExporting === cls.id ? "Menyiapkan..." : "Unduh Laporan"}
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

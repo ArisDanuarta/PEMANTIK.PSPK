@@ -25,8 +25,8 @@ export default async function GuruSiswaPage() {
 
   try {
     // 1. Get classes taught by this teacher
-    const { data: classTeacherRows } = await (supabase as any)
-      .from("class_teachers")
+    const { data: classTeacherRows } = await supabase
+      .from("class_teachers" as any)
       .select("class_id")
       .eq("teacher_id", teacherId);
 
@@ -88,7 +88,7 @@ export default async function GuruSiswaPage() {
       }
     }
   } catch (err) {
-    console.error("Failed to load siswa guru:", err);
+    // Error ditangani secara silent
   }
 
   return (

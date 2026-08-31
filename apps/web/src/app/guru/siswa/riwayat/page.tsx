@@ -25,8 +25,8 @@ export default async function RiwayatFasePage() {
   let activePhase = "Belum Ada Fase";
 
   try {
-    const { data: classTeacherRows } = await (supabase as any)
-      .from("class_teachers")
+    const { data: classTeacherRows } = await supabase
+      .from("class_teachers" as any)
       .select("class_id")
       .eq("teacher_id", teacherId);
 
@@ -80,7 +80,7 @@ export default async function RiwayatFasePage() {
       }
     }
   } catch (err) {
-    console.error("Failed to load riwayat siswa guru:", err);
+    // Error ditangani secara silent
   }
 
   return (

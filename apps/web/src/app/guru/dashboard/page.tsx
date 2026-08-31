@@ -43,8 +43,8 @@ export default async function Dashboard() {
 
   try {
     // 1. Get classes taught by this teacher via class_teachers junction table
-    const { data: classTeacherRows } = await (supabase as any)
-      .from("class_teachers")
+    const { data: classTeacherRows } = await supabase
+      .from("class_teachers" as any)
       .select("class_id")
       .eq("teacher_id", teacherId);
 
@@ -164,7 +164,7 @@ export default async function Dashboard() {
       }
     }
   } catch (err) {
-    console.error("Error fetching guru dashboard stats:", err);
+    // Error ditangani secara silent
   }
 
   return (

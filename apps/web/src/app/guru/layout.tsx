@@ -32,7 +32,7 @@ export default async function GuruLayout({ children }: { children: React.ReactNo
 
   if (userId) {
     const supabase = createServerClient();
-    const { data: userRecord } = await (supabase as any)
+    const { data: userRecord } = await supabase
       .from("users")
       .select("full_name")
       .eq("id", userId)
