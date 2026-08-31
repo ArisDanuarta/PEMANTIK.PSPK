@@ -20,9 +20,10 @@ export default async function Dashboard() {
 
   if (!teacherId || !schoolId) redirect("/login");
 
-  let stats = {
+  const stats = {
     totalClasses: 0,
     totalStudents: 0,
+    totalTeachers: 0,
     completedSessions: 0,
     avgScore: 0,
     avgLit: 0,
@@ -74,6 +75,13 @@ export default async function Dashboard() {
       }
     }
 
+    const { count: teacherCount } = await supabase
+      .from("users")
+      .select("id", { count: "exact", head: true })
+      .eq("school_id", schoolId)
+      .eq("role", "teacher");
+    stats.totalTeachers = teacherCount || 0;
+
     if (classIds.length > 0) {
       // 2. Get students in these classes
       const { data: students } = await supabase
@@ -118,7 +126,7 @@ export default async function Dashboard() {
         const { data: sessions } = await supabase
           .from("v_assessment_report")
           .select("final_score, subject_area")
-          .eq("teacher_id", teacherId)
+          .in("student_id", studentIds)
           .eq("session_status", "completed");
 
         if (sessions && sessions.length > 0) {
@@ -140,7 +148,7 @@ export default async function Dashboard() {
         const { data: recent } = await supabase
           .from("v_assessment_report")
           .select("session_id, final_score, completed_at, category_name, student_name, class_name")
-          .eq("teacher_id", teacherId)
+          .in("student_id", studentIds)
           .eq("session_status", "completed")
           .order("completed_at", { ascending: false })
           .limit(5);
@@ -186,7 +194,7 @@ export default async function Dashboard() {
               npsn={npsn}
               communityId={communityId}
               communityName={communityName}
-              totalTeachers={stats.totalClasses} // We don't have total teachers here, fallback to classes
+              totalTeachers={stats.totalTeachers}
               totalStudents={stats.totalStudents}
               totalClasses={stats.totalClasses}
               isReadOnly={true}

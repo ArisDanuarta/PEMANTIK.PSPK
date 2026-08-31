@@ -25,17 +25,27 @@ export default async function GuruSiswaPage() {
 
   try {
     // 1. Get classes taught by this teacher
-    const { data: classData } = await supabase
-      .from("classes")
-      .select("id, name, grade")
-      .eq("school_id", schoolId)
-      .eq("teacher_id", teacherId)
-      .eq("is_active", true)
-      .order("grade")
-      .order("name");
+    const { data: classTeacherRows } = await (supabase as any)
+      .from("class_teachers")
+      .select("class_id")
+      .eq("teacher_id", teacherId);
 
-    classes = classData ?? [];
-    const classIds = classes.map((c: any) => c.id);
+    const classIds = classTeacherRows?.map((r: any) => r.class_id) || [];
+
+    let classData: any[] = [];
+    if (classIds.length > 0) {
+      const { data } = await supabase
+        .from("classes")
+        .select("id, name, grade")
+        .in("id", classIds)
+        .eq("school_id", schoolId)
+        .eq("is_active", true)
+        .order("grade")
+        .order("name");
+      classData = data || [];
+    }
+
+    classes = classData;
 
     if (classIds.length > 0) {
       // 2. Fetch the active phase for the school

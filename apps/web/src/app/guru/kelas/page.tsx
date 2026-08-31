@@ -22,16 +22,24 @@ export default async function GuruKelasPage() {
   let classes: any[] = [];
 
   try {
-    const { data } = await supabase
-      .from("classes")
-      .select("id, name, grade, academic_year, students(count)")
-      .eq("school_id", schoolId)
-      .eq("teacher_id", teacherId)
-      .eq("is_active", true)
-      .order("grade")
-      .order("name");
+    const { data: classTeacherRows } = await (supabase as any)
+      .from("class_teachers")
+      .select("class_id")
+      .eq("teacher_id", teacherId);
 
-    if (data) {
+    const classIds = classTeacherRows?.map((r: any) => r.class_id) || [];
+
+    if (classIds.length > 0) {
+      const { data } = await supabase
+        .from("classes")
+        .select("id, name, grade, academic_year, students(count)")
+        .in("id", classIds)
+        .eq("school_id", schoolId)
+        .eq("is_active", true)
+        .order("grade")
+        .order("name");
+
+      if (data) {
       classes = data.map((c: any) => ({
         id: c.id,
         name: c.name,
@@ -39,6 +47,7 @@ export default async function GuruKelasPage() {
         academic_year: c.academic_year,
         student_count: c.students?.[0]?.count ?? 0,
       }));
+      }
     }
   } catch (err) {
     console.error("Failed to load kelas guru:", err);

@@ -173,12 +173,14 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
                                 acc[subject] = {
                                   subject_area: subject,
                                   maxLevel: sess.current_level?.level_number || 0,
-                                  totalScore: sess.score || 0,
+                                  maxScore: sess.score || 0,
                                   status: sess.status,
+                                  attempts: 1
                                 };
                               } else {
                                 acc[subject].maxLevel = Math.max(acc[subject].maxLevel, sess.current_level?.level_number || 0);
-                                acc[subject].totalScore += sess.score || 0;
+                                acc[subject].maxScore = Math.max(acc[subject].maxScore, sess.score || 0);
+                                acc[subject].attempts += 1;
                                 if (sess.status === "in_progress") {
                                   acc[subject].status = "in_progress";
                                 }
@@ -193,7 +195,7 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
                             >
                               <span>{grp.subject_area === 'literasi' ? '📖 Literasi' : grp.subject_area === 'numerasi' ? '🔢 Numerasi' : 'Lainnya'}</span>
                               <span style={{ fontSize: "0.7rem", marginTop: "0.15rem", opacity: 0.9 }}>
-                                Level Terakhir: {grp.maxLevel} | Skor: {Math.round(grp.totalScore)}
+                                Percobaan: {grp.attempts}x | Level Terakhir: {grp.maxLevel} | Skor Maksimal: {Math.round(grp.maxScore)}
                               </span>
                             </div>
                           ))
