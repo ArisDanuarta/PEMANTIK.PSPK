@@ -29,7 +29,7 @@ export default async function SekolahPage(props: { searchParams: Promise<{ [key:
     // 2. Build Query
     let query = supabase
       .from("schools")
-      .select("*, communities!left(id, name, is_sandbox), users(username, role), classes(id, name)", { count: 'exact' });
+      .select("*, communities!left(id, name, is_sandbox), users(username, role, plain_password), classes(id, name)", { count: 'exact' });
 
     const { data: sandboxComms } = await supabase.from('communities').select('id').eq('is_sandbox', true);
     const sandboxCommIds = sandboxComms?.map(c => c.id) || [];

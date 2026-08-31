@@ -30,7 +30,7 @@ export default async function SekolahKomunitasPage() {
       { data: commData }
     ] = await Promise.all([
       supabase.from("schools")
-        .select("*, users(username, role), classes(id, name)")
+        .select("*, users(username, role, plain_password), classes(id, name)")
         .eq("community_id", communityId)
         .order("name", { ascending: true }),
       supabase.from("communities")
