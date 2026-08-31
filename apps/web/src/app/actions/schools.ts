@@ -948,7 +948,7 @@ export async function importDapodikAction(
         role: "school",
         school_id: newSchool.id,
         is_active: true,
-        plain_password: creds.password
+        plain_password: dapodikPassword
       });
 
       if (userErr) {

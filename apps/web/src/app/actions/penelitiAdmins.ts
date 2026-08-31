@@ -2,7 +2,7 @@
 
 import { createServerClient } from "@pemantik/supabase";
 import { revalidatePath } from "next/cache";
-import { generateTeacherCredentials } from "@/lib/credentialGenerator";
+import { generateAdminCredentials } from "@/lib/credentialGenerator";
 
 export interface ActionResponse {
   success: boolean;
@@ -68,7 +68,7 @@ export async function createPenelitiAdminAction(formData: FormData): Promise<Act
     }
 
     // 2. Generate password menggunakan nama
-    const creds = generateTeacherCredentials(fullName);
+    const creds = generateAdminCredentials(fullName);
     const generatedPassword = creds.password;
 
     // 3. Buat akun di Auth Supabase
@@ -176,7 +176,7 @@ export async function resetPenelitiPasswordAction(id: string): Promise<ActionRes
       .eq("id", id)
       .maybeSingle();
 
-    const creds = generateTeacherCredentials(userData?.full_name || "peneliti");
+    const creds = generateAdminCredentials(userData?.full_name || "peneliti");
 
     const { error } = await admin.auth.admin.updateUserById(id, {
       password: creds.password

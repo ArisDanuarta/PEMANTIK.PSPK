@@ -102,21 +102,9 @@ export function generateTeacherCredentials(
   const userDigits = nipDigits.length >= 3 ? nipDigits.slice(-3) : randomDigits(3);
   const username = `${nameSeg}${userDigits}`;
 
-  const segs = getValidNameSegments(fullName);
-  const passSeg = segs.length > 0
-    ? segs[Math.floor(Math.random() * segs.length)].slice(0, 4)
-    : nameSeg.slice(0, 4);
-  const passNamePart = passSeg.charAt(0).toUpperCase() + passSeg.slice(1);
-
-  let yearPart = randomDigits(2);
-  if (birthDate) {
-    const yearMatch = birthDate.match(/(\d{4})/);
-    if (yearMatch) yearPart = yearMatch[1].slice(-2);
-  }
-
-  const symbol = randomSymbol();
-  const randPart = randomDigits(2);
-  return { username, password: `${passNamePart}${yearPart}${symbol}${randPart}` };
+  // Password Guru: 6 digit acak sesuai instruksi
+  const password = randomDigits(6);
+  return { username, password };
 }
 
 // ─── SEKOLAH ──────────────────────────────────────────────────────────────────
@@ -131,24 +119,21 @@ export function generateSchoolCredentials(
   npsn?: string | null,
   district?: string | null,
 ): SchoolCredentials {
-  const nameWithoutNegeri = name.replace(/\bnegeri\b/gi, "");
-  const schoolNamePart = alphanumLower(nameWithoutNegeri);
-  const npsnDigits = (npsn || "").replace(/[^0-9]/g, "");
-  const npsnPart = npsnDigits.length >= 4 ? npsnDigits.slice(-4) : randomDigits(4);
-  const username = `${schoolNamePart}${npsnPart}`;
+  // Username: "admin_" + 1 kata nama sekolah + 4 digit angka acak
+  const words = name.replace(/\bnegeri\b/gi, "").split(/\s+/).filter(w => w.length > 2);
+  const oneWord = words.length > 0 ? alphanumLower(words[0]) : "sekolah";
+  const username = `admin_${oneWord}${randomDigits(4)}`;
 
-  const nameAbbr = abbreviate(name, 4);
-  const passNamePart = nameAbbr.charAt(0).toUpperCase() + nameAbbr.slice(1);
-
-  const districtPart = district ? alphaOnly(district).slice(0, 4) : randomDigits(4);
-  const passDistrictPart = districtPart.charAt(0).toUpperCase() + districtPart.slice(1);
-
-  const passDigits = npsnDigits.length >= 3 ? npsnDigits.slice(-3) : randomDigits(3);
-  const symbol = randomSymbol();
+  // Password: 8 karakter acak (huruf besar, kecil, angka)
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let password = "";
+  for (let i = 0; i < 8; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
 
   return {
     username,
-    password: `${passNamePart}${passDistrictPart}${symbol}${passDigits}`,
+    password,
   };
 }
 
@@ -167,17 +152,40 @@ export function generateCommunityCredentials(
   const randDigitsUser = randomDigits(3);
   const username = `${nameAbbr}${randDigitsUser}`;
 
-  const passNameAbbr = abbreviate(name, 4);
-  const passNamePart = passNameAbbr.charAt(0).toUpperCase() + passNameAbbr.slice(1);
-
-  const regencyPart = regency ? alphaOnly(regency).slice(0, 4) : randomDigits(4);
-  const passRegencyPart = regencyPart.charAt(0).toUpperCase() + regencyPart.slice(1);
-
-  const symbol = randomSymbol();
-  const randDigitsPass = randomDigits(3);
+  // Password: 8-10 karakter acak yang kuat (huruf, angka, simbol)
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$&*";
+  const len = Math.floor(Math.random() * 3) + 8; // 8 to 10
+  let password = "";
+  for (let i = 0; i < len; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
 
   return {
     username,
-    password: `${passNamePart}${passRegencyPart}${symbol}${randDigitsPass}`,
+    password,
   };
+}
+
+// ─── ADMIN / PENELITI ─────────────────────────────────────────────────────────
+
+export interface AdminCredentials {
+  username: string;
+  password: string;
+}
+
+export function generateAdminCredentials(
+  fullName: string,
+): AdminCredentials {
+  const nameSeg = randomNameSegment(fullName, 10);
+  const username = `${nameSeg}${randomDigits(3)}`;
+
+  // Password: 8-10 karakter acak yang kuat (huruf, angka, simbol)
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$&*";
+  const len = Math.floor(Math.random() * 3) + 8; // 8 to 10
+  let password = "";
+  for (let i = 0; i < len; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+
+  return { username, password };
 }
