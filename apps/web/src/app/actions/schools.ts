@@ -110,6 +110,9 @@ export async function createSchoolAction(
       }
     }
 
+    const schoolCreds = generateSchoolCredentials(name, npsn, district);
+    const { username, password: generatedPassword } = schoolCreds;
+
     const { data: newSchool, error } = await (supabase as any).from("schools").insert({
       community_id: finalCommunityId,
       name,
@@ -125,7 +128,8 @@ export async function createSchoolAction(
       principal_name,
       contact_phone,
       is_active,
-      import_source: "manual",  
+      import_source: "manual",
+      plain_password: generatedPassword
     }).select().single();
 
     if (error || !newSchool) {
@@ -151,8 +155,6 @@ export async function createSchoolAction(
       }
     }
 
-    const schoolCreds = generateSchoolCredentials(name, npsn, district);
-    const { username, password: generatedPassword } = schoolCreds;
     const adminEmail = email || `${username}@pemantik.local`;
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -171,13 +173,14 @@ export async function createSchoolAction(
       return { success: false, error: "Gagal membuat akun login sekolah: " + (authError?.message || "Unknown error") };
     }
 
-    const { error: userError } = await supabase.from("users").insert({
+    const { error: userError } = await (supabase as any).from("users").insert({
       id: authData.user.id,
       username: username,
       full_name: `Admin ${name}`,
       role: "school",
       school_id: newSchool.id,
       is_active: true,
+      plain_password: generatedPassword
     });
 
     if (userError) {
@@ -430,7 +433,10 @@ export async function bulkCreateSchoolsAction(
 
       const generatedAddress = `${village}, ${district}, ${city}, ${province}`;
 
-      const { data: newSchool, error: schoolErr } = await supabase.from("schools").insert({
+      const schoolCreds = generateSchoolCredentials(name, npsn, district);
+      const { username, password: generatedPassword } = schoolCreds;
+
+      const { data: newSchool, error: schoolErr } = await (supabase as any).from("schools").insert({
         community_id,
         name,
         npsn,
@@ -446,6 +452,7 @@ export async function bulkCreateSchoolsAction(
         contact_phone: nomor_telepon,
         is_active: true,
         import_source: "manual", 
+        plain_password: generatedPassword
       } as any).select().single();
 
       if (schoolErr || !newSchool) {
@@ -461,9 +468,6 @@ export async function bulkCreateSchoolsAction(
           current_stage: "persiapan_akun"
         });
       }
-
-      const bulkSchoolCreds = generateSchoolCredentials(name, npsn, district);
-      const { username, password: generatedPassword } = bulkSchoolCreds;
       
       const adminEmail = email_sekolah || `${username}@pemantik.local`;
 
@@ -483,13 +487,14 @@ export async function bulkCreateSchoolsAction(
          continue;
       }
 
-      const { error: userError } = await supabase.from("users").insert({
+      const { error: userError } = await (supabase as any).from("users").insert({
         id: authData.user.id,
         username: username,
         full_name: `Admin ${name}`,
         role: "school",
         school_id: newSchool.id,
         is_active: true,
+        plain_password: generatedPassword
       });
 
       if (userError) {
@@ -563,6 +568,18 @@ export async function resetSchoolPasswordAction(schoolId: string): Promise<Actio
     
     if (authError) {
       return { success: false, error: "Gagal mereset password: " + authError.message };
+    }
+
+    const { error: updateUserError } = await (supabase as any).from("users").update({
+      plain_password: creds.password
+    }).eq("id", user.id);
+
+    const { error: updateSchoolError } = await (supabase as any).from("schools").update({
+      plain_password: creds.password
+    }).eq("id", schoolId);
+
+    if (updateUserError || updateSchoolError) {
+      return { success: false, error: "Berhasil mereset password, tetapi gagal mengupdate plain_password." };
     }
 
     revalidatePath("/super-admin/sekolah");
@@ -862,13 +879,10 @@ export async function importDapodikAction(
         import_source: "dapodik",
       }).eq("id", schoolId);
     } else {
-      // Sekolah independen: community_id = null jika bukan dari role community.
-      // Superadmin yang membuat sekolah via Dapodik = sekolah independen (tidak punya induk komunitas).
       let finalCommunityId = null as string | null;
       if (role === "community" && authCommunityId) {
         finalCommunityId = authCommunityId;
       }
-      // ↑ Tidak ada lagi pencarian/pembuatan komunitas "SEKOLAH INDEPENDEN".
 
       const npsn = payload.confirmed_npsn?.trim() || null;
       if (npsn) {
@@ -879,6 +893,8 @@ export async function importDapodikAction(
       }
 
       const schoolName = payload.confirmed_name?.trim() || parseResult.detected_school_name || "Sekolah Dapodik";
+      const dapodikDistrict = payload.confirmed_district || null;
+      const creds = generateSchoolCredentials(schoolName, npsn, dapodikDistrict);
       
       const { data: newSchool, error: schoolErr } = await (supabase as any)
         .from("schools")
@@ -891,9 +907,10 @@ export async function importDapodikAction(
           district: payload.confirmed_district || null,
           village: payload.confirmed_village || null,
           is_active: true,
-          import_source: "manual", 
+          import_source: "dapodik", 
           dapodik_imported_at: new Date().toISOString(),
           raw_dapodik_header: { raw_header_text: parseResult.raw_header_text },
+          plain_password: creds.password
         })
         .select("id")
         .single();
@@ -909,9 +926,7 @@ export async function importDapodikAction(
         current_stage: "persiapan_akun",
       });
 
-      const dapodikDistrict = payload.confirmed_district || null;
-      const dapodikCreds = generateSchoolCredentials(schoolName, npsn, dapodikDistrict);
-      const { username: dapodikUsername, password: dapodikPassword } = dapodikCreds;
+      const { username: dapodikUsername, password: dapodikPassword } = creds;
       
       const adminEmail = `${dapodikUsername}@pemantik.local`;
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -926,13 +941,14 @@ export async function importDapodikAction(
         return { success: false, error: "Gagal membuat akun admin sekolah: " + authError?.message };
       }
 
-      const { error: userErr } = await supabase.from("users").insert({
+      const { error: userErr } = await (supabase as any).from("users").insert({
         id: authData.user.id,
         username: dapodikUsername,
         full_name: `Admin ${schoolName}`,
         role: "school",
         school_id: newSchool.id,
         is_active: true,
+        plain_password: creds.password
       });
 
       if (userErr) {
@@ -963,13 +979,14 @@ export async function importDapodikAction(
         });
 
         if (!authError && authData.user) {
-          await supabase.from("users").insert({
+          await (supabase as any).from("users").insert({
             id: authData.user.id,
             username: fallbackCreds.username,
             full_name: `Admin ${schoolData.name}`,
             role: "school",
             school_id: schoolId,
             is_active: true,
+            plain_password: fallbackCreds.password
           });
         }
       }

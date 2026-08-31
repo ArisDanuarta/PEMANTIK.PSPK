@@ -93,7 +93,8 @@ export async function createPenelitiAdminAction(formData: FormData): Promise<Act
       username,
       full_name: fullName,
       role: "peneliti",
-      is_active: isActive
+      is_active: isActive,
+      plain_password: generatedPassword
     });
 
     if (insertError) {
@@ -180,6 +181,14 @@ export async function resetPenelitiPasswordAction(id: string): Promise<ActionRes
     const { error } = await admin.auth.admin.updateUserById(id, {
       password: creds.password
     });
+
+    const { error: updateError } = await admin.from("users").update({
+      plain_password: creds.password
+    }).eq("id", id);
+
+    if (updateError) {
+      return { success: false, error: "Berhasil mereset password di Auth, tetapi gagal mengupdate plain_password di tabel users." };
+    }
 
     if (error) throw error;
     return { 

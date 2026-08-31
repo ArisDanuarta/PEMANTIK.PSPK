@@ -148,10 +148,10 @@ export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] 
     {
       key: "username",
       label: "Akun Akses",
-      render: (val: any) => (
+      render: (val: any, row: any) => (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
           <div><span style={{ color: "black" }}>User:</span> <strong>{val}</strong></div>
-          <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>(Otomatis)</code></div>
+          <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>{row.plain_password || "(Otomatis)"}</code></div>
         </div>
       )
     },

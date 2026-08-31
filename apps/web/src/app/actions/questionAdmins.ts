@@ -94,7 +94,8 @@ export async function createQuestionAdminAction(formData: FormData): Promise<Act
       username,
       full_name: fullName,
       role: "question_admin",
-      is_active: isActive
+      is_active: isActive,
+      plain_password: generatedPassword
     });
 
     if (insertError) {
@@ -185,6 +186,14 @@ export async function resetQuestionAdminPasswordAction(id: string): Promise<Acti
     const { error: authError } = await admin.auth.admin.updateUserById(id, {
       password: creds.password
     });
+    
+    const { error: updateError } = await admin.from("users").update({
+      plain_password: creds.password
+    }).eq("id", id);
+
+    if (updateError) {
+      return { success: false, error: "Berhasil mereset password di Auth, tetapi gagal mengupdate plain_password di tabel users." };
+    }
     
     if (authError) {
       return { success: false, error: "Gagal mereset password: " + authError.message };

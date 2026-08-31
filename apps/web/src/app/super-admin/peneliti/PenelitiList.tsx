@@ -140,7 +140,16 @@ export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }
 
   const columns = [
     { key: "full_name", label: "Nama Lengkap", render: (val: any) => <div style={{ fontWeight: 600, color: "#102e50" }}>{val}</div> },
-    { key: "username", label: "Username" },
+    { 
+      key: "username", 
+      label: "Akun Akses", 
+      render: (val: any, row: any) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
+          <div><span style={{ color: "black" }}>User:</span> <strong>{val}</strong></div>
+          <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>{row.plain_password || "-"}</code></div>
+        </div>
+      ) 
+    },
     { key: "is_active", label: "Status", render: (val: any) => <Badge variant={val ? "success" : "danger"}>{val ? "Aktif" : "Non-Aktif"}</Badge> },
     { key: "actions", label: "Aksi", render: (_: any, admin: any) => (
         <div style={{ display: "flex", gap: "0.5rem" }}>

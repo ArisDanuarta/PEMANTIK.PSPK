@@ -75,7 +75,7 @@ export async function createTeacherAction(
       return { success: false, error: "Gagal membuat akun Auth guru: " + (authError?.message || "Unknown") };
     }
 
-    const { error: userError } = await supabase.from("users").insert({
+    const { error: userError } = await (supabase as any).from("users").insert({
       id: authData.user.id,
       username,
       full_name,
@@ -89,7 +89,8 @@ export async function createTeacherAction(
       district,
       city: regency,
       province,
-      is_active
+      is_active,
+      plain_password: generatedPassword
     } as any);
 
     if (userError) {
@@ -213,7 +214,7 @@ export async function bulkCreateTeachersAction(
         continue;
       }
 
-      const { error: userError } = await supabase.from("users").insert({
+      const { error: userError } = await (supabase as any).from("users").insert({
         id: authData.user.id,
         username,
         full_name,
@@ -227,7 +228,8 @@ export async function bulkCreateTeachersAction(
         district: district,
         city: regency,
         province: province,
-        is_active: true
+        is_active: true,
+        plain_password: generatedPassword
       } as any);
 
       if (userError) {
@@ -358,13 +360,20 @@ export async function resetTeacherPasswordAction(teacherId: string): Promise<Act
       (teacherData as any)?.birth_date || null,
     );
 
-    // For teachers, teacherId is their auth user id
     const { error: authError } = await supabase.auth.admin.updateUserById(teacherId, {
       password: creds.password
     });
     
     if (authError) {
       return { success: false, error: "Gagal mereset password: " + authError.message };
+    }
+
+    const { error: updateError } = await (supabase as any).from("users").update({
+      plain_password: creds.password
+    }).eq("id", teacherId);
+
+    if (updateError) {
+      return { success: false, error: "Berhasil mereset password, tetapi gagal mengupdate tabel users." };
     }
 
     revalidatePath("/super-admin/guru");

@@ -23,6 +23,7 @@ interface Teacher {
   } | null;
   communities?: { name: string; is_sandbox?: boolean } | null;
   classes?: { name: string }[];
+  plain_password?: string;
 }
 
 interface SchoolOption {
@@ -324,7 +325,7 @@ export default function TeachersManager({
                 <td>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
                     <div><span style={{ color: "black" }}>User:</span> <strong>{row.username}</strong></div>
-                    <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code></div>
+                    <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>{row.plain_password || "-"}</code></div>
                   </div>
                 </td>
                 <td>{row.schools?.name || "-"}</td>

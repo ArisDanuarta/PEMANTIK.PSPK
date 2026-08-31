@@ -28,7 +28,7 @@ interface School {
   contact_phone: string | null;
   community_id: string;
   communities: { id: string; name: string; is_sandbox?: boolean } | null;
-  users?: { username: string; role: string }[];
+  users?: { username: string; role: string; plain_password?: string; }[];
   classes?: any[];
   is_active: boolean;
 }
@@ -372,7 +372,7 @@ export default function SchoolsManager({
                         <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
                           <div><span style={{ color: "black" }}>User:</span> <strong>{schoolUser.username}</strong></div>
                           {row.email && <div><span style={{ color: "black" }}>Email:</span> {row.email}</div>}
-                          <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code> <span style={{ fontSize: "0.7rem", color: "black" }}>(bawaan)</span></div>
+                          <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>{schoolUser.plain_password || "-"}</code></div>
                         </div>
                       ) : (
                         <span style={{ color: "black", fontSize: "0.85rem" }}>Belum ada akun</span>

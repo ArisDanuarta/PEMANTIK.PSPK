@@ -30,6 +30,7 @@ interface TeacherRow {
   city?: string | null;
   province?: string | null;
   classes: { id: string; name: string; grade: number }[];
+  plain_password?: string;
 }
 
 interface ClassOption { id: string; name: string; grade: number; }
@@ -217,7 +218,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                 <td>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
                     <div><span style={{ color: "black" }}>User:</span> <strong>{t.username}</strong></div>
-                    <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>Password123!</code></div>
+                    <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>{t.plain_password || "-"}</code></div>
                   </div>
                   {t.nip && <div style={{ fontSize: "0.78rem", color: "black", marginTop: "0.25rem" }}>NIP: {t.nip}</div>}
                 </td>

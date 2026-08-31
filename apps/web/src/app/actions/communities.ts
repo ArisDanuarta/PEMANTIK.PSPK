@@ -62,6 +62,10 @@ export async function createCommunityAction(
   
   const address = village && district && regency && province ? `${village}, ${district}, ${regency}, ${province}` : null;
 
+  const creds = generateCommunityCredentials(name, regency);
+  const { username, password: generatedPassword } = creds;
+  const adminEmail = contactEmail || `${username}@pemantik.local`;
+
   const { data: newComm, error } = await supabase.from("communities").insert({
     name,
     code,
@@ -77,6 +81,7 @@ export async function createCommunityAction(
     is_active: isActive,
     is_sandbox: isSandbox,
     allowed_categories: null,
+    plain_password: generatedPassword
   } as any).select().single();
 
   if (error || !newComm) {
@@ -85,9 +90,6 @@ export async function createCommunityAction(
   }
 
   // BUAT AKUN ADMIN KOMUNITAS SECARA OTOMATIS
-  const creds = generateCommunityCredentials(name, regency);
-  const { username, password: generatedPassword } = creds;
-  const adminEmail = contactEmail || `${username}@pemantik.local`;
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: adminEmail,
@@ -106,13 +108,14 @@ export async function createCommunityAction(
     return { success: false, error: "Gagal membuat akun login komunitas: " + (authError?.message || "Unknown error") };
   }
 
-  const { error: userError } = await supabase.from("users").insert({
+  const { error: userError } = await (supabase as any).from("users").insert({
     id: authData.user.id,
     username: username,
     full_name: `Admin ${name}`,
     role: "community",
     community_id: newComm.id,
     is_active: true,
+    plain_password: generatedPassword
   });
 
   if (userError) {
@@ -259,6 +262,18 @@ export async function resetCommunityPasswordAction(communityId: string): Promise
       return { success: false, error: "Gagal mereset password: " + authError.message };
     }
 
+    const { error: updateUserError } = await (supabase as any).from("users").update({
+      plain_password: creds.password
+    }).eq("id", user.id);
+
+    const { error: updateCommError } = await (supabase as any).from("communities").update({
+      plain_password: creds.password
+    }).eq("id", communityId);
+
+    if (updateUserError || updateCommError) {
+      return { success: false, error: "Berhasil mereset password, tetapi gagal mengupdate plain_password." };
+    }
+
     revalidatePath("/super-admin/komunitas");
     return { 
       success: true, 
@@ -356,7 +371,7 @@ export async function bulkCreateCommunitiesAction(
         continue;
       }
 
-      const { error: userError } = await supabase.from("users").insert({
+      const { error: userError } = await (supabase as any).from("users").insert({
         id: authData.user.id,
         username: username,
         full_name: `Admin ${name}`,
