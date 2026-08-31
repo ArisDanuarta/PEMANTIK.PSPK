@@ -115,7 +115,7 @@ export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] 
   const handleResetPassword = async (id: string) => {
     const isConfirmed = await confirm({
       title: "Reset Sandi",
-      description: "Apakah Anda yakin ingin mereset kata sandi akun admin ini ke default (Password123!)?",
+      description: "Apakah Anda yakin ingin mereset kata sandi akun admin ini ke password acak baru?",
       confirmLabel: "Reset",
       cancelLabel: "Batal",
       variant: "warning",

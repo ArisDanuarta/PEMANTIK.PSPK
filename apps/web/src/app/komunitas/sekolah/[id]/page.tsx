@@ -30,7 +30,7 @@ export default async function SchoolDetailPage({ params }: PageProps) {
   // 1. Fetch school detail and verify it belongs to this community
   const { data: school, error: schoolErr } = await supabase
     .from("schools")
-    .select("*, users(id, username, full_name, role), classes(*)")
+    .select("*, users(id, username, full_name, role, plain_password), classes(*)")
     .eq("id", schoolId)
     .eq("community_id", communityId)
     .maybeSingle();
@@ -42,7 +42,7 @@ export default async function SchoolDetailPage({ params }: PageProps) {
   // 2. Fetch teachers specifically for this school
   const { data: teachers = [] } = await supabase
     .from("users")
-    .select("id, username, full_name, role, gender, is_active, created_at, classes!class_teachers(id, name)")
+    .select("id, full_name, username, gender, is_active, created_at, classes!class_teachers(id, name), plain_password")
     .eq("school_id", schoolId)
     .eq("role", "teacher")
     .order("full_name", { ascending: true });

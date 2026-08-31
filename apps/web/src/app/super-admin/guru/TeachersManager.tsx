@@ -164,7 +164,7 @@ export default function TeachersManager({
   const handleResetPassword = async (row: any) => {
     const isConfirmed = await confirm({
       title: "Reset Sandi",
-      description: `Apakah Anda yakin ingin mereset kata sandi guru '${row.full_name}' ke default (Password123!)?`,
+      description: `Apakah Anda yakin ingin mereset kata sandi guru '${row.full_name}' ke password acak baru?`,
       confirmLabel: "Reset",
       cancelLabel: "Batal",
       variant: "warning"
@@ -477,7 +477,8 @@ export default function TeachersManager({
 
               {!editingTeacher && (
                 <div style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1.5rem" }}>
-                  * Password default untuk guru baru adalah <b>Password123!</b>
+                  ℹ Username: <strong>nama+3 digit NIP/acak</strong><br />
+                  Password digenerate berupa 6 digit angka acak.
                 </div>
               )}
               
@@ -497,7 +498,7 @@ export default function TeachersManager({
       {isBulkModalOpen && (
         <BulkUploadModal
           title="Import Data Guru"
-          description="Download template, isi data, dan upload kembali. Sistem akan otomatis membuat username (nama+NIP) dan password default (Password123!)."
+          description="Download template, isi data, dan upload kembali. Sistem akan otomatis membuat username dan password acak."
           templateFileName="Template_Guru"
           templateHeaders={[]}
           onDownloadTemplate={handleDownloadTemplate}

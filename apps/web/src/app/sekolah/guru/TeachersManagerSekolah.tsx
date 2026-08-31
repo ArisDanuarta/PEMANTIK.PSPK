@@ -365,7 +365,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
 
               {!editingTeacher && (
                 <div style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1.5rem" }}>
-                  * Password default untuk guru baru adalah <b>Password123!</b>
+                  * Password digenerate berupa <b>6 digit angka acak</b>
                 </div>
               )}
               

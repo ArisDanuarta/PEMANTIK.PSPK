@@ -66,7 +66,7 @@ export default function DapodikKomunitasClient({ schools, communityId, community
           </p>
           <ul style={{ color: "#334155", fontSize: "0.88rem", lineHeight: 1.7, margin: 0, paddingLeft: "1.35rem" }}>
             <li><strong>Mendaftarkan Sekolah Baru</strong> (atau memutakhirkan sekolah yang sudah ada)</li>
-            <li><strong>Membuat Akun Admin Sekolah</strong> dengan format <code style={{ backgroundColor: "#f1f5f9", padding: "0.15rem 0.4rem", borderRadius: "4px" }}>sch_[NPSN]</code> & sandi default <code style={{ backgroundColor: "#f1f5f9", padding: "0.15rem 0.4rem", borderRadius: "4px" }}>Password123!</code></li>
+            <li><strong>Membuat Akun Admin Sekolah</strong> dengan format <code style={{ backgroundColor: "#f1f5f9", padding: "0.15rem 0.4rem", borderRadius: "4px" }}>admin_[nama]</code> & sandi <code style={{ backgroundColor: "#f1f5f9", padding: "0.15rem 0.4rem", borderRadius: "4px" }}>acak alfanumerik</code></li>
             <li><strong>Membentuk Daftar Rombel / Kelas</strong> secara otomatis</li>
             <li><strong>Menghasilkan Akun Anak</strong> siap pakai untuk mengikuti asesmen Literasi & Numerasi</li>
           </ul>

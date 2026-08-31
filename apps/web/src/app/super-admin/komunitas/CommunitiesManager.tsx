@@ -173,7 +173,7 @@ export default function CommunitiesManager({
   const handleResetPassword = async (comm: Community) => {
     const ok = await confirm({
       title: "Reset Sandi",
-      description: `Apakah Anda yakin ingin mereset kata sandi admin komunitas '${comm.name}' ke default (Password123!)?`,
+      description: `Apakah Anda yakin ingin mereset kata sandi admin komunitas '${comm.name}' ke password acak baru?`,
       confirmLabel: "Reset",
       cancelLabel: "Batal",
       variant: "warning",
@@ -332,9 +332,9 @@ export default function CommunitiesManager({
             <span style={{ color: "black" }}>Password:</span>{" "}
             <code 
               style={{ color: "#a8281c", cursor: "pointer", textDecoration: "underline" }} 
-              onClick={() => { navigator.clipboard.writeText(row.plain_password || "Password123!"); showSuccessToast("Tersalin", "Password disalin ke clipboard"); }}
+              onClick={() => { navigator.clipboard.writeText(row.plain_password || "(Otomatis)"); showSuccessToast("Tersalin", "Password disalin ke clipboard"); }}
               title="Klik untuk menyalin"
-            >{row.plain_password || "Password123!"}</code>{" "}
+            >{row.plain_password || "(Otomatis)"}</code>{" "}
             {!row.plain_password && <span style={{ fontSize: "0.7rem", color: "black" }}>(bawaan)</span>}
           </div>
         </div>
@@ -622,7 +622,7 @@ export default function CommunitiesManager({
           
           {!editingComm && (
             <div style={{ fontSize: "0.8rem", color: "#6b7280", marginTop: "0.5rem" }}>
-              * Sistem akan meng-generate <b>Username</b> dari Nama Komunitas + 3 angka acak. Password default adalah <b>Password123!</b>
+              * Sistem akan meng-generate <b>Username</b> dari Nama Komunitas + 3 angka acak. Password berupa <b>8-10 karakter acak kuat</b>
             </div>
           )}
 
@@ -650,7 +650,7 @@ export default function CommunitiesManager({
       {isBulkModalOpen && (
         <BulkUploadModal
           title="Import Data Komunitas"
-          description="Download template di luar ini, isi data, dan upload kembali. Sistem akan otomatis membuat akun untuk setiap komunitas yang di-upload dengan password default (Password123!)."
+          description="Download template di luar ini, isi data, dan upload kembali. Sistem akan otomatis membuat akun untuk setiap komunitas yang di-upload dengan password acak."
           templateFileName="Template_Komunitas"
           templateHeaders={[]}
           onDownloadTemplate={handleDownloadTemplate}

@@ -313,7 +313,7 @@ export default function SchoolDetailKomunitas({
           Peran: "Admin Sekolah",
           Nama: adm.full_name || school.name,
           Username: adm.username,
-          Password_Default: "Password123!",
+          Password: adm.plain_password || "(Acak)",
           Info_Tambahan: `NPSN: ${school.npsn || "-"}`
         }));
         const wsAdmin = XLSX.utils.json_to_sheet(adminData);
@@ -324,7 +324,7 @@ export default function SchoolDetailKomunitas({
           Peran: "Admin Sekolah",
           Nama: school.name,
           Username: `sch_${school.name.toLowerCase().replace(/[^a-z0-9]/g, "")}`.slice(0, 15),
-          Password_Default: "Password123!",
+          Password: "(Acak)",
           Info_Tambahan: `NPSN: ${school.npsn || "-"}`
         }];
         const wsAdmin = XLSX.utils.json_to_sheet(adminData);
@@ -338,7 +338,7 @@ export default function SchoolDetailKomunitas({
           Peran: "Guru",
           Nama: t.full_name,
           Username: t.username,
-          Password_Default: "Password123!",
+          Password: t.plain_password || "(Acak)",
           Info_Tambahan: "-"
         }));
         const wsTeacher = XLSX.utils.json_to_sheet(teacherData);
@@ -592,7 +592,7 @@ export default function SchoolDetailKomunitas({
                   {adminUser ? (
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
                       <div><span style={{ color: "#64748b" }}>Username:</span> <strong style={{ color: "#0f172a" }}>{adminUser.username}</strong></div>
-                      <div><span style={{ color: "#64748b" }}>Password:</span> <code style={{ color: "#a8281c", backgroundColor: "#fee2e2", padding: "0.1rem 0.3rem", borderRadius: "0.25rem" }}>Password123!</code> <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>(default)</span></div>
+                      <div><span style={{ color: "#64748b" }}>Password:</span> <code style={{ color: "#a8281c", backgroundColor: "#fee2e2", padding: "0.1rem 0.3rem", borderRadius: "0.25rem" }}>{adminUser.plain_password || "(Acak)"}</code> </div>
                     </div>
                   ) : (
                     <div style={{ color: "#64748b", fontStyle: "italic" }}>Akun Admin Sekolah belum dibentuk oleh sistem.</div>
@@ -892,7 +892,7 @@ export default function SchoolDetailKomunitas({
           <div style={{ padding: "1.5rem", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "0.5rem", marginBottom: "1.5rem" }}>
             <h4 style={{ margin: "0 0 0.5rem 0", color: "#166534" }}>Panduan Distribusi Akun</h4>
             <p style={{ margin: 0, fontSize: "0.85rem", color: "#15803d", lineHeight: "1.5" }}>
-              Anda dapat mengunduh daftar lengkap username, password default (<code>Password123!</code>) untuk Admin Sekolah dan Guru, serta PIN default (<code>123456</code>) untuk Anak di sekolah ini.
+              Anda dapat mengunduh daftar lengkap username dan password untuk Admin Sekolah dan Guru, serta PIN default (<code>123456</code>) untuk Anak di sekolah ini.
               Data Excel tersebut memiliki 3 sheet (Akun Sekolah, Akun Guru, dan Akun Anak) yang dapat dipilah dan didistribusikan kepada pihak sekolah atau wali kelas.
             </p>
           </div>
@@ -947,7 +947,7 @@ export default function SchoolDetailKomunitas({
       {isTeacherBulkModalOpen && (
         <BulkUploadModal
           title="Import Data Guru"
-          description={`Upload file Excel sesuai template. Sistem akan membuat username (nama+NIP) dan password default (Password123!) untuk setiap guru. Pastikan kolom nama_sekolah diisi dengan: "${school.name}".`}
+          description={`Upload file Excel sesuai template. Sistem akan membuat username otomatis dan password acak untuk setiap guru. Pastikan kolom nama_sekolah diisi dengan: "${school.name}".`}
           templateFileName={`Template_Guru_${school.name.replace(/[^a-zA-Z0-9]/g, "_")}`}
           templateHeaders={[]}
           onDownloadTemplate={handleDownloadGuruTemplate}
@@ -1054,8 +1054,8 @@ export default function SchoolDetailKomunitas({
             {!editingTeacher && (
               <div style={{ display: "flex", alignItems: "flex-end" }}>
                 <div style={{ fontSize: "0.78rem", color: "#6b7280", background: "#f9fafb", padding: "0.625rem", borderRadius: "0.375rem", border: "1px solid #e5e7eb", width: "100%" }}>
-                  ℹ Username: <strong>nama+3 digit NIP/acak</strong><br />
-                  Password default: <code>Password123!</code>
+                  ℹ Username: <strong>nama+3 digit akhir NIP/acak</strong><br />
+                  Password: <code>6 digit angka acak</code>
                 </div>
               </div>
             )}
@@ -1226,6 +1226,7 @@ export default function SchoolDetailKomunitas({
               <div style={{ display: "flex", alignItems: "flex-end" }}>
                 <div style={{ fontSize: "0.78rem", color: "#6b7280", background: "#f9fafb", padding: "0.625rem", borderRadius: "0.375rem", border: "1px solid #e5e7eb", width: "100%" }}>
                   ℹ Username otomatis: <strong>nama+3 digit NISN</strong><br />
+                  PIN: <code>123456</code>
                   PIN default: <code>123456</code>
                 </div>
               </div>

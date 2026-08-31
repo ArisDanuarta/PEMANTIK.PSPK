@@ -122,7 +122,7 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
   const handleResetPassword = async (row: any) => {
     const isConfirmed = await confirm({
       title: "Reset Sandi",
-      description: `Apakah Anda yakin ingin mereset kata sandi guru '${row.full_name}' ke default (Password123!)?`,
+      description: `Apakah Anda yakin ingin mereset kata sandi guru '${row.full_name}' ke password acak baru?`,
       confirmLabel: "Reset",
       cancelLabel: "Batal",
       variant: "warning"
@@ -405,7 +405,7 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
 
               {!editingTeacher && (
                 <div style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1.5rem" }}>
-                  * Sistem akan meng-generate <b>Username</b> secara acak jika email kosong, dan password default adalah <b>Password123!</b>
+                  * Sistem akan meng-generate <b>Username</b> secara acak jika email kosong, dan password digenerate berupa <b>6 digit angka acak</b>
                 </div>
               )}
               

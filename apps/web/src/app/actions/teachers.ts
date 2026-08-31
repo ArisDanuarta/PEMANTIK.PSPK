@@ -75,12 +75,17 @@ export async function createTeacherAction(
       return { success: false, error: "Gagal membuat akun Auth guru: " + (authError?.message || "Unknown") };
     }
 
+    // Dapatkan community_id dari sekolah
+    const { data: schoolData } = await supabase.from("schools").select("community_id").eq("id", school_id).single();
+    const community_id = schoolData?.community_id || authSchoolId; // fallback jika somehow gagal tapi role komunitas
+
     const { error: userError } = await (supabase as any).from("users").insert({
       id: authData.user.id,
       username,
       full_name,
       role: "teacher",
       school_id,
+      community_id,
       nip,
       email: email || null,
       gender: normalizeGender(gender) as any,
@@ -214,12 +219,17 @@ export async function bulkCreateTeachersAction(
         continue;
       }
 
+      // Get community_id from the pre-fetched schools map
+      const schoolObj = schoolsData?.find((s: any) => s.id === school_id);
+      const community_id = schoolObj?.community_id || authCommunityId;
+
       const { error: userError } = await (supabase as any).from("users").insert({
         id: authData.user.id,
         username,
         full_name,
         role: "teacher",
         school_id,
+        community_id,
         nip: row.nip ? String(row.nip) : null,
         email: email || null,
         gender: normalizeGender(gender) as any,

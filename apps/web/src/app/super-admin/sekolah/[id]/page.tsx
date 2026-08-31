@@ -36,7 +36,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
       .single(),
     (supabase as any)
       .from("users")
-      .select("id, full_name, username, gender, is_active, created_at, classes!class_teachers(id, name)")
+      .select("id, full_name, username, gender, is_active, created_at, classes!class_teachers(id, name), plain_password")
       .eq("school_id", id)
       .eq("role", "teacher")
       .order("full_name", { ascending: true }),
@@ -63,7 +63,7 @@ export default async function SchoolDetailPage({ params }: { params: Promise<{ i
       .order("name", { ascending: true }),
     (supabase as any)
       .from("users")
-      .select("id, full_name, username, role")
+      .select("id, full_name, username, role, plain_password")
       .eq("school_id", id)
       .eq("role", "school")
       .limit(1)

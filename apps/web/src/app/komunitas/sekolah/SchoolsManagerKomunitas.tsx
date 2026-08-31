@@ -137,7 +137,7 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
   const handleResetPassword = async (school: School) => {
     const ok = await confirm({
       title: "Reset Sandi",
-      description: `Apakah Anda yakin ingin mereset kata sandi admin sekolah '${school.name}' ke default (Password123!)?`,
+      description: `Apakah Anda yakin ingin mereset kata sandi admin sekolah '${school.name}' ke password acak baru?`,
       confirmLabel: "Reset",
       cancelLabel: "Batal",
       variant: "warning",
@@ -432,7 +432,7 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                 
                 {!editingSchool && (
                   <div style={{ gridColumn: "span 2", fontSize: "0.8rem", color: "#6b7280", marginTop: "0.5rem" }}>
-                    * Sistem akan meng-generate <b>Username</b> dari Nama Sekolah + 4 digit NPSN/acak. Password default adalah <b>Password123!</b>
+                    * Sistem akan meng-generate <b>Username</b> diawali admin_ + nama + 4 digit acak. Password digenerate berupa <b>8 karakter alfanumerik acak</b>
                   </div>
                 )}
               </div>
