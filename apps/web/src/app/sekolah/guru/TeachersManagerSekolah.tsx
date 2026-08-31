@@ -217,8 +217,22 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                 <td><div style={{ fontWeight: 600, color: "#102e50" }}>{t.full_name}</div></td>
                 <td>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                    <div><span style={{ color: "black" }}>User:</span> <strong>{t.username}</strong></div>
-                    <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>{t.plain_password || "-"}</code></div>
+                    <div>
+                      <span style={{ color: "black" }}>User:</span>{" "}
+                      <strong 
+                        style={{ cursor: "pointer", textDecoration: "underline", color: "#0874aa" }} 
+                        onClick={() => { navigator.clipboard.writeText(t.username); showSuccess("Tersalin", "Username disalin ke clipboard"); }}
+                        title="Klik untuk menyalin"
+                      >{t.username}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: "black" }}>Pass:</span>{" "}
+                      <code 
+                        style={{ color: "#a8281c", cursor: "pointer", textDecoration: "underline" }} 
+                        onClick={() => { navigator.clipboard.writeText(t.plain_password || "-"); showSuccess("Tersalin", "Password disalin ke clipboard"); }}
+                        title="Klik untuk menyalin"
+                      >{t.plain_password || "-"}</code>
+                    </div>
                   </div>
                   {t.nip && <div style={{ fontSize: "0.78rem", color: "black", marginTop: "0.25rem" }}>NIP: {t.nip}</div>}
                 </td>

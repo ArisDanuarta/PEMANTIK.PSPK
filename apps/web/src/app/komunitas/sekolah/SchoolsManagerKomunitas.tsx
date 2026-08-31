@@ -277,9 +277,23 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
                     <td>
                       {schoolUser ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                          <div><span style={{ color: "black" }}>User:</span> <strong>{schoolUser.username}</strong></div>
+                          <div>
+                            <span style={{ color: "black" }}>User:</span>{" "}
+                            <strong 
+                              style={{ cursor: "pointer", textDecoration: "underline", color: "#0874aa" }} 
+                              onClick={() => { navigator.clipboard.writeText(schoolUser.username); showSuccessToast("Tersalin", "Username disalin ke clipboard"); }}
+                              title="Klik untuk menyalin"
+                            >{schoolUser.username}</strong>
+                          </div>
                           {row.email && <div><span style={{ color: "black" }}>Email:</span> {row.email}</div>}
-                          <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>{schoolUser.plain_password || "-"}</code></div>
+                          <div>
+                            <span style={{ color: "black" }}>Pass:</span>{" "}
+                            <code 
+                              style={{ color: "#a8281c", cursor: "pointer", textDecoration: "underline" }} 
+                              onClick={() => { navigator.clipboard.writeText(schoolUser.plain_password || "-"); showSuccessToast("Tersalin", "Password disalin ke clipboard"); }}
+                              title="Klik untuk menyalin"
+                            >{schoolUser.plain_password || "-"}</code>
+                          </div>
                         </div>
                       ) : (
                         <span style={{ color: "black", fontSize: "0.85rem" }}>Belum ada akun</span>

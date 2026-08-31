@@ -248,8 +248,22 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
                 <td><strong>{row.full_name}</strong></td>
                 <td>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                    <div><span style={{ color: "black" }}>User:</span> <strong>{row.username}</strong></div>
-                    <div><span style={{ color: "black" }}>Pass:</span> <code style={{ color: "#a8281c" }}>{row.plain_password || "-"}</code></div>
+                    <div>
+                      <span style={{ color: "black" }}>User:</span>{" "}
+                      <strong 
+                        style={{ cursor: "pointer", textDecoration: "underline", color: "#0874aa" }} 
+                        onClick={() => { navigator.clipboard.writeText(row.username); showSuccessToast("Tersalin", "Username disalin ke clipboard"); }}
+                        title="Klik untuk menyalin"
+                      >{row.username}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: "black" }}>Pass:</span>{" "}
+                      <code 
+                        style={{ color: "#a8281c", cursor: "pointer", textDecoration: "underline" }} 
+                        onClick={() => { navigator.clipboard.writeText(row.plain_password || "-"); showSuccessToast("Tersalin", "Password disalin ke clipboard"); }}
+                        title="Klik untuk menyalin"
+                      >{row.plain_password || "-"}</code>
+                    </div>
                   </div>
                 </td>
                 <td>{row.schools?.name || "-"}</td>
