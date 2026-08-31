@@ -1,8 +1,13 @@
 import * as XLSX from "xlsx";
+import { headers } from "next/headers";
 
 export const runtime = "nodejs"; // Pastikan Node.js runtime, bukan Edge
 
 export async function POST(request: Request) {
+  const headersList = await headers();
+  if (!headersList.get("x-user-role")) {
+    return Response.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;

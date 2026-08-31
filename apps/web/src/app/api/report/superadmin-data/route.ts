@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 
   const supabase    = createServerClient();
   const headersList = await headers();
-  let userRole      = headersList.get("x-user-role") || "super_admin";
+  let userRole      = headersList.get("x-user-role");
 
   if (userRole !== "super_admin" && userRole !== "peneliti") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

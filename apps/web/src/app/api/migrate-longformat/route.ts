@@ -16,6 +16,7 @@ import { createClient } from "@supabase/supabase-js";
 import { normalizeSesName } from "@/lib/utils/sesMatcher";
 import { parseFlexibleDate, normalizeIdentityNumber, normalizeText } from "@/lib/normalizationUtils";
 import bcrypt from "bcryptjs";
+import { headers } from "next/headers";
 
 export const maxDuration = 300; // 5 menit — cukup untuk 3000-5000 siswa
 export const runtime = "nodejs";
@@ -290,6 +291,10 @@ const DEFAULT_PASSWORD = "Password123!";
 const DEFAULT_PIN = "123456";
 
 export async function POST(request: Request) {
+  const headersList = await headers();
+  if (headersList.get("x-user-role") !== "super_admin") {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 403, headers: { "Content-Type": "application/json" } });
+  }
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({

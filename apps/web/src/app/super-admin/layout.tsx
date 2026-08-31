@@ -1,5 +1,7 @@
 import AppLayout from "@/components/layout/AppLayout";
 import { createServerClient } from "@pemantik/supabase";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import type { NavSection } from "@/components/layout/Sidebar";
 
 const superAdminNav: NavSection[] = [
@@ -52,6 +54,11 @@ export default async function SuperAdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = await headers();
+  if (headersList.get("x-user-role") !== "super_admin") {
+    redirect("/login");
+  }
+
   const supabase = createServerClient();
   const { data: { session } } = await supabase.auth.getSession();
   let userName = "Super Admin";
