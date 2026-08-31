@@ -41,7 +41,7 @@ export async function getQuestionAdmins() {
   }
 }
 
-export async function createQuestionAdminAction(formData: FormData) {
+export async function createQuestionAdminAction(formData: FormData): Promise<ActionResponse> {
   try {
     const fullName = (formData.get("full_name") as string)?.trim();
     const username = (formData.get("username") as string)?.trim().toLowerCase();
@@ -112,7 +112,7 @@ export async function createQuestionAdminAction(formData: FormData) {
   }
 }
 
-export async function updateQuestionAdminAction(id: string, formData: FormData) {
+export async function updateQuestionAdminAction(id: string, formData: FormData): Promise<ActionResponse> {
   try {
     const fullName = (formData.get("full_name") as string)?.trim();
     const password = (formData.get("password") as string);
@@ -170,7 +170,7 @@ export async function deleteQuestionAdminAction(id: string) {
   }
 }
 
-export async function resetQuestionAdminPasswordAction(id: string) {
+export async function resetQuestionAdminPasswordAction(id: string): Promise<ActionResponse> {
   try {
     const admin = getAdminClient();
 

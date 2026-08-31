@@ -280,7 +280,7 @@ export async function bulkCreateTeachersAction(
   }
 }
 
-export async function updateTeacherAction(id: string, formData: FormData) {
+export async function updateTeacherAction(id: string, formData: FormData): Promise<ActionResponse> {
   try {
     const { role, schoolId: authSchoolId } = await requireAuth(["super_admin", "school", "community"]);
     const school_id = (formData.get("school_id") as string)?.trim();

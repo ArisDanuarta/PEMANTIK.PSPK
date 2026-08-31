@@ -40,7 +40,7 @@ export async function getPenelitiAdmins() {
   }
 }
 
-export async function createPenelitiAdminAction(formData: FormData) {
+export async function createPenelitiAdminAction(formData: FormData): Promise<ActionResponse> {
   try {
     const fullName = (formData.get("full_name") as string)?.trim();
     const username = (formData.get("username") as string)?.trim().toLowerCase();
@@ -111,7 +111,7 @@ export async function createPenelitiAdminAction(formData: FormData) {
   }
 }
 
-export async function updatePenelitiAdminAction(id: string, formData: FormData) {
+export async function updatePenelitiAdminAction(id: string, formData: FormData): Promise<ActionResponse> {
   try {
     const fullName = (formData.get("full_name") as string)?.trim();
     const isActive = formData.get("is_active") === "true";
@@ -164,7 +164,7 @@ export async function deletePenelitiAdminAction(id: string) {
   }
 }
 
-export async function resetPenelitiPasswordAction(id: string) {
+export async function resetPenelitiPasswordAction(id: string): Promise<ActionResponse> {
   try {
     const admin = getAdminClient();
 
