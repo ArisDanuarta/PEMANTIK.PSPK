@@ -342,13 +342,40 @@ export default async function KomunitasDashboardPage() {
         // --- End New Analytics Data ---
       }
 
-      // Fetch Item Analysis via RPC (Assuming 'fase_1' or active phase)
+      // Fetch Item Analysis via RPC
       if (communityId) {
-        const activePhase = schoolsSummary.length > 0 ? schoolsSummary[0].phase : 'fase_1';
-        const { data: itemAnalysis, error: itemError } = await (supabase.rpc as any)("get_community_item_analysis", {
+        let activePhase = schoolsSummary.length > 0 ? schoolsSummary[0].phase : 'Fase 1';
+        
+        // Find the most dominant phase in the actual session data (fixes mismatch between 'Tahap 1' vs 'Fase 1')
+        if (statsData && statsData.length > 0) {
+          const phaseCounts = new Map<string, number>();
+          statsData.forEach((s: any) => {
+            const p = s.phase;
+            if (p) phaseCounts.set(p, (phaseCounts.get(p) || 0) + 1);
+          });
+          let maxCount = 0;
+          for (const [p, count] of phaseCounts.entries()) {
+            if (count > maxCount) {
+              maxCount = count;
+              activePhase = p;
+            }
+          }
+        }
+
+        let { data: itemAnalysis, error: itemError } = await (supabase.rpc as any)("get_community_item_analysis", {
           p_community_id: communityId,
           p_phase: activePhase
         });
+        
+        // Fallback for legacy test data that uses 'fase_1' instead of 'Fase 1'
+        if ((!itemAnalysis || itemAnalysis.length === 0) && activePhase === 'Fase 1') {
+          const fallbackRes = await (supabase.rpc as any)("get_community_item_analysis", {
+            p_community_id: communityId,
+            p_phase: 'fase_1'
+          });
+          itemAnalysis = fallbackRes.data;
+          itemError = fallbackRes.error;
+        }
         
         if (!itemError && itemAnalysis) {
           itemAnalysisData = itemAnalysis as any[];
