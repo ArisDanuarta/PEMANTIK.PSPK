@@ -2,6 +2,7 @@ import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import type { NavSection } from "@/components/layout/Sidebar";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { createServerClient } from "@pemantik/supabase";
 
 export default async function SekolahLayout({ children }: { children: React.ReactNode }) {
@@ -14,11 +15,15 @@ export default async function SekolahLayout({ children }: { children: React.Reac
   if (schoolId) {
     try {
       const supabase = createServerClient();
-      const { data: school } = await (supabase as any)
+      const { data: school, error } = await supabase
         .from("schools")
         .select("name, community_id")
         .eq("id", schoolId)
         .maybeSingle();
+      
+      if (error || !school) {
+        redirect("/login");
+      }
       
       if (school?.name) {
         userName = school.name;
@@ -28,7 +33,10 @@ export default async function SekolahLayout({ children }: { children: React.Reac
       isIndependent = !school?.community_id;
     } catch (e) {
       console.error("Gagal memuat status komunitas sekolah di layout:", e);
+      redirect("/login");
     }
+  } else {
+    redirect("/login");
   }
 
   const manajemenItems = [

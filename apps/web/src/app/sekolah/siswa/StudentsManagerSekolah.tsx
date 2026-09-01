@@ -49,7 +49,7 @@ interface Props {
   initialStudents: StudentRow[];
   classes: ClassOption[];
   schoolId: string;
-  sesVariables: any[];
+  sesVariables: { id: string; type: string; variable_name?: string; name?: string; [key: string]: unknown }[];
 }
 
 const EXCEL_COLUMNS = ["nama_siswa", "nisn", "npsn", "jenis_kelamin", "tanggal_lahir", "nama_sekolah", "kelas", "pekerjaan_ibu", "pekerjaan_ayah", "pendidikan_ibu", "pendidikan_ayah", "kelurahan_desa", "kecamatan", "kabupaten", "provinsi"];
@@ -69,8 +69,8 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
   const [editingStudent, setEditingStudent] = useState<StudentRow | null>(null);
   
   // States for Retake dropdowns
-  const [schoolAssessments, setSchoolAssessments] = useState<any[]>([]);
-  const [levels, setLevels] = useState<any[]>([]);
+  const [schoolAssessments, setSchoolAssessments] = useState<{ id: string; category_id?: string; phase?: string; question_categories?: { name?: string }; [key: string]: unknown }[]>([]);
+  const [levels, setLevels] = useState<{ id: string; level_number?: number; [key: string]: unknown }[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedPhase, setSelectedPhase] = useState("");
   const [selectedLevelName, setSelectedLevelName] = useState("");
@@ -168,7 +168,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
     });
   };
 
-  const handleBulkUpload = async (rows: any[]) => {
+  const handleBulkUpload = async (rows: Record<string, unknown>[]) => {
     const enriched = rows.map((r) => ({ ...r, school_id: schoolId }));
     const res = await bulkCreateStudentsAction(enriched);
     return res;
@@ -397,7 +397,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
                 disabled={isPending || isFetchingData}
               >
                 <option value="|">- Pilih Kategori -</option>
-                {schoolAssessments.map((sa: any, idx) => (
+                {schoolAssessments.map((sa, idx) => (
                   <option key={idx} value={`${sa.category_id}|${sa.phase}`}>
                     {sa.question_categories?.name} - {sa.phase}
                   </option>
@@ -416,7 +416,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
                   disabled={isPending || isFetchingData}
                 >
                   <option value="">- Tidak Spesifik / Bebas -</option>
-                  {levels.map((lvl: any) => (
+                  {levels.map((lvl) => (
                     <option key={lvl.id} value={`Level ${lvl.level_number}`}>Level {lvl.level_number}</option>
                   ))}
                 </select>
@@ -463,7 +463,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
                 disabled={isPending || isFetchingData}
               >
                 <option value="|">- Pilih Kategori -</option>
-                {schoolAssessments.map((sa: any, idx) => (
+                {schoolAssessments.map((sa, idx) => (
                   <option key={idx} value={`${sa.category_id}|${sa.phase}`}>
                     {sa.question_categories?.name} - {sa.phase}
                   </option>
@@ -482,7 +482,7 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
                   disabled={isPending || isFetchingData}
                 >
                   <option value="">- Tidak Spesifik / Bebas -</option>
-                  {levels.map((lvl: any) => (
+                  {levels.map((lvl) => (
                     <option key={lvl.id} value={`Level ${lvl.level_number}`}>Level {lvl.level_number}</option>
                   ))}
                 </select>

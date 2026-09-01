@@ -86,8 +86,8 @@ export default function AksesUjianSekolahClient({
       } else {
         showError("Gagal Mengajukan", res.error || "Terjadi kesalahan.");
       }
-    } catch (err: any) {
-      showError("Error", err.message || "Terjadi kesalahan saat mengajukan fase.");
+    } catch (err: unknown) {
+      showError("Gagal", err instanceof Error ? err.message : "Terjadi kesalahan saat memproses paket.");
     } finally {
       setIsSubmittingReq(false);
     }
@@ -134,8 +134,8 @@ export default function AksesUjianSekolahClient({
         setSelectedPackageId("");
         setSelectedClassId("");
         setSelectedStudentId("");
-      } catch (err: any) {
-        showError("Gagal", err.message || "Terjadi kesalahan.");
+      } catch (err: unknown) {
+        showError("Gagal", err instanceof Error ? err.message : "Terjadi kesalahan.");
       }
     });
   };
@@ -313,13 +313,13 @@ export default function AksesUjianSekolahClient({
                       type="checkbox"
                       checked={allCategories.length > 0 && reqCategoryIds.length === allCategories.length}
                       onChange={(e) => {
-                        if (e.target.checked) setReqCategoryIds(allCategories.map((c: any) => c.id));
+                        if (e.target.checked) setReqCategoryIds(allCategories.map((c) => c.id as string));
                         else setReqCategoryIds([]);
                       }}
                     />
                     Pilih Semua Kategori ({allCategories.length})
                   </label>
-                  {allCategories.map((cat: any) => (
+                  {allCategories.map((cat) => (
                     <label key={cat.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", cursor: "pointer" }}>
                       <input
                         type="checkbox"

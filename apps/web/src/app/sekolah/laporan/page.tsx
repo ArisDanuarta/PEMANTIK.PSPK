@@ -34,7 +34,7 @@ export default async function SekolahLaporanPage() {
 
     if (sessionCategories) {
       const pkgMap = new Map<string, { id: string; name: string }>();
-      sessionCategories.forEach((s: any) => {
+      sessionCategories.forEach((s) => {
         const pkg = Array.isArray(s.question_categories)
           ? s.question_categories[0]
           : s.question_categories;

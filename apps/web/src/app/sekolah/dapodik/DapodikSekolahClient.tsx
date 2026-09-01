@@ -56,8 +56,8 @@ export default function DapodikSekolahClient({ school }: DapodikSekolahClientPro
       } else {
         showError("Gagal Memindai File", result.error || "Format file tidak dikenali atau rusak.");
       }
-    } catch (err: any) {
-      showError("Error", err.message || "Terjadi kesalahan saat memproses file Dapodik.");
+    } catch (err: unknown) {
+      showError("Error", err instanceof Error ? err.message : "Terjadi kesalahan saat memproses file Dapodik.");
     } finally {
       setIsParsing(false);
     }
@@ -123,8 +123,8 @@ export default function DapodikSekolahClient({ school }: DapodikSekolahClientPro
           console.error("Error polling import status:", err);
         }
       }, 2000);
-    } catch (err: any) {
-      showError("Error", err.message || "Terjadi kesalahan saat memulai impor.");
+    } catch (err: unknown) {
+      showError("Error", err instanceof Error ? err.message : "Terjadi kesalahan saat memulai impor.");
       setIsImporting(false);
       setImportProgress(null);
     }

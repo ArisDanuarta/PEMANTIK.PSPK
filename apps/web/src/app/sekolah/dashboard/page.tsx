@@ -53,7 +53,7 @@ export default async function SekolahDashboard() {
 
   try {
     // 0. Nama sekolah, npsn, info komunitas, & stages data
-    const { data: school } = await (supabase as any)
+    const { data: school } = await supabase
       .from("schools")
       .select("name, npsn, community_id, communities(name)")
       .eq("id", schoolId)

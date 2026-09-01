@@ -21,9 +21,9 @@ export default async function SekolahDapodikPage() {
     redirect("/login");
   }
 
-  let school: any = null;
+  let school: { id: string; name: string; npsn?: string | null; community_id?: string | null; dapodik_imported_at?: string | null; import_source?: string | null } | null = null;
   try {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("schools")
       .select("id, name, npsn, community_id, dapodik_imported_at, import_source")
       .eq("id", schoolId)
@@ -49,7 +49,7 @@ export default async function SekolahDapodikPage() {
           <div className="page-header-left">
             <h1 className="page-title">Upload Data Dapodik</h1>
             <div className="page-breadcrumb">
-              <span>{school.name}</span>
+              <span>{school.npsn || "-"}</span>
               <span className="page-breadcrumb-sep">›</span>
               <span>Manajemen</span>
               <span className="page-breadcrumb-sep">›</span>

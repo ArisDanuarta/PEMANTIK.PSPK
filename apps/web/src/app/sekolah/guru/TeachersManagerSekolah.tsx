@@ -123,7 +123,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
     });
   };
 
-  const handleBulkUpload = async (rows: any[]) => {
+  const handleBulkUpload = async (rows: Record<string, unknown>[]) => {
     const enrichedRows = rows.map((row) => ({ ...row, school_id: schoolId }));
     const res = await bulkCreateTeachersAction(enrichedRows);
     return res;
@@ -239,7 +239,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                 <td>
                   {t.classes && t.classes.length > 0 ? (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
-                      {t.classes.map((c: any) => (
+                      {t.classes.map((c: { name: string; id: string }) => (
                         <span key={c.id} style={{ padding: "0.15rem 0.4rem", backgroundColor: "#eff6ff", color: "#1d4ed8", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 500 }}>{c.name}</span>
                       ))}
                     </div>
@@ -301,7 +301,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "150px", overflowY: "auto", border: "1px solid #e5e7eb", padding: "0.75rem", borderRadius: "0.375rem" }}>
                     {classes.length > 0 ? (
                       classes.map((c) => {
-                        const isChecked = editingTeacher?.classes?.some((ec: any) => ec.name === c.name);
+                        const isChecked = editingTeacher?.classes?.some((ec: { name: string }) => ec.name === c.name);
                         return (
                           <label key={c.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", cursor: "pointer" }}>
                             <input type="checkbox" name="class_ids" value={c.id} defaultChecked={isChecked} />
@@ -328,7 +328,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
                 </div>
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Tanggal Lahir *</label>
-                  <input type="date" name="birth_date" required defaultValue={editingTeacher?.birth_date as any} className="form-input" style={{ width: "100%" }} />
+                  <input type="date" name="birth_date" required defaultValue={editingTeacher?.birth_date as string} className="form-input" style={{ width: "100%" }} />
                 </div>
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Gender *</label>
@@ -347,19 +347,19 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Kelurahan / Desa *</label>
-                  <input type="text" name="village" required defaultValue={(editingTeacher as any)?.village ?? ""} className="form-input" style={{ width: "100%" }} />
+                  <input type="text" name="village" required defaultValue={editingTeacher?.village ?? ""} className="form-input" style={{ width: "100%" }} />
                 </div>
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Kecamatan *</label>
-                  <input type="text" name="district" required defaultValue={(editingTeacher as any)?.district ?? ""} className="form-input" style={{ width: "100%" }} />
+                  <input type="text" name="district" required defaultValue={editingTeacher?.district ?? ""} className="form-input" style={{ width: "100%" }} />
                 </div>
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Kabupaten / Kota *</label>
-                  <input type="text" name="regency" required defaultValue={(editingTeacher as any)?.city ?? ""} className="form-input" style={{ width: "100%" }} />
+                  <input type="text" name="regency" required defaultValue={editingTeacher?.city ?? ""} className="form-input" style={{ width: "100%" }} />
                 </div>
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}>Provinsi *</label>
-                  <input type="text" name="province" required defaultValue={(editingTeacher as any)?.province ?? ""} className="form-input" style={{ width: "100%" }} />
+                  <input type="text" name="province" required defaultValue={editingTeacher?.province ?? ""} className="form-input" style={{ width: "100%" }} />
                 </div>
               </div>
 

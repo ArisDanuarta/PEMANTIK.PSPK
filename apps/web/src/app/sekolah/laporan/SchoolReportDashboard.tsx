@@ -190,8 +190,8 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
       if (section === "per_class") setClassCards(json.data ?? []);
       if (section === "per_phase") setPhaseCards(json.data ?? []);
       if (section === "per_level") setLevelCards(json.data ?? []);
-    } catch (err: any) {
-      showError("Gagal Memuat Section", err.message || "Terjadi kesalahan.");
+    } catch (err: unknown) {
+      showError("Gagal Memuat Section", err instanceof Error ? err.message : "Terjadi kesalahan.");
     } finally {
       setIsLoadingSection(false);
     }
@@ -225,8 +225,8 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
       if (!res.ok) throw new Error((await res.json()).error || "Server error");
       const json = await res.json();
       setReportData(json.data ?? []);
-    } catch (err: any) {
-      showError("Gagal Memuat Data", err.message || "Terjadi kesalahan jaringan.");
+    } catch (err: unknown) {
+      showError("Gagal Memuat Data", err instanceof Error ? err.message : "Terjadi kesalahan jaringan.");
     } finally {
       setIsLoadingData(false);
     }
@@ -272,8 +272,8 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
       const dateStr = new Date().toISOString().split("T")[0];
       downloadFromUrl(objectUrl, `hasil-ujian_${type}-${filterValue}_${dateStr}.xlsx`);
       showSuccess("Berhasil", "File berhasil diunduh.");
-    } catch (err: any) {
-      showError("Gagal Download", err.message || "Terjadi kesalahan.");
+    } catch (err: unknown) {
+      showError("Gagal Download", err instanceof Error ? err.message : "Terjadi kesalahan.");
     } finally {
       setDownloadingCard(null);
     }
@@ -331,8 +331,8 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
       const dateStr = new Date().toISOString().split("T")[0];
       downloadFromUrl(window.URL.createObjectURL(blob), `rekap-detail-sekolah_${dateStr}.xlsx`);
       showSuccess("Berhasil", "File rekap detail berhasil diunduh.");
-    } catch (err: any) {
-      showError("Gagal Export", err.message || "Terjadi kesalahan.");
+    } catch (err: unknown) {
+      showError("Gagal Export", err instanceof Error ? err.message : "Terjadi kesalahan.");
     } finally {
       setIsExporting(false);
     }
@@ -555,8 +555,8 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
               const dateStr = new Date().toISOString().split("T")[0];
               downloadFromUrl(window.URL.createObjectURL(blob), `RAW_Data_Sekolah_${dateStr}.xlsx`);
               showSuccess("Berhasil Export", "File 1 sheet RAW Data berhasil diunduh.");
-            } catch (err: any) {
-              showError("Gagal Export", err.message || "Terjadi kesalahan sistem.");
+            } catch (err: unknown) {
+              showError("Gagal Export", err instanceof Error ? err.message : "Terjadi kesalahan sistem.");
             } finally {
               setIsExporting(false);
             }
@@ -667,8 +667,8 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
                           const dateStr = new Date().toISOString().split("T")[0];
                           downloadFromUrl(window.URL.createObjectURL(blob), `RAW_Data_Kelas_${card.grade}_${card.class_name}_${dateStr}.xlsx`);
                           showSuccess("Berhasil Export", `Data mentah Kelas ${card.class_name} berhasil diunduh.`);
-                        } catch (err: any) {
-                          showError("Gagal Export", err.message || "Terjadi kesalahan.");
+                        } catch (err: unknown) {
+                          showError("Gagal Export", err instanceof Error ? err.message : "Terjadi kesalahan.");
                         } finally {
                           setIsExporting(false);
                         }

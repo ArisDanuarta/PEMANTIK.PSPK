@@ -33,7 +33,7 @@ export default async function SekolahIntervensiPage() {
 
   // Akses terbuka apabila tracking progres minimal berada di tahap 4 (intervensi / selesai)
   // atau jika sudah terdapat riwayat intervensi yang tercatat
-  const isUnlocked = stages.some((s: any) => ["intervensi", "selesai"].includes(s.current_stage)) || interventions.length > 0;
+  const isUnlocked = stages.some((s) => ["intervensi", "selesai"].includes(s.current_stage)) || interventions.length > 0;
 
   if (!isUnlocked) {
     return (
@@ -130,7 +130,7 @@ export default async function SekolahIntervensiPage() {
 
       <IntervensiSekolahClient
         initialInterventions={interventions}
-        activeStages={stages.filter((s: any) => s.current_stage === "intervensi")}
+        activeStages={stages.filter((s) => s.current_stage === "intervensi")}
       />
     </div>
   );

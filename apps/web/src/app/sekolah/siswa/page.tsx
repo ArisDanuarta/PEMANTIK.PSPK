@@ -41,7 +41,7 @@ export default async function SekolahSiswaPage() {
         .eq("is_active", true)
         .order("grade")
         .order("name"),
-      (supabase as any)
+      supabase
         .from("ses_variables")
         .select("*")
         .order("name"),

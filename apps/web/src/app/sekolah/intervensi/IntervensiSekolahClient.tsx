@@ -5,9 +5,30 @@ import { Badge, Button } from "@pemantik/ui";
 
 import InterventionForm from "@/components/shared/InterventionForm";
 
+interface InterventionRecord {
+  id: string;
+  stage_id?: string | null;
+  phase?: string | null;
+  created_at: string;
+  kondisi_awal?: string;
+  upaya_dilakukan?: string;
+  perubahan_signifikan?: string;
+  alasan_bermakna?: string;
+  users?: { role?: string; full_name?: string };
+  communities?: { name?: string };
+  intervention_tag_links?: { intervention_tags?: { id?: string; name?: string } }[];
+}
+
+interface ActiveStage {
+  id: string;
+  phase?: string | null;
+  community_id?: string | null;
+  school_id?: string | null;
+}
+
 interface IntervensiSekolahClientProps {
-  initialInterventions: any[];
-  activeStages?: any[];
+  initialInterventions: InterventionRecord[];
+  activeStages?: ActiveStage[];
 }
 
 function formatDate(iso: string) {
@@ -22,8 +43,8 @@ export default function IntervensiSekolahClient({
   initialInterventions,
   activeStages = [],
 }: IntervensiSekolahClientProps) {
-  const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
-  const [selectedStageForForm, setSelectedStageForForm] = useState<any | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<InterventionRecord | null>(null);
+  const [selectedStageForForm, setSelectedStageForForm] = useState<ActiveStage | null>(null);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
@@ -64,7 +85,7 @@ export default function IntervensiSekolahClient({
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "0.75rem" }}>
             {activeStages.map((st) => {
-              const isSubmittedByUs = initialInterventions.some((i: any) => 
+              const isSubmittedByUs = initialInterventions.some((i) => 
                 i.stage_id === st.id && 
                 (i.users?.role === 'school' || i.users?.role === 'super_admin')
               );
@@ -142,9 +163,9 @@ export default function IntervensiSekolahClient({
                     <td>
                       <div style={{ fontWeight: 700, color: "#102e50" }}>{item.phase}</div>
                       <div style={{ fontSize: "0.78rem", color: "#6b7280", marginTop: "0.15rem" }}>
-                        Oleh: {(item as any).users?.role === "teacher" 
-                          ? `Guru (${(item as any).users?.full_name || "Tanpa Nama"})` 
-                          : (item as any).users?.role === "community"
+                        Oleh: {item.users?.role === "teacher" 
+                          ? `Guru (${item.users?.full_name || "Tanpa Nama"})` 
+                          : item.users?.role === "community"
                             ? `Komunitas (${item.communities?.name || "Tanpa Nama"})`
                             : "Admin Sekolah"}
                       </div>
@@ -161,7 +182,7 @@ export default function IntervensiSekolahClient({
                     </td>
                     <td>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
-                        {(item.intervention_tag_links || []).map((lnk: any) => (
+                        {(item.intervention_tag_links || []).map((lnk) => (
                           <span key={lnk.intervention_tags?.id} style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 600 }}>
                             #{lnk.intervention_tags?.name}
                           </span>
@@ -210,7 +231,7 @@ export default function IntervensiSekolahClient({
             </div>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-              {(selectedDetail.intervention_tag_links || []).map((lnk: any) => (
+              {(selectedDetail.intervention_tag_links || []).map((lnk) => (
                 <span key={lnk.intervention_tags?.id} style={{ padding: "0.25rem 0.65rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.78rem", fontWeight: 600 }}>
                   #{lnk.intervention_tags?.name}
                 </span>
@@ -288,10 +309,10 @@ export default function IntervensiSekolahClient({
               Fase: <strong>{selectedStageForForm.phase}</strong>
             </p>
             <InterventionForm
-              schoolId={selectedStageForForm.school_id}
+              schoolId={selectedStageForForm.school_id || ""}
               schoolName={"Sekolah"}
               stageId={selectedStageForForm.id}
-              phase={selectedStageForForm.phase}
+              phase={selectedStageForForm.phase || ""}
               onSuccess={() => setSelectedStageForForm(null)}
               onCancel={() => setSelectedStageForForm(null)}
             />

@@ -22,7 +22,7 @@ export default async function SekolahAksesUjianPage() {
   let packages: any[] = [];
   let classes: any[] = [];
   let students: any[] = [];
-  let communityData: any = null;
+  let communityData: Record<string, unknown> | null = null;
   let allCategories: any[] = [];
   let phaseRequests: any[] = [];
   let currentStage = "persiapan_akun";
@@ -52,7 +52,7 @@ export default async function SekolahAksesUjianPage() {
         .from("question_categories")
         .select("id, name, subject_area")
         .order("name"),
-      (supabase as any)
+      supabase
         .from("assessment_phase_requests")
         .select("id, phase, valid_from, valid_until, status, rejection_reason, created_at, category_id, question_categories(name, subject_area)")
         .contains("target_school_ids", [schoolId])
@@ -73,18 +73,18 @@ export default async function SekolahAksesUjianPage() {
       const { data: commInfo } = await supabase
         .from("communities")
         .select("name")
-        .eq("id", communityId)
+        .eq("id", communityId as string)
         .maybeSingle();
-      communityName = (commInfo as any)?.name ?? null;
+      communityName = (commInfo as { name?: string })?.name ?? null;
       isIndependent = !communityId || communityName === "SEKOLAH INDEPENDEN";
     } else {
       isIndependent = true;
     }
 
-    const pkgMap = new Map<string, any>();
+    const pkgMap = new Map<string, unknown>();
     const now = new Date();
     
-    (schoolAccessData ?? []).forEach((a: any) => {
+    (schoolAccessData ?? []).forEach((a) => {
       const pkg = Array.isArray(a.question_categories) ? a.question_categories[0] : a.question_categories;
       
       let isExpired = false;
