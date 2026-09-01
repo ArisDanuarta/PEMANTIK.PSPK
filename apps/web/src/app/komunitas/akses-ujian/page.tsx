@@ -110,7 +110,7 @@ export default async function KomunitasAksesUjianPage() {
   const phaseRequests = phaseRequestsRes.success ? (phaseRequestsRes.data || []) : [];
 
   // ── Cek tahap asesmen sekolah binaan untuk menentukan apakah tombol pengajuan terbuka ──
-  const { data: stagesData } = await (supabase as any)
+  const { data: stagesData } = await supabase
     .from("school_assessment_stages")
     .select("current_stage")
     .eq("community_id", communityId);

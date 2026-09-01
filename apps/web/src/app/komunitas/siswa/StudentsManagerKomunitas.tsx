@@ -259,8 +259,24 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
                 </td>
                 <td>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                    <div><span style={{ color: "black" }}>User:</span> <strong>{row.username}</strong></div>
-                    <div><span style={{ color: "black" }}>PIN:</span> <code style={{ color: "#a8281c" }}>123456</code></div>
+                    <div 
+                      onClick={() => { navigator.clipboard.writeText(row.username); success("Tersalin", "Username disalin ke clipboard"); }}
+                      style={{ cursor: "pointer", transition: "opacity 0.2s" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                      title="Klik untuk menyalin"
+                    >
+                      <span style={{ color: "black" }}>User:</span> <strong>{row.username}</strong>
+                    </div>
+                    <div
+                      onClick={() => { navigator.clipboard.writeText("123456"); success("Tersalin", "PIN disalin ke clipboard"); }}
+                      style={{ cursor: "pointer", transition: "opacity 0.2s" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                      title="Klik untuk menyalin"
+                    >
+                      <span style={{ color: "black" }}>PIN:</span> <code style={{ color: "#a8281c", backgroundColor: "#fee2e2", padding: "0.1rem 0.3rem", borderRadius: "0.25rem" }}>123456</code>
+                    </div>
                   </div>
                 </td>
                 <td>

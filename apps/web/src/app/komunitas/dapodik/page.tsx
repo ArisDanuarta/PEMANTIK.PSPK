@@ -29,7 +29,7 @@ export default async function KomunitasDapodikPage() {
       { data: scData },
       { data: commData }
     ] = await Promise.all([
-      (supabase as any).from("schools")
+      supabase.from("schools")
         .select("id, name, npsn, province, city, district, village, dapodik_imported_at, import_source")
         .eq("community_id", communityId)
         .order("name", { ascending: true }),

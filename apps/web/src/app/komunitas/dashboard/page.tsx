@@ -106,7 +106,7 @@ export default async function KomunitasDashboardPage() {
       totalClasses = classesData?.length || 0;
 
       // 3c. Fetch interventions status per school
-      const { data: interRows } = await (supabase as any)
+      const { data: interRows } = await supabase
         .from("interventions")
         .select("school_id, phase")
         .eq("community_id", communityId);
@@ -145,6 +145,7 @@ export default async function KomunitasDashboardPage() {
         });
       }
 
+
       // 4. Fetch lightweight sessions data for stats & comparison chart
       const { data: statsData } = await supabase
         .from("assessment_sessions")
@@ -160,7 +161,7 @@ export default async function KomunitasDashboardPage() {
         .in("school_id", schoolIds)
         .eq("status", "completed")
         .eq("is_void", false)
-        .limit(100000);
+        .limit(20000);
         
       if (statsData && statsData.length > 0) {
         const allLvlIds = [...new Set(statsData.map((s: any) => s.current_level_id).filter(Boolean))];
@@ -350,7 +351,7 @@ export default async function KomunitasDashboardPage() {
         });
         
         if (!itemError && itemAnalysis) {
-          itemAnalysisData = itemAnalysis;
+          itemAnalysisData = itemAnalysis as any[];
         }
       }
 

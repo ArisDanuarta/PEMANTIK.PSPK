@@ -39,7 +39,7 @@ export default async function SiswaKomunitasPage() {
     const schoolIds = schools.map(s => s.id);
 
     // 2. Dapatkan variabel SES
-    const { data: sesData } = await (supabase as any)
+    const { data: sesData } = await supabase
       .from("ses_variables")
       .select("*")
       .order("name", { ascending: true });

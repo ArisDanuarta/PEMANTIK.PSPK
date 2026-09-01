@@ -23,7 +23,7 @@ export default async function KomunitasIntervensiPage() {
   }
 
   // 1. Dapatkan semua sekolah milik komunitas ini
-  const { data: schools } = await (supabase as any)
+  const { data: schools } = await supabase
     .from("schools")
     .select("id")
     .eq("community_id", communityId);
@@ -33,7 +33,7 @@ export default async function KomunitasIntervensiPage() {
   
   let unlockedStages: any[] = [];
   if (schoolIds.length > 0) {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("school_assessment_stages")
       .select("id, school_id, phase, current_stage, schools(id, name, npsn)")
       .in("school_id", schoolIds)
