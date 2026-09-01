@@ -69,8 +69,8 @@ export default function ItemAnalysisChart({ data }: ItemAnalysisChartProps) {
         </button>
       </div>
 
-      <div style={{ width: "100%", height: 350 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ width: "100%", height: 350, minWidth: 0 }}>
+        <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
           <BarChart data={sortedData} margin={{ top: 20, right: 30, left: -10, bottom: 40 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
             <XAxis 

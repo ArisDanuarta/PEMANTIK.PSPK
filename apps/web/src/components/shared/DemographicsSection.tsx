@@ -91,7 +91,7 @@ export default function DemographicsSection({
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <h4 style={{ fontSize: "0.95rem", color: "#374151", marginBottom: "1rem", fontWeight: 600 }}>Sebaran Gender</h4>
           <div style={{ width: "100%", height: 250 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <PieChart>
                 <Pie
                   data={genderData}
@@ -125,7 +125,7 @@ export default function DemographicsSection({
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <h4 style={{ fontSize: "0.95rem", color: "#374151", marginBottom: "1rem", fontWeight: 600 }}>Status Sosial Ekonomi (SES)</h4>
           <div style={{ width: "100%", height: 280 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <BarChart data={sesData} margin={{ top: 10, right: 10, left: -20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis 

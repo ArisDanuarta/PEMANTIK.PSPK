@@ -65,7 +65,7 @@ export default function ProgressTrackingChart({
       <p style={{ margin: "0 0 2rem 0", color: "#6b7280", fontSize: "0.9rem" }}>{description}</p>
       
       <div style={{ width: "100%", height: 350 }}>
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
           <BarChart
             data={chartData}
             margin={{ top: 20, right: 30, left: 0, bottom: 5 }}

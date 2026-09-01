@@ -117,7 +117,7 @@ export default function AnalisisKomparatifClient({ initialData, communities }: {
             Perbandingan Skor berdasarkan Kelas SES
           </h2>
           <div style={{ width: "100%", height: 300 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <BarChart data={sesData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />
@@ -136,7 +136,7 @@ export default function AnalisisKomparatifClient({ initialData, communities }: {
             Gender Gap (Skor Rata-rata Laki-laki vs Perempuan)
           </h2>
           <div style={{ width: "100%", height: 300 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <BarChart data={genderData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />

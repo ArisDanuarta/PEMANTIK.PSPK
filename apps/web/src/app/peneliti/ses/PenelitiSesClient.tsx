@@ -104,7 +104,7 @@ export default function PenelitiSesClient({
         </div>
 
         <div style={{ height: "420px", width: "100%", background: "#f8fafc", borderRadius: "16px", padding: "1rem" }}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
             <ScatterChart margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
               <XAxis 

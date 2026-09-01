@@ -31,7 +31,7 @@ export default function DashboardCharts({
         <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem", color: "#102e50", fontFamily: "var(--font-lora)" }}>
           Sebaran Gender Anak
         </h3>
-        <div style={{ width: "100%", height: 250 }}>
+        <div style={{ width: "100%", height: 250, minWidth: 0 }}>
           {isMounted ? (
             <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <PieChart>
@@ -63,7 +63,7 @@ export default function DashboardCharts({
         <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem", color: "#102e50", fontFamily: "var(--font-lora)" }}>
           Sebaran Usia Anak
         </h3>
-        <div style={{ width: "100%", height: 250 }}>
+        <div style={{ width: "100%", height: 250, minWidth: 0 }}>
           {isMounted ? (
             <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <BarChart data={ageData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -85,7 +85,7 @@ export default function DashboardCharts({
         <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem", color: "#102e50", fontFamily: "var(--font-lora)" }}>
           Aktivitas Asesmen
         </h3>
-        <div style={{ width: "100%", height: 250 }}>
+        <div style={{ width: "100%", height: 250, minWidth: 0 }}>
           {isMounted ? (
             <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <PieChart>
@@ -117,7 +117,7 @@ export default function DashboardCharts({
         <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "1rem", color: "#102e50", fontFamily: "var(--font-lora)" }}>
           Sebaran Kategori SES
         </h3>
-        <div style={{ width: "100%", height: 250 }}>
+        <div style={{ width: "100%", height: 250, minWidth: 0 }}>
           {isMounted ? (
             <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <BarChart data={sesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>

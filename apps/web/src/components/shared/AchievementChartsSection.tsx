@@ -79,7 +79,7 @@ export default function AchievementChartsSection({
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem" }}>
         <ChartCard title="Distribusi Usia Anak" description="Berdasarkan data tanggal lahir di profil siswa">
           {ageDistData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <BarChart data={ageDistData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis dataKey="age" tick={{ fontSize: 12, fill: "#6b7280" }} label={{ value: 'Usia (Tahun)', position: 'insideBottom', offset: -5, fontSize: 12, fill: '#6b7280' }} />
@@ -96,7 +96,7 @@ export default function AchievementChartsSection({
         {/* Capaian Level Tertinggi - Literasi */}
         <ChartCard title="Distribusi Level Literasi Tertinggi" description="Mengambil 1 level tertinggi yang berhasil diselesaikan tiap anak">
           {litLevelDist.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <BarChart data={litLevelDist} layout="vertical" margin={{ top: 10, right: 30, left: 60, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
                 <XAxis type="number" tick={{ fontSize: 12, fill: "#6b7280" }} allowDecimals={false} />
@@ -113,7 +113,7 @@ export default function AchievementChartsSection({
         {/* Capaian Level Tertinggi - Numerasi */}
         <ChartCard title="Distribusi Level Numerasi Tertinggi" description="Mengambil 1 level tertinggi yang berhasil diselesaikan tiap anak">
           {numLevelDist.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <BarChart data={numLevelDist} layout="vertical" margin={{ top: 10, right: 30, left: 60, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
                 <XAxis type="number" tick={{ fontSize: 12, fill: "#6b7280" }} allowDecimals={false} />
@@ -135,7 +135,7 @@ export default function AchievementChartsSection({
           description="Dihitung dengan menjumlahkan level akhir (0-8) tiap anak, lalu dibagi dengan total anak pada usia tersebut."
         >
           {litByAge.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <LineChart data={litByAge} margin={{ top: 20, right: 30, left: 0, bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis type="number" dataKey="age" domain={['dataMin', 'dataMax']} tick={{ fontSize: 12, fill: "#6b7280" }} label={{ value: 'Usia (Tahun)', position: 'insideBottom', offset: -5, fontSize: 12, fill: '#6b7280' }} />
@@ -161,7 +161,7 @@ export default function AchievementChartsSection({
           description="Dihitung dengan menjumlahkan level akhir (0-4) tiap anak, lalu dibagi dengan total anak pada usia tersebut."
         >
           {numByAge.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <LineChart data={numByAge} margin={{ top: 20, right: 30, left: 0, bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis type="number" dataKey="age" domain={['dataMin', 'dataMax']} tick={{ fontSize: 12, fill: "#6b7280" }} label={{ value: 'Usia (Tahun)', position: 'insideBottom', offset: -5, fontSize: 12, fill: '#6b7280' }} />
@@ -187,7 +187,7 @@ export default function AchievementChartsSection({
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1.5rem" }}>
         <ChartCard title="Tren Capaian Level Berdasarkan SES" description="Membandingkan level tertinggi rata-rata yang dicapai anak dari berbagai latar belakang SES">
           {combinedSesData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <BarChart data={combinedSesData} margin={{ top: 20, right: 30, left: 0, bottom: 25 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis dataKey="sesLabel" tick={{ fontSize: 12, fill: "#6b7280" }} />

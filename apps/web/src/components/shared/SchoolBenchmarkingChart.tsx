@@ -43,8 +43,8 @@ export default function SchoolBenchmarkingChart({ data }: SchoolBenchmarkingChar
   }
 
   return (
-    <div style={{ width: "100%", height: 400 }}>
-      <ResponsiveContainer width="100%" height="100%">
+    <div style={{ width: "100%", height: 350, minWidth: 0 }}>
+      <ResponsiveContainer width="99%" height="100%">
         <ComposedChart data={sortedData} margin={{ top: 20, right: 30, left: -10, bottom: 60 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
           <XAxis 

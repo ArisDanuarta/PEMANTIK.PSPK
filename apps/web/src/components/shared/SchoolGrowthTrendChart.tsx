@@ -305,7 +305,7 @@ export default function SchoolGrowthTrendChart({
       {/* Chart */}
       {hasAnyData ? (
         <div style={{ width: "100%", height: 320 }}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
             <LineChart
               data={sortedData}
               margin={{ top: 30, right: 30, left: 0, bottom: 20 }}

@@ -282,7 +282,7 @@ export default function RombelComparisonChart({
       {hasData ? (
         <>
           <div style={{ width: "100%", height: Math.max(300, filteredData.length * 55 + 80) }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
               <BarChart
                 data={filteredData}
                 margin={{ top: 10, right: 20, left: 0, bottom: 30 }}

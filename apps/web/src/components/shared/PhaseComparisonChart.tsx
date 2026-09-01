@@ -191,7 +191,7 @@ export default function PhaseComparisonChart({
       </div>
 
       <div style={{ width: "100%", height: 340 }}>
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
             <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 25 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="phase" stroke="#64748b" fontSize={13} fontWeight={600} tickLine={false} />
