@@ -109,7 +109,7 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
           </h3>
           <div style={{ width: "100%", height: 250, minWidth: 0 }}>
             {isMounted && genderData.length > 0 ? (
-              <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
+              <ResponsiveContainer width="99%" height={250} minWidth={1} minHeight={1}>
                 <PieChart>
                   <Pie data={genderData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                     {genderData.map((entry, index) => (
@@ -133,7 +133,7 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
           </h3>
           <div style={{ width: "100%", height: 250, minWidth: 0 }}>
             {isMounted && ageData.length > 0 ? (
-              <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
+              <ResponsiveContainer width="99%" height={250} minWidth={1} minHeight={1}>
                 <BarChart data={ageData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#4b5563" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 12, fill: "#4b5563" }} axisLine={false} tickLine={false} />
@@ -154,7 +154,7 @@ export default function GuruDashboardClient({ stats, recentSessions }: GuruDashb
           </h3>
           <div style={{ width: "100%", height: 250, minWidth: 0 }}>
             {isMounted && sesData.length > 0 ? (
-              <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
+              <ResponsiveContainer width="99%" height={250} minWidth={1} minHeight={1}>
                 <BarChart data={sesData} layout="vertical" margin={{ left: 50, right: 20 }}>
                   <XAxis type="number" tick={{ fontSize: 12, fill: "#4b5563" }} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: "#334155", fontWeight: 500 }} axisLine={false} tickLine={false} width={130} />
