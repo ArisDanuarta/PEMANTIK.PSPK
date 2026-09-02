@@ -26,7 +26,7 @@ export default async function SekolahGuruPage() {
       supabase
         .from("users")
         .select(`
-          id, full_name, username, nip, gender, is_active, created_at,
+          id, full_name, username, nip, gender, is_active, created_at, plain_password,
           classes!classes_teacher_id_fkey(id, name, grade)
         `)
         .eq("school_id", schoolId)
