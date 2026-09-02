@@ -1,1 +1,0 @@
-ALTER TABLE questions ADD COLUMN IF NOT EXISTS order_index integer NOT NULL DEFAULT 0;
