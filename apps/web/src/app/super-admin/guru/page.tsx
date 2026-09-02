@@ -10,7 +10,6 @@ export const metadata: Metadata = {
 
 export default async function GuruPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const searchParams = await props.searchParams;
-  const supabase = createServerClient();
 
   // 1. Parse URL Params
   const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page, 10) : 1;
@@ -27,12 +26,9 @@ export default async function GuruPage(props: { searchParams: Promise<{ [key: st
   let classes: any[] = [];
   
   try {
-    // 2. Build Query
-    let query = supabase
-      .from("users")
-      .select("*, schools(name, communities(name, is_sandbox)), communities(name, is_sandbox), classes!class_teachers(name)", { count: 'exact' })
-      .eq("role", "teacher");
+    const supabase = createServerClient();
 
+    // Ambil ID sandbox untuk filtering
     const { data: sandboxComms } = await supabase.from('communities').select('id').eq('is_sandbox', true);
     const sandboxCommIds = sandboxComms?.map(c => c.id) || [];
     let sandboxSchoolIds: string[] = [];
@@ -41,29 +37,47 @@ export default async function GuruPage(props: { searchParams: Promise<{ [key: st
       sandboxSchoolIds = sandboxSchools?.map(s => s.id) || [];
     }
 
-    if (showSandbox) {
-      const cIds = sandboxCommIds.length > 0 ? sandboxCommIds.join(',') : '00000000-0000-0000-0000-000000000000';
-      const sIds = sandboxSchoolIds.length > 0 ? sandboxSchoolIds.join(',') : '00000000-0000-0000-0000-000000000000';
-      query = query.or(`community_id.in.(${cIds}),school_id.in.(${sIds})`);
-    } else {
-      if (sandboxCommIds.length > 0) query = query.not("community_id", "in", `(${sandboxCommIds.join(',')})`);
-      if (sandboxSchoolIds.length > 0) query = query.not("school_id", "in", `(${sandboxSchoolIds.join(',')})`);
-    }
-    
-    if (searchQuery) {
-      query = query.or(`full_name.ilike.%${searchQuery}%,username.ilike.%${searchQuery}%`);
-    }
+    // Helper filter — PENTING: gunakan .or() bukan .not("in") agar guru dari
+    // sekolah/komunitas independen (NULL) tetap ikut tampil.
+    const applyFilters = (q: any) => {
+      if (showSandbox) {
+        const cIds = sandboxCommIds.length > 0 ? sandboxCommIds.join(',') : '00000000-0000-0000-0000-000000000000';
+        const sIds = sandboxSchoolIds.length > 0 ? sandboxSchoolIds.join(',') : '00000000-0000-0000-0000-000000000000';
+        q = q.or(`community_id.in.(${cIds}),school_id.in.(${sIds})`);
+      } else {
+        // Sertakan NULL agar guru tanpa komunitas/sekolah ikut tampil
+        if (sandboxCommIds.length > 0) {
+          q = q.or(`community_id.not.in.(${sandboxCommIds.join(',')}),community_id.is.null`);
+        }
+        if (sandboxSchoolIds.length > 0) {
+          q = q.or(`school_id.not.in.(${sandboxSchoolIds.join(',')}),school_id.is.null`);
+        }
+      }
+      if (searchQuery) {
+        q = q.or(`full_name.ilike.%${searchQuery}%,username.ilike.%${searchQuery}%`);
+      }
+      return q;
+    };
 
-    const [
-      { data: tData, count: tCount },
-      { data: scData },
-      { data: cData }
-    ] = await Promise.all([
-      query.order("created_at", { ascending: false }).range(start, end),
+    // ─── 1. COUNT terpisah — tanpa join berat ───
+    let countQuery = supabase.from("users").select("id", { count: 'exact', head: true }).eq("role", "teacher");
+    countQuery = applyFilters(countQuery);
+    const { count: tCount } = await countQuery;
+
+    // ─── 2. DATA dengan join — hanya halaman yang diminta ───
+    let dataQuery = supabase
+      .from("users")
+      .select("*, schools(name, communities(name, is_sandbox)), communities(name, is_sandbox), classes!class_teachers(name)")
+      .eq("role", "teacher");
+    dataQuery = applyFilters(dataQuery);
+    const { data: tData } = await dataQuery.order("created_at", { ascending: false }).range(start, end);
+
+    // ─── 3. Dropdown sekolah & kelas ───
+    const [{ data: scData }, { data: cData }] = await Promise.all([
       supabase.from("schools").select("id, name").eq("is_active", true).order("name", { ascending: true }).limit(5000),
-      supabase.from("classes").select("id, name, school_id").eq("is_active", true).order("name", { ascending: true }).limit(5000)
+      supabase.from("classes").select("id, name, school_id").eq("is_active", true).order("name", { ascending: true }).limit(5000),
     ]);
-    
+
     teachers = tData ?? [];
     count = tCount ?? 0;
     schools = scData ?? [];
@@ -71,6 +85,7 @@ export default async function GuruPage(props: { searchParams: Promise<{ [key: st
   } catch (err) {
     console.error("Unexpected error loading teachers:", err);
   }
+
 
   return (
     <div className="animate-fade-in">
