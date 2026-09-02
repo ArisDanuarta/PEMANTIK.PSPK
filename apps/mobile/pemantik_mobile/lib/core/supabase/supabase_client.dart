@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,9 +11,8 @@ const _kStudentJwtKey = 'student_jwt';
 const _tokenStorage = FlutterSecureStorage();
 
 class SupabaseConfig {
-  static const String supabaseUrl = 'https://bhrqorbjdmlewwmlajfg.supabase.co';
-  static const String supabaseAnonKey =
-      'sb_publishable_SzhpIVvCr63y2FuU4fAAHg_pUw-rB7u';
+  static final String supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
+  static final String supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   /// Kunci storage untuk JWT siswa - gunakan konstanta ini di seluruh app
   /// agar tidak ada typo key yang menyebabkan token tidak terbaca.

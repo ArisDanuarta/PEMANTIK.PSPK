@@ -525,10 +525,10 @@ class _EmptyHistoryState extends StatelessWidget {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Image.network(
-                      'https://lh3.googleusercontent.com/aida/AP1WRLs3GOa9AZbXG-X4LvRN9963C2qXNm0ieSXnza43CXsBxH4RAA7IfzeaVqnoqzbL26mR9kcU27h0cuQyRv91ptw9KNO_AAVm7WLNwAk0xJ3eRnQwKbHwGgWtzfT700UrRaoqDw6BF8P_ZvUk63d-LYoP-zfz4u1LtNsRABytDrRTIIpr6pHfkpOEmuzOJYZyNK1o-PPJQySUKAHqQLYSUIQCWjYqZNfTYFF1sPBUSUUtbbCwc99SN6H1yko',
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.history, size: 80, color: AppColors.border),
+                    const Icon(
+                      Icons.history,
+                      size: 120,
+                      color: AppColors.border,
                     ),
                     // Pinging dots
                     Positioned(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/storage/secure_storage.dart';
@@ -10,10 +11,24 @@ import 'core/sync/sync_service.dart';
 import 'core/update/update_service.dart';
 
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await SupabaseConfig.initialize();
+
+  // Tambahkan global error handler
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('Flutter Error: ${details.exception}');
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('Async Error: $error');
+    return true; // prevent default crash behavior
+  };
+
   runApp(const ProviderScope(child: PemantikApp()));
 }
 
