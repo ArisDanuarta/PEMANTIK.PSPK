@@ -289,7 +289,7 @@ export default async function AssessmentLevelsPage({ params }: { params: Promise
                 <div className="lv-level-name">Level {num}</div>
                 <div className="lv-level-sub">Lulus &amp; Selesai</div>
                 <Link
-                  href={`/siswa/asesmen/${level.session?.id}/hasil`}
+                  href={`/siswa/asesmen/${level.session?.id}/hasil?from=list`}
                   className="lv-action lv-action-selesai"
                 >
                   Lihat Hasil
@@ -308,7 +308,7 @@ export default async function AssessmentLevelsPage({ params }: { params: Promise
                 <div className="lv-level-sub">Maaf Tidak Bisa Lanjut Level Berikutnya</div>
                 {/* Lihat hasil ujian yang gagal */}
                 <Link
-                  href={level.session?.id ? `/siswa/asesmen/${level.session.id}/hasil` : '/siswa/dashboard'}
+                  href={level.session?.id ? `/siswa/asesmen/${level.session.id}/hasil?from=list` : '/siswa/dashboard'}
                   className="lv-action lv-action-gagal"
                 >
                   Lihat Hasil
