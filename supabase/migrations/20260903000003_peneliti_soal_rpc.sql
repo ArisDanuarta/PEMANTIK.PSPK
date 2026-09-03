@@ -32,7 +32,7 @@ BEGIN
       0 AS avg_time
     FROM answers_agg a
     JOIN questions q ON a.question_id = q.id
-    LEFT JOIN question_levels ql ON q.id = ql.question_id
+    LEFT JOIN question_levels ql ON q.level_id = ql.id
     WHERE q.question_code NOT LIKE 'TES-%' 
       AND a.total_answers >= 5
     ORDER BY success_rate ASC

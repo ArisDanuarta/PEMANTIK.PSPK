@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createServerClient } from "@pemantik/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
 import React from "react";
 import PenelitiSoalClient from "./PenelitiSoalClient";
 
@@ -10,16 +11,28 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+export interface QuestionStat {
+  id: string;
+  question_code: string;
+  subject_area: string;
+  question_type: string;
+  level_number: number | null;
+  total_answers: number;
+  correct_answers: number;
+  success_rate: number;
+  avg_time: number;
+}
+
 export default async function PenelitiSoalPage() {
-  const supabase = createServerClient();
-  let questionsData: any[] = [];
+  const supabase = createServerClient() as SupabaseClient;
+  let questionsData: QuestionStat[] = [];
 
   try {
-    const { data, error } = await (supabase as any).rpc("get_peneliti_soal_stats");
+    const { data, error } = await supabase.rpc("get_peneliti_soal_stats");
     if (error) {
       console.error("RPC Error (get_peneliti_soal_stats):", JSON.stringify(error, null, 2));
     } else if (data && Array.isArray(data)) {
-      questionsData = data;
+      questionsData = data as QuestionStat[];
     }
   } catch (err) {
     console.error("[PenelitiSoalPage] Failed:", err);
