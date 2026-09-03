@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { SupabaseClient } from "@supabase/supabase-js";
 import React from "react";
-import PenelitiSesClient from "./PenelitiSesClient";
+import PenelitiSesClient, { ProvinceStat, CityStat, CorrelationPoint } from "./PenelitiSesClient";
 import { createServerClient } from "@pemantik/supabase";
 
 export const metadata: Metadata = {
@@ -11,20 +12,20 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function PenelitiSesPage() {
-  const supabase = createServerClient();
-  let provinceStats: Record<string, any> = {};
-  let cityStats: Record<string, any> = {};
-  let correlationData: any[] = [];
+  const supabase = createServerClient() as SupabaseClient;
+  let provinceStats: Record<string, ProvinceStat> = {};
+  let cityStats: Record<string, CityStat> = {};
+  let correlationData: CorrelationPoint[] = [];
   let correlationCoef = 0;
 
   try {
-    const { data, error } = await (supabase as any).rpc("get_peneliti_ses_stats");
+    const { data, error } = await supabase.rpc("get_peneliti_ses_stats");
     
     if (error) {
       console.error("RPC Error (get_peneliti_ses_stats):", JSON.stringify(error, null, 2));
     } else if (data && typeof data === 'object') {
        // reconstruct provinceStats
-       (data.provinceStats || []).forEach((p: any) => {
+       (data.provinceStats || []).forEach((p: { province: string; count: number; total_score: number }) => {
          provinceStats[p.province] = {
            count: p.count,
            totalScore: p.total_score,
@@ -33,8 +34,8 @@ export default async function PenelitiSesPage() {
        });
 
        // reconstruct cityStats
-       const cityAgg: Record<string, any> = {};
-       (data.cityStats || []).forEach((c: any) => {
+       const cityAgg: Record<string, { count: number; totalScore: number; districts: Record<string, { count: number; totalScore: number }> }> = {};
+       (data.cityStats || []).forEach((c: { city: string; district: string; count: number; total_score: number }) => {
          if (!cityAgg[c.city]) cityAgg[c.city] = { count: 0, totalScore: 0, districts: {} };
          cityAgg[c.city].count += c.count;
          cityAgg[c.city].totalScore += c.total_score;

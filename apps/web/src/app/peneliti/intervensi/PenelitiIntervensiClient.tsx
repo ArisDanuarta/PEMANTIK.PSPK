@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { Badge, Button } from "@pemantik/ui";
 import InterventionGraph from "@/components/shared/InterventionGraph";
-import ReactMarkdown from "react-markdown";
-import { getGlobalInterventionGraph } from "@/app/actions/interventions";
+import { InterventionRow } from "@/app/actions/interventions";
 
 interface PenelitiIntervensiClientProps {
-  initialInterventions: any[];
+  initialInterventions: InterventionRow[];
 }
 
 function formatDate(iso: string) {
@@ -24,12 +23,12 @@ export default function PenelitiIntervensiClient({
 }: PenelitiIntervensiClientProps) {
   const [activeTab, setActiveTab] = useState<"list" | "ai_graph">("ai_graph");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<InterventionRow | null>(null);
 
   // Filter interventions
   const filtered = initialInterventions.filter(inv => 
-    inv.student?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    inv.intervention_type?.toLowerCase().includes(searchQuery.toLowerCase())
+    inv.schools?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    inv.phase?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -79,7 +78,7 @@ export default function PenelitiIntervensiClient({
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
               <input
                 type="text"
-                placeholder="Cari nama siswa atau jenis intervensi..."
+                placeholder="Cari nama sekolah atau fase..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="form-input"
@@ -92,10 +91,10 @@ export default function PenelitiIntervensiClient({
                 <thead>
                   <tr>
                     <th>Tanggal</th>
-                    <th>Siswa</th>
-                    <th>Komunitas</th>
-                    <th>Jenis Intervensi</th>
-                    <th>Status</th>
+                    <th>Sekolah</th>
+                    <th>Fase</th>
+                    <th>Submiter</th>
+                    <th>Tag Intervensi</th>
                     <th>Aksi</th>
                   </tr>
                 </thead>
@@ -107,16 +106,19 @@ export default function PenelitiIntervensiClient({
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((inv: any) => (
+                    filtered.map((inv) => (
                       <tr key={inv.id}>
                         <td>{formatDate(inv.created_at)}</td>
-                        <td style={{ fontWeight: 600 }}>{inv.student?.full_name || "-"}</td>
-                        <td>{inv.school?.communities?.name || "-"}</td>
-                        <td style={{ textTransform: "capitalize" }}>{inv.intervention_type?.replace(/_/g, ' ')}</td>
+                        <td style={{ fontWeight: 600 }}>{inv.schools?.name || "-"}</td>
+                        <td style={{ textTransform: "capitalize" }}>{inv.phase}</td>
+                        <td>{inv.submitted_by}</td>
                         <td>
-                          <Badge variant={inv.status === 'completed' ? 'success' : 'warning'}>
-                            {inv.status}
-                          </Badge>
+                          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                            {inv.intervention_tag_links?.slice(0, 2).map((tl, i) => (
+                              <Badge key={i} variant="default">{tl.intervention_tags.name}</Badge>
+                            ))}
+                            {(inv.intervention_tag_links?.length || 0) > 2 && <Badge variant="default">+{inv.intervention_tag_links!.length - 2}</Badge>}
+                          </div>
                         </td>
                         <td>
                           <button onClick={() => setSelectedDetail(inv)} className="action-btn-text" style={{ color: "#0874aa" }}>
@@ -149,32 +151,37 @@ export default function PenelitiIntervensiClient({
             </h2>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
               <div>
-                <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: 0 }}>Siswa</p>
-                <p style={{ fontWeight: 600, margin: 0 }}>{selectedDetail.student?.full_name}</p>
+                <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: 0 }}>Sekolah</p>
+                <p style={{ fontWeight: 600, margin: 0 }}>{selectedDetail.schools?.name}</p>
               </div>
               <div>
-                <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: 0 }}>Komunitas / Sekolah</p>
+                <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: 0 }}>Fase / Waktu</p>
                 <p style={{ fontWeight: 600, margin: 0 }}>
-                  {selectedDetail.school?.communities?.name} / {selectedDetail.school?.name}
+                  {selectedDetail.phase} / {formatDate(selectedDetail.created_at)}
                 </p>
               </div>
             </div>
             
             <div style={{ marginBottom: "1rem" }}>
-              <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: 0 }}>Catatan Guru</p>
+              <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: 0 }}>Kondisi Awal</p>
               <div style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem" }}>
-                {selectedDetail.notes || <i>Tidak ada catatan</i>}
+                {selectedDetail.kondisi_awal || <i>Tidak ada data</i>}
               </div>
             </div>
 
-            {selectedDetail.ai_feedback && (
-              <div style={{ marginBottom: "1.5rem" }}>
-                <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: 0 }}>Analisis AI</p>
-                <div style={{ backgroundColor: "#eff6ff", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem", fontSize: "0.95rem" }}>
-                  <ReactMarkdown>{selectedDetail.ai_feedback}</ReactMarkdown>
-                </div>
+            <div style={{ marginBottom: "1rem" }}>
+              <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: 0 }}>Upaya Dilakukan</p>
+              <div style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem" }}>
+                {selectedDetail.upaya_dilakukan || <i>Tidak ada data</i>}
               </div>
-            )}
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: 0 }}>Perubahan Signifikan</p>
+              <div style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem" }}>
+                {selectedDetail.perubahan_signifikan || <i>Tidak ada data</i>}
+              </div>
+            </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid #e5e7eb", paddingTop: "1rem" }}>
               <Button onClick={() => setSelectedDetail(null)} variant="outline">Tutup</Button>

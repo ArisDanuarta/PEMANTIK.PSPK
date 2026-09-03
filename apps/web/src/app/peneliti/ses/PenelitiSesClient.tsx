@@ -3,8 +3,12 @@
 import React, { useMemo } from "react";
 import SebaranMapViewer from "@/app/super-admin/sebaran-ses/SebaranMapViewer";
 import {
-  ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ZAxis
+  ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ZAxis, TooltipProps
 } from 'recharts';
+
+export interface ProvinceStat { count: number; totalScore: number; avgScore: number; }
+export interface CityStat { count: number; avgScore: number; coordinates: [number, number] | null; districts: Array<{ name: string; count: number; avgScore: number }> }
+export interface CorrelationPoint { sesScore: number; assessScore: number; }
 
 export default function PenelitiSesClient({ 
   provinceStats, 
@@ -12,9 +16,9 @@ export default function PenelitiSesClient({
   correlationData,
   correlationCoef
 }: { 
-  provinceStats: any; 
-  cityStats: any;
-  correlationData: any[];
+  provinceStats: Record<string, ProvinceStat>; 
+  cityStats: Record<string, CityStat>;
+  correlationData: CorrelationPoint[];
   correlationCoef: number;
 }) {
 
@@ -110,7 +114,7 @@ export default function PenelitiSesClient({
               <ZAxis range={[40, 40]} />
               <Tooltip 
                 cursor={{ strokeDasharray: '3 3', stroke: '#94a3b8', strokeWidth: 1 }} 
-                content={({ active, payload }: any) => {
+                content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     return (
                       <div style={{

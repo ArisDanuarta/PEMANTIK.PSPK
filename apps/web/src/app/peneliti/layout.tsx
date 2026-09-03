@@ -1,5 +1,6 @@
 import AppLayout from "@/components/layout/AppLayout";
 import { createServerClient } from "@pemantik/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
 import type { NavSection } from "@/components/layout/Sidebar";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -44,12 +45,12 @@ export default async function PenelitiLayout({
     redirect("/login");
   }
 
-  const supabase = createServerClient();
+  const supabase = createServerClient() as SupabaseClient;
   const { data: { session } } = await supabase.auth.getSession();
   let userName = "Peneliti Nasional";
 
   if (session?.user?.id) {
-    const { data: userRecord } = await (supabase as any)
+    const { data: userRecord } = await supabase
       .from("users")
       .select("full_name, username")
       .eq("id", session.user.id)

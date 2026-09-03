@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { createServerClient } from "@pemantik/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
 import React from "react";
-import AnalisisKomparatifClient from "./AnalisisKomparatifClient";
+import AnalisisKomparatifClient, { KomparatifStats } from "./AnalisisKomparatifClient";
 
 export const metadata: Metadata = {
   title: "Analisis Komparatif",
@@ -11,26 +12,26 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function PenelitiAnalisisPage() {
-  const supabase = createServerClient();
-  let initialStats: any = null;
-  let communities: any[] = [];
+  const supabase = createServerClient() as SupabaseClient;
+  let initialStats: KomparatifStats | null = null;
+  let communities: Array<{ id: string; name: string }> = [];
   let uniqueProvinces: string[] = [];
 
   try {
     // 1. Get active communities for filter
-    const { data: comms } = await (supabase as any)
+    const { data: comms } = await supabase
       .from("communities")
       .select("id, name")
       .eq("is_sandbox", false);
     communities = comms || [];
 
     // 2. Get distinct provinces (from schools table since it's much faster than querying v_assessment_report)
-    const { data: provs } = await (supabase as any)
+    const { data: provs } = await supabase
       .from("schools")
       .select("province")
       .not("province", "is", null);
     
-    uniqueProvinces = Array.from(new Set(provs?.map((p: any) => p.province) || [])).sort() as string[];
+    uniqueProvinces = Array.from(new Set(provs?.map(p => p.province) || [])).sort();
     
     // 3. Fetch initial aggregated data via RPC Server Action
     const { fetchAnalisisKomparatifStats } = await import("@/app/actions/penelitiAnalisis");

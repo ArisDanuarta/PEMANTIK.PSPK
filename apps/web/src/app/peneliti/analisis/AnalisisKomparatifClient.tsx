@@ -6,20 +6,35 @@ import {
 } from 'recharts';
 import { fetchAnalisisKomparatifStats } from "@/app/actions/penelitiAnalisis";
 
+export interface KomparatifStats {
+  sesData: Array<{ name: string; RataRataSkor: number; TotalSiswa: number }>;
+  genderData: Array<{ name: string; RataRataSkor: number }>;
+  levelDistData: Array<{
+    community: string;
+    level0: number;
+    level1: number;
+    level2: number;
+    level3: number;
+    level4: number;
+    level5: number;
+    total: number;
+  }>;
+}
+
 export default function AnalisisKomparatifClient({ 
   initialStats, 
   communities,
   provinces 
 }: { 
-  initialStats: any; 
-  communities: any[];
+  initialStats: KomparatifStats | null; 
+  communities: Array<{ id: string; name: string }>;
   provinces: string[];
 }) {
   const [filterCommunity, setFilterCommunity] = useState("all");
   const [filterProv, setFilterProv] = useState("all");
   const [filterGender, setFilterGender] = useState("all");
 
-  const [stats, setStats] = useState<any>(initialStats || {
+  const [stats, setStats] = useState<KomparatifStats>(initialStats || {
     sesData: [],
     genderData: [],
     levelDistData: []
@@ -155,7 +170,7 @@ export default function AnalisisKomparatifClient({
               </tr>
             </thead>
             <tbody>
-              {levelDistData?.map((d: any, i: number) => (
+              {levelDistData?.map((d, i) => (
                 <tr key={i}>
                   <td style={{ fontWeight: 600, color: "#1f2937" }}>{d.community}</td>
                   <td style={{ textAlign: "center", backgroundColor: `rgba(220, 38, 38, ${d.total ? d.level0 / d.total : 0})` }}>{d.level0}</td>

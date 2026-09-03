@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createServerClient } from "@pemantik/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
 import React from "react";
 import PenelitiDashboardClient from "./PenelitiDashboardClient";
 
@@ -10,26 +11,38 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function PenelitiDashboardPage() {
-  const supabase = createServerClient();
+export interface DashboardStats {
+  totalStudents: number;
+  avgScoreTotal: number;
+  avgScoreLit: number;
+  avgScoreNum: number;
+  completionRate: number;
+  activeSchools: number;
+  topCommunities: Array<{ name: string; avgScore: number }>;
+  monthlyTrend: Array<{ month: string; avgScore: number }>;
+  levelDistribution: Array<{ level: string; count: number }>;
+}
 
-  let data = {
+export default async function PenelitiDashboardPage() {
+  const supabase = createServerClient() as SupabaseClient;
+
+  let data: DashboardStats = {
     totalStudents: 0,
     avgScoreTotal: 0,
     avgScoreLit: 0,
     avgScoreNum: 0,
     completionRate: 0,
     activeSchools: 0,
-    topCommunities: [] as any[],
-    monthlyTrend: [] as any[],
-    levelDistribution: [] as any[]
+    topCommunities: [],
+    monthlyTrend: [],
+    levelDistribution: []
   };
 
   try {
-    const { data: rpcData, error } = await (supabase as any).rpc('get_peneliti_dashboard_stats');
+    const { data: rpcData, error } = await supabase.rpc('get_peneliti_dashboard_stats');
     if (error) throw error;
     if (rpcData && typeof rpcData === 'object') {
-      data = { ...data, ...(rpcData as any) };
+      data = { ...data, ...(rpcData as DashboardStats) };
     }
   } catch (err) {
     console.error("Gagal mengambil data dashboard peneliti:", err);

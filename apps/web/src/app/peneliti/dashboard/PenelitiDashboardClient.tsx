@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
+import { DashboardStats } from "./page";
 
-export default function PenelitiDashboardClient({ data }: { data: any }) {
+export default function PenelitiDashboardClient({ data }: { data: DashboardStats }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
       {/* ── KPI CARDS ── */}
@@ -44,7 +45,7 @@ export default function PenelitiDashboardClient({ data }: { data: any }) {
             Top 5 Komunitas (Rata-rata Skor Tertinggi)
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            {data.topCommunities.map((c: any, i: number) => (
+            {data.topCommunities.map((c, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "0.75rem", borderBottom: i !== data.topCommunities.length - 1 ? "1px solid #e5e7eb" : "none" }}>
                 <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
                   <div style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: "#e0f2fe", color: "#0369a1", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.8rem", fontWeight: 700 }}>
@@ -67,8 +68,8 @@ export default function PenelitiDashboardClient({ data }: { data: any }) {
             Distribusi Level Nasional
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {data.levelDistribution.map((l: any, i: number) => {
-              const maxCount = Math.max(...data.levelDistribution.map((d: any) => d.count));
+            {data.levelDistribution.map((l, i) => {
+              const maxCount = Math.max(...data.levelDistribution.map((d) => d.count));
               const pct = (l.count / maxCount) * 100;
               return (
                 <div key={i}>
