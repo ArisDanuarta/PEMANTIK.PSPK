@@ -15,23 +15,23 @@ BEGIN
       AND session_status = 'completed'
       AND (p_community_id = 'all' OR (community_id)::text = p_community_id)
       AND (p_province = 'all' OR province = p_province)
-      AND (p_gender = 'all' OR gender = p_gender)
+      AND (p_gender = 'all' OR gender::text = p_gender)
   ),
   ses_agg AS (
     SELECT 
-      COALESCE(ses_class, 'Tidak Diketahui') AS name,
-      AVG(final_score) AS "RataRataSkor",
+      COALESCE(ses_class::text, 'Tidak Diketahui') AS name,
+      ROUND(AVG(final_score)::numeric, 2) AS "RataRataSkor",
       COUNT(*) AS "JumlahSiswa"
     FROM filtered_sessions
     GROUP BY 1
   ),
   gender_agg AS (
     SELECT 
-      CASE WHEN gender = 'L' THEN 'Laki-laki' WHEN gender = 'P' THEN 'Perempuan' ELSE 'Tidak Diketahui' END AS name,
-      AVG(final_score) AS "RataRataSkor",
+      CASE WHEN gender::text = 'L' THEN 'Laki-laki' WHEN gender::text = 'P' THEN 'Perempuan' ELSE 'Tidak Diketahui' END AS name,
+      ROUND(AVG(final_score)::numeric, 2) AS "RataRataSkor",
       COUNT(*) AS "Jumlah"
     FROM filtered_sessions
-    WHERE gender IN ('L', 'P')
+    WHERE gender::text IN ('L', 'P')
     GROUP BY 1
   ),
   level_agg AS (

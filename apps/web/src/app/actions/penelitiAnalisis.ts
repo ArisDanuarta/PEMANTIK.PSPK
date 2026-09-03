@@ -16,7 +16,7 @@ export async function fetchAnalisisKomparatifStats(
     });
 
     if (error) {
-      console.error("RPC Error (get_peneliti_komparatif_stats):", error);
+      console.error("RPC Error (get_peneliti_komparatif_stats):", JSON.stringify(error, null, 2));
       return { success: false, error: "Gagal mengambil data agregasi analisis komparatif." };
     }
 
