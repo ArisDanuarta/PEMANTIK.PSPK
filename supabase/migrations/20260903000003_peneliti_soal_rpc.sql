@@ -12,7 +12,8 @@ BEGIN
     SELECT 
       sa.question_id,
       COUNT(*) AS total_answers,
-      COUNT(*) FILTER (WHERE sa.is_correct = true) AS correct_answers
+      COUNT(*) FILTER (WHERE sa.is_correct = true) AS correct_answers,
+      COALESCE(AVG(sa.time_spent_sec), 0) AS avg_time_sec
     FROM student_answers sa
     JOIN valid_sessions vs ON sa.session_id = vs.session_id
     GROUP BY sa.question_id
@@ -29,7 +30,7 @@ BEGIN
       CASE WHEN a.total_answers > 0 
            THEN ROUND((a.correct_answers::numeric / a.total_answers::numeric) * 100, 2) 
            ELSE 0 END AS success_rate,
-      0 AS avg_time
+      ROUND(a.avg_time_sec::numeric, 2) AS avg_time
     FROM answers_agg a
     JOIN questions q ON a.question_id = q.id
     LEFT JOIN question_levels ql ON q.level_id = ql.id
