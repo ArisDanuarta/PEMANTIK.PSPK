@@ -14,6 +14,7 @@ interface SearchableSelectProps {
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 export default function SearchableSelect({ 
@@ -22,7 +23,8 @@ export default function SearchableSelect({
   required = false, 
   value, 
   onChange, 
-  placeholder = "Pilih..." 
+  placeholder = "Pilih...",
+  disabled = false
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -42,16 +44,16 @@ export default function SearchableSelect({
   const filteredOptions = options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
+    <div ref={containerRef} style={{ position: "relative", width: "100%", opacity: disabled ? 0.6 : 1, pointerEvents: disabled ? "none" : "auto" }}>
       {/* Hidden input to hold the actual value for the form submission */}
       <input type="hidden" name={name} value={value || ""} required={required} />
       
       <div 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => { if (!disabled) setIsOpen(!isOpen); }}
         style={{ 
           display: "flex", justifyContent: "space-between", alignItems: "center",
           padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.375rem",
-          cursor: "pointer", backgroundColor: "#fff", minHeight: "38px", width: "100%"
+          cursor: disabled ? "not-allowed" : "pointer", backgroundColor: disabled ? "#f3f4f6" : "#fff", minHeight: "38px", width: "100%"
         }}
       >
         <span style={{ color: selectedOption ? "inherit" : "#6b7280", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>

@@ -70,15 +70,15 @@ export default function SuperAdminReportDashboard({
   useEffect(() => {
     setSelectedSchoolId("all");
     setSchools([]);
-    if (!selectedCommunityId || selectedCommunityId === "all") return;
 
     const fetchSchools = async () => {
-      const { data } = await supabase
-        .from("schools")
-        .select("id, name")
-        .eq("community_id", selectedCommunityId)
-        .eq("is_active", true)
-        .order("name");
+      let query = supabase.from("schools").select("id, name").eq("is_active", true).order("name");
+      
+      if (selectedCommunityId && selectedCommunityId !== "all") {
+        query = query.eq("community_id", selectedCommunityId);
+      }
+
+      const { data } = await query;
       if (data) setSchools(data);
     };
     fetchSchools();
@@ -236,52 +236,44 @@ export default function SuperAdminReportDashboard({
             <label className="form-label" style={{ display: "block", marginBottom: "0.5rem" }}>
               Filter Komunitas
             </label>
-            <select
-              className="form-input"
+            <SearchableSelect
+              name="community_id"
+              options={[{ value: "all", label: "Semua Komunitas" }, ...communities.map((c) => ({ value: c.id, label: c.name }))]}
               value={selectedCommunityId}
-              onChange={(e) => setSelectedCommunityId(e.target.value)}
+              onChange={setSelectedCommunityId}
+              placeholder="Semua Komunitas"
               disabled={!selectedPackageId || isLoadingData}
-            >
-              <option value="all">Semua Komunitas</option>
-              {communities.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div>
             <label className="form-label" style={{ display: "block", marginBottom: "0.5rem" }}>
               Filter Sekolah
             </label>
-            <select
-              className="form-input"
+            <SearchableSelect
+              name="school_id"
+              options={[{ value: "all", label: "Semua Sekolah" }, ...schools.map((s) => ({ value: s.id, label: s.name }))]}
               value={selectedSchoolId}
-              onChange={(e) => setSelectedSchoolId(e.target.value)}
-              disabled={!selectedPackageId || isLoadingData || selectedCommunityId === "all"}
-            >
-              <option value="all">Semua Sekolah</option>
-              {schools.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedSchoolId}
+              placeholder="Semua Sekolah"
+              disabled={!selectedPackageId || isLoadingData}
+            />
           </div>
           <div>
             <label className="form-label" style={{ display: "block", marginBottom: "0.5rem" }}>
               Filter Gender
             </label>
-            <select
-              className="form-input"
+            <SearchableSelect
+              name="gender"
+              options={[
+                { value: "all", label: "Semua Gender" },
+                { value: "L", label: "Laki-laki (L)" },
+                { value: "P", label: "Perempuan (P)" },
+              ]}
               value={selectedGender}
-              onChange={(e) => setSelectedGender(e.target.value)}
+              onChange={setSelectedGender}
+              placeholder="Semua Gender"
               disabled={!selectedPackageId || isLoadingData}
-            >
-              <option value="all">Semua Gender</option>
-              <option value="L">Laki-laki (L)</option>
-              <option value="P">Perempuan (P)</option>
-            </select>
+            />
           </div>
           <div>
             <label className="form-label" style={{ display: "block", marginBottom: "0.5rem" }}>
