@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import React from "react";
 import PenelitiIntervensiClient from "./PenelitiIntervensiClient";
 import { getAllInterventionsGlobal } from "@/app/actions/interventions";
-import { getLatestAiKnowledgeGraph } from "@/app/actions/geminiGraph";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +13,6 @@ export const metadata: Metadata = {
 export default async function PenelitiIntervensiPage() {
   const resList = await getAllInterventionsGlobal();
   const interventions = resList.success ? (resList.data || []) : [];
-
-  const nodes: any[] = [];
-  const edges: any[] = [];
-  const aiGraphRes = await getLatestAiKnowledgeGraph();
 
   return (
     <div className="animate-fade-in">
@@ -36,9 +31,6 @@ export default async function PenelitiIntervensiPage() {
 
       <PenelitiIntervensiClient
         initialInterventions={interventions}
-        graphNodes={nodes}
-        graphEdges={edges}
-        aiGraph={aiGraphRes.success ? aiGraphRes : null}
       />
     </div>
   );

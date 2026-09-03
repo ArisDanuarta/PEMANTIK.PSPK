@@ -2,15 +2,12 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Badge, Button } from "@pemantik/ui";
-import RawInterventionGraph from "@/components/shared/RawInterventionGraph";
+import InterventionGraph from "@/components/shared/InterventionGraph";
 import ReactMarkdown from "react-markdown";
 import { getGlobalInterventionGraph } from "@/app/actions/interventions";
 
 interface PenelitiIntervensiClientProps {
   initialInterventions: any[];
-  graphNodes: any[];
-  graphEdges: any[];
-  aiGraph: any | null;
 }
 
 function formatDate(iso: string) {
@@ -24,15 +21,10 @@ function formatDate(iso: string) {
 
 export default function PenelitiIntervensiClient({
   initialInterventions,
-  graphNodes,
-  graphEdges,
-  aiGraph,
 }: PenelitiIntervensiClientProps) {
   const [activeTab, setActiveTab] = useState<"list" | "ai_graph">("ai_graph");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
-  
-  const [showAiGraphModal, setShowAiGraphModal] = useState(false);
 
   // Filter interventions
   const filtered = initialInterventions.filter(inv => 
@@ -77,44 +69,8 @@ export default function PenelitiIntervensiClient({
         </div>
 
         {activeTab === "ai_graph" && (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <div>
-                <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: "#102e50", margin: 0 }}>AI Knowledge Graph</h2>
-                <p style={{ color: "#4b5563", fontSize: "0.85rem", marginTop: "0.25rem" }}>
-                  Visualisasi hubungan antar konsep berdasarkan analisis Gemini AI dari data intervensi dan asesmen.
-                </p>
-              </div>
-              <Button onClick={() => setShowAiGraphModal(true)} style={{ backgroundColor: "#0874aa", color: "white" }}>
-                Lihat Full Graph
-              </Button>
-            </div>
-
-            {aiGraph && aiGraph.nodes && aiGraph.nodes.length > 0 ? (
-              <div style={{ border: "1px solid #e5e7eb", borderRadius: "0.5rem", padding: "1rem", height: "500px" }}>
-                <RawInterventionGraph initialNodes={aiGraph.nodes} initialEdges={aiGraph.edges} />
-              </div>
-            ) : (
-              <div style={{ textAlign: "center", padding: "3rem", border: "1px dashed #d1d5db", borderRadius: "0.5rem", color: "#6b7280" }}>
-                Belum ada data AI Knowledge Graph yang digenerate oleh Super Admin.
-              </div>
-            )}
-
-            {showAiGraphModal && aiGraph && (
-              <div style={{
-                position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-                backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1000,
-                display: "flex", flexDirection: "column"
-              }}>
-                <div style={{ backgroundColor: "white", padding: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "#102e50", margin: 0 }}>Knowledge Graph Intervensi Nasional</h2>
-                  <Button variant="outline" onClick={() => setShowAiGraphModal(false)}>Tutup (X)</Button>
-                </div>
-                <div style={{ flex: 1, backgroundColor: "#f8fafc" }}>
-                  <RawInterventionGraph initialNodes={aiGraph.nodes} initialEdges={aiGraph.edges} />
-                </div>
-              </div>
-            )}
+          <div style={{ backgroundColor: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #f1f3f5", minHeight: "780px" }}>
+            <InterventionGraph />
           </div>
         )}
 
