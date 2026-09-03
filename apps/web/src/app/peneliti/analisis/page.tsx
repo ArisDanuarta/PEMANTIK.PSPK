@@ -12,29 +12,33 @@ export const dynamic = "force-dynamic";
 
 export default async function PenelitiAnalisisPage() {
   const supabase = createServerClient();
-  let rawData: any[] = [];
+  let initialStats: any = null;
   let communities: any[] = [];
+  let uniqueProvinces: string[] = [];
 
   try {
-    // Get active communities for filter
+    // 1. Get active communities for filter
     const { data: comms } = await (supabase as any)
       .from("communities")
       .select("id, name")
       .eq("is_sandbox", false);
     communities = comms || [];
-    const validCommIds = communities.map((c: any) => c.id);
 
-    // 1. Get base report data for comparative analysis
-    const { data: rs } = await (supabase as any)
-      .from("v_assessment_report")
-      .select("student_id, session_id, school_id, community_id, community_name, session_status, final_score, final_level_number, completed_at, category_id, gender, ses_class, school_name, province, city")
-      .eq("session_status", "completed")
-      .not("session_id", "is", null)
-      .in("community_id", validCommIds);
+    // 2. Get distinct provinces (from schools table since it's much faster than querying v_assessment_report)
+    const { data: provs } = await (supabase as any)
+      .from("schools")
+      .select("province")
+      .not("province", "is", null);
+    
+    uniqueProvinces = Array.from(new Set(provs?.map((p: any) => p.province) || [])).sort() as string[];
+    
+    // 3. Fetch initial aggregated data via RPC Server Action
+    const { fetchAnalisisKomparatifStats } = await import("@/app/actions/penelitiAnalisis");
+    const result = await fetchAnalisisKomparatifStats('all', 'all', 'all');
+    if (result.success) {
+      initialStats = result.data;
+    }
 
-    rawData = rs || [];
-
-    // The active communities were already fetched at the start of the try block.
   } catch (err) {
     console.error("Failed to load data for comparative analysis", err);
   }
@@ -54,7 +58,11 @@ export default async function PenelitiAnalisisPage() {
         </div>
       </div>
 
-      <AnalisisKomparatifClient initialData={rawData} communities={communities} />
+      <AnalisisKomparatifClient 
+        initialStats={initialStats} 
+        communities={communities} 
+        provinces={uniqueProvinces as string[]} 
+      />
     </div>
   );
 }

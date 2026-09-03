@@ -1,81 +1,65 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  ScatterChart, Scatter, ZAxis
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { fetchAnalisisKomparatifStats } from "@/app/actions/penelitiAnalisis";
 
-export default function AnalisisKomparatifClient({ initialData, communities }: { initialData: any[], communities: any[] }) {
+export default function AnalisisKomparatifClient({ 
+  initialStats, 
+  communities,
+  provinces 
+}: { 
+  initialStats: any; 
+  communities: any[];
+  provinces: string[];
+}) {
   const [filterCommunity, setFilterCommunity] = useState("all");
   const [filterProv, setFilterProv] = useState("all");
   const [filterGender, setFilterGender] = useState("all");
 
-  const provinces = useMemo(() => {
-    const provs = new Set(initialData.map(d => d.province).filter(Boolean));
-    return Array.from(provs).sort();
-  }, [initialData]);
+  const [stats, setStats] = useState<any>(initialStats || {
+    sesData: [],
+    genderData: [],
+    levelDistData: []
+  });
+  const [loading, setLoading] = useState(false);
 
   // Apply Filters
-  const filteredData = useMemo(() => {
-    return initialData.filter(d => {
-      const commMatch = filterCommunity === "all" || d.community_id === filterCommunity;
-      const provMatch = filterProv === "all" || d.province === filterProv;
-      const genderMatch = filterGender === "all" || d.gender === filterGender;
-      return commMatch && provMatch && genderMatch;
-    });
-  }, [initialData, filterCommunity, filterProv, filterGender]);
+  useEffect(() => {
+    let isMounted = true;
+    const loadStats = async () => {
+      setLoading(true);
+      try {
+        const res = await fetchAnalisisKomparatifStats(filterCommunity, filterProv, filterGender);
+        if (res.success && isMounted) {
+          setStats(res.data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    
+    // We already have initialStats for 'all', so only refetch if not initial
+    if (filterCommunity !== 'all' || filterProv !== 'all' || filterGender !== 'all') {
+      loadStats();
+    } else {
+      if (initialStats) setStats(initialStats);
+    }
+    
+    return () => { isMounted = false; };
+  }, [filterCommunity, filterProv, filterGender, initialStats]);
 
-  // Data for SES vs Score Bar Chart
-  const sesData = useMemo(() => {
-    const map = new Map();
-    filteredData.forEach(d => {
-      const ses = d.ses_class || "Tidak Diketahui";
-      if (!map.has(ses)) map.set(ses, { name: ses, totalScore: 0, count: 0 });
-      const item = map.get(ses);
-      item.totalScore += d.final_score || 0;
-      item.count += 1;
-    });
-    return Array.from(map.values()).map(v => ({
-      name: v.name,
-      RataRataSkor: parseFloat((v.totalScore / v.count).toFixed(2)),
-      JumlahSiswa: v.count
-    })).sort((a,b) => {
-      // Custom sort for SES class: Atas, Menengah, Bawah
-      const order: Record<string, number> = { "atas": 3, "menengah": 2, "bawah": 1, "Tidak Diketahui": 0 };
-      return (order[b.name.toLowerCase()] || 0) - (order[a.name.toLowerCase()] || 0);
-    });
-  }, [filteredData]);
+  const { sesData, genderData, levelDistData } = stats;
 
-  // Data for Gender Gap (L vs P) per Level or Overall
-  const genderData = useMemo(() => {
-    let mScore = 0, mCount = 0;
-    let fScore = 0, fCount = 0;
-
-    filteredData.forEach(d => {
-      if (d.gender === 'L') { mScore += (d.final_score || 0); mCount++; }
-      else if (d.gender === 'P') { fScore += (d.final_score || 0); fCount++; }
-    });
-
-    return [
-      { name: "Laki-laki", RataRataSkor: mCount ? parseFloat((mScore / mCount).toFixed(2)) : 0, Jumlah: mCount },
-      { name: "Perempuan", RataRataSkor: fCount ? parseFloat((fScore / fCount).toFixed(2)) : 0, Jumlah: fCount }
-    ];
-  }, [filteredData]);
-
-  // Distribusi Level per Komunitas (Heatmap/Table Data)
-  const levelDistData = useMemo(() => {
-    const map = new Map();
-    filteredData.forEach(d => {
-      const c = d.community_name || 'Tidak Diketahui';
-      const lvl = d.final_level_number || 0;
-      if (!map.has(c)) map.set(c, { community: c, level0: 0, level1: 0, level2: 0, level3: 0, level4: 0, level5: 0, total: 0 });
-      const item = map.get(c);
-      item[`level${lvl}`] = (item[`level${lvl}`] || 0) + 1;
-      item.total += 1;
-    });
-    return Array.from(map.values()).sort((a,b) => b.total - a.total).slice(0, 10); // Top 10
-  }, [filteredData]);
+  // Custom sort for SES Data
+  const sortedSesData = [...(sesData || [])].sort((a,b) => {
+    const order: Record<string, number> = { "atas": 3, "menengah": 2, "bawah": 1, "tidak diketahui": 0 };
+    return (order[b.name.toLowerCase()] || 0) - (order[a.name.toLowerCase()] || 0);
+  });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
@@ -108,9 +92,10 @@ export default function AnalisisKomparatifClient({ initialData, communities }: {
             </select>
           </div>
         </div>
+        {loading && <div style={{ marginTop: "1rem", color: "#0874aa", fontSize: "0.9rem" }}>Memuat data...</div>}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "1.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "1.5rem", opacity: loading ? 0.5 : 1, transition: "opacity 0.2s" }}>
         {/* ── CHART 1: SES vs Skor ── */}
         <div className="card" style={{ padding: "1.5rem" }}>
           <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: "#102e50", marginBottom: "1rem" }}>
@@ -118,7 +103,7 @@ export default function AnalisisKomparatifClient({ initialData, communities }: {
           </h2>
           <div style={{ width: "100%", height: 300 }}>
             <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
-              <BarChart data={sesData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+              <BarChart data={sortedSesData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} />
                 <YAxis axisLine={false} tickLine={false} />
@@ -151,7 +136,7 @@ export default function AnalisisKomparatifClient({ initialData, communities }: {
       </div>
 
       {/* ── TABLE: Distribusi Level per Komunitas ── */}
-      <div className="card" style={{ padding: "1.5rem" }}>
+      <div className="card" style={{ padding: "1.5rem", opacity: loading ? 0.5 : 1, transition: "opacity 0.2s" }}>
         <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: "#102e50", marginBottom: "1.25rem" }}>
           Heatmap Pencapaian Level per Komunitas (Top 10)
         </h2>
@@ -170,15 +155,15 @@ export default function AnalisisKomparatifClient({ initialData, communities }: {
               </tr>
             </thead>
             <tbody>
-              {levelDistData.map((d, i) => (
+              {levelDistData?.map((d: any, i: number) => (
                 <tr key={i}>
                   <td style={{ fontWeight: 600, color: "#1f2937" }}>{d.community}</td>
-                  <td style={{ textAlign: "center", backgroundColor: `rgba(220, 38, 38, ${d.level0 / d.total})` }}>{d.level0}</td>
-                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.level1 / d.total})` }}>{d.level1}</td>
-                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.level2 / d.total})` }}>{d.level2}</td>
-                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.level3 / d.total})` }}>{d.level3}</td>
-                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.level4 / d.total})` }}>{d.level4}</td>
-                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.level5 / d.total})` }}>{d.level5}</td>
+                  <td style={{ textAlign: "center", backgroundColor: `rgba(220, 38, 38, ${d.total ? d.level0 / d.total : 0})` }}>{d.level0}</td>
+                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.total ? d.level1 / d.total : 0})` }}>{d.level1}</td>
+                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.total ? d.level2 / d.total : 0})` }}>{d.level2}</td>
+                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.total ? d.level3 / d.total : 0})` }}>{d.level3}</td>
+                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.total ? d.level4 / d.total : 0})` }}>{d.level4}</td>
+                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.total ? d.level5 / d.total : 0})` }}>{d.level5}</td>
                   <td style={{ textAlign: "center", fontWeight: 600 }}>{d.total}</td>
                 </tr>
               ))}
