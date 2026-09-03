@@ -41,11 +41,13 @@ interface Option {
 interface SuperAdminReportDashboardProps {
   communities: Option[];
   packages: Option[];
+  schools: (Option & { community_id: string | null })[];
 }
 
 export default function SuperAdminReportDashboard({
   communities,
   packages,
+  schools,
 }: SuperAdminReportDashboardProps) {
   const [selectedPackageId, setSelectedPackageId] = useState<string>("all");
   const [selectedCommunityId, setSelectedCommunityId] = useState<string>("all");
@@ -55,7 +57,6 @@ export default function SuperAdminReportDashboard({
   const [isExporting, setIsExporting] = useState(false);
   const [reportData, setReportData] = useState<ReportData[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
-  const [schools, setSchools] = useState<Option[]>([]);
   
   // Pagination & Stats State
   const [page, setPage] = useState(1);
@@ -67,22 +68,13 @@ export default function SuperAdminReportDashboard({
   const supabase = createBrowserClient();
 
   // Load schools when community changes
+  const filteredSchools = useMemo(() => {
+    if (!selectedCommunityId || selectedCommunityId === "all") return schools;
+    return schools.filter(s => s.community_id === selectedCommunityId);
+  }, [schools, selectedCommunityId]);
+
   useEffect(() => {
     setSelectedSchoolId("all");
-    setSchools([]);
-
-    const fetchSchools = async () => {
-      let query = supabase.from("schools").select("id, name").eq("is_active", true).order("name");
-      
-      if (selectedCommunityId && selectedCommunityId !== "all") {
-        query = query.eq("community_id", selectedCommunityId);
-      }
-
-      const { data } = await query;
-      if (data) setSchools(data);
-    };
-    fetchSchools();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCommunityId]);
 
   // --- Reset page when filters change ---
@@ -251,7 +243,7 @@ export default function SuperAdminReportDashboard({
             </label>
             <SearchableSelect
               name="school_id"
-              options={[{ value: "all", label: "Semua Sekolah" }, ...schools.map((s) => ({ value: s.id, label: s.name }))]}
+              options={[{ value: "all", label: "Semua Sekolah" }, ...filteredSchools.map((s) => ({ value: s.id, label: s.name }))]}
               value={selectedSchoolId}
               onChange={setSelectedSchoolId}
               placeholder="Semua Sekolah"

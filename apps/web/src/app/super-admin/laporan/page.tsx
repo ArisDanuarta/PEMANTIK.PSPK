@@ -23,6 +23,7 @@ export default async function SuperAdminLaporanPage() {
 
   let communities: { id: string; name: string }[] = [];
   let packages: { id: string; name: string }[] = [];
+  let schools: { id: string; name: string; community_id: string | null }[] = [];
 
   try {
     // 1. Dapatkan daftar komunitas
@@ -39,6 +40,14 @@ export default async function SuperAdminLaporanPage() {
       .select("id, name")
       .order("name", { ascending: true });
     packages = catData ?? [];
+
+    // 3. Dapatkan semua sekolah aktif
+    const { data: schoolData } = await supabase
+      .from("schools")
+      .select("id, name, community_id")
+      .eq("is_active", true)
+      .order("name", { ascending: true });
+    schools = schoolData ?? [];
 
   } catch (err) {
     console.error("Unexpected error loading super admin reports:", err);
@@ -60,6 +69,7 @@ export default async function SuperAdminLaporanPage() {
       <SuperAdminReportDashboard
         communities={communities}
         packages={packages}
+        schools={schools}
       />
     </div>
   );

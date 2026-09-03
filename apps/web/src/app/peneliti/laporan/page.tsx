@@ -23,6 +23,7 @@ export default async function PenelitiLaporanPage() {
 
   let communities: { id: string; name: string }[] = [];
   let packages: { id: string; name: string }[] = [];
+  let schools: { id: string; name: string; community_id: string | null }[] = [];
 
   try {
     const { data: commData } = await supabase
@@ -37,6 +38,14 @@ export default async function PenelitiLaporanPage() {
       .select("id, name")
       .order("name", { ascending: true });
     packages = catData ?? [];
+
+    const { data: schoolData } = await supabase
+      .from("schools")
+      .select("id, name, community_id")
+      .eq("is_active", true)
+      .order("name", { ascending: true });
+    schools = schoolData ?? [];
+
 
   } catch (err) {
     console.error("Unexpected error loading peneliti reports:", err);
@@ -60,6 +69,7 @@ export default async function PenelitiLaporanPage() {
       <SuperAdminReportDashboard
         communities={communities}
         packages={packages}
+        schools={schools}
       />
     </div>
   );
