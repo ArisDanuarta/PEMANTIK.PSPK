@@ -9,11 +9,13 @@ import {
 export default function PenelitiSesClient({ 
   provinceStats, 
   cityStats, 
-  correlationData 
+  correlationData,
+  correlationCoef
 }: { 
   provinceStats: any; 
   cityStats: any;
   correlationData: any[];
+  correlationCoef: number;
 }) {
 
   // For scatter plot, we might want to sample if data is huge, but recharts can handle a few thousand.
@@ -23,28 +25,6 @@ export default function PenelitiSesClient({
       return correlationData.slice(0, 2000);
     }
     return correlationData;
-  }, [correlationData]);
-
-  // Calculate correlation coefficient (Pearson's r)
-  const correlationCoef = useMemo(() => {
-    if (correlationData.length < 2) return 0;
-    
-    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
-    const n = correlationData.length;
-
-    correlationData.forEach(d => {
-      sumX += d.sesScore;
-      sumY += d.assessScore;
-      sumXY += (d.sesScore * d.assessScore);
-      sumX2 += (d.sesScore * d.sesScore);
-      sumY2 += (d.assessScore * d.assessScore);
-    });
-
-    const numerator = (n * sumXY) - (sumX * sumY);
-    const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-    
-    if (denominator === 0) return 0;
-    return numerator / denominator;
   }, [correlationData]);
 
   return (

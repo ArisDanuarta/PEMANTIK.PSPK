@@ -12,103 +12,58 @@ export const dynamic = "force-dynamic";
 
 export default async function PenelitiSesPage() {
   const supabase = createServerClient();
-  let studentData: any[] = [];
-  let assessmentData: any[] = [];
+  let provinceStats: Record<string, any> = {};
+  let cityStats: Record<string, any> = {};
+  let correlationData: any[] = [];
+  let correlationCoef = 0;
 
   try {
-    // We fetch students for the map
-    const { data: stData } = await (supabase as any)
-      .from("students")
-      .select("id, city, district, province, ses_score, ses_class, father_education_id, mother_education_id, father_occupation_id, mother_occupation_id")
-      .not("province", "is", null);
-    studentData = stData || [];
-
-    const { data: comms } = await (supabase as any)
-      .from("communities")
-      .select("id")
-      .eq("is_sandbox", false);
-    const validCommIds = (comms || []).map((c: any) => c.id);
-
-    // And we fetch sessions for correlation analysis
-    const { data: rs } = await (supabase as any)
-      .from("v_assessment_report")
-      .select("student_id, final_score")
-      .eq("session_status", "completed")
-      .in("community_id", validCommIds);
-    assessmentData = rs || [];
-
-  } catch (err) {
-    console.error(err);
-  }
-
-  const cityStats: Record<string, any> = {};
-  
-  // Aggregate data by province
-  const provinceStats: Record<string, { count: number, totalScore: number, avgScore: number }> = {};
-  studentData.forEach(student => {
-    const prov = student.province.toUpperCase();
-    if (!provinceStats[prov]) provinceStats[prov] = { count: 0, totalScore: 0, avgScore: 0 };
-    provinceStats[prov].count += 1;
-    provinceStats[prov].totalScore += (student.ses_score || 0);
-  });
-
-  Object.keys(provinceStats).forEach(prov => {
-    if (provinceStats[prov].count > 0) {
-      provinceStats[prov].avgScore = provinceStats[prov].totalScore / provinceStats[prov].count;
-    }
-  });
-
-  // Aggregate by city for map regions
-  const cityAgg: Record<string, { count: number, totalScore: number, districts: Record<string, { count: number, totalScore: number }> }> = {};
-  studentData.forEach(student => {
-    if (!student.city) return;
-    let city = student.city.toUpperCase();
-    city = city.replace(/KABUPATEN|KAB\.|KOTA|ADMINISTRASI/ig, "").trim();
+    const { data, error } = await (supabase as any).rpc("get_peneliti_ses_stats");
     
-    if (!cityAgg[city]) cityAgg[city] = { count: 0, totalScore: 0, districts: {} };
-    cityAgg[city].count += 1;
-    cityAgg[city].totalScore += (student.ses_score || 0);
+    if (error) {
+      console.error("RPC Error (get_peneliti_ses_stats):", JSON.stringify(error, null, 2));
+    } else if (data && typeof data === 'object') {
+       // reconstruct provinceStats
+       (data.provinceStats || []).forEach((p: any) => {
+         provinceStats[p.province] = {
+           count: p.count,
+           totalScore: p.total_score,
+           avgScore: p.count > 0 ? p.total_score / p.count : 0
+         };
+       });
 
-    if (student.district) {
-      let district = student.district.toUpperCase();
-      district = district.replace(/KECAMATAN|KEC\./ig, "").trim();
-      if (!cityAgg[city].districts[district]) cityAgg[city].districts[district] = { count: 0, totalScore: 0 };
-      cityAgg[city].districts[district].count += 1;
-      cityAgg[city].districts[district].totalScore += (student.ses_score || 0);
+       // reconstruct cityStats
+       const cityAgg: Record<string, any> = {};
+       (data.cityStats || []).forEach((c: any) => {
+         if (!cityAgg[c.city]) cityAgg[c.city] = { count: 0, totalScore: 0, districts: {} };
+         cityAgg[c.city].count += c.count;
+         cityAgg[c.city].totalScore += c.total_score;
+         
+         if (c.district) {
+           cityAgg[c.city].districts[c.district] = {
+             count: c.count,
+             totalScore: c.total_score
+           };
+         }
+       });
+
+       for (const city of Object.keys(cityAgg)) {
+         const avgScore = cityAgg[city].count > 0 ? cityAgg[city].totalScore / cityAgg[city].count : 0;
+         const districtsList = Object.keys(cityAgg[city].districts).map(dName => ({
+           name: dName,
+           count: cityAgg[city].districts[dName].count,
+           avgScore: cityAgg[city].districts[dName].count > 0 ? cityAgg[city].districts[dName].totalScore / cityAgg[city].districts[dName].count : 0
+         })).sort((a, b) => b.count - a.count);
+
+         cityStats[city] = { count: cityAgg[city].count, avgScore, coordinates: null, districts: districtsList };
+       }
+
+       correlationData = data.correlationData || [];
+       correlationCoef = data.correlationCoef || 0;
     }
-  });
-
-  for (const city of Object.keys(cityAgg)) {
-    const avgScore = cityAgg[city].totalScore / cityAgg[city].count;
-    const districtsList = Object.keys(cityAgg[city].districts).map(dName => ({
-      name: dName,
-      count: cityAgg[city].districts[dName].count,
-      avgScore: cityAgg[city].districts[dName].totalScore / cityAgg[city].districts[dName].count
-    })).sort((a, b) => b.count - a.count);
-
-    cityStats[city] = { count: cityAgg[city].count, avgScore, coordinates: null, districts: districtsList };
+  } catch (err) {
+    console.error("Failed to load data for SES analysis", err);
   }
-
-  // Correlation prep
-  const studentScores = new Map();
-  assessmentData.forEach(a => {
-    // Average if multiple sessions
-    if (!studentScores.has(a.student_id)) {
-      studentScores.set(a.student_id, { sum: 0, count: 0 });
-    }
-    const rec = studentScores.get(a.student_id);
-    rec.sum += (a.final_score || 0);
-    rec.count += 1;
-  });
-
-  let correlationData = studentData.map(s => {
-    const avgAssessScore = studentScores.has(s.id) ? (studentScores.get(s.id).sum / studentScores.get(s.id).count) : null;
-    return {
-      sesScore: s.ses_score,
-      assessScore: avgAssessScore
-    }
-  }).filter(d => d.sesScore !== null && d.assessScore !== null);
-
 
   return (
     <div className="animate-fade-in" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -129,6 +84,7 @@ export default async function PenelitiSesPage() {
         provinceStats={provinceStats} 
         cityStats={cityStats} 
         correlationData={correlationData}
+        correlationCoef={correlationCoef}
       />
     </div>
   );
