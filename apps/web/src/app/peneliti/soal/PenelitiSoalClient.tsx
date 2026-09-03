@@ -4,6 +4,14 @@ import React, { useState, useMemo } from "react";
 import { Badge, Table } from "@pemantik/ui";
 import { QuestionStat } from "./page";
 
+function formatSeconds(seconds: number) {
+  if (isNaN(seconds) || seconds < 0) return "0s";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  if (mins > 0) return `${mins}m ${secs}s`;
+  return `${secs}s`;
+}
+
 export default function PenelitiSoalClient({ initialData }: { initialData: QuestionStat[] }) {
   const [filterSubject, setFilterSubject] = useState("all");
   const [sortOrder, setSortOrder] = useState<"easiest" | "hardest">("hardest");
@@ -39,7 +47,7 @@ export default function PenelitiSoalClient({ initialData }: { initialData: Quest
         </div>
       );
     } },
-    { key: "avg_time", label: "Rata-rata Waktu", render: (val: unknown) => <div style={{ textAlign: "center" }}>{((val as number) || 0).toFixed(1)}s</div> },
+    { key: "avg_time", label: "Rata-rata Waktu", render: (val: unknown) => <div style={{ textAlign: "center" }}>{formatSeconds((val as number) || 0)}</div> },
     { key: "difficulty", label: "Difficulty Index", render: (_: unknown, q: QuestionStat) => {
         const rate = q.success_rate || 0;
         let difficulty = "Sedang";
