@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import React from "react";
-import IntervensiSuperAdminClient from "@/app/super-admin/intervensi/IntervensiSuperAdminClient";
+import PenelitiIntervensiClient from "./PenelitiIntervensiClient";
 import { getAllInterventionsGlobal } from "@/app/actions/interventions";
 import { getLatestAiKnowledgeGraph } from "@/app/actions/geminiGraph";
-import { getSystemSettings } from "@/app/actions/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +19,6 @@ export default async function PenelitiIntervensiPage() {
   const edges: any[] = [];
   const aiGraphRes = await getLatestAiKnowledgeGraph();
 
-  const settingsRes = await getSystemSettings();
-  const hasGeminiKey = !!settingsRes.data?.gemini_api_key;
-
   return (
     <div className="animate-fade-in">
       <div className="page-header">
@@ -38,12 +34,11 @@ export default async function PenelitiIntervensiPage() {
         </div>
       </div>
 
-      <IntervensiSuperAdminClient
+      <PenelitiIntervensiClient
         initialInterventions={interventions}
         graphNodes={nodes}
         graphEdges={edges}
         aiGraph={aiGraphRes.success ? aiGraphRes : null}
-        hasGeminiKey={hasGeminiKey}
       />
     </div>
   );
