@@ -1,6 +1,8 @@
 import AppLayout from "@/components/layout/AppLayout";
 import { createServerClient } from "@pemantik/supabase";
 import type { NavSection } from "@/components/layout/Sidebar";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 const penelitiNav: NavSection[] = [
   {
@@ -35,6 +37,13 @@ export default async function PenelitiLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = await headers();
+  const userRole = headersList.get("x-user-role");
+
+  if (userRole !== "peneliti") {
+    redirect("/login");
+  }
+
   const supabase = createServerClient();
   const { data: { session } } = await supabase.auth.getSession();
   let userName = "Peneliti Nasional";
