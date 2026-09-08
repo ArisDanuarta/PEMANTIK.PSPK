@@ -525,7 +525,7 @@ export default function IntervensiSuperAdminClient({
             )}
             {isChatLoading && (
               <div style={{ alignSelf: "flex-start", backgroundColor: "white", padding: "1rem 1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", fontSize: "0.95rem", color: "#64748b", display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                <span className="animate-spin">⏳</span> Gemini sedang membaca {graphNodes.length} node data...
+                <span className="animate-spin">⏳</span> Gemini sedang membaca {globalNodes.length} node data...
               </div>
             )}
             <div ref={chatEndRef} />
