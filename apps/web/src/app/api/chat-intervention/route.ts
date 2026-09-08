@@ -18,14 +18,16 @@ export async function POST(req: Request) {
 
     const apiKey = settings.data.gemini_api_key;
     
+    const stripHtml = (html: string) => html ? html.replace(/<[^>]*>?/gm, '') : '';
+
     // Map data to reduce token size
     const textData = graphNodes.map((node: any, index: number) => {
       let nodeStr = `[Node ${index + 1}] ID: ${node.id}, Tipe: ${node.type}, Label: ${node.label}`;
       if (node.data) {
-        if (node.data.kondisi_awal) nodeStr += `\nKondisi Awal: ${node.data.kondisi_awal}`;
-        if (node.data.upaya_dilakukan) nodeStr += `\nUpaya Dilakukan: ${node.data.upaya_dilakukan}`;
-        if (node.data.perubahan_signifikan) nodeStr += `\nPerubahan Signifikan: ${node.data.perubahan_signifikan}`;
-        if (node.data.alasan_bermakna) nodeStr += `\nAlasan Bermakna: ${node.data.alasan_bermakna}`;
+        if (node.data.kondisi_awal) nodeStr += `\nKondisi Awal: ${stripHtml(node.data.kondisi_awal)}`;
+        if (node.data.upaya_dilakukan) nodeStr += `\nUpaya Dilakukan: ${stripHtml(node.data.upaya_dilakukan)}`;
+        if (node.data.perubahan_signifikan) nodeStr += `\nPerubahan Signifikan: ${stripHtml(node.data.perubahan_signifikan)}`;
+        if (node.data.alasan_bermakna) nodeStr += `\nAlasan Bermakna: ${stripHtml(node.data.alasan_bermakna)}`;
         if (node.data.phase) nodeStr += `\nFase: ${node.data.phase}`;
         if (node.data.submitter_role) nodeStr += `\nDisubmit oleh role: ${node.data.submitter_role}`;
       }
