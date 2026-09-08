@@ -1111,3 +1111,20 @@ video::-webkit-media-controls-current-time-display,
 video::-webkit-media-controls-time-remaining-display {
   display: none !important;
 }
+
+/* Quill Editor overrides */
+.ql-editor {
+  min-height: 120px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+.ql-container {
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  font-family: inherit;
+}
+.ql-toolbar {
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  background-color: #f8fafc;
+}

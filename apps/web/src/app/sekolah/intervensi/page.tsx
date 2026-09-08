@@ -37,7 +37,7 @@ export default async function SekolahIntervensiPage() {
 
   if (!isUnlocked) {
     return (
-      <div className="animate-fade-in" style={{ padding: "1rem 0" }}>
+      <div style={{ padding: "1rem 0" }}>
         <div className="page-header">
           <div className="page-header-left">
             <h1 className="page-title">Daftar Intervensi</h1>
@@ -116,7 +116,7 @@ export default async function SekolahIntervensiPage() {
   }
 
   return (
-    <div className="animate-fade-in">
+    <div >
       <div className="page-header">
         <div className="page-header-left">
           <h1 className="page-title">Daftar Intervensi</h1>

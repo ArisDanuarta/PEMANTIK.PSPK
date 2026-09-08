@@ -15,7 +15,7 @@ export default async function PenelitiIntervensiPage() {
   const interventions = resList.success ? (resList.data || []) : [];
 
   return (
-    <div className="animate-fade-in">
+    <div >
       <div className="page-header">
         <div className="page-header-left">
           <h1 className="page-title">Pola Intervensi &amp; Knowledge Graph Nasional</h1>

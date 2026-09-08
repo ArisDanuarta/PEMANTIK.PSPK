@@ -25,7 +25,7 @@ export default async function SuperAdminIntervensiPage() {
   const hasGeminiKey = !!settingsRes.data?.gemini_api_key;
 
   return (
-    <div className="animate-fade-in">
+    <div >
       <div className="page-header">
         <div className="page-header-left">
           <h1 className="page-title">Pusat Intervensi &amp; Knowledge Graph Global</h1>

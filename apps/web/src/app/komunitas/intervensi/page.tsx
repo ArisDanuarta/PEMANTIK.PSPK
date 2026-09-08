@@ -50,7 +50,7 @@ export default async function KomunitasIntervensiPage() {
 
   if (!hasUnlocked) {
     return (
-      <div className="animate-fade-in" style={{ padding: "2rem 0" }}>
+      <div style={{ padding: "2rem 0" }}>
         <div className="page-header">
           <div className="page-header-left">
             <h1 className="page-title">Form &amp; Laporan Intervensi</h1>
@@ -136,7 +136,7 @@ export default async function KomunitasIntervensiPage() {
   const edges = resGraph.success ? (resGraph.edges || []) : [];
 
   return (
-    <div className="animate-fade-in">
+    <div >
       <div className="page-header">
         <div className="page-header-left">
           <h1 className="page-title">Form &amp; Laporan Intervensi</h1>
