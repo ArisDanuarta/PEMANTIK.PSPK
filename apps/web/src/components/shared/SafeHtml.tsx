@@ -1,5 +1,5 @@
-import React from "react";
-import DOMPurify from "isomorphic-dompurify";
+import React, { useEffect, useState } from "react";
+import DOMPurify from "dompurify";
 
 interface SafeHtmlProps {
   html: string;
@@ -8,8 +8,16 @@ interface SafeHtmlProps {
 }
 
 export default function SafeHtml({ html, className, style }: SafeHtmlProps) {
-  const cleanHtml = DOMPurify.sanitize(html || "");
-  
+  const [cleanHtml, setCleanHtml] = useState("");
+
+  useEffect(() => {
+    setCleanHtml(DOMPurify.sanitize(html || ""));
+  }, [html]);
+
+  if (!cleanHtml) {
+    return <div className={className} style={style} />;
+  }
+
   return (
     <div
       className={className}
