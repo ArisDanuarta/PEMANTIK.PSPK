@@ -56,7 +56,10 @@ export async function createTeacherAction(
 
     const supabase = createServerClient();
 
-    const teacherCreds = generateTeacherCredentials(full_name, nip, birth_date);
+    // Dapatkan data sekolah untuk kredensial dan community_id
+    const { data: schoolData } = await supabase.from("schools").select("community_id, name").eq("id", school_id).single();
+    
+    const teacherCreds = generateTeacherCredentials(full_name, schoolData?.name || "Sekolah", nip, birth_date);
     const { username, password: generatedPassword } = teacherCreds;
     
     const adminEmail = email || `${username}@pemantik.local`;
@@ -75,8 +78,6 @@ export async function createTeacherAction(
       return { success: false, error: "Gagal membuat akun Auth guru: " + (authError?.message || "Unknown") };
     }
 
-    // Dapatkan community_id dari sekolah
-    const { data: schoolData } = await supabase.from("schools").select("community_id").eq("id", school_id).single();
     const community_id = schoolData?.community_id || authSchoolId; // fallback jika somehow gagal tapi role komunitas
 
     const { error: userError } = await (supabase as any).from("users").insert({
@@ -201,7 +202,7 @@ export async function bulkCreateTeachersAction(
 
       const birth_date_val = birth_date;
 
-      const bulkTeacherCreds = generateTeacherCredentials(full_name as string, nip, birth_date_val);
+      const bulkTeacherCreds = generateTeacherCredentials(full_name as string, schoolName, nip, birth_date_val);
       const { username, password: generatedPassword } = bulkTeacherCreds;
       
       const adminEmail = email || `${username}@pemantik.local`;
@@ -360,12 +361,13 @@ export async function resetTeacherPasswordAction(teacherId: string): Promise<Act
     // Ambil data guru untuk generate password kontekstual
     const { data: teacherData } = await supabase
       .from("users")
-      .select("username, full_name, nip, birth_date")
+      .select("username, full_name, nip, birth_date, schools(name)")
       .eq("id", teacherId)
       .maybeSingle();
 
     const creds = generateTeacherCredentials(
       (teacherData as any)?.full_name || "guru",
+      (teacherData as any)?.schools?.name || "Sekolah",
       (teacherData as any)?.nip || null,
       (teacherData as any)?.birth_date || null,
     );

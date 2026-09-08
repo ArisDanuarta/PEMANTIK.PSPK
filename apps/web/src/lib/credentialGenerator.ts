@@ -94,6 +94,7 @@ export interface TeacherCredentials {
 
 export function generateTeacherCredentials(
   fullName: string,
+  schoolName: string,
   nip?: string | null,
   birthDate?: string | null,
 ): TeacherCredentials {
@@ -102,8 +103,25 @@ export function generateTeacherCredentials(
   const userDigits = nipDigits.length >= 3 ? nipDigits.slice(-3) : randomDigits(3);
   const username = `${nameSeg}${userDigits}`;
 
-  // Password Guru: 6 digit acak sesuai instruksi
-  const password = randomDigits(6);
+  // Nama sekolah (kata pertama tanpa negeri)
+  const words = (schoolName || "").replace(/\bnegeri\b/gi, "").split(/\s+/).filter(w => w.length > 2);
+  const oneWordSchool = words.length > 0 ? alphanumLower(words[0]) : "sekolah";
+
+  // Ekstrak Tahun Lahir
+  let birthYear = "";
+  if (birthDate) {
+    const d = new Date(birthDate);
+    if (!isNaN(d.getTime())) {
+      birthYear = d.getFullYear().toString();
+    }
+  }
+  if (!birthYear) {
+    birthYear = "1234"; // Fallback
+  }
+
+  // Password Guru: Opsi 3 (Nama Depan + Kata Sekolah + Tahun Lahir)
+  const password = `${nameSeg}${oneWordSchool}${birthYear}`;
+  
   return { username, password };
 }
 
