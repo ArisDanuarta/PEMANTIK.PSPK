@@ -30,6 +30,10 @@ export default function IntervensiKomunitasClient({
   const [selectedStageForForm, setSelectedStageForForm] = useState<any | null>(null);
   const [selectedInterventionDetail, setSelectedInterventionDetail] = useState<any | null>(null);
 
+  const uniqueActiveStages = Array.from(
+    new Map(activeStages.map((st: any) => [`${st.school_id}-${st.phase}`, st])).values()
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
       {/* Top Bar / Header Action */}
@@ -47,10 +51,10 @@ export default function IntervensiKomunitasClient({
           </p>
         </div>
 
-        {activeStages.length > 0 && (
+        {uniqueActiveStages.length > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <span style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 600 }}>
-              {activeStages.length} Sekolah Siap Intervensi
+              {uniqueActiveStages.length} Sekolah Siap Intervensi
             </span>
           </div>
         )}
@@ -59,18 +63,18 @@ export default function IntervensiKomunitasClient({
       {/* Daftar Intervensi & Alert Sekolah Butuh Intervensi */}
       <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
         {/* Active Stages Need Intervention Alert / List */}
-        {activeStages.length > 0 && (
+        {uniqueActiveStages.length > 0 && (
           <div style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a", padding: "1.25rem 1.5rem", borderRadius: "1rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
               <h4 style={{ margin: 0, color: "#92400e", fontSize: "1.02rem" }}>
-                ⚠️ Tahap Intervensi Sedang Berlangsung ({activeStages.length} Sekolah)
+                ⚠️ Tahap Intervensi Sedang Berlangsung ({uniqueActiveStages.length} Sekolah)
               </h4>
               <span style={{ fontSize: "0.82rem", color: "#b45309" }}>
                 Sekolah-sekolah berikut telah menyelesaikan asesmen dan siap dicatat intervensinya.
               </span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "0.75rem" }}>
-              {activeStages.map((st) => {
+              {uniqueActiveStages.map((st: any) => {
                 const isSubmittedByUs = initialInterventions.some((i: any) => 
                   i.stage_id === st.id && 
                   (i.users?.role === 'community' || i.users?.role === 'super_admin')

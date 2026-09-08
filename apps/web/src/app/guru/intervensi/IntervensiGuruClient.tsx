@@ -31,6 +31,10 @@ export default function IntervensiGuruClient({
   const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
   const [selectedStageForForm, setSelectedStageForForm] = useState<any | null>(null);
 
+  const uniqueActiveStages = Array.from(
+    new Map(activeStages.map((st: any) => [st.phase, st])).values()
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
       {/* Top Bar Info */}
@@ -50,25 +54,25 @@ export default function IntervensiGuruClient({
         {activeStages.length > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <span style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 600 }}>
-              {activeStages.length} Tahap Siap Intervensi
+              {uniqueActiveStages.length} Tahap Siap Intervensi
             </span>
           </div>
         )}
       </div>
 
       {/* Daftar Tahap Intervensi Aktif */}
-      {activeStages.length > 0 && (
+      {uniqueActiveStages.length > 0 && (
         <div style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a", padding: "1.25rem 1.5rem", borderRadius: "1rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
             <h4 style={{ margin: 0, color: "#92400e", fontSize: "1.02rem" }}>
-              ⚠️ Tahap Intervensi Sedang Berlangsung ({activeStages.length} Fase)
+              ⚠️ Tahap Intervensi Sedang Berlangsung ({uniqueActiveStages.length} Fase)
             </h4>
             <span style={{ fontSize: "0.82rem", color: "#b45309" }}>
               Isi laporan intervensi untuk setiap fase yang selesai asesmen.
             </span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "0.75rem" }}>
-            {activeStages.map((st) => {
+            {uniqueActiveStages.map((st: any) => {
               const isSubmittedByUs = initialInterventions.some((i: any) =>
                 i.stage_id === st.id &&
                 i.submitted_by === currentUserId

@@ -271,7 +271,9 @@ export async function submitInterventionAction(
             current_stage: "selesai",
             stage_updated_at: new Date().toISOString(),
           })
-          .eq("id", payload.stageId);
+          .eq("school_id", payload.schoolId)
+          .eq("phase", payload.phase)
+          .eq("current_stage", "intervensi");
 
         if (stageUpdateErr) {
           console.error("[submitInterventionAction] Gagal update stage ke selesai:", stageUpdateErr);
