@@ -216,7 +216,7 @@ export default function IntervensiSuperAdminClient({
       const response = await fetch('/api/chat-intervention', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: currentMessages, graphNodes })
+        body: JSON.stringify({ messages: currentMessages, graphNodes: globalNodes })
       });
 
       if (!response.ok) {
