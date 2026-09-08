@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Badge, Button } from "@pemantik/ui";
+import SafeHtml from "@/components/shared/SafeHtml";
 import InterventionForm from "@/components/shared/InterventionForm";
 
 interface IntervensiGuruClientProps {
@@ -153,14 +154,10 @@ export default function IntervensiGuruClient({
                       </div>
                     </td>
                     <td style={{ maxWidth: "220px" }}>
-                      <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                        {item.kondisi_awal}
-                      </div>
+                      <SafeHtml html={item.kondisi_awal || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} />
                     </td>
                     <td style={{ maxWidth: "240px" }}>
-                      <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                        {item.upaya_dilakukan}
-                      </div>
+                      <SafeHtml html={item.upaya_dilakukan || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} />
                     </td>
                     <td>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
@@ -227,9 +224,7 @@ export default function IntervensiGuruClient({
               ].map((field, idx) => (
                 <div key={idx}>
                   <strong style={{ display: "block", color: "#334155", marginBottom: "0.25rem" }}>{field.label}</strong>
-                  <div style={{ backgroundColor: field.bg, padding: "0.875rem", borderRadius: "0.5rem", border: `1px solid ${field.border}`, color: field.color }}>
-                    {field.value}
-                  </div>
+                  <SafeHtml html={field.value || ""} style={{ backgroundColor: field.bg, padding: "0.875rem", borderRadius: "0.5rem", border: `1px solid ${field.border}`, color: field.color }} />
                 </div>
               ))}
             </div>

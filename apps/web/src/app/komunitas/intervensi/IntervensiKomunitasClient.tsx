@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Badge, Button } from "@pemantik/ui";
+import SafeHtml from "@/components/shared/SafeHtml";
 import InterventionForm from "@/components/shared/InterventionForm";
 import InterventionGraph from "@/components/shared/InterventionGraph";
 
@@ -156,14 +157,10 @@ export default function IntervensiKomunitasClient({
                         </div>
                       </td>
                       <td style={{ maxWidth: "200px" }}>
-                        <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                          {item.kondisi_awal}
-                        </div>
+                        <SafeHtml html={item.kondisi_awal || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} />
                       </td>
                       <td style={{ maxWidth: "220px" }}>
-                        <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                          {item.upaya_dilakukan}
-                        </div>
+                        <SafeHtml html={item.upaya_dilakukan || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} />
                       </td>
                       <td>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
@@ -259,33 +256,25 @@ export default function IntervensiKomunitasClient({
               <div>
                 <strong style={{ display: "block", color: "#102e50", marginBottom: "0.35rem" }}>1. Ceritakan kondisi awal:</strong>
                 <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "0 0 0.35rem 0" }}>Bagaimana kondisi literasi/numerasi murid sebelum upaya ini dilakukan?</p>
-                <div style={{ backgroundColor: "#f8fafc", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#1e293b", whiteSpace: "pre-wrap" }}>
-                  {selectedInterventionDetail.kondisi_awal}
-                </div>
+                <SafeHtml html={selectedInterventionDetail.kondisi_awal || ""} style={{ backgroundColor: "#f8fafc", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#1e293b", whiteSpace: "pre-wrap" }} />
               </div>
 
               <div>
                 <strong style={{ display: "block", color: "#102e50", marginBottom: "0.35rem" }}>2. Ceritakan upaya yang dilakukan:</strong>
                 <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "0 0 0.35rem 0" }}>Apa yang Anda/sekolah/komunitas lakukan untuk meningkatkan literasi dan numerasi murid?</p>
-                <div style={{ backgroundColor: "#f8fafc", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#1e293b", whiteSpace: "pre-wrap" }}>
-                  {selectedInterventionDetail.upaya_dilakukan}
-                </div>
+                <SafeHtml html={selectedInterventionDetail.upaya_dilakukan || ""} style={{ backgroundColor: "#f8fafc", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#1e293b", whiteSpace: "pre-wrap" }} />
               </div>
 
               <div>
                 <strong style={{ display: "block", color: "#102e50", marginBottom: "0.35rem" }}>3. Ceritakan perubahan paling signifikan:</strong>
                 <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "0 0 0.35rem 0" }}>Perubahan paling signifikan pada murid sejak upaya ini dilakukan:</p>
-                <div style={{ backgroundColor: "#f0fdf4", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #bbf7d0", color: "#166534", whiteSpace: "pre-wrap" }}>
-                  {selectedInterventionDetail.perubahan_signifikan}
-                </div>
+                <SafeHtml html={selectedInterventionDetail.perubahan_signifikan || ""} style={{ backgroundColor: "#f0fdf4", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #bbf7d0", color: "#166534", whiteSpace: "pre-wrap" }} />
               </div>
 
               <div>
                 <strong style={{ display: "block", color: "#102e50", marginBottom: "0.35rem" }}>4. Mengapa perubahan ini yang paling bermakna?</strong>
-                <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "0 0 0.35rem 0" }}>Alasan mengapa perubahan ini menjadi yang paling penting:</p>
-                <div style={{ backgroundColor: "#eff6ff", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #bfdbfe", color: "#1e40af", whiteSpace: "pre-wrap" }}>
-                  {selectedInterventionDetail.alasan_bermakna}
-                </div>
+                <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "0 0 0.35rem 0" }}>Dari semua perubahan, mengapa ini yang paling penting:</p>
+                <SafeHtml html={selectedInterventionDetail.alasan_bermakna || ""} style={{ backgroundColor: "#eff6ff", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #bfdbfe", color: "#1e40af", whiteSpace: "pre-wrap" }} />
               </div>
             </div>
 

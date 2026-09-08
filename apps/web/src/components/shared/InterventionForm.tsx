@@ -4,6 +4,18 @@ import React, { useState, useEffect, useTransition } from "react";
 import { Button, Badge, useToast } from "@pemantik/ui";
 import { submitInterventionAction, getAllInterventionTags, type InterventionPayload } from "@/app/actions/interventions";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css";
+
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+
+const quillModules = {
+  toolbar: [
+    ['bold', 'italic', 'underline'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    ['clean']
+  ],
+};
 
 interface InterventionFormProps {
   schoolId: string;
@@ -134,14 +146,15 @@ export default function InterventionForm({
         <p style={{ fontSize: "0.8rem", color: "#64748b", margin: "0 0 0.5rem 0" }}>
           Bagaimana kondisi literasi/numerasi murid sebelum upaya ini dilakukan?
         </p>
-        <textarea
-          rows={3}
-          value={kondisiAwal}
-          onChange={(e) => setKondisiAwal(e.target.value)}
-          placeholder="Jelaskan kondisi awal murid sebelum intervensi dilakukan..."
-          style={{ width: "100%", padding: "0.65rem 0.875rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.88rem" }}
-          required
-        />
+        <div style={{ backgroundColor: "white", borderRadius: "0.5rem" }}>
+          <ReactQuill 
+            theme="snow"
+            modules={quillModules}
+            value={kondisiAwal} 
+            onChange={setKondisiAwal} 
+            placeholder="Jelaskan kondisi awal murid sebelum intervensi dilakukan..."
+          />
+        </div>
       </div>
 
       {/* Field 2: Upaya Dilakukan */}
@@ -152,14 +165,15 @@ export default function InterventionForm({
         <p style={{ fontSize: "0.8rem", color: "#64748b", margin: "0 0 0.5rem 0" }}>
           Apa yang Anda/sekolah/komunitas lakukan untuk meningkatkan literasi dan numerasi murid? Kapan dan di mana upaya itu berlangsung?
         </p>
-        <textarea
-          rows={3}
-          value={upayaDilakukan}
-          onChange={(e) => setUpayaDilakukan(e.target.value)}
-          placeholder="Jelaskan upaya konkret yang telah dilakukan, waktu, dan tempat pelaksanaannya..."
-          style={{ width: "100%", padding: "0.65rem 0.875rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.88rem" }}
-          required
-        />
+        <div style={{ backgroundColor: "white", borderRadius: "0.5rem" }}>
+          <ReactQuill 
+            theme="snow"
+            modules={quillModules}
+            value={upayaDilakukan} 
+            onChange={setUpayaDilakukan} 
+            placeholder="Jelaskan upaya konkret yang telah dilakukan, waktu, dan tempat pelaksanaannya..."
+          />
+        </div>
       </div>
 
       {/* Field 3: Perubahan Signifikan */}
@@ -170,14 +184,15 @@ export default function InterventionForm({
         <p style={{ fontSize: "0.8rem", color: "#64748b", margin: "0 0 0.5rem 0" }}>
           Menurut pandangan Anda, apa perubahan paling signifikan yang Anda alami atau amati pada murid sejak upaya ini dilakukan? Ceritakan secara utuh, apa yang terjadi dan bagaimana kondisinya sekarang.
         </p>
-        <textarea
-          rows={3}
-          value={perubahanSignifikan}
-          onChange={(e) => setPerubahanSignifikan(e.target.value)}
-          placeholder="Jelaskan perubahan signifikan yang terlihat pada murid saat ini..."
-          style={{ width: "100%", padding: "0.65rem 0.875rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.88rem" }}
-          required
-        />
+        <div style={{ backgroundColor: "white", borderRadius: "0.5rem" }}>
+          <ReactQuill 
+            theme="snow"
+            modules={quillModules}
+            value={perubahanSignifikan} 
+            onChange={setPerubahanSignifikan} 
+            placeholder="Jelaskan perubahan signifikan yang terlihat pada murid saat ini..."
+          />
+        </div>
       </div>
 
       {/* Field 4: Alasan Bermakna */}
@@ -188,14 +203,15 @@ export default function InterventionForm({
         <p style={{ fontSize: "0.8rem", color: "#64748b", margin: "0 0 0.5rem 0" }}>
           Dari semua perubahan yang terjadi, mengapa perubahan inilah yang paling penting menurut Anda?
         </p>
-        <textarea
-          rows={3}
-          value={alasanBermakna}
-          onChange={(e) => setAlasanBermakna(e.target.value)}
-          placeholder="Refleksikan mengapa perubahan ini menjadi yang paling penting dan bermakna..."
-          style={{ width: "100%", padding: "0.65rem 0.875rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.88rem" }}
-          required
-        />
+        <div style={{ backgroundColor: "white", borderRadius: "0.5rem" }}>
+          <ReactQuill 
+            theme="snow"
+            modules={quillModules}
+            value={alasanBermakna} 
+            onChange={setAlasanBermakna} 
+            placeholder="Refleksikan mengapa perubahan ini menjadi yang paling penting dan bermakna..."
+          />
+        </div>
       </div>
 
       {/* Tag Selector */}
@@ -206,6 +222,30 @@ export default function InterventionForm({
         <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "0 0 0.5rem 0" }}>
           Ketik kata kunci lalu tekan <kbd style={{ background: "#e2e8f0", padding: "0.1rem 0.3rem", borderRadius: 4 }}>Enter</kbd> atau <kbd style={{ background: "#e2e8f0", padding: "0.1rem 0.3rem", borderRadius: 4 }}>Koma</kbd>. Anda juga bisa menyalin (paste) banyak tag sekaligus.
         </p>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", marginBottom: "0.75rem" }}>
+          <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600, alignSelf: "center", marginRight: "0.25rem" }}>Tag Populer:</span>
+          {["Literasi", "Numerasi", "Pedagogi", "Fasilitas", "Karakter", "Dukungan Orang Tua"]
+            .filter(t => !selectedTags.some(s => s.toLowerCase() === t.toLowerCase()))
+            .map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => handleAddTag(t)}
+                style={{
+                  padding: "0.2rem 0.5rem",
+                  backgroundColor: "#f1f5f9",
+                  color: "#475569",
+                  borderRadius: "0.25rem",
+                  fontSize: "0.75rem",
+                  border: "1px solid #cbd5e1",
+                  cursor: "pointer",
+                }}
+              >
+                + {t}
+              </button>
+            ))}
+        </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginBottom: "0.5rem" }}>
           {selectedTags.map((t) => (

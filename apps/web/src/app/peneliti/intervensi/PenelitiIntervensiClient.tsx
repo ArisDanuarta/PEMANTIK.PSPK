@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Badge, Button } from "@pemantik/ui";
+import SafeHtml from "@/components/shared/SafeHtml";
 import InterventionGraph from "@/components/shared/InterventionGraph";
 import { InterventionRow } from "@/app/actions/interventions";
 
@@ -164,23 +165,29 @@ export default function PenelitiIntervensiClient({
             
             <div style={{ marginBottom: "1rem" }}>
               <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: 0 }}>Kondisi Awal</p>
-              <div style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem" }}>
-                {selectedDetail.kondisi_awal || <i>Tidak ada data</i>}
-              </div>
+              {selectedDetail.kondisi_awal ? (
+                <SafeHtml html={selectedDetail.kondisi_awal} style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem" }} />
+              ) : (
+                <div style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem" }}><i>Tidak ada data</i></div>
+              )}
             </div>
 
             <div style={{ marginBottom: "1rem" }}>
               <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: 0 }}>Upaya Dilakukan</p>
-              <div style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem" }}>
-                {selectedDetail.upaya_dilakukan || <i>Tidak ada data</i>}
-              </div>
+              {selectedDetail.upaya_dilakukan ? (
+                <SafeHtml html={selectedDetail.upaya_dilakukan} style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem" }} />
+              ) : (
+                <div style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem" }}><i>Tidak ada data</i></div>
+              )}
             </div>
 
             <div style={{ marginBottom: "1rem" }}>
               <p style={{ fontSize: "0.85rem", color: "#6b7280", margin: 0 }}>Perubahan Signifikan</p>
-              <div style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem" }}>
-                {selectedDetail.perubahan_signifikan || <i>Tidak ada data</i>}
-              </div>
+              {selectedDetail.perubahan_signifikan ? (
+                <SafeHtml html={selectedDetail.perubahan_signifikan} style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem" }} />
+              ) : (
+                <div style={{ backgroundColor: "#f3f4f6", padding: "1rem", borderRadius: "0.5rem", marginTop: "0.5rem" }}><i>Tidak ada data</i></div>
+              )}
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid #e5e7eb", paddingTop: "1rem" }}>

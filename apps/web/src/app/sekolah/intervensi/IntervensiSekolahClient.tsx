@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Badge, Button } from "@pemantik/ui";
+import SafeHtml from "@/components/shared/SafeHtml";
 
 import InterventionForm from "@/components/shared/InterventionForm";
 
@@ -171,14 +172,10 @@ export default function IntervensiSekolahClient({
                       </div>
                     </td>
                     <td style={{ maxWidth: "220px" }}>
-                      <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                        {item.kondisi_awal}
-                      </div>
+                      <SafeHtml html={item.kondisi_awal || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} />
                     </td>
                     <td style={{ maxWidth: "240px" }}>
-                      <div style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                        {item.upaya_dilakukan}
-                      </div>
+                      <SafeHtml html={item.upaya_dilakukan || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} />
                     </td>
                     <td>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
@@ -243,30 +240,22 @@ export default function IntervensiSekolahClient({
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem", fontSize: "0.9rem" }}>
               <div>
                 <strong style={{ display: "block", color: "#334155", marginBottom: "0.25rem" }}>1. Kondisi Awal / Diagnosa Asesmen:</strong>
-                <div style={{ backgroundColor: "#f8fafc", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#1e293b" }}>
-                  {selectedDetail.kondisi_awal}
-                </div>
+                <SafeHtml html={selectedDetail.kondisi_awal || ""} style={{ backgroundColor: "#f8fafc", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#1e293b" }} />
               </div>
 
               <div>
                 <strong style={{ display: "block", color: "#334155", marginBottom: "0.25rem" }}>2. Upaya Intervensi yang Dilakukan:</strong>
-                <div style={{ backgroundColor: "#f8fafc", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#1e293b" }}>
-                  {selectedDetail.upaya_dilakukan}
-                </div>
+                <SafeHtml html={selectedDetail.upaya_dilakukan || ""} style={{ backgroundColor: "#f8fafc", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", color: "#1e293b" }} />
               </div>
 
               <div>
                 <strong style={{ display: "block", color: "#334155", marginBottom: "0.25rem" }}>3. Perubahan Signifikan / Dampak Nyata:</strong>
-                <div style={{ backgroundColor: "#f0fdf4", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #bbf7d0", color: "#166534" }}>
-                  {selectedDetail.perubahan_signifikan}
-                </div>
+                <SafeHtml html={selectedDetail.perubahan_signifikan || ""} style={{ backgroundColor: "#f0fdf4", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #bbf7d0", color: "#166534" }} />
               </div>
 
               <div>
                 <strong style={{ display: "block", color: "#334155", marginBottom: "0.25rem" }}>4. Alasan Mengapa Praktik Ini Bermakna:</strong>
-                <div style={{ backgroundColor: "#eff6ff", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #bfdbfe", color: "#1e40af" }}>
-                  {selectedDetail.alasan_bermakna}
-                </div>
+                <SafeHtml html={selectedDetail.alasan_bermakna || ""} style={{ backgroundColor: "#eff6ff", padding: "0.875rem", borderRadius: "0.5rem", border: "1px solid #bfdbfe", color: "#1e40af" }} />
               </div>
             </div>
 
