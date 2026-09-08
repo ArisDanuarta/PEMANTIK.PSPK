@@ -478,7 +478,7 @@ export default function TeachersManager({
               {!editingTeacher && (
                 <div style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1.5rem" }}>
                   ℹ Username: <strong>nama+3 digit NIP/acak</strong><br />
-                  Password digenerate berupa 6 digit angka acak.
+                  Password digenerate berupa kombinasi nama depan, nama sekolah, dan tahun lahir.
                 </div>
               )}
               

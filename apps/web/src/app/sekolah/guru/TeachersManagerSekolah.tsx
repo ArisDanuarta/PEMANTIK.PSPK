@@ -365,7 +365,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
 
               {!editingTeacher && (
                 <div style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1.5rem" }}>
-                  * Password digenerate berupa <b>6 digit angka acak</b>
+                  * Password digenerate berupa kombinasi <b>nama depan, nama sekolah, dan tahun lahir</b>
                 </div>
               )}
               

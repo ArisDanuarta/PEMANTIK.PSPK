@@ -405,7 +405,7 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
 
               {!editingTeacher && (
                 <div style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1.5rem" }}>
-                  * Sistem akan meng-generate <b>Username</b> secara acak jika email kosong, dan password digenerate berupa <b>6 digit angka acak</b>
+                  * Sistem akan meng-generate <b>Username</b> secara acak jika email kosong, dan password digenerate berupa kombinasi <b>nama depan, nama sekolah, dan tahun lahir</b>
                 </div>
               )}
               

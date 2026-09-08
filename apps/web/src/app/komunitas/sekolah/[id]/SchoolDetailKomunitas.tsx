@@ -1075,7 +1075,7 @@ export default function SchoolDetailKomunitas({
               <div style={{ display: "flex", alignItems: "flex-end" }}>
                 <div style={{ fontSize: "0.78rem", color: "#6b7280", background: "#f9fafb", padding: "0.625rem", borderRadius: "0.375rem", border: "1px solid #e5e7eb", width: "100%" }}>
                   ℹ Username: <strong>nama+3 digit akhir NIP/acak</strong><br />
-                  Password: <code>6 digit angka acak</code>
+                  Password: <code>nama+sekolah+tahun lahir</code>
                 </div>
               </div>
             )}
