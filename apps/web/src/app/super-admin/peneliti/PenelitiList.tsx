@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Table, Button, Modal, Badge, useToast, useConfirm } from "@pemantik/ui";
+import { DataTable, Button, Modal, Badge, useToast, useConfirm } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import {
   createPenelitiAdminAction,
   updatePenelitiAdminAction,
@@ -138,8 +139,8 @@ export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }
     }
   };
 
-  const columns = [
-    { key: "full_name", label: "Nama Lengkap", render: (val: any) => <div style={{ fontWeight: 600, color: "#102e50" }}>{val}</div> },
+  const columns: ColumnDef<any>[] = [
+    { key: "full_name", label: "Nama Lengkap", sortable: true, render: (val: any) => <div style={{ fontWeight: 600, color: "#102e50" }}>{val}</div> },
     { 
       key: "username", 
       label: "Akun Akses", 
@@ -165,8 +166,8 @@ export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }
       ) 
     },
     { key: "is_active", label: "Status", render: (val: any) => <Badge variant={val ? "success" : "danger"}>{val ? "Aktif" : "Non-Aktif"}</Badge> },
-    { key: "actions", label: "Aksi", render: (_: any, admin: any) => (
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+    { key: "actions", label: "Aksi", align: "right" as const, render: (_: any, admin: any) => (
+        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
           <button onClick={() => openEditModal(admin)} className="action-btn-text" title="Edit">Edit</button>
           <button onClick={() => handleResetPassword(admin.id)} className="action-btn-text" style={{ color: "#f59e0b" }} title="Reset Password">Reset</button>
           <button onClick={() => handleDelete(admin.id)} className="action-btn-text" style={{ color: "#dc2626" }} title="Hapus">Hapus</button>
@@ -187,10 +188,11 @@ export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }
         </Button>
       </div>
 
-      <Table
+      <DataTable
         columns={columns}
         data={admins}
         emptyMessage="Belum ada akun peneliti."
+        striped
       />
 
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "Edit Peneliti" : "Tambah Peneliti"}>

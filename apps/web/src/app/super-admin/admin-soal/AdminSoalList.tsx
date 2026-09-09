@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Table, Button, Modal, Badge, useToast, useConfirm } from "@pemantik/ui";
+import { DataTable, Button, Modal, Badge, useToast, useConfirm } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import {
   createQuestionAdminAction,
   updateQuestionAdminAction,
@@ -139,10 +140,11 @@ export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] 
     }
   };
 
-  const columns = [
+  const columns: ColumnDef<any>[] = [
     {
       key: "full_name",
       label: "Nama Lengkap",
+      sortable: true,
       render: (val: any, row: any) => <div style={{ fontWeight: 500 }}>{val}</div>
     },
     {
@@ -177,6 +179,7 @@ export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] 
     {
       key: "actions",
       label: "Aksi",
+      align: "right" as const,
       render: (_: any, admin: any) => (
         <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", flexWrap: "wrap" }}>
           <Button variant="outline" size="sm" onClick={() => openEditModal(admin)}>
@@ -202,10 +205,12 @@ export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] 
         </Button>
       </div>
 
-      <Table
+      <DataTable
         columns={columns}
         data={admins}
         emptyMessage="Belum ada akun Admin Soal terdaftar."
+        striped
+        minWidth="700px"
       />
 
       <Modal
