@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useTransition, useEffect } from "react";
-import { Table, Button, Modal, Badge } from "@pemantik/ui";
+import { DataTable, Button, Modal, Badge } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import { useToast } from "@pemantik/ui";
 import { useConfirm } from "@pemantik/ui";
 import {
@@ -298,10 +299,11 @@ export default function CommunitiesManager({
     XLSX.writeFile(wb, "Template_Komunitas.xlsx");
   };
 
-  const columns = [
+  const columns: ColumnDef<Community>[] = [
     {
       key: "name",
       label: "Nama Mitra / Komunitas",
+      sortable: true,
       render: (_: any, row: Community) => (
         <div>
           <div style={{ fontWeight: 600, color: "#102e50" }}>{row.name}</div>
@@ -372,8 +374,9 @@ export default function CommunitiesManager({
     {
       key: "actions",
       label: "Aksi",
+      align: "right" as const,
       render: (_: any, row: Community) => (
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", flexWrap: "wrap" }}>
           <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>
             Edit
           </Button>
@@ -455,7 +458,7 @@ export default function CommunitiesManager({
       </div>
 
       <div className="card">
-        <Table columns={columns} data={paginatedCommunities} emptyMessage="Tidak ada komunitas terdaftar" />
+        <DataTable columns={columns} data={paginatedCommunities} emptyMessage="Tidak ada komunitas terdaftar" minWidth="900px" striped />
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}

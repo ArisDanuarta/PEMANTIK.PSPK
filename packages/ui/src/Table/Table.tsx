@@ -54,20 +54,26 @@ function SortIcon({ dir }: { dir: SortDirection }) {
       style={{
         display: "inline-flex",
         flexDirection: "column",
-        marginLeft: "0.3rem",
+        marginLeft: "0.5rem",
         verticalAlign: "middle",
         lineHeight: 1,
-        opacity: dir ? 1 : 0.35,
-        transform: "translateY(-1px)",
+        opacity: dir ? 1 : 0.4,
+        color: dir ? "var(--color-primary, #0874aa)" : "currentColor",
+        transform: "translateY(-2px)",
       }}
     >
       {dir === "desc" ? (
-        <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M7 14l5 5 5-5z" />
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      ) : dir === "asc" ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 15l-6-6-6 6" />
         </svg>
       ) : (
-        <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M7 10l5-5 5 5z" />
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 15l5 5 5-5" />
+          <path d="M7 9l5-5 5 5" />
         </svg>
       )}
     </span>
