@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Badge, useToast, useConfirm } from "@pemantik/ui";
+import { DataTable, Badge, useToast, useConfirm } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import { deleteQuestion } from "@/app/actions/questions";
 import { useRouter } from "next/navigation";
 
@@ -106,131 +107,149 @@ export default function QuestionTableClient({
   return (
     <div>
       {/* Scrollable table wrapper */}
+      {/* Scrollable table wrapper */}
       <div className="table-wrapper" style={{ border: "none", borderRadius: 0, overflowX: "auto" }}>
-        <table className="pemantik-table">
-          <thead>
-            <tr>
-              <th style={{ width: "38%" }}>Pertanyaan</th>
-              <th className="col-hide-mobile">Kode Soal</th>
-              <th className="col-hide-mobile">Mata Pelajaran</th>
-              <th>Tipe</th>
-              <th className="col-hide-mobile">Level / Kategori</th>
-              <th>Status</th>
-              <th style={{ textAlign: "right" }}>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {questions.map((q) => {
-              const typeColor = TYPE_COLORS[q.question_type] || "#6c757d";
-              return (
-                <tr key={q.id}>
-                  {/* Pertanyaan */}
-                  <td>
-                    <div
-                      style={{
-                        fontWeight: 500,
-                        fontSize: "0.875rem",
-                        color: "black",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                        marginBottom: "0.2rem",
-                      }}
-                    >
-                      {q.question_text || "(Tanpa teks pertanyaan)"}
+        {(() => {
+          const columns: ColumnDef<any>[] = [
+            {
+              key: "question",
+              label: "Pertanyaan",
+              width: "38%",
+              render: (_: any, q: any) => (
+                <>
+                  <div
+                    style={{
+                      fontWeight: 500,
+                      fontSize: "0.875rem",
+                      color: "black",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      marginBottom: "0.2rem",
+                    }}
+                  >
+                    {q.question_text || "(Tanpa teks pertanyaan)"}
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "black" }}>
+                    {new Date(q.created_at).toLocaleDateString("id-ID", {
+                      day: "2-digit", month: "short", year: "numeric",
+                    })}
+                  </div>
+                </>
+              )
+            },
+            {
+              key: "code",
+              label: "Kode Soal",
+              className: "col-hide-mobile",
+              sortable: true,
+              render: (_: any, q: any) => (
+                <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--clr-biru)" }}>
+                  {q.question_code || "-"}
+                </div>
+              )
+            },
+            {
+              key: "subject",
+              label: "Mata Pelajaran",
+              className: "col-hide-mobile",
+              sortable: true,
+              render: (_: any, q: any) => (
+                <Badge variant={q.subject_area === "literasi" ? ("info" as any) : ("warning" as any)}>
+                  {q.subject_area?.toUpperCase()}
+                </Badge>
+              )
+            },
+            {
+              key: "type",
+              label: "Tipe",
+              sortable: true,
+              render: (_: any, q: any) => {
+                const typeColor = TYPE_COLORS[q.question_type] || "#6c757d";
+                return (
+                  <span
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: "0.35rem",
+                      fontSize: "0.78rem", fontWeight: 500,
+                      padding: "0.2rem 0.6rem",
+                      borderRadius: 999,
+                      background: `${typeColor}12`,
+                      color: typeColor,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: typeColor, flexShrink: 0 }} />
+                    {TYPE_LABELS[q.question_type] || q.question_type}
+                  </span>
+                );
+              }
+            },
+            {
+              key: "level",
+              label: "Level / Kategori",
+              className: "col-hide-mobile",
+              render: (_: any, q: any) => (
+                <>
+                  <div style={{ fontSize: "0.82rem", fontWeight: 500, color: "black" }}>
+                    {q.question_levels?.question_categories?.name || "-"}
+                  </div>
+                  {q.question_levels?.level_number != null && (
+                    <div style={{ fontSize: "0.72rem", color: "black", marginTop: "0.1rem" }}>
+                      Level {q.question_levels.level_number}
                     </div>
-                    <div style={{ fontSize: "0.75rem", color: "black" }}>
-                      {new Date(q.created_at).toLocaleDateString("id-ID", {
-                        day: "2-digit", month: "short", year: "numeric",
-                      })}
-                    </div>
-                  </td>
-
-                  {/* Kode Soal */}
-                  <td className="col-hide-mobile">
-                    <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--clr-biru)" }}>
-                      {q.question_code || "-"}
-                    </div>
-                  </td>
-
-                  {/* Mata Pelajaran */}
-                  <td className="col-hide-mobile">
-                    <Badge
-                      variant={q.subject_area === "literasi" ? ("info" as any) : ("warning" as any)}
-                    >
-                      {q.subject_area?.toUpperCase()}
-                    </Badge>
-                  </td>
-
-                  {/* Tipe */}
-                  <td>
-                    <span
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: "0.35rem",
-                        fontSize: "0.78rem", fontWeight: 500,
-                        padding: "0.2rem 0.6rem",
-                        borderRadius: 999,
-                        background: `${typeColor}12`,
-                        color: typeColor,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: typeColor, flexShrink: 0 }} />
-                      {TYPE_LABELS[q.question_type] || q.question_type}
-                    </span>
-                  </td>
-
-                  {/* Level / Kategori */}
-                  <td className="col-hide-mobile">
-                    <div style={{ fontSize: "0.82rem", fontWeight: 500, color: "black" }}>
-                      {q.question_levels?.question_categories?.name || "-"}
-                    </div>
-                    {q.question_levels?.level_number != null && (
-                      <div style={{ fontSize: "0.72rem", color: "black", marginTop: "0.1rem" }}>
-                        Level {q.question_levels.level_number}
-                      </div>
-                    )}
-                  </td>
-
-                  {/* Status */}
-                  <td>
-                    <Badge variant={q.is_published ? ("success" as any) : ("warning" as any)}>
-                      {q.is_published ? "Published" : "Draft"}
-                    </Badge>
-                  </td>
-
-                  {/* Aksi */}
-                  <td style={{ textAlign: "right" }}>
-                    <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", flexWrap: "nowrap" }}>
-                      <button
-                        onClick={() => router.push(`${basePath}/${q.id}`)}
-                        className="btn btn-outline btn-sm"
-                        title="Lihat detail"
-                      >
-                        Detail
-                      </button>
-                      <button
-                        onClick={() => router.push(`${basePath}/${q.id}/edit`)}
-                        className="btn btn-primary btn-sm"
-                        title="Edit soal"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(q.id)}
-                        className="btn btn-danger btn-sm"
-                        title="Hapus soal"
-                      >
-                        Hapus
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  )}
+                </>
+              )
+            },
+            {
+              key: "status",
+              label: "Status",
+              sortable: true,
+              render: (_: any, q: any) => (
+                <Badge variant={q.is_published ? ("success" as any) : ("warning" as any)}>
+                  {q.is_published ? "Published" : "Draft"}
+                </Badge>
+              )
+            },
+            {
+              key: "actions",
+              label: "Aksi",
+              align: "right" as const,
+              render: (_: any, q: any) => (
+                <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", flexWrap: "nowrap" }}>
+                  <button
+                    onClick={() => router.push(`${basePath}/${q.id}`)}
+                    className="btn btn-outline btn-sm"
+                    title="Lihat detail"
+                  >
+                    Detail
+                  </button>
+                  <button
+                    onClick={() => router.push(`${basePath}/${q.id}/edit`)}
+                    className="btn btn-primary btn-sm"
+                    title="Edit soal"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(q.id)}
+                    className="btn btn-danger btn-sm"
+                    title="Hapus soal"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              )
+            }
+          ];
+          return (
+            <DataTable
+              columns={columns}
+              data={questions}
+            />
+          );
+        })()}
       </div>
 
       {/* Pagination */}
