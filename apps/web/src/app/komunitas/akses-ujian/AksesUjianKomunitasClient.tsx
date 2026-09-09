@@ -301,156 +301,115 @@ export default function AksesUjianKomunitasClient({
             </strong>
             Super Admin belum memberikan akses ujian apapun ke komunitas ini.
           </div>
-        ) : (
-          <table
-            style={{
-              width: "100%",
-              minWidth: "700px",
-              borderCollapse: "collapse",
-              fontSize: "0.9rem",
-            }}
-          >
-            <thead>
-              <tr
-                style={{
-                  borderBottom: "2px solid #e5e7eb",
-                  textAlign: "left",
-                  color: "#4b5563",
-                }}
-              >
-                <th style={{ padding: "0.75rem 0.5rem" }}>Nama Kategori</th>
-                <th style={{ padding: "0.75rem 0.5rem" }}>Jenis</th>
-                <th style={{ padding: "0.75rem 0.5rem" }}>Fase</th>
-                <th style={{ padding: "0.75rem 0.5rem" }}>Rentang Valid</th>
-                <th style={{ padding: "0.75rem 0.5rem" }}>Status</th>
-                <th style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
-                  Distribusi Cepat
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {communityAccesses.map((acc) => {
-                const expired = isExpired(acc.valid_until);
-                const isThisDistributing = distributingId === acc.id;
-
-                return (
-                  <tr
-                    key={acc.id}
-                    style={{ borderBottom: "1px solid #f3f4f6" }}
+        ) : (() => {
+            const columns: ColumnDef<any>[] = [
+              {
+                key: "name",
+                label: "Nama Kategori",
+                sortable: true,
+                render: (_: any, acc: any) => <span style={{ fontWeight: 600, color: "#102e50" }}>{acc.name}</span>
+              },
+              {
+                key: "subject_area",
+                label: "Jenis",
+                render: (_: any, acc: any) => <span style={{ color: "#374151" }}>{acc.subject_area?.toUpperCase()}</span>
+              },
+              {
+                key: "phase",
+                label: "Fase",
+                render: (_: any, acc: any) => (
+                  <span
+                    style={{
+                      padding: "0.2rem 0.65rem",
+                      borderRadius: "9999px",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      border: "1px solid #e5e7eb",
+                      color: "#374151",
+                    }}
                   >
-                    <td
+                    {acc.phase || "-"}
+                  </span>
+                )
+              },
+              {
+                key: "valid_range",
+                label: "Rentang Valid",
+                render: (_: any, acc: any) => {
+                  const expired = isExpired(acc.valid_until);
+                  return (
+                    <span
                       style={{
-                        padding: "0.75rem 0.5rem",
-                        fontWeight: 600,
-                        color: "#102e50",
-                      }}
-                    >
-                      {acc.name}
-                    </td>
-                    <td style={{ padding: "0.75rem 0.5rem", color: "#374151" }}>
-                      {acc.subject_area?.toUpperCase()}
-                    </td>
-                    <td style={{ padding: "0.75rem 0.5rem" }}>
-                      <span
-                        style={{
-                          padding: "0.2rem 0.65rem",
-                          borderRadius: "9999px",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          border: "1px solid #e5e7eb",
-                          color: "#374151",
-                        }}
-                      >
-                        {acc.phase || "-"}
-                      </span>
-                    </td>
-                    <td
-                      style={{
-                        padding: "0.75rem 0.5rem",
                         fontSize: "0.85rem",
                         color: expired ? "#9ca3af" : "#4b5563",
                         textDecoration: expired ? "line-through" : "none",
                       }}
                     >
                       {formatDate(acc.valid_from)} - {formatDate(acc.valid_until)}
-                    </td>
-                    <td style={{ padding: "0.75rem 0.5rem" }}>
-                      {expired ? (
-                        <span
-                          style={{
-                            color: "#ef4444",
-                            fontSize: "0.8rem",
-                            fontWeight: 600,
-                          }}
-                        >
-                          Kedaluwarsa
-                        </span>
-                      ) : (
-                        <span
-                          style={{
-                            color: "#16a34a",
-                            fontSize: "0.8rem",
-                            fontWeight: 600,
-                          }}
-                        >
-                          ● Aktif
-                        </span>
-                      )}
-                    </td>
-                    <td
-                      style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}
+                    </span>
+                  );
+                }
+              },
+              {
+                key: "status",
+                label: "Status",
+                render: (_: any, acc: any) => {
+                  const expired = isExpired(acc.valid_until);
+                  return expired ? (
+                    <span style={{ color: "#ef4444", fontSize: "0.8rem", fontWeight: 600 }}>Kedaluwarsa</span>
+                  ) : (
+                    <span style={{ color: "#16a34a", fontSize: "0.8rem", fontWeight: 600 }}>● Aktif</span>
+                  );
+                }
+              },
+              {
+                key: "distribute",
+                label: "Distribusi Cepat",
+                align: "center" as const,
+                render: (_: any, acc: any) => {
+                  const expired = isExpired(acc.valid_until);
+                  const isThisDistributing = distributingId === acc.id;
+                  return (
+                    <button
+                      onClick={() => handleDistributeAll(acc)}
+                      disabled={expired || isThisDistributing || isPending || targets.length === 0}
+                      title={
+                        expired
+                          ? "Akses sudah kedaluwarsa"
+                          : targets.length === 0
+                          ? "Tidak ada sekolah dalam komunitas"
+                          : `Distribusikan ke semua ${targets.length} sekolah`
+                      }
+                      style={{
+                        padding: "0.4rem 0.9rem",
+                        borderRadius: "0.4rem",
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        cursor: expired || isThisDistributing || targets.length === 0 ? "not-allowed" : "pointer",
+                        border: "1px solid",
+                        borderColor: expired || targets.length === 0 ? "#d1d5db" : "#2563eb",
+                        backgroundColor: expired || targets.length === 0 ? "#f3f4f6" : isThisDistributing ? "#93c5fd" : "#eff6ff",
+                        color: expired || targets.length === 0 ? "#9ca3af" : "#1d4ed8",
+                        transition: "all 0.15s",
+                        whiteSpace: "nowrap",
+                      }}
                     >
-                      <button
-                        onClick={() => handleDistributeAll(acc)}
-                        disabled={
-                          expired || isThisDistributing || isPending || targets.length === 0
-                        }
-                        title={
-                          expired
-                            ? "Akses sudah kedaluwarsa"
-                            : targets.length === 0
-                            ? "Tidak ada sekolah dalam komunitas"
-                            : `Distribusikan ke semua ${targets.length} sekolah`
-                        }
-                        style={{
-                          padding: "0.4rem 0.9rem",
-                          borderRadius: "0.4rem",
-                          fontSize: "0.8rem",
-                          fontWeight: 600,
-                          cursor:
-                            expired || isThisDistributing || targets.length === 0
-                              ? "not-allowed"
-                              : "pointer",
-                          border: "1px solid",
-                          borderColor:
-                            expired || targets.length === 0
-                              ? "#d1d5db"
-                              : "#2563eb",
-                          backgroundColor:
-                            expired || targets.length === 0
-                              ? "#f3f4f6"
-                              : isThisDistributing
-                              ? "#93c5fd"
-                              : "#eff6ff",
-                          color:
-                            expired || targets.length === 0
-                              ? "#9ca3af"
-                              : "#1d4ed8",
-                          transition: "all 0.15s",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {isThisDistributing
-                          ? "Memproses…"
-                          : `Ke Semua Sekolah (${targets.length})`}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
+                      {isThisDistributing ? "Memproses…" : `Ke Semua Sekolah (${targets.length})`}
+                    </button>
+                  );
+                }
+              }
+            ];
+            return (
+              <DataTable
+                columns={columns}
+                data={communityAccesses}
+                emptyMessage="Super Admin belum memberikan akses ujian apapun ke komunitas ini."
+                striped
+                minWidth="700px"
+              />
+            );
+          })()}
       </div>
 
       {/* ── Riwayat distribusi ke sekolah ────────────────────────────────── */}

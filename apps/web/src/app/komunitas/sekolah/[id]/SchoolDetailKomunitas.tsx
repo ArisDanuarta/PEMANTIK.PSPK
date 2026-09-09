@@ -3,7 +3,8 @@
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import * as XLSX from "xlsx";
-import { Badge, Button, useToast, useConfirm, Modal } from "@pemantik/ui";
+import { DataTable, Badge, Button, useToast, useConfirm, Modal } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import { parseDapodikAction, importDapodikAction } from "../../../actions/schools";
 import { createTeacherAction, updateTeacherAction, deleteTeacherAction, bulkCreateTeachersAction } from "../../../actions/teachers";
@@ -669,43 +670,65 @@ export default function SchoolDetailKomunitas({
             </div>
           ) : (
             <div style={{ border: "1px solid #e5e7eb", borderRadius: "0.5rem", overflow: "hidden", overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
-                <thead>
-                  <tr style={{ background: "#f9fafb" }}>
-                    {["Nama Guru", "Username", "Kelas Diajar", "Status", "Aksi"].map((h) => (
-                      <th key={h} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.8rem", fontWeight: 600, color: "#374151", borderBottom: "1px solid #e5e7eb" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedTeachers.map((t, i) => (
-                    <tr key={t.id} style={{ borderBottom: i < paginatedTeachers.length - 1 ? "1px solid #f3f4f6" : "none" }}>
-                      <td style={{ padding: "0.875rem 1rem", fontWeight: 500 }}>{t.full_name || "-"}</td>
-                      <td 
-                        style={{ padding: "0.875rem 1rem", fontFamily: "monospace", fontSize: "0.85rem", color: "#1d4ed8", cursor: "pointer", fontWeight: 600 }}
+              {(() => {
+                const columns: ColumnDef<any>[] = [
+                  {
+                    key: "full_name",
+                    label: "Nama Guru",
+                    sortable: true,
+                    render: (_: any, t: any) => <span style={{ fontWeight: 500 }}>{t.full_name || "-"}</span>
+                  },
+                  {
+                    key: "username",
+                    label: "Username",
+                    render: (_: any, t: any) => (
+                      <span
+                        style={{ fontFamily: "monospace", fontSize: "0.85rem", color: "#1d4ed8", cursor: "pointer", fontWeight: 600 }}
                         onClick={() => { navigator.clipboard.writeText(t.username); showSuccessToast("Tersalin", "Username disalin ke clipboard"); }}
                         title="Klik untuk menyalin"
                       >
                         {t.username}
-                      </td>
-                      <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>
+                      </span>
+                    )
+                  },
+                  {
+                    key: "classes",
+                    label: "Kelas Diajar",
+                    render: (_: any, t: any) => (
+                      <span style={{ fontSize: "0.85rem" }}>
                         {t.classes && t.classes.length > 0
                           ? t.classes.map((c: any) => c.name).join(", ")
                           : <span style={{ color: "#9ca3af" }}>Belum ada kelas</span>}
-                      </td>
-                      <td style={{ padding: "0.875rem 1rem" }}>
-                        <Badge variant={t.is_active ? "success" : "danger"}>{t.is_active ? "Aktif" : "Nonaktif"}</Badge>
-                      </td>
-                      <td style={{ padding: "0.875rem 1rem" }}>
-                        <div style={{ display: "flex", gap: "0.5rem" }}>
-                          <Button variant="outline" size="sm" onClick={() => { setEditingTeacher(t); setIsTeacherModalOpen(true); }}>Edit</Button>
-                          <Button variant="danger" size="sm" onClick={() => handleDeleteTeacher(t)}>Hapus</Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </span>
+                    )
+                  },
+                  {
+                    key: "status",
+                    label: "Status",
+                    render: (_: any, t: any) => (
+                      <Badge variant={t.is_active ? "success" : "danger"}>{t.is_active ? "Aktif" : "Nonaktif"}</Badge>
+                    )
+                  },
+                  {
+                    key: "actions",
+                    label: "Aksi",
+                    render: (_: any, t: any) => (
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <Button variant="outline" size="sm" onClick={() => { setEditingTeacher(t); setIsTeacherModalOpen(true); }}>Edit</Button>
+                        <Button variant="danger" size="sm" onClick={() => handleDeleteTeacher(t)}>Hapus</Button>
+                      </div>
+                    )
+                  }
+                ];
+                return (
+                  <DataTable
+                    columns={columns}
+                    data={paginatedTeachers}
+                    emptyMessage="Belum ada guru terdaftar di sekolah ini."
+                    striped
+                  />
+                );
+              })()}
             </div>
           )}
           {filteredTeachers.length > 0 && (
@@ -770,69 +793,98 @@ export default function SchoolDetailKomunitas({
             </div>
           ) : (
             <div style={{ border: "1px solid #e5e7eb", borderRadius: "0.5rem", overflow: "hidden", overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
-                <thead>
-                  <tr style={{ background: "#f9fafb" }}>
-                    {["Nama Anak", "L/P", "Fase Aktif", "Kelas", "SES", "Level Terakhir yang Dicapai", "Status", "Aksi"].map((h) => (
-                      <th key={h} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.8rem", fontWeight: 600, color: "#374151", borderBottom: "1px solid #e5e7eb" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedStudents.map((s, i) => (
-                    <tr key={s.id} style={{ borderBottom: i < paginatedStudents.length - 1 ? "1px solid #f3f4f6" : "none" }}>
-                      <td style={{ padding: "0.875rem 1rem", fontWeight: 500 }}>{s.full_name}</td>
-                      <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>{s.gender === "perempuan" || s.gender === "P" ? "P" : "L"}</td>
-                      <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem", color: "#374151" }}>
-                        <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: 999, background: "#eff6ff", color: "#1d4ed8", fontWeight: 500 }}>
-                          {activePhase}
+              {(() => {
+                const columns: ColumnDef<any>[] = [
+                  {
+                    key: "full_name",
+                    label: "Nama Anak",
+                    sortable: true,
+                    render: (_: any, s: any) => <span style={{ fontWeight: 500 }}>{s.full_name}</span>
+                  },
+                  {
+                    key: "gender",
+                    label: "L/P",
+                    render: (_: any, s: any) => <span style={{ fontSize: "0.85rem" }}>{s.gender === "perempuan" || s.gender === "P" ? "P" : "L"}</span>
+                  },
+                  {
+                    key: "activePhase",
+                    label: "Fase Aktif",
+                    render: (_: any, s: any) => (
+                      <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: 999, background: "#eff6ff", color: "#1d4ed8", fontWeight: 500 }}>
+                        {activePhase}
+                      </span>
+                    )
+                  },
+                  {
+                    key: "classes",
+                    label: "Kelas",
+                    render: (_: any, s: any) => <span style={{ fontSize: "0.85rem" }}>{(s.classes as any)?.name || <span style={{ color: "#9ca3af" }}>-</span>}</span>
+                  },
+                  {
+                    key: "ses",
+                    label: "SES",
+                    render: (_: any, s: any) => (
+                      s.socioeconomic_status || s.ses_class ? (
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600, padding: "0.15rem 0.5rem", borderRadius: 999, background: (sesColorMap[s.socioeconomic_status || s.ses_class] || "#6b7280") + "20", color: sesColorMap[s.socioeconomic_status || s.ses_class] || "#6b7280" }}>
+                          {s.socioeconomic_status || s.ses_class}
                         </span>
-                      </td>
-                      <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem" }}>{(s.classes as any)?.name || <span style={{ color: "#9ca3af" }}>-</span>}</td>
-                      <td style={{ padding: "0.875rem 1rem" }}>
-                        {s.socioeconomic_status || s.ses_class ? (
-                          <span style={{ fontSize: "0.75rem", fontWeight: 600, padding: "0.15rem 0.5rem", borderRadius: 999, background: (sesColorMap[s.socioeconomic_status || s.ses_class] || "#6b7280") + "20", color: sesColorMap[s.socioeconomic_status || s.ses_class] || "#6b7280" }}>
-                            {s.socioeconomic_status || s.ses_class}
-                          </span>
-                        ) : <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>-</span>}
-                      </td>
-                      <td style={{ padding: "0.875rem 1rem" }}>
-                        {(() => {
-                          const studentSessions = (sessions || []).filter((session: any) => 
-                            session.student_id === s.id && session.phase === activePhase
-                          );
-                          let maxLit = 0;
-                          let maxNum = 0;
-                          studentSessions.forEach((session: any) => {
-                            const subj = session.question_categories?.subject_area;
-                            const lvl = session.level_number || 0;
-                            if (subj === "literasi" && lvl > maxLit) maxLit = lvl;
-                            if (subj === "numerasi" && lvl > maxNum) maxNum = lvl;
-                          });
-                          if (maxLit === 0 && maxNum === 0) {
-                             return <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>-</span>;
-                          }
-                          return (
-                            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                              {maxLit > 0 && <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: 4, background: "#e0f2fe", color: "#0369a1", fontWeight: 600 }}>Lit: Lv.{maxLit}</span>}
-                              {maxNum > 0 && <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: 4, background: "#ffedd5", color: "#c2410c", fontWeight: 600 }}>Num: Lv.{maxNum}</span>}
-                            </div>
-                          );
-                        })()}
-                      </td>
-                      <td style={{ padding: "0.875rem 1rem" }}>
-                        <Badge variant={s.is_active !== false ? "success" : "danger"}>{s.is_active !== false ? "Aktif" : "Nonaktif"}</Badge>
-                      </td>
-                      <td style={{ padding: "0.875rem 1rem" }}>
-                        <div style={{ display: "flex", gap: "0.5rem" }}>
-                          <Button variant="outline" size="sm" onClick={() => { setEditingStudent(s); setIsStudentModalOpen(true); }}>Edit</Button>
-                          <Button variant="danger" size="sm" onClick={() => handleDeleteStudent(s)}>Hapus</Button>
+                      ) : <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>-</span>
+                    )
+                  },
+                  {
+                    key: "lastLevel",
+                    label: "Level Terakhir yang Dicapai",
+                    render: (_: any, s: any) => {
+                      const studentSessions = (sessions || []).filter((session: any) => 
+                        session.student_id === s.id && session.phase === activePhase
+                      );
+                      let maxLit = 0;
+                      let maxNum = 0;
+                      studentSessions.forEach((session: any) => {
+                        const subj = session.question_categories?.subject_area;
+                        const lvl = session.level_number || 0;
+                        if (subj === "literasi" && lvl > maxLit) maxLit = lvl;
+                        if (subj === "numerasi" && lvl > maxNum) maxNum = lvl;
+                      });
+                      if (maxLit === 0 && maxNum === 0) {
+                         return <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>-</span>;
+                      }
+                      return (
+                        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                          {maxLit > 0 && <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: 4, background: "#e0f2fe", color: "#0369a1", fontWeight: 600 }}>Lit: Lv.{maxLit}</span>}
+                          {maxNum > 0 && <span style={{ fontSize: "0.75rem", padding: "0.15rem 0.5rem", borderRadius: 4, background: "#ffedd5", color: "#c2410c", fontWeight: 600 }}>Num: Lv.{maxNum}</span>}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      );
+                    }
+                  },
+                  {
+                    key: "status",
+                    label: "Status",
+                    render: (_: any, s: any) => (
+                      <Badge variant={s.is_active !== false ? "success" : "danger"}>{s.is_active !== false ? "Aktif" : "Nonaktif"}</Badge>
+                    )
+                  },
+                  {
+                    key: "actions",
+                    label: "Aksi",
+                    render: (_: any, s: any) => (
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <Button variant="outline" size="sm" onClick={() => { setEditingStudent(s); setIsStudentModalOpen(true); }}>Edit</Button>
+                        <Button variant="danger" size="sm" onClick={() => handleDeleteStudent(s)}>Hapus</Button>
+                      </div>
+                    )
+                  }
+                ];
+                return (
+                  <DataTable
+                    columns={columns}
+                    data={paginatedStudents}
+                    emptyMessage="Belum ada anak terdaftar yang cocok dengan pencarian / filter ini."
+                    striped
+                    minWidth="700px"
+                  />
+                );
+              })()}
             </div>
           )}
           {filteredStudents.length > 0 && (
