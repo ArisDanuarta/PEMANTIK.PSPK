@@ -158,7 +158,7 @@ export default function DapodikKomunitasClient({ schools, communityId, community
           {(() => {
             const columns: ColumnDef<any>[] = [
               {
-                key: "name_npsn",
+                key: "name",
                 label: "Nama Sekolah & NPSN",
                 sortable: true,
                 render: (_: any, s: any) => (

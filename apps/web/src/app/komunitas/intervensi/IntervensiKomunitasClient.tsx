@@ -139,7 +139,6 @@ export default function IntervensiKomunitasClient({
                   {
                     key: "school_phase",
                     label: "Sekolah & Fase",
-                    sortable: true,
                     render: (_: any, item: any) => (
                       <>
                         <div style={{ fontWeight: 700, color: "#102e50" }}>{item.schools?.name || "Sekolah"}</div>
