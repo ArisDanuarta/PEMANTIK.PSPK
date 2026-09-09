@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from "react";
-import { Button, Badge, useToast } from "@pemantik/ui";
+import { DataTable, Button, Badge, useToast } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 
 
@@ -612,94 +613,115 @@ export default function CommunityReportDashboard({ schools, packages, communityI
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table className="pemantik-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr
-                style={{
-                  borderBottom: "2px solid #e5e7eb",
-                  textAlign: "left",
-                  color: "#4b5563",
-                  backgroundColor: "#f8fafc",
-                }}
-              >
-                <th style={{ padding: "0.85rem 1rem" }}>No</th>
-                <th style={{ padding: "0.85rem 1rem" }}>Nama Sekolah</th>
-                <th style={{ padding: "0.85rem 1rem" }}>NPSN</th>
-                <th style={{ padding: "0.85rem 1rem" }}>Kota / Kabupaten</th>
-                <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Anak Terdaftar</th>
-                <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Anak Mengerjakan</th>
-                <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Rata-rata Skor</th>
-                <th style={{ padding: "0.85rem 1rem", textAlign: "center" }}>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {schools.length === 0 ? (
-                <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
-                    Belum ada sekolah binaan yang terdaftar di komunitas ini.
-                  </td>
-                </tr>
-              ) : (
-                schools.map((school, idx) => {
+          {(() => {
+            const columns: ColumnDef<any>[] = [
+              {
+                key: "index",
+                label: "No",
+                render: (_: any, __: any, index: number) => <span style={{ color: "#6b7280" }}>{index + 1}</span>
+              },
+              {
+                key: "name",
+                label: "Nama Sekolah",
+                sortable: true,
+                render: (_: any, school: any) => <span style={{ fontWeight: 600, color: "#102e50" }}>{school.name}</span>
+              },
+              {
+                key: "npsn",
+                label: "NPSN",
+                sortable: true,
+                render: (_: any, school: any) => <span style={{ color: "#4b5563" }}>{(school as any).npsn || "-"}</span>
+              },
+              {
+                key: "city",
+                label: "Kota / Kabupaten",
+                sortable: true,
+                render: (_: any, school: any) => <span style={{ color: "#4b5563" }}>{(school as any).city || "-"}</span>
+              },
+              {
+                key: "registered_students",
+                label: "Anak Terdaftar",
+                align: "center" as const,
+                render: (_: any, school: any) => (
+                  <span style={{ fontWeight: 600, color: "#1e40af" }}>
+                    {(school as any).registeredStudentsCount ?? 0}
+                  </span>
+                )
+              },
+              {
+                key: "assessed_students",
+                label: "Anak Mengerjakan",
+                align: "center" as const,
+                render: (_: any, school: any) => {
                   const schoolRows = filteredData.filter((r) => r.school_id === school.id);
                   const uniqueAssessedStudents = new Set(schoolRows.map((r) => r.nisn || r.id)).size;
-                  const avgScore =
-                    schoolRows.length > 0
-                      ? (schoolRows.reduce((acc, r) => acc + r.score_total, 0) / schoolRows.length).toFixed(1)
-                      : "-";
-
                   return (
-                    <tr key={school.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                      <td style={{ padding: "0.85rem 1rem", color: "#6b7280" }}>{idx + 1}</td>
-                      <td style={{ padding: "0.85rem 1rem", fontWeight: 600, color: "#102e50" }}>{school.name}</td>
-                      <td style={{ padding: "0.85rem 1rem", color: "#4b5563" }}>{(school as any).npsn || "-"}</td>
-                      <td style={{ padding: "0.85rem 1rem", color: "#4b5563" }}>{(school as any).city || "-"}</td>
-                      <td style={{ padding: "0.85rem 1rem", textAlign: "center", fontWeight: 600, color: "#1e40af" }}>
-                        {(school as any).registeredStudentsCount ?? 0}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.85rem 1rem",
-                          textAlign: "center",
-                          fontWeight: 600,
-                          color: uniqueAssessedStudents > 0 ? "#16a34a" : "#9ca3af",
-                        }}
-                      >
-                        {selectedPackageId ? uniqueAssessedStudents : "-"}
-                      </td>
-                      <td style={{ padding: "0.85rem 1rem", textAlign: "center", fontWeight: 700, color: "#102e50" }}>
-                        {selectedPackageId ? avgScore : "-"}
-                      </td>
-                      <td style={{ padding: "0.85rem 1rem", textAlign: "center" }}>
-                        <button
-                          onClick={() => handleExport(school.id)}
-                          disabled={!selectedPackageId || isExporting || isLoadingData}
-                          style={{
-                            padding: "0.35rem 0.75rem",
-                            borderRadius: "0.375rem",
-                            border: "1px solid #0874aa",
-                            backgroundColor: "transparent",
-                            color: "#0874aa",
-                            fontSize: "0.78rem",
-                            fontWeight: 600,
-                            cursor: !selectedPackageId || isExporting || isLoadingData ? "not-allowed" : "pointer",
-                            opacity: !selectedPackageId || isExporting || isLoadingData ? 0.6 : 1,
-                          }}
-                          title={
-                            !selectedPackageId
-                              ? "Pilih Kategori Ujian di atas terlebih dahulu"
-                              : `Export Data untuk ${school.name}`
-                          }
-                        >
-                          Export Data
-                        </button>
-                      </td>
-                    </tr>
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        color: uniqueAssessedStudents > 0 ? "#16a34a" : "#9ca3af",
+                      }}
+                    >
+                      {selectedPackageId ? uniqueAssessedStudents : "-"}
+                    </span>
                   );
-                })
-              )}
-            </tbody>
-          </table>
+                }
+              },
+              {
+                key: "avg_score",
+                label: "Rata-rata Skor",
+                align: "center" as const,
+                render: (_: any, school: any) => {
+                  const schoolRows = filteredData.filter((r) => r.school_id === school.id);
+                  const avgScore = schoolRows.length > 0
+                    ? (schoolRows.reduce((acc, r) => acc + r.score_total, 0) / schoolRows.length).toFixed(1)
+                    : "-";
+                  return (
+                    <span style={{ fontWeight: 700, color: "#102e50" }}>
+                      {selectedPackageId ? avgScore : "-"}
+                    </span>
+                  );
+                }
+              },
+              {
+                key: "actions",
+                label: "Aksi",
+                align: "center" as const,
+                render: (_: any, school: any) => (
+                  <button
+                    onClick={() => handleExport(school.id)}
+                    disabled={!selectedPackageId || isExporting || isLoadingData}
+                    style={{
+                      padding: "0.35rem 0.75rem",
+                      borderRadius: "0.375rem",
+                      border: "1px solid #0874aa",
+                      backgroundColor: "transparent",
+                      color: "#0874aa",
+                      fontSize: "0.78rem",
+                      fontWeight: 600,
+                      cursor: !selectedPackageId || isExporting || isLoadingData ? "not-allowed" : "pointer",
+                      opacity: !selectedPackageId || isExporting || isLoadingData ? 0.6 : 1,
+                    }}
+                    title={
+                      !selectedPackageId
+                        ? "Pilih Kategori Ujian di atas terlebih dahulu"
+                        : `Export Data untuk ${school.name}`
+                    }
+                  >
+                    Export Data
+                  </button>
+                )
+              }
+            ];
+            return (
+              <DataTable
+                columns={columns}
+                data={schools}
+                emptyMessage="Belum ada sekolah binaan yang terdaftar di komunitas ini."
+                striped
+              />
+            );
+          })()}
         </div>
       </div>
     </div>
