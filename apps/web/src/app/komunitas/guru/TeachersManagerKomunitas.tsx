@@ -2,7 +2,8 @@
 
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Badge, Button, useToast, useConfirm } from "@pemantik/ui";
+import { DataTable, Badge, Button, useToast, useConfirm } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import { createTeacherAction, updateTeacherAction, deleteTeacherAction, resetTeacherPasswordAction, bulkCreateTeachersAction, bulkDeleteTeachersAction } from "../../actions/teachers";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
@@ -224,77 +225,89 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
         </div>
       </div>
 
-      <table className="pemantik-table">
-        <thead>
-          <tr>
-            <th>Nama Guru</th>
-            <th>Akun Akses</th>
-            <th>Sekolah Binaan</th>
-            <th>Kelas Terpilih</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredTeachers.length === 0 ? (
-            <tr>
-              <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
-                Tidak ada data guru ditemukan.
-              </td>
-            </tr>
-          ) : (
-            paginatedTeachers.map((row) => (
-              <tr key={row.id}>
-                <td><strong>{row.full_name}</strong></td>
-                <td>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                    <div>
-                      <span style={{ color: "black" }}>User:</span>{" "}
-                      <strong 
-                        style={{ cursor: "pointer", textDecoration: "underline", color: "#0874aa" }} 
-                        onClick={() => { navigator.clipboard.writeText(row.username); showSuccessToast("Tersalin", "Username disalin ke clipboard"); }}
-                        title="Klik untuk menyalin"
-                      >{row.username}</strong>
-                    </div>
-                    <div>
-                      <span style={{ color: "black" }}>Pass:</span>{" "}
-                      <code 
-                        style={{ color: "#a8281c", cursor: "pointer", textDecoration: "underline" }} 
-                        onClick={() => { navigator.clipboard.writeText(row.plain_password || "-"); showSuccessToast("Tersalin", "Password disalin ke clipboard"); }}
-                        title="Klik untuk menyalin"
-                      >{row.plain_password || "-"}</code>
-                    </div>
-                  </div>
-                </td>
-                <td>{row.schools?.name || "-"}</td>
-                <td>
-                  {row.classes && row.classes.length > 0 ? (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
-                      {row.classes.map((c: any) => (
-                        <span key={c.name} style={{ padding: "0.15rem 0.4rem", backgroundColor: "#f3f4f6", borderRadius: "0.25rem", fontSize: "0.75rem", border: "1px solid #e5e7eb" }}>
-                          {c.name}
-                        </span>
-                      ))}
-                    </div>
-                  ) : "-"}
-                </td>
-                <td>
-                  <Badge variant={row.is_active ? "success" : "danger"}>
-                    {row.is_active ? "Aktif" : "Nonaktif"}
-                  </Badge>
-                </td>
-                <td>
-                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                    <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset Sandi</Button>
-                    <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      {(() => {
+        const columns: ColumnDef<any>[] = [
+          {
+            key: "full_name",
+            label: "Nama Guru",
+            sortable: true,
+            render: (_: any, row: any) => <strong>{row.full_name}</strong>
+          },
+          {
+            key: "username",
+            label: "Akun Akses",
+            render: (_: any, row: any) => (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
+                <div>
+                  <span style={{ color: "black" }}>User:</span>{" "}
+                  <strong 
+                    style={{ cursor: "pointer", textDecoration: "underline", color: "#0874aa" }} 
+                    onClick={() => { navigator.clipboard.writeText(row.username); showSuccessToast("Tersalin", "Username disalin ke clipboard"); }}
+                    title="Klik untuk menyalin"
+                  >{row.username}</strong>
+                </div>
+                <div>
+                  <span style={{ color: "black" }}>Pass:</span>{" "}
+                  <code 
+                    style={{ color: "#a8281c", cursor: "pointer", textDecoration: "underline" }} 
+                    onClick={() => { navigator.clipboard.writeText(row.plain_password || "-"); showSuccessToast("Tersalin", "Password disalin ke clipboard"); }}
+                    title="Klik untuk menyalin"
+                  >{row.plain_password || "-"}</code>
+                </div>
+              </div>
+            )
+          },
+          {
+            key: "schools",
+            label: "Sekolah Binaan",
+            render: (_: any, row: any) => row.schools?.name || "-"
+          },
+          {
+            key: "classes",
+            label: "Kelas Terpilih",
+            render: (_: any, row: any) => (
+              row.classes && row.classes.length > 0 ? (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
+                  {row.classes.map((c: any) => (
+                    <span key={c.name} style={{ padding: "0.15rem 0.4rem", backgroundColor: "#f3f4f6", borderRadius: "0.25rem", fontSize: "0.75rem", border: "1px solid #e5e7eb" }}>
+                      {c.name}
+                    </span>
+                  ))}
+                </div>
+              ) : "-"
+            )
+          },
+          {
+            key: "is_active",
+            label: "Status",
+            render: (_: any, row: any) => (
+              <Badge variant={row.is_active ? "success" : "danger"}>
+                {row.is_active ? "Aktif" : "Nonaktif"}
+              </Badge>
+            )
+          },
+          {
+            key: "actions",
+            label: "Aksi",
+            align: "right" as const,
+            render: (_: any, row: any) => (
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
+                <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset Sandi</Button>
+                <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
+              </div>
+            )
+          }
+        ];
+        return (
+          <DataTable
+            columns={columns}
+            data={paginatedTeachers}
+            emptyMessage="Tidak ada data guru ditemukan."
+            striped
+          />
+        );
+      })()}
 
       <Pagination
         currentPage={currentPage}

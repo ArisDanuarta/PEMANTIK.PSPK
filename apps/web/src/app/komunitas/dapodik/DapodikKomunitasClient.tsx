@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, Badge, useToast } from "@pemantik/ui";
+import { DataTable, Button, Badge, useToast } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import { parseDapodikAction, importDapodikAction } from "@/app/actions/schools";
 import { useRouter } from "next/navigation";
@@ -154,77 +155,91 @@ export default function DapodikKomunitasClient({ schools, communityId, community
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table className="pemantik-table">
-            <thead>
-              <tr>
-                <th>Nama Sekolah & NPSN</th>
-                <th>Wilayah</th>
-                <th>Jumlah Kelas</th>
-                <th>Akun Anak</th>
-                <th>Akun Guru</th>
-                <th>Status Dapodik</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSchools.length === 0 ? (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "3rem 1rem", color: "#64748b" }}>
-                    Belum ada sekolah binaan yang cocok dengan pencarian.
-                  </td>
-                </tr>
-              ) : (
-                filteredSchools.map((s) => {
+          {(() => {
+            const columns: ColumnDef<any>[] = [
+              {
+                key: "name_npsn",
+                label: "Nama Sekolah & NPSN",
+                sortable: true,
+                render: (_: any, s: any) => (
+                  <>
+                    <div style={{ fontWeight: 600, color: "#102e50" }}>{s.name}</div>
+                    <div style={{ fontSize: "0.8rem", color: "#64748b" }}>NPSN: {s.npsn || "-"}</div>
+                  </>
+                )
+              },
+              {
+                key: "wilayah",
+                label: "Wilayah",
+                render: (_: any, s: any) => (
+                  <div style={{ fontSize: "0.85rem", color: "#334155" }}>{s.city || s.province || "-"}</div>
+                )
+              },
+              {
+                key: "classes_count",
+                label: "Jumlah Kelas",
+                render: (_: any, s: any) => (
+                  <div style={{ fontWeight: 600, color: "#d97706" }}>{s.classes_count} Kelas</div>
+                )
+              },
+              {
+                key: "students_count",
+                label: "Akun Anak",
+                render: (_: any, s: any) => (
+                  <div style={{ fontWeight: 600, color: "#2563eb" }}>{s.students_count} Anak</div>
+                )
+              },
+              {
+                key: "teachers_count",
+                label: "Akun Guru",
+                render: (_: any, s: any) => (
+                  <div style={{ fontWeight: 600, color: "#059669" }}>{s.teachers_count} Guru</div>
+                )
+              },
+              {
+                key: "status_dapodik",
+                label: "Status Dapodik",
+                render: (_: any, s: any) => {
                   const isImported = Boolean(s.dapodik_imported_at);
-                  return (
-                    <tr key={s.id}>
-                      <td>
-                        <div style={{ fontWeight: 600, color: "#102e50" }}>{s.name}</div>
-                        <div style={{ fontSize: "0.8rem", color: "#64748b" }}>NPSN: {s.npsn || "-"}</div>
-                      </td>
-                      <td>
-                        <div style={{ fontSize: "0.85rem", color: "#334155" }}>{s.city || s.province || "-"}</div>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 600, color: "#d97706" }}>{s.classes_count} Kelas</div>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 600, color: "#2563eb" }}>{s.students_count} Anak</div>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 600, color: "#059669" }}>{s.teachers_count} Guru</div>
-                      </td>
-                      <td>
-                        {isImported ? (
-                          <div>
-                            <Badge variant="success">Sudah Diimpor</Badge>
-                            <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.25rem" }}>
-                              {new Date(s.dapodik_imported_at!).toLocaleDateString("id-ID", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric"
-                              })}
-                            </div>
-                          </div>
-                        ) : (
-                          <Badge variant="warning">Belum / Manual</Badge>
-                        )}
-                      </td>
-                      <td>
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsDapodikModalOpen(true)}
-                          style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem", color: "#0369a1", borderColor: "#7dd3fc" }}
-                        >
-                          Sync Dapodik
-                        </Button>
-                      </td>
-                    </tr>
+                  return isImported ? (
+                    <div>
+                      <Badge variant="success">Sudah Diimpor</Badge>
+                      <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.25rem" }}>
+                        {new Date(s.dapodik_imported_at!).toLocaleDateString("id-ID", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <Badge variant="warning">Belum / Manual</Badge>
                   );
-                })
-              )}
-            </tbody>
-          </table>
+                }
+              },
+              {
+                key: "actions",
+                label: "Aksi",
+                render: (_: any, s: any) => (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsDapodikModalOpen(true)}
+                    style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem", color: "#0369a1", borderColor: "#7dd3fc" }}
+                  >
+                    Sync Dapodik
+                  </Button>
+                )
+              }
+            ];
+            return (
+              <DataTable
+                columns={columns}
+                data={filteredSchools}
+                emptyMessage="Belum ada sekolah binaan yang cocok dengan pencarian."
+                striped
+              />
+            );
+          })()}
         </div>
       </div>
 

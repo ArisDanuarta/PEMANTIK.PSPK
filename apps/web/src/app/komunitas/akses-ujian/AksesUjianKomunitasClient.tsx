@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { Button, Badge, useToast } from "@pemantik/ui";
+import { DataTable, Button, Badge, useToast } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import AssignPackageModal from "@/components/shared/AssignPackageModal";
 import {
   assignCommunityPackageToSchool,
@@ -556,65 +557,73 @@ export default function AksesUjianKomunitasClient({
                     </span>
                   </div>
                   <div style={{ overflowX: "auto", backgroundColor: "white" }}>
-                    <table style={{ width: "100%", minWidth: "700px", borderCollapse: "collapse", fontSize: "0.9rem" }}>
-                      <thead>
-                        <tr
-                          style={{
-                            borderBottom: "2px solid #e5e7eb",
-                            textAlign: "left",
-                            color: "#4b5563",
-                            backgroundColor: "#f9fafb",
-                          }}
-                        >
-                          <th style={{ padding: "0.75rem 1rem" }}>Tanggal Penugasan</th>
-                          <th style={{ padding: "0.75rem 1rem" }}>Sekolah Binaan</th>
-                          <th style={{ padding: "0.75rem 1rem" }}>Kategori Ujian</th>
-                          <th style={{ padding: "0.75rem 1rem" }}>Rentang Valid</th>
-                          <th style={{ padding: "0.75rem 1rem" }}>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {logsInPhase.map((log) => {
-                          const expired = isExpired(log.valid_until);
-                          return (
-                            <tr key={log.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                              <td style={{ padding: "0.75rem 1rem", color: "#6b7280" }}>
-                                {formatDate(log.created_at)}
-                              </td>
-                              <td style={{ padding: "0.75rem 1rem", fontWeight: 600, color: "#102e50" }}>
-                                {log.target_name}
-                              </td>
-                              <td style={{ padding: "0.75rem 1rem" }}>
-                                {log.question_categories?.name}
-                                <span style={{ display: "block", fontSize: "0.78rem", color: "#6b7280" }}>
-                                  ({log.question_categories?.subject_area?.toUpperCase()})
-                                </span>
-                              </td>
-                              <td
-                                style={{
-                                  padding: "0.75rem 1rem",
-                                  fontSize: "0.85rem",
-                                  color: expired ? "#9ca3af" : "#4b5563",
-                                }}
-                              >
+                    {(() => {
+                      const columns: ColumnDef<any>[] = [
+                        {
+                          key: "created_at",
+                          label: "Tanggal Penugasan",
+                          render: (_: any, log: any) => (
+                            <span style={{ color: "#6b7280" }}>{formatDate(log.created_at)}</span>
+                          )
+                        },
+                        {
+                          key: "target_name",
+                          label: "Sekolah Binaan",
+                          render: (_: any, log: any) => (
+                            <span style={{ fontWeight: 600, color: "#102e50" }}>{log.target_name}</span>
+                          )
+                        },
+                        {
+                          key: "category",
+                          label: "Kategori Ujian",
+                          render: (_: any, log: any) => (
+                            <>
+                              {log.question_categories?.name}
+                              <span style={{ display: "block", fontSize: "0.78rem", color: "#6b7280" }}>
+                                ({log.question_categories?.subject_area?.toUpperCase()})
+                              </span>
+                            </>
+                          )
+                        },
+                        {
+                          key: "valid_range",
+                          label: "Rentang Valid",
+                          render: (_: any, log: any) => {
+                            const expired = isExpired(log.valid_until);
+                            return (
+                              <span style={{ fontSize: "0.85rem", color: expired ? "#9ca3af" : "#4b5563" }}>
                                 {formatDate(log.valid_from)} - {formatDate(log.valid_until)}
-                              </td>
-                              <td style={{ padding: "0.75rem 1rem" }}>
-                                {expired ? (
-                                  <span style={{ color: "#ef4444", fontSize: "0.8rem", fontWeight: 600 }}>
-                                    Kedaluwarsa
-                                  </span>
-                                ) : (
-                                  <span style={{ color: "#16a34a", fontSize: "0.8rem", fontWeight: 600 }}>
-                                    ● Aktif
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                              </span>
+                            );
+                          }
+                        },
+                        {
+                          key: "status",
+                          label: "Status",
+                          render: (_: any, log: any) => {
+                            const expired = isExpired(log.valid_until);
+                            return expired ? (
+                              <span style={{ color: "#ef4444", fontSize: "0.8rem", fontWeight: 600 }}>
+                                Kedaluwarsa
+                              </span>
+                            ) : (
+                              <span style={{ color: "#16a34a", fontSize: "0.8rem", fontWeight: 600 }}>
+                                ● Aktif
+                              </span>
+                            );
+                          }
+                        }
+                      ];
+                      return (
+                        <DataTable
+                          columns={columns}
+                          data={logsInPhase}
+                          emptyMessage="Belum ada penugasan."
+                          striped
+                          minWidth="700px"
+                        />
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
@@ -644,46 +653,61 @@ export default function AksesUjianKomunitasClient({
           </div>
         </div>
 
-        {phaseRequests.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "2.5rem", color: "#6b7280", backgroundColor: "#f9fafb", borderRadius: "0.5rem" }}>
-            Belum ada pengajuan fase asesmen yang dikirim ke Super Admin.
-          </div>
-        ) : (
-          <table className="pemantik-table">
-            <thead>
-              <tr>
-                <th>Tanggal Pengajuan</th>
-                <th>Kategori Ujian</th>
-                <th>Fase Diajukan</th>
-                <th>Target Sekolah</th>
-                <th>Rentang Waktu</th>
-                <th>Status &amp; Alasan</th>
-              </tr>
-            </thead>
-            <tbody>
-              {phaseRequests.map((pr: any) => (
-                <tr key={pr.id}>
-                  <td style={{ color: "#6b7280", fontSize: "0.85rem" }}>
+          {(() => {
+            const columns: ColumnDef<any>[] = [
+              {
+                key: "created_at",
+                label: "Tanggal Pengajuan",
+                render: (_: any, pr: any) => (
+                  <span style={{ color: "#6b7280", fontSize: "0.85rem" }}>
                     {formatDate(pr.created_at)}
-                  </td>
-                  <td style={{ fontWeight: 600, color: "#102e50" }}>
+                  </span>
+                )
+              },
+              {
+                key: "category",
+                label: "Kategori Ujian",
+                render: (_: any, pr: any) => (
+                  <span style={{ fontWeight: 600, color: "#102e50" }}>
                     {pr.question_categories?.name || pr.category_id}
-                  </td>
-                  <td>
-                    <span style={{ padding: "0.2rem 0.65rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 600, backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb" }}>
-                      {pr.phase}
-                    </span>
-                  </td>
-                  <td style={{ fontSize: "0.85rem" }}>
+                  </span>
+                )
+              },
+              {
+                key: "phase",
+                label: "Fase Diajukan",
+                render: (_: any, pr: any) => (
+                  <span style={{ padding: "0.2rem 0.65rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 600, backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb" }}>
+                    {pr.phase}
+                  </span>
+                )
+              },
+              {
+                key: "target_school_ids",
+                label: "Target Sekolah",
+                render: (_: any, pr: any) => (
+                  <span style={{ fontSize: "0.85rem" }}>
                     {pr.target_school_ids?.length || 0} Sekolah
-                  </td>
-                  <td style={{ fontSize: "0.85rem", color: "#4b5563" }}>
+                  </span>
+                )
+              },
+              {
+                key: "valid_range",
+                label: "Rentang Waktu",
+                render: (_: any, pr: any) => (
+                  <span style={{ fontSize: "0.85rem", color: "#4b5563" }}>
                     {formatDate(pr.valid_from)} - {formatDate(pr.valid_until)}
-                  </td>
-                  <td>
-                    {pr.status === "approved" ? (
-                      <Badge variant="success">Disetujui</Badge>
-                    ) : pr.status === "rejected" ? (
+                  </span>
+                )
+              },
+              {
+                key: "status",
+                label: "Status & Alasan",
+                render: (_: any, pr: any) => {
+                  if (pr.status === "approved") {
+                    return <Badge variant="success">Disetujui</Badge>;
+                  } else if (pr.status === "rejected") {
+                    return (
                       <div>
                         <Badge variant="danger">Ditolak</Badge>
                         {pr.rejection_reason && (
@@ -692,15 +716,22 @@ export default function AksesUjianKomunitasClient({
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <Badge variant="warning">Menunggu Persetujuan</Badge>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+                    );
+                  } else {
+                    return <Badge variant="warning">Menunggu Persetujuan</Badge>;
+                  }
+                }
+              }
+            ];
+            return (
+              <DataTable
+                columns={columns}
+                data={phaseRequests}
+                emptyMessage="Belum ada pengajuan fase asesmen yang dikirim ke Super Admin."
+                striped
+              />
+            );
+          })()}
       </div>
 
       {/* ── Modal Request Fase Asesmen Baru ───────────────────────────────── */}

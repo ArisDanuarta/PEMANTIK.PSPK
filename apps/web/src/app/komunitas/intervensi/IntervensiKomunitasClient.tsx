@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Badge, Button } from "@pemantik/ui";
+import { DataTable, Badge, Button } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import SafeHtml from "@/components/shared/SafeHtml";
 import InterventionForm from "@/components/shared/InterventionForm";
 import InterventionGraph from "@/components/shared/InterventionGraph";
@@ -133,21 +134,14 @@ export default function IntervensiKomunitasClient({
             </div>
           ) : (
             <div style={{ overflowX: "auto" }}>
-              <table className="pemantik-table" style={{ minWidth: "900px" }}>
-                <thead>
-                  <tr>
-                    <th>Sekolah &amp; Fase</th>
-                    <th>1. Kondisi Awal</th>
-                    <th>2. Upaya Dilakukan</th>
-                    <th>Tag Topik</th>
-                    <th>Tanggal</th>
-                    <th style={{ textAlign: "center" }}>Detail</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {initialInterventions.map((item) => (
-                    <tr key={item.id}>
-                      <td>
+              {(() => {
+                const columns: ColumnDef<any>[] = [
+                  {
+                    key: "school_phase",
+                    label: "Sekolah & Fase",
+                    sortable: true,
+                    render: (_: any, item: any) => (
+                      <>
                         <div style={{ fontWeight: 700, color: "#102e50" }}>{item.schools?.name || "Sekolah"}</div>
                         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.2rem" }}>
                           <Badge variant="info">{item.phase}</Badge>
@@ -159,34 +153,70 @@ export default function IntervensiKomunitasClient({
                               ? `Komunitas (${item.communities?.name || "Tanpa Nama"})`
                               : "Admin Sekolah"}
                         </div>
-                      </td>
-                      <td style={{ maxWidth: "200px" }}>
+                      </>
+                    )
+                  },
+                  {
+                    key: "kondisi_awal",
+                    label: "1. Kondisi Awal",
+                    render: (_: any, item: any) => (
+                      <div style={{ maxWidth: "200px" }}>
                         <SafeHtml html={item.kondisi_awal || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} />
-                      </td>
-                      <td style={{ maxWidth: "220px" }}>
+                      </div>
+                    )
+                  },
+                  {
+                    key: "upaya_dilakukan",
+                    label: "2. Upaya Dilakukan",
+                    render: (_: any, item: any) => (
+                      <div style={{ maxWidth: "220px" }}>
                         <SafeHtml html={item.upaya_dilakukan || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} />
-                      </td>
-                      <td>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
-                          {(item.intervention_tag_links || []).map((lnk: any) => (
-                            <span key={lnk.intervention_tags?.id} style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 600 }}>
-                              #{lnk.intervention_tags?.name}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td style={{ fontSize: "0.82rem", color: "#64748b" }}>
+                      </div>
+                    )
+                  },
+                  {
+                    key: "tag_topik",
+                    label: "Tag Topik",
+                    render: (_: any, item: any) => (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
+                        {(item.intervention_tag_links || []).map((lnk: any) => (
+                          <span key={lnk.intervention_tags?.id} style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 600 }}>
+                            #{lnk.intervention_tags?.name}
+                          </span>
+                        ))}
+                      </div>
+                    )
+                  },
+                  {
+                    key: "tanggal",
+                    label: "Tanggal",
+                    render: (_: any, item: any) => (
+                      <span style={{ fontSize: "0.82rem", color: "#64748b" }}>
                         {formatDate(item.created_at)}
-                      </td>
-                      <td style={{ textAlign: "center" }}>
-                        <Button size="sm" variant="outline" onClick={() => setSelectedInterventionDetail(item)}>
-                          Lihat Detail
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </span>
+                    )
+                  },
+                  {
+                    key: "detail",
+                    label: "Detail",
+                    align: "center" as const,
+                    render: (_: any, item: any) => (
+                      <Button size="sm" variant="outline" onClick={() => setSelectedInterventionDetail(item)}>
+                        Lihat Detail
+                      </Button>
+                    )
+                  }
+                ];
+                return (
+                  <DataTable
+                    columns={columns}
+                    data={initialInterventions}
+                    emptyMessage="Belum ada laporan intervensi yang pernah disubmit oleh komunitas Anda."
+                    striped
+                    minWidth="900px"
+                  />
+                );
+              })()}
             </div>
           )}
         </div>
