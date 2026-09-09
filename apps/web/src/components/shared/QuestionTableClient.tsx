@@ -140,7 +140,7 @@ export default function QuestionTableClient({
               )
             },
             {
-              key: "code",
+              key: "question_code",
               label: "Kode Soal",
               className: "col-hide-mobile",
               sortable: true,
@@ -151,7 +151,7 @@ export default function QuestionTableClient({
               )
             },
             {
-              key: "subject",
+              key: "subject_area",
               label: "Mata Pelajaran",
               className: "col-hide-mobile",
               sortable: true,
@@ -162,7 +162,7 @@ export default function QuestionTableClient({
               )
             },
             {
-              key: "type",
+              key: "question_type",
               label: "Tipe",
               sortable: true,
               render: (_: any, q: any) => {
@@ -203,7 +203,7 @@ export default function QuestionTableClient({
               )
             },
             {
-              key: "status",
+              key: "is_published",
               label: "Status",
               sortable: true,
               render: (_: any, q: any) => (

@@ -188,7 +188,7 @@ export default function IntervensiKomunitasClient({
                     )
                   },
                   {
-                    key: "tanggal",
+                    key: "created_at",
                     label: "Tanggal",
                     sortable: true,
                     render: (_: any, item: any) => (
