@@ -2,7 +2,8 @@
 
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Table, Button, Modal, Badge, useToast, useConfirm, SesBadge } from "@pemantik/ui";
+import { DataTable, Button, Modal, Badge, useToast, useConfirm, SesBadge } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import { createStudentAction, bulkCreateStudentsAction, updateStudentAction, deleteStudentAction, resetStudentPasswordAction, bulkDeleteStudentsAction } from "../../actions/students";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import CredentialModal, { Credentials } from "@/components/shared/CredentialModal";
@@ -308,71 +309,102 @@ export default function StudentsManager({
         </span>
       </div>
 
-      <div style={{ overflowX: "auto" }}>
-        <table className="pemantik-table">
-        <thead>
-          <tr>
-            <th>Nama Anak</th>
-            <th>NISN & Gender</th>
-            <th>Akun Akses</th>
-            <th>Kelas & Guru</th>
-            <th>Sekolah</th>
-            <th>SES</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedStudents.length === 0 ? (
-            <tr>
-              <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
-                Tidak ada data anak ditemukan.
-              </td>
-            </tr>
-          ) : (
-            paginatedStudents.map((row) => (
-              <tr key={row.id}>
-                <td><strong>{row.full_name}</strong></td>
-                <td>
-                  <div style={{ fontWeight: 500 }}>NISN: {row.nisn || "-"}</div>
-                  <div style={{ fontSize: "0.8rem", color: "black" }}>{row.gender === "L" ? "Laki-laki" : "Perempuan"}</div>
-                </td>
-                <td>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                    <div><span style={{ color: "black" }}>User:</span> <strong>{row.username}</strong></div>
-                    <div><span style={{ color: "black" }}>PIN:</span> <code style={{ color: "#a8281c" }}>123456</code></div>
-                  </div>
-                </td>
-                <td>
-                  <div style={{ fontWeight: 500, color: "#102e50" }}>{row.classes?.name || "-"}</div>
-                  <div style={{ fontSize: "0.8rem", color: "black" }}>Guru: {row.classes?.users?.full_name || "-"}</div>
-                </td>
-                <td>{row.schools?.name || "-"}</td>
-                <td>
-                  {row.ses_class ? (
-                  <SesBadge sesClass={row.ses_class} />
-                  ) : (
-                    <span style={{ fontSize: "0.8rem", color: "black" }}>Belum Dihitung</span>
-                  )}
-                </td>
-                <td>
-                  <Badge variant={row.is_active ? "success" : "danger"}>
-                    {row.is_active ? "Aktif" : "Nonaktif"}
-                  </Badge>
-                </td>
-                <td>
-                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                    <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset PIN</Button>
-                    <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-      </div>
+      {(() => {
+        const studentColumns: ColumnDef<Student>[] = [
+          {
+            key: "full_name",
+            label: "Nama Anak",
+            sortable: true,
+            render: (_v, row) => (
+              <strong style={{ color: "#102e50" }}>{row.full_name}</strong>
+            ),
+          },
+          {
+            key: "nisn",
+            label: "NISN & Gender",
+            render: (_v, row) => (
+              <div>
+                <div style={{ fontWeight: 500 }}>NISN: {row.nisn || "—"}</div>
+                <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>
+                  {row.gender === "L" ? "Laki-laki" : "Perempuan"}
+                </div>
+              </div>
+            ),
+          },
+          {
+            key: "username",
+            label: "Akun Akses",
+            render: (_v, row) => (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", fontSize: "0.82rem" }}>
+                <div>
+                  <span style={{ color: "#6c757d" }}>User: </span>
+                  <strong>{row.username}</strong>
+                </div>
+                <div>
+                  <span style={{ color: "#6c757d" }}>PIN: </span>
+                  <code style={{ color: "#a8281c" }}>123456</code>
+                </div>
+              </div>
+            ),
+          },
+          {
+            key: "classes",
+            label: "Kelas & Guru",
+            render: (_v, row) => (
+              <div>
+                <div style={{ fontWeight: 500, color: "#102e50" }}>{(row.classes as any)?.name || "—"}</div>
+                <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>Guru: {(row.classes as any)?.users?.full_name || "—"}</div>
+              </div>
+            ),
+          },
+          {
+            key: "schools",
+            label: "Sekolah",
+            render: (_v, row) => (
+              <span style={{ fontSize: "0.875rem" }}>{row.schools?.name || "—"}</span>
+            ),
+          },
+          {
+            key: "ses_class",
+            label: "SES",
+            render: (_v, row) =>
+              row.ses_class ? (
+                <SesBadge sesClass={row.ses_class} />
+              ) : (
+                <span style={{ fontSize: "0.78rem", color: "#adb5bd" }}>Belum Dihitung</span>
+              ),
+          },
+          {
+            key: "is_active",
+            label: "Status",
+            render: (_v, row) => (
+              <Badge variant={row.is_active ? "success" : "danger"}>
+                {row.is_active ? "Aktif" : "Nonaktif"}
+              </Badge>
+            ),
+          },
+          {
+            key: "actions",
+            label: "Aksi",
+            render: (_v, row) => (
+              <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
+                <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset PIN</Button>
+                <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
+              </div>
+            ),
+          },
+        ];
+        return (
+          <DataTable
+            columns={studentColumns}
+            data={paginatedStudents}
+            emptyMessage="Tidak ada data anak ditemukan."
+            minWidth="900px"
+            striped
+          />
+        );
+      })()}
 
       <Pagination
         currentPage={currentPage}

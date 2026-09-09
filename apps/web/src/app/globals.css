@@ -744,6 +744,136 @@ h6 { font-size: 0.875rem; }
   margin-bottom: 0.5rem;
 }
 
+/* ─── DataTable Component Styles ─────────────────────────────────────────────
+ * All styles prefixed with .dt- to avoid conflicts with legacy .pemantik-table
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* Outer wrapper – contains scroll shadow effects */
+.dt-wrapper {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+  background: #fff;
+  /* Horizontal scroll shadows via background trick */
+  background-image:
+    linear-gradient(to right, #fff, #fff),
+    linear-gradient(to right, #fff, #fff),
+    linear-gradient(to right, rgba(16,46,80,0.08), rgba(255,255,255,0)),
+    linear-gradient(to left,  rgba(16,46,80,0.08), rgba(255,255,255,0));
+  background-position: left center, right center, left center, right center;
+  background-repeat: no-repeat;
+  background-size: 24px 100%, 24px 100%, 16px 100%, 16px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+/* Horizontal scroll container */
+.dt-scroll-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* The actual <table> */
+.dt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  min-width: 600px;
+}
+
+/* ── Sticky thead ── */
+.dt-thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.dt-thead tr {
+  background: linear-gradient(to bottom, #f8f9fa, #f1f3f5);
+  box-shadow: 0 1px 0 #dee2e6, 0 2px 4px rgba(16,46,80,0.04);
+}
+
+.dt-table th {
+  background: transparent;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #495057;
+  padding: 0.7rem 1rem;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.dt-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f1f3f5;
+  color: #212529;
+  vertical-align: middle;
+}
+
+.dt-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dt-table tbody tr {
+  transition: background var(--duration-fast);
+}
+
+.dt-table tbody tr:hover {
+  background: rgba(8, 116, 170, 0.035);
+}
+
+/* ── Compact size ── */
+.dt-table.dt-sm th {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.68rem;
+}
+
+.dt-table.dt-sm td {
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* ── Zebra striping ── */
+.dt-table.dt-striped tbody tr:nth-child(even) {
+  background: #f9fbfd;
+}
+
+.dt-table.dt-striped tbody tr:nth-child(even):hover {
+  background: rgba(8, 116, 170, 0.045);
+}
+
+/* ── Clickable rows ── */
+.dt-table.dt-clickable-rows tbody tr {
+  cursor: pointer;
+}
+
+/* ── Sortable column headers ── */
+.dt-sortable-th {
+  position: relative;
+  transition: color var(--duration-fast), background var(--duration-fast);
+}
+
+.dt-sortable-th:hover {
+  color: var(--clr-biru);
+  background: rgba(16, 46, 80, 0.05);
+}
+
+/* ── Modern empty state ── */
+.dt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3.5rem 1rem;
+  color: #adb5bd;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
 /* ─── Form Elements ────────────────────────────────────────────────────────── */
 .form-group {
   display: flex;

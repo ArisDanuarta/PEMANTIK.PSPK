@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { Badge, Button, useToast, useConfirm } from "@pemantik/ui";
+import { Badge, Button, DataTable, useToast, useConfirm } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import { reviewPhaseRequestAction } from "@/app/actions/phaseRequests";
 import { useRouter } from "next/navigation";
 
@@ -164,97 +165,96 @@ export default function PersetujuanSuperAdminClient({
             </p>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="pemantik-table">
-              <thead>
-                <tr>
-                  <th>Komunitas Pengaju</th>
-                  <th>Kategori &amp; Fase</th>
-                  <th>Daftar Sekolah Target</th>
-                  <th>Rentang Valid</th>
-                  <th>Status / Ditinjau</th>
-                  {activeTab === "pending" && <th style={{ textAlign: "center" }}>Aksi Peninjauan</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRequests.map((req) => (
-                  <tr key={req.id}>
-                    <td>
-                      <div style={{ fontWeight: 600, color: "#102e50", fontSize: "0.95rem" }}>
-                        {req.communities?.name || "Komunitas"}
-                      </div>
-                      <div style={{ fontSize: "0.78rem", color: "#6b7280", marginTop: "0.15rem" }}>
-                        Diajukan: {formatDate(req.created_at)}
-                      </div>
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 600, color: "#111827" }}>
-                        {req.question_categories?.name || req.category_id}
-                      </div>
-                      <div style={{ marginTop: "0.25rem" }}>
-                        <span style={{ padding: "0.18rem 0.55rem", backgroundColor: "#f3f4f6", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 600, border: "1px solid #e5e7eb", color: "#374151" }}>
-                          {req.phase}
-                        </span>
-                      </div>
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "280px" }}>
-                        {(req.target_school_ids || []).map((sid: string) => (
-                          <span key={sid} style={{ padding: "0.15rem 0.45rem", backgroundColor: "#e0f2fe", color: "#0369a1", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 500 }}>
-                            {schoolMap.get(sid) || sid}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td style={{ fontSize: "0.85rem", color: "#4b5563" }}>
-                      {formatDate(req.valid_from)} &ndash; {formatDate(req.valid_until)}
-                    </td>
-                    <td>
-                      {req.status === "approved" ? (
-                        <div>
-                          <Badge variant="success">✅ Disetujui</Badge>
-                          {req.reviewed_at && <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.2rem" }}>{formatDate(req.reviewed_at)}</div>}
-                        </div>
-                      ) : req.status === "rejected" ? (
-                        <div>
-                          <Badge variant="danger">❌ Ditolak</Badge>
-                          {req.rejection_reason && (
-                            <div style={{ fontSize: "0.75rem", color: "#ef4444", marginTop: "0.25rem", maxWidth: "200px" }}>
-                              Alasan: {req.rejection_reason}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <Badge variant="warning">⏳ Pending / Menunggu</Badge>
+          <>{(() => {
+            const cols: ColumnDef<any>[] = [
+              {
+                key: "community",
+                label: "Komunitas Pengaju",
+                render: (_v, req) => (
+                  <div>
+                    <div style={{ fontWeight: 600, color: "#102e50", fontSize: "0.95rem" }}>{req.communities?.name || "Komunitas"}</div>
+                    <div style={{ fontSize: "0.78rem", color: "#6b7280", marginTop: "0.15rem" }}>Diajukan: {formatDate(req.created_at)}</div>
+                  </div>
+                ),
+              },
+              {
+                key: "category",
+                label: "Kategori & Fase",
+                render: (_v, req) => (
+                  <div>
+                    <div style={{ fontWeight: 600, color: "#111827" }}>{req.question_categories?.name || req.category_id}</div>
+                    <div style={{ marginTop: "0.25rem" }}>
+                      <span style={{ padding: "0.18rem 0.55rem", backgroundColor: "#f3f4f6", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 600, border: "1px solid #e5e7eb", color: "#374151" }}>
+                        {req.phase}
+                      </span>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: "target_school_ids",
+                label: "Daftar Sekolah Target",
+                render: (_v, req) => (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: 280 }}>
+                    {(req.target_school_ids || []).map((sid: string) => (
+                      <span key={sid} style={{ padding: "0.15rem 0.45rem", backgroundColor: "#e0f2fe", color: "#0369a1", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 500 }}>
+                        {schoolMap.get(sid) || sid}
+                      </span>
+                    ))}
+                  </div>
+                ),
+              },
+              {
+                key: "valid_from",
+                label: "Rentang Valid",
+                render: (_v, req) => (
+                  <span style={{ fontSize: "0.85rem", color: "#4b5563" }}>
+                    {formatDate(req.valid_from)} – {formatDate(req.valid_until)}
+                  </span>
+                ),
+              },
+              {
+                key: "status",
+                label: "Status / Ditinjau",
+                render: (_v, req) =>
+                  req.status === "approved" ? (
+                    <div>
+                      <Badge variant="success">✅ Disetujui</Badge>
+                      {req.reviewed_at && <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.2rem" }}>{formatDate(req.reviewed_at)}</div>}
+                    </div>
+                  ) : req.status === "rejected" ? (
+                    <div>
+                      <Badge variant="danger">❌ Ditolak</Badge>
+                      {req.rejection_reason && (
+                        <div style={{ fontSize: "0.75rem", color: "#ef4444", marginTop: "0.25rem", maxWidth: 200 }}>Alasan: {req.rejection_reason}</div>
                       )}
-                    </td>
-                    {activeTab === "pending" && (
-                      <td style={{ textAlign: "center" }}>
-                        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
-                          <Button
-                            size="sm"
-                            style={{ backgroundColor: "#2d9e5f", color: "white" }}
-                            onClick={() => handleApprove(req)}
-                            disabled={isSubmitting}
-                          >
-                            Setujui ✓
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            onClick={() => { setRejectingReq(req); setRejectionReason(""); }}
-                            disabled={isSubmitting}
-                          >
-                            Tolak ✗
-                          </Button>
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  ) : (
+                    <Badge variant="warning">⏳ Pending / Menunggu</Badge>
+                  ),
+              },
+              ...(activeTab === "pending" ? [{
+                key: "actions",
+                label: "Aksi Peninjauan",
+                align: "center" as const,
+                render: (_v: unknown, req: any) => (
+                  <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
+                    <Button size="sm" style={{ backgroundColor: "#2d9e5f", color: "white" }} onClick={() => handleApprove(req)} disabled={isSubmitting}>Setujui ✓</Button>
+                    <Button size="sm" variant="danger" onClick={() => { setRejectingReq(req); setRejectionReason(""); }} disabled={isSubmitting}>Tolak ✗</Button>
+                  </div>
+                ),
+              }] : []),
+            ];
+            return (
+              <DataTable
+                columns={cols}
+                data={filteredRequests}
+                emptyMessage={activeTab === "pending" ? "Belum ada pengajuan fase yang perlu ditinjau." : "Belum ada pengajuan fase yang disetujui atau ditolak sebelumnya."}
+                minWidth="800px"
+                striped
+              />
+            );
+          })()} </>
         )}
       </div>
 

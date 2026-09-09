@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { Button, Badge, Table, useConfirm, useToast } from "@pemantik/ui";
+import { Button, Badge, DataTable, useConfirm, useToast } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import AssignPackageModal from "@/components/shared/AssignPackageModal";
 import { assignAssessmentPackage, updateAssessmentAccessAction, deleteAssessmentAccessAction } from "../../actions/assessment";
 import { createPortal } from "react-dom";
@@ -127,64 +128,81 @@ export default function AksesUjianClient({ packages, communities, schools, acces
           />
         </div>
         
-        {accessLogs.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "3rem", color: "#6b7280" }}>
-            Belum ada kategori yang didistribusikan ke komunitas.
-          </div>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left", color: "#4b5563" }}>
-                <th style={{ padding: "0.75rem 0.5rem" }}>Tanggal</th>
-                <th style={{ padding: "0.75rem 0.5rem" }}>Target Akses</th>
-                <th style={{ padding: "0.75rem 0.5rem" }}>Kategori Ujian</th>
-                <th style={{ padding: "0.75rem 0.5rem" }}>Fase Ujian</th>
-                <th style={{ padding: "0.75rem 0.5rem" }}>Rentang Waktu Valid</th>
-                <th style={{ padding: "0.75rem 0.5rem" }}>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {accessLogs.filter(log => {
-                if (!searchQuery) return true;
-                const lowerQuery = searchQuery.toLowerCase();
-                const targetMatch = (log.target_name || "").toLowerCase().includes(lowerQuery);
-                const packageMatch = (log.question_categories?.name || "").toLowerCase().includes(lowerQuery);
-                const phaseMatch = (log.phase || "").toLowerCase().includes(lowerQuery);
-                return targetMatch || packageMatch || phaseMatch;
-              }).map((log) => (
-                <tr key={log.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                  <td style={{ padding: "0.75rem 0.5rem" }}>
-                    {new Date(log.created_at).toLocaleDateString('id-ID')}
-                  </td>
-                  <td style={{ padding: "0.75rem 0.5rem", fontWeight: 500, color: "#102e50" }}>
-                    {log.target_name}
-                    <span style={{ display: "inline-block", marginLeft: "0.5rem", fontSize: "0.7rem", padding: "0.1rem 0.4rem", borderRadius: "99px", backgroundColor: log.target_type === 'community' ? "#e0e7ff" : "#fce7f3", color: log.target_type === 'community' ? "#3730a3" : "#9d174d" }}>
-                      {log.target_type === 'community' ? 'Komunitas' : 'Sekolah'}
-                    </span>
-                  </td>
-                  <td style={{ padding: "0.75rem 0.5rem" }}>
-                    {log.question_categories?.name} 
-                    <span style={{ display: "block", fontSize: "0.8rem", color: "#6b7280" }}>
-                      ({log.question_categories?.subject_area?.toUpperCase()})
-                    </span>
-                  </td>
-                  <td style={{ padding: "0.75rem 0.5rem" }}>
-                    <span style={{ padding: "0.25rem 0.75rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 600, border: "1px solid #e5e7eb", backgroundColor: "transparent", color: "#374151" }}>{log.phase}</span>
-                  </td>
-                  <td style={{ padding: "0.75rem 0.5rem", fontSize: "0.85rem", color: "#4b5563" }}>
-                    {new Date(log.valid_from).toLocaleDateString('id-ID')} - {new Date(log.valid_until).toLocaleDateString('id-ID')}
-                  </td>
-                  <td style={{ padding: "0.75rem 0.5rem" }}>
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
-                      <Button variant="outline" size="sm" onClick={() => setEditingLog(log)}>Edit</Button>
-                      <Button variant="danger" size="sm" onClick={() => handleDelete(log)}>Hapus</Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        {(() => {
+          const filteredLogs = accessLogs.filter(log => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            return (
+              (log.target_name || "").toLowerCase().includes(q) ||
+              (log.question_categories?.name || "").toLowerCase().includes(q) ||
+              (log.phase || "").toLowerCase().includes(q)
+            );
+          });
+          const accessCols: ColumnDef<typeof filteredLogs[0]>[] = [
+            {
+              key: "created_at",
+              label: "Tanggal",
+              render: (_v, log) => <span>{new Date(log.created_at).toLocaleDateString("id-ID")}</span>,
+            },
+            {
+              key: "target_name",
+              label: "Target Akses",
+              render: (_v, log) => (
+                <span style={{ fontWeight: 500, color: "#102e50" }}>
+                  {log.target_name}
+                  <span style={{ display: "inline-block", marginLeft: "0.5rem", fontSize: "0.7rem", padding: "0.1rem 0.4rem", borderRadius: "99px", backgroundColor: log.target_type === "community" ? "#e0e7ff" : "#fce7f3", color: log.target_type === "community" ? "#3730a3" : "#9d174d" }}>
+                    {log.target_type === "community" ? "Komunitas" : "Sekolah"}
+                  </span>
+                </span>
+              ),
+            },
+            {
+              key: "category",
+              label: "Kategori Ujian",
+              render: (_v, log) => (
+                <div>
+                  <div>{log.question_categories?.name}</div>
+                  <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>({log.question_categories?.subject_area?.toUpperCase()})</div>
+                </div>
+              ),
+            },
+            {
+              key: "phase",
+              label: "Fase Ujian",
+              render: (_v, log) => (
+                <span style={{ padding: "0.25rem 0.75rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 600, border: "1px solid #e5e7eb", color: "#374151" }}>{log.phase}</span>
+              ),
+            },
+            {
+              key: "valid_from",
+              label: "Rentang Waktu Valid",
+              render: (_v, log) => (
+                <span style={{ fontSize: "0.82rem", color: "#4b5563" }}>
+                  {new Date(log.valid_from).toLocaleDateString("id-ID")} — {new Date(log.valid_until).toLocaleDateString("id-ID")}
+                </span>
+              ),
+            },
+            {
+              key: "actions",
+              label: "Aksi",
+              render: (_v, log) => (
+                <div style={{ display: "flex", gap: "0.4rem" }}>
+                  <Button variant="outline" size="sm" onClick={() => setEditingLog(log)}>Edit</Button>
+                  <Button variant="danger" size="sm" onClick={() => handleDelete(log)}>Hapus</Button>
+                </div>
+              ),
+            },
+          ];
+          return (
+            <DataTable
+              columns={accessCols}
+              data={filteredLogs}
+              emptyMessage="Belum ada kategori yang didistribusikan ke komunitas."
+              minWidth="800px"
+              striped
+            />
+          );
+        })()}
       </div>
 
       <AssignPackageModal

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useTransition, useRef, useEffect } from "react";
-import { Badge, Button, useToast } from "@pemantik/ui";
+import { Badge, Button, DataTable, useToast } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import SafeHtml from "@/components/shared/SafeHtml";
 import InterventionGraph from "@/components/shared/InterventionGraph";
 import RawInterventionGraph from "@/components/shared/RawInterventionGraph";
@@ -378,82 +379,97 @@ export default function IntervensiSuperAdminClient({
             ))}
           </div>
 
-          {filteredInterventions.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "3rem", color: "#6b7280", backgroundColor: "#f9fafb", borderRadius: "0.75rem" }}>
-              Belum ada laporan intervensi atau tidak ada yang sesuai dengan filter pencarian.
-            </div>
-          ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table className="pemantik-table">
-                <thead>
-                  <tr>
-                    <th>Sumber &amp; Pembina</th>
-                    <th>Sekolah &amp; Fase</th>
-                    <th>Diagnosa Awal</th>
-                    <th>Upaya Dilakukan</th>
-                    <th>Tag Topik</th>
-                    <th>Tanggal</th>
-                    <th style={{ textAlign: "center" }}>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredInterventions.map((item: any) => {
-                    const role = item.users?.role ?? "unknown";
-                    const roleMeta: Record<string, { label: string; color: string; bg: string }> = {
-                      community: { label: "Komunitas", color: "#4f46e5", bg: "#eef2ff" },
-                      super_admin: { label: "SuperAdmin", color: "#102e50", bg: "#e0f7ff" },
-                      school: { label: "Sekolah", color: "#0284c7", bg: "#e0f2fe" },
-                      teacher: { label: "Guru", color: "#059669", bg: "#d1fae5" },
-                    };
-                    const rm = roleMeta[role] ?? { label: role, color: "#64748b", bg: "#f1f5f9" };
-                    const isIndependent = !item.community_id;
-
-                    return (
-                      <tr key={item.id}>
-                        <td>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                            <span style={{ padding: "0.15rem 0.5rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, backgroundColor: rm.bg, color: rm.color, display: "inline-block", width: "fit-content" }}>
-                              {rm.label}
-                            </span>
-                            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#102e50" }}>
-                              {isIndependent ? "Sekolah Independen" : `${item.communities?.name || "Komunitas"}`}
-                            </span>
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: 700, color: "#1e293b" }}>{item.schools?.name || "Sekolah"}</div>
-                          <div style={{ marginTop: "0.2rem" }}><Badge variant="info">{item.phase}</Badge></div>
-                        </td>
-                        <td style={{ maxWidth: "200px" }}>
-                          <SafeHtml html={item.kondisi_awal || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} />
-                        </td>
-                        <td style={{ maxWidth: "220px" }}>
-                          <SafeHtml html={item.upaya_dilakukan || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} />
-                        </td>
-                        <td>
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
-                            {(item.intervention_tag_links || []).map((lnk: any) => (
-                              <span key={lnk.intervention_tags?.id} style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 600 }}>
-                                #{lnk.intervention_tags?.name}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td style={{ fontSize: "0.82rem", color: "#64748b" }}>
-                          {formatDate(item.created_at)}
-                        </td>
-                        <td style={{ textAlign: "center" }}>
-                          <Button size="sm" variant="outline" onClick={() => setSelectedDetail(item)}>
-                            Detail
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {(() => {
+            const roleMeta: Record<string, { label: string; color: string; bg: string }> = {
+              community: { label: "Komunitas", color: "#4f46e5", bg: "#eef2ff" },
+              super_admin: { label: "SuperAdmin", color: "#102e50", bg: "#e0f7ff" },
+              school: { label: "Sekolah", color: "#0284c7", bg: "#e0f2fe" },
+              teacher: { label: "Guru", color: "#059669", bg: "#d1fae5" },
+            };
+            const interventionCols: ColumnDef<any>[] = [
+              {
+                key: "source",
+                label: "Sumber & Pembina",
+                render: (_v, item) => {
+                  const role = item.users?.role ?? "unknown";
+                  const rm = roleMeta[role] ?? { label: role, color: "#64748b", bg: "#f1f5f9" };
+                  const isIndependent = !item.community_id;
+                  return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                      <span style={{ padding: "0.15rem 0.5rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, backgroundColor: rm.bg, color: rm.color, display: "inline-block", width: "fit-content" }}>
+                        {rm.label}
+                      </span>
+                      <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#102e50" }}>
+                        {isIndependent ? "Sekolah Independen" : `${item.communities?.name || "Komunitas"}`}
+                      </span>
+                    </div>
+                  );
+                },
+              },
+              {
+                key: "school",
+                label: "Sekolah & Fase",
+                render: (_v, item) => (
+                  <div>
+                    <div style={{ fontWeight: 700, color: "#1e293b" }}>{item.schools?.name || "Sekolah"}</div>
+                    <div style={{ marginTop: "0.2rem" }}><Badge variant="info">{item.phase}</Badge></div>
+                  </div>
+                ),
+              },
+              {
+                key: "kondisi_awal",
+                label: "Diagnosa Awal",
+                render: (_v, item) => (
+                  <SafeHtml html={item.kondisi_awal || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", maxWidth: 200 }} />
+                ),
+              },
+              {
+                key: "upaya_dilakukan",
+                label: "Upaya Dilakukan",
+                render: (_v, item) => (
+                  <SafeHtml html={item.upaya_dilakukan || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", maxWidth: 220 }} />
+                ),
+              },
+              {
+                key: "tags",
+                label: "Tag Topik",
+                render: (_v, item) => (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: 180 }}>
+                    {(item.intervention_tag_links || []).map((lnk: any) => (
+                      <span key={lnk.intervention_tags?.id} style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 600 }}>
+                        #{lnk.intervention_tags?.name}
+                      </span>
+                    ))}
+                  </div>
+                ),
+              },
+              {
+                key: "created_at",
+                label: "Tanggal",
+                sortable: true,
+                render: (_v, item) => (
+                  <span style={{ fontSize: "0.82rem", color: "#64748b" }}>{formatDate(item.created_at)}</span>
+                ),
+              },
+              {
+                key: "actions",
+                label: "Aksi",
+                align: "center" as const,
+                render: (_v, item) => (
+                  <Button size="sm" variant="outline" onClick={() => setSelectedDetail(item)}>Detail</Button>
+                ),
+              },
+            ];
+            return (
+              <DataTable
+                columns={interventionCols}
+                data={filteredInterventions}
+                emptyMessage="Belum ada laporan intervensi atau tidak ada yang sesuai dengan filter pencarian."
+                minWidth="950px"
+                striped
+              />
+            );
+          })()}
         </div>
       )}
 

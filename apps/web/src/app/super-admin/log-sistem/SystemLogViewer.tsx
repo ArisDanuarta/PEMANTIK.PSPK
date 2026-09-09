@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { createBrowserClient } from "@pemantik/supabase/client";
-import { Badge, useToast } from "@pemantik/ui";
+import { Badge, DataTable, useToast } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import { resolveSystemLog } from "@/app/actions/logs";
 
 export default function SystemLogViewer({ initialLogs }: { initialLogs: any[] }) {
@@ -62,84 +63,92 @@ export default function SystemLogViewer({ initialLogs }: { initialLogs: any[] })
   return (
     <div className="card">
       <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--color-gray-200)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-        <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 600 }}>Log Aktivitas & Error Terakhir</h3>
+        <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 600 }}>Log Aktivitas &amp; Error Terakhir</h3>
         <Badge variant="info">Mendengarkan Pembaruan...</Badge>
       </div>
-      <div style={{ overflowX: "auto" }}>
-      <table className="pemantik-table">
-        <thead>
-          <tr>
-            <th>Waktu</th>
-            <th>Level</th>
-            <th>Sumber / Konteks</th>
-            <th>Pesan</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {logs.length === 0 ? (
-            <tr>
-              <td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
-                Tidak ada log sistem yang tercatat.
-              </td>
-            </tr>
-          ) : (
-            logs.map((log) => (
-              <tr key={log.id}>
-                <td style={{ fontSize: "0.85rem", color: "black" }}>
-                  {new Date(log.created_at).toLocaleString("id-ID")}
-                </td>
-                <td>
-                  <Badge variant={getLevelColor(log.level, log.source)}>
-                    {log.source === "feedback" ? "MASUKAN PENGGUNA" : log.level.toUpperCase()}
-                  </Badge>
-                </td>
-                <td>
-                  <div>
-                    <strong style={{ textTransform: "capitalize", color: log.source === "feedback" ? "var(--color-primary)" : "inherit" }}>
-                      {log.source === "feedback" ? "Feedback/Bug Report" : log.source}
-                    </strong>
+      {(() => {
+        const logCols: ColumnDef<typeof logs[0]>[] = [
+          {
+            key: "created_at",
+            label: "Waktu",
+            render: (_v, log) => (
+              <span style={{ fontSize: "0.82rem", color: "#495057" }}>
+                {new Date(log.created_at).toLocaleString("id-ID")}
+              </span>
+            ),
+          },
+          {
+            key: "level",
+            label: "Level",
+            render: (_v, log) => (
+              <Badge variant={getLevelColor(log.level, log.source)}>
+                {log.source === "feedback" ? "MASUKAN PENGGUNA" : log.level.toUpperCase()}
+              </Badge>
+            ),
+          },
+          {
+            key: "source",
+            label: "Sumber / Konteks",
+            render: (_v, log) => (
+              <div>
+                <strong style={{ textTransform: "capitalize", color: log.source === "feedback" ? "var(--color-primary)" : "inherit" }}>
+                  {log.source === "feedback" ? "Feedback/Bug Report" : log.source}
+                </strong>
+                <div style={{ fontSize: "0.72rem", color: "#6c757d" }}>Role: {log.role_context || "—"}</div>
+                {log.source === "feedback" && (
+                  <div style={{ fontSize: "0.72rem", color: "#6c757d", marginTop: "0.25rem" }}>
+                    Oleh: <strong>{log.details?.sender_name || "—"}</strong><br />
+                    Asal: <strong>{log.details?.entity_name || "—"}</strong>
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "black" }}>Role: {log.role_context || "-"}</div>
-                  {log.source === "feedback" && (
-                    <div style={{ fontSize: "0.75rem", color: "black", marginTop: "0.25rem" }}>
-                      Oleh: <strong>{log.details?.sender_name || "-"}</strong><br/>
-                      Asal: <strong>{log.details?.entity_name || "-"}</strong>
-                    </div>
-                  )}
-                </td>
-                <td style={{ maxWidth: 300, wordWrap: "break-word" }}>
-                  {log.source === "feedback" && log.details?.path ? (
-                    <div style={{ marginBottom: "0.25rem", fontSize: "0.8rem", color: "black" }}>
-                      Path: <code>{log.details.path}</code>
-                    </div>
-                  ) : null}
-                  {log.message}
-                </td>
-                <td>
-                  {log.resolved ? (
-                    <span style={{ color: "var(--color-success)", fontWeight: 600, fontSize: "0.85rem" }}>Selesai</span>
-                  ) : (
-                    <span style={{ color: "var(--color-danger)", fontWeight: 600, fontSize: "0.85rem" }}>Open</span>
-                  )}
-                </td>
-                <td>
-                  {!log.resolved && (["error", "critical"].includes(log.level) || log.source === "feedback") && (
-                    <button 
-                      className="btn btn-sm btn-outline" 
-                      onClick={() => handleResolve(log.id)}
-                    >
-                      Tandai Selesai
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-      </div>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: "message",
+            label: "Pesan",
+            render: (_v, log) => (
+              <div style={{ maxWidth: 300, wordBreak: "break-word" }}>
+                {log.source === "feedback" && log.details?.path ? (
+                  <div style={{ marginBottom: "0.25rem", fontSize: "0.78rem", color: "#6c757d" }}>
+                    Path: <code>{log.details.path}</code>
+                  </div>
+                ) : null}
+                {log.message}
+              </div>
+            ),
+          },
+          {
+            key: "resolved",
+            label: "Status",
+            render: (_v, log) =>
+              log.resolved ? (
+                <span style={{ color: "var(--color-success)", fontWeight: 600, fontSize: "0.82rem" }}>Selesai</span>
+              ) : (
+                <span style={{ color: "var(--color-danger)", fontWeight: 600, fontSize: "0.82rem" }}>Open</span>
+              ),
+          },
+          {
+            key: "actions",
+            label: "Aksi",
+            render: (_v, log) =>
+              !log.resolved && (["error", "critical"].includes(log.level) || log.source === "feedback") ? (
+                <button className="btn btn-sm btn-outline" onClick={() => handleResolve(log.id)}>
+                  Tandai Selesai
+                </button>
+              ) : null,
+          },
+        ];
+        return (
+          <DataTable
+            columns={logCols}
+            data={logs}
+            emptyMessage="Tidak ada log sistem yang tercatat."
+            size="sm"
+            minWidth="800px"
+          />
+        );
+      })()}
     </div>
   );
 }

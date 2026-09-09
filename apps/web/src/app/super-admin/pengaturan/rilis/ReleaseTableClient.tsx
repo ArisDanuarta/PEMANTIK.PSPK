@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, useToast, Modal } from "@pemantik/ui";
+import { Button, DataTable, useToast, Modal } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import { useRouter } from "next/navigation";
 import { updateRelease, deleteRelease } from "@/app/actions/releases";
 
@@ -80,69 +81,70 @@ export default function ReleaseTableClient({ initialReleases }: { initialRelease
     <>
       <div className="card" style={{ maxWidth: "100%", overflowX: "auto" }}>
         <h2 style={{ marginBottom: "1rem" }}>Riwayat Rilis</h2>
-        {initialReleases && initialReleases.length > 0 ? (
-          <div className="table-responsive">
-            <table className="pemantik-table" style={{ width: "100%", minWidth: "750px" }}>
-              <thead>
-                <tr>
-                  <th>Versi</th>
-                  <th>Code</th>
-                  <th>Tanggal Rilis</th>
-                  <th>Status</th>
-                  <th>Wajib?</th>
-                  <th>Link Download</th>
-                  <th style={{ textAlign: "right" }}>Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {initialReleases.map((r: any) => (
-                  <tr key={r.id}>
-                    <td style={{ fontWeight: 600 }}>{r.version_name}</td>
-                    <td>{r.version_code}</td>
-                    <td>{new Date(r.created_at).toLocaleString("id-ID", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
-                    <td>
-                      <span className={`badge ${r.is_active ? 'badge-success' : 'badge-secondary'}`}>
-                        {r.is_active ? 'Aktif' : 'Non-Aktif'}
-                      </span>
-                    </td>
-                    <td>{r.is_mandatory ? 'Ya' : 'Tidak'}</td>
-                    <td>
-                      <a 
-                        href={r.download_url} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        style={{ color: "var(--clr-biru)", textDecoration: "underline", fontSize: "0.85rem", whiteSpace: "nowrap" }}
-                      >
-                        Download APK
-                      </a>
-                    </td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <button 
-                        className="btn btn-outline btn-sm" 
-                        style={{ marginRight: "0.5rem" }}
-                        onClick={() => openEditModal(r)}
-                        disabled={loadingId === r.id}
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        className="btn btn-danger btn-sm" 
-                        onClick={() => handleDelete(r.id, r.version_name)}
-                        disabled={loadingId === r.id}
-                      >
-                        {loadingId === r.id ? "..." : "Hapus"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div style={{ padding: "2rem", textAlign: "center", color: "black" }}>
-            Belum ada versi rilis aplikasi yang diunggah.
-          </div>
-        )}
+      {(() => {
+          const releaseCols: ColumnDef<any>[] = [
+            {
+              key: "version_name",
+              label: "Versi",
+              sortable: true,
+              render: (_v, r) => <span style={{ fontWeight: 600 }}>{r.version_name}</span>,
+            },
+            { key: "version_code", label: "Code", render: (_v, r) => <span>{r.version_code}</span> },
+            {
+              key: "created_at",
+              label: "Tanggal Rilis",
+              sortable: true,
+              render: (_v, r) => (
+                <span>{new Date(r.created_at).toLocaleString("id-ID", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+              ),
+            },
+            {
+              key: "is_active",
+              label: "Status",
+              render: (_v, r) => (
+                <span className={`badge ${r.is_active ? "badge-success" : "badge-secondary"}`}>
+                  {r.is_active ? "Aktif" : "Non-Aktif"}
+                </span>
+              ),
+            },
+            {
+              key: "is_mandatory",
+              label: "Wajib?",
+              render: (_v, r) => <span>{r.is_mandatory ? "Ya" : "Tidak"}</span>,
+            },
+            {
+              key: "download_url",
+              label: "Link Download",
+              render: (_v, r) => (
+                <a href={r.download_url} target="_blank" rel="noreferrer" style={{ color: "var(--clr-biru)", textDecoration: "underline", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                  Download APK
+                </a>
+              ),
+            },
+            {
+              key: "actions",
+              label: "Aksi",
+              align: "right" as const,
+              render: (_v, r) => (
+                <div style={{ display: "flex", gap: "0.4rem", justifyContent: "flex-end" }}>
+                  <button className="btn btn-outline btn-sm" onClick={() => openEditModal(r)} disabled={loadingId === r.id}>Edit</button>
+                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(r.id, r.version_name)} disabled={loadingId === r.id}>
+                    {loadingId === r.id ? "..." : "Hapus"}
+                  </button>
+                </div>
+              ),
+            },
+          ];
+          return (
+            <DataTable
+              columns={releaseCols}
+              data={initialReleases || []}
+              emptyMessage="Belum ada versi rilis aplikasi yang diunggah."
+              minWidth="700px"
+              striped
+            />
+          );
+        })()}
       </div>
 
       <Modal open={!!editingRelease} onClose={() => setEditingRelease(null)} title="Edit Rilis">

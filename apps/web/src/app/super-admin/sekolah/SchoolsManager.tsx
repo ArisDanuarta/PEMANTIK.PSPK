@@ -2,7 +2,8 @@
 
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Badge, Button, useToast, useConfirm } from "@pemantik/ui";
+import { DataTable, Badge, Button, useToast, useConfirm } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import { createSchoolAction, updateSchoolAction, deleteSchoolAction, bulkCreateSchoolsAction, resetSchoolPasswordAction, parseDapodikAction, importDapodikAction, bulkDeleteSchoolsAction } from "../../actions/schools";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import CredentialModal, { Credentials } from "@/components/shared/CredentialModal";
@@ -326,107 +327,109 @@ export default function SchoolsManager({
             </div>
           </div>
 
-          <div style={{ overflowX: "auto" }}>
-        <table className="pemantik-table">
-          <thead>
-            <tr>
-              <th>Nama Sekolah</th>
-              <th>NPSN & Alamat</th>
-              <th>Akun Akses</th>
-              <th>Komunitas Induk</th>
-              <th>Daftar Kelas</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedSchools.length === 0 ? (
-              <tr>
-                <td colSpan={5} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
-                  Tidak ada data ditemukan.
-                </td>
-              </tr>
-            ) : (
-              paginatedSchools.map((row) => {
-                const schoolUser = row.users?.find(u => u.role === 'school');
-                return (
-                  <tr key={row.id}>
-                    <td>
-                      <div style={{ fontWeight: 600, color: "#102e50" }}>{row.name}</div>
-                      <div style={{ fontSize: "0.8rem", color: "#2563eb", fontWeight: 500 }}>
-                        {row.jenjang_sekolah ? `${row.jenjang_sekolah} ` : ""}
-                        {row.status_sekolah ? `${row.status_sekolah}` : ""} 
+          {(() => {
+            type SchoolRow = typeof paginatedSchools[0];
+            const schoolCols: ColumnDef<SchoolRow>[] = [
+              {
+                key: "name",
+                label: "Nama Sekolah",
+                sortable: true,
+                render: (_v, row) => (
+                  <div>
+                    <div style={{ fontWeight: 600, color: "#102e50" }}>{row.name}</div>
+                    <div style={{ fontSize: "0.78rem", color: "#2563eb", fontWeight: 500 }}>
+                      {row.jenjang_sekolah ?? ""} {row.status_sekolah ?? ""}
+                    </div>
+                    <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>Kepsek: {(row as any).principal_name || "—"}</div>
+                  </div>
+                ),
+              },
+              {
+                key: "npsn",
+                label: "NPSN & Alamat",
+                render: (_v, row) => (
+                  <div>
+                    <div style={{ fontWeight: 500 }}>NPSN: {(row as any).npsn || "—"}</div>
+                    <div style={{ fontSize: "0.78rem", color: "#6c757d" }}>
+                      {[(row as any).address, (row as any).village, (row as any).district, (row as any).city].filter(Boolean).join(", ") || "—"}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: "users",
+                label: "Akun Akses",
+                render: (_v, row) => {
+                  const schoolUser = (row as any).users?.find((u: any) => u.role === "school");
+                  return schoolUser ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", fontSize: "0.82rem" }}>
+                      <div>
+                        <span style={{ color: "#6c757d" }}>User: </span>
+                        <strong
+                          style={{ cursor: "pointer", textDecoration: "underline", color: "#0874aa" }}
+                          onClick={() => { navigator.clipboard.writeText(schoolUser.username); showSuccessToast("Tersalin", "Username disalin ke clipboard"); }}
+                        >{schoolUser.username}</strong>
                       </div>
-                      <div style={{ fontSize: "0.8rem", color: "black" }}>Kepsek: {row.principal_name || "-"}</div>
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 500 }}>NPSN: {row.npsn || "-"}</div>
-                      <div style={{ fontSize: "0.8rem", color: "black" }}>
-                        {row.address ? `${row.address}, ` : ""}
-                        {row.village ? `${row.village}, ` : ""}
-                        {row.district ? `${row.district}, ` : ""}
-                        {row.city || ""}
+                      <div>
+                        <span style={{ color: "#6c757d" }}>Pass: </span>
+                        <code
+                          style={{ color: "#a8281c", cursor: "pointer", textDecoration: "underline" }}
+                          onClick={() => { navigator.clipboard.writeText(schoolUser.plain_password || "—"); showSuccessToast("Tersalin", "Password disalin ke clipboard"); }}
+                        >{schoolUser.plain_password || "—"}</code>
                       </div>
-                    </td>
-                    <td>
-                      {schoolUser ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                          <div>
-                            <span style={{ color: "black" }}>User:</span>{" "}
-                            <strong 
-                              style={{ cursor: "pointer", textDecoration: "underline", color: "#0874aa" }} 
-                              onClick={() => { navigator.clipboard.writeText(schoolUser.username); showSuccessToast("Tersalin", "Username disalin ke clipboard"); }}
-                              title="Klik untuk menyalin"
-                            >{schoolUser.username}</strong>
-                          </div>
-                          {row.email && <div><span style={{ color: "black" }}>Email:</span> {row.email}</div>}
-                          <div>
-                            <span style={{ color: "black" }}>Pass:</span>{" "}
-                            <code 
-                              style={{ color: "#a8281c", cursor: "pointer", textDecoration: "underline" }} 
-                              onClick={() => { navigator.clipboard.writeText(schoolUser.plain_password || "-"); showSuccessToast("Tersalin", "Password disalin ke clipboard"); }}
-                              title="Klik untuk menyalin"
-                            >{schoolUser.plain_password || "-"}</code>
-                          </div>
-                        </div>
-                      ) : (
-                        <span style={{ color: "black", fontSize: "0.85rem" }}>Belum ada akun</span>
-                      )}
-                    </td>
-                    <td>
-                      {row.communities?.name ? (
-                        <span style={{ fontWeight: 500, color: "#0f172a" }}>{row.communities.name}</span>
-                      ) : (
-                        <span style={{ color: "#64748b", fontStyle: "italic", fontSize: "0.85rem" }}>Sekolah Independen</span>
-                      )}
-                    </td>
-                    <td>
-                      {row.classes && row.classes.length > 0 ? (
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
-                          {row.classes.map((c: any) => (
-                            <span key={c.id} style={{ padding: "0.15rem 0.4rem", backgroundColor: "#f3f4f6", borderRadius: "0.25rem", fontSize: "0.75rem", border: "1px solid #e5e7eb" }}>
-                              {c.name}
-                            </span>
-                          ))}
-                        </div>
-                      ) : "-"}
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                        <a href={`/super-admin/sekolah/${row.id}`} style={{ textDecoration: "none" }}>
-                          <Button variant="outline" size="sm">Detail →</Button>
-                        </a>
-                        <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
-                        <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset Sandi</Button>
-                        <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                    </div>
+                  ) : <span style={{ color: "#adb5bd", fontSize: "0.82rem" }}>Belum ada akun</span>;
+                },
+              },
+              {
+                key: "communities",
+                label: "Komunitas Induk",
+                render: (_v, row) =>
+                  (row as any).communities?.name ? (
+                    <span style={{ fontWeight: 500 }}>{(row as any).communities.name}</span>
+                  ) : (
+                    <span style={{ color: "#64748b", fontStyle: "italic", fontSize: "0.85rem" }}>Sekolah Independen</span>
+                  ),
+              },
+              {
+                key: "classes",
+                label: "Daftar Kelas",
+                render: (_v, row) =>
+                  (row as any).classes?.length > 0 ? (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
+                      {(row as any).classes.map((c: any) => (
+                        <span key={c.id} style={{ padding: "0.15rem 0.4rem", backgroundColor: "#f3f4f6", borderRadius: "0.25rem", fontSize: "0.72rem", border: "1px solid #e5e7eb" }}>
+                          {c.name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : <span style={{ color: "#adb5bd" }}>—</span>,
+              },
+              {
+                key: "actions",
+                label: "Aksi",
+                render: (_v, row) => (
+                  <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                    <a href={`/super-admin/sekolah/${row.id}`} style={{ textDecoration: "none" }}>
+                      <Button variant="outline" size="sm">Detail →</Button>
+                    </a>
+                    <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset Sandi</Button>
+                    <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
+                  </div>
+                ),
+              },
+            ];
+            return (
+              <DataTable
+                columns={schoolCols}
+                data={paginatedSchools}
+                emptyMessage="Tidak ada data sekolah ditemukan."
+                minWidth="950px"
+                striped
+              />
+            );
+          })()}
 
       <Pagination
         currentPage={currentPage}

@@ -4,7 +4,8 @@
 
 export { PhantomSkeleton } from "./Skeleton/PhantomSkeleton";
 export { Button } from "./Button/Button";
-export { Table } from "./Table/Table";
+export { Table, DataTable } from "./Table/Table";
+export type { ColumnDef, DataTableProps } from "./Table/Table";
 export { Modal } from "./Modal/Modal";
 export { Badge, SesBadge, StatusBadge } from "./Badge/Badge";
 
