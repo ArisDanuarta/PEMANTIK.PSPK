@@ -190,6 +190,7 @@ export default function IntervensiKomunitasClient({
                   {
                     key: "tanggal",
                     label: "Tanggal",
+                    sortable: true,
                     render: (_: any, item: any) => (
                       <span style={{ fontSize: "0.82rem", color: "#64748b" }}>
                         {formatDate(item.created_at)}
