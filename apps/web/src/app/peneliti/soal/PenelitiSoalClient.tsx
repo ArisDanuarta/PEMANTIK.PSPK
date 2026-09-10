@@ -81,6 +81,7 @@ export default function PenelitiSoalClient({ initialData }: { initialData: Quest
         </div>
 
         <DataTable
+          className="dt-table-wrap"
           columns={columns}
           data={filteredData.map((d, i) => ({ ...d, id: d.question_code || `q-${i}` }))}
           emptyMessage="Belum ada data analisis soal."

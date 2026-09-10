@@ -806,6 +806,11 @@ h6 { font-size: 0.875rem; }
   border-bottom: 2px solid #dee2e6;
 }
 
+.dt-table-wrap th {
+  white-space: normal;
+  line-height: 1.4;
+}
+
 .dt-table td {
   padding: 0.875rem 1rem;
   border-bottom: 1px solid #f1f3f5;
