@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { DataTable, ColumnDef } from "@pemantik/ui";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
@@ -155,36 +156,41 @@ export default function AnalisisKomparatifClient({
         <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: "#102e50", marginBottom: "1.25rem" }}>
           Heatmap Pencapaian Level per Komunitas (Top 10)
         </h2>
-        <div style={{ overflowX: "auto" }}>
-          <table className="pemantik-table">
-            <thead>
-              <tr>
-                <th style={{ textAlign: "left" }}>Komunitas</th>
-                <th style={{ textAlign: "center" }}>Level 0</th>
-                <th style={{ textAlign: "center" }}>Level 1</th>
-                <th style={{ textAlign: "center" }}>Level 2</th>
-                <th style={{ textAlign: "center" }}>Level 3</th>
-                <th style={{ textAlign: "center" }}>Level 4</th>
-                <th style={{ textAlign: "center" }}>Level 5</th>
-                <th style={{ textAlign: "center" }}>Total Siswa</th>
-              </tr>
-            </thead>
-            <tbody>
-              {levelDistData?.map((d, i) => (
-                <tr key={i}>
-                  <td style={{ fontWeight: 600, color: "#1f2937" }}>{d.community}</td>
-                  <td style={{ textAlign: "center", backgroundColor: `rgba(220, 38, 38, ${d.total ? d.level0 / d.total : 0})` }}>{d.level0}</td>
-                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.total ? d.level1 / d.total : 0})` }}>{d.level1}</td>
-                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.total ? d.level2 / d.total : 0})` }}>{d.level2}</td>
-                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.total ? d.level3 / d.total : 0})` }}>{d.level3}</td>
-                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.total ? d.level4 / d.total : 0})` }}>{d.level4}</td>
-                  <td style={{ textAlign: "center", backgroundColor: `rgba(16, 185, 129, ${d.total ? d.level5 / d.total : 0})` }}>{d.level5}</td>
-                  <td style={{ textAlign: "center", fontWeight: 600 }}>{d.total}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+          <div style={{ overflowX: "auto" }}>
+            {(() => {
+              const columns: ColumnDef<any>[] = [
+                {
+                  key: "community",
+                  label: "Komunitas",
+                  sortable: true,
+                  render: (_: any, d: any) => (
+                    <span style={{ fontWeight: 600, color: "#1f2937" }}>{d.community}</span>
+                  )
+                },
+                ...Array.from({ length: 6 }).map((_, i) => ({
+                  key: `level${i}`,
+                  label: `Level ${i}`,
+                  align: "center" as const,
+                  render: (_: any, d: any) => (
+                    <div style={{ backgroundColor: i === 0 ? `rgba(220, 38, 38, ${d.total ? d[`level${i}`] / d.total : 0})` : `rgba(16, 185, 129, ${d.total ? d[`level${i}`] / d.total : 0})`, padding: "0.5rem", borderRadius: "0.25rem", minHeight: "36px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {d[`level${i}`]}
+                    </div>
+                  )
+                })),
+                {
+                  key: "total",
+                  label: "Total Siswa",
+                  align: "center",
+                  sortable: true,
+                  render: (_: any, d: any) => (
+                    <span style={{ fontWeight: 600 }}>{d.total}</span>
+                  )
+                }
+              ];
+
+              return <DataTable columns={columns} data={levelDistData || []} emptyMessage="Tidak ada data distribusi level" />;
+            })()}
+          </div>
       </div>
     </div>
   );

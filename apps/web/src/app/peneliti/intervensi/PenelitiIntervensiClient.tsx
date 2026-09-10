@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Badge, Button } from "@pemantik/ui";
+import { Badge, Button, DataTable, ColumnDef } from "@pemantik/ui";
 import SafeHtml from "@/components/shared/SafeHtml";
 import InterventionGraph from "@/components/shared/InterventionGraph";
 import { InterventionRow } from "@/app/actions/interventions";
@@ -88,49 +88,60 @@ export default function PenelitiIntervensiClient({
             </div>
             
             <div style={{ overflowX: "auto" }}>
-              <table className="pemantik-table">
-                <thead>
-                  <tr>
-                    <th>Tanggal</th>
-                    <th>Sekolah</th>
-                    <th>Fase</th>
-                    <th>Submiter</th>
-                    <th>Tag Intervensi</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} style={{ textAlign: "center", padding: "2rem", color: "#6b7280" }}>
-                        Tidak ada catatan intervensi.
-                      </td>
-                    </tr>
-                  ) : (
-                    filtered.map((inv) => (
-                      <tr key={inv.id}>
-                        <td>{formatDate(inv.created_at)}</td>
-                        <td style={{ fontWeight: 600 }}>{inv.schools?.name || "-"}</td>
-                        <td style={{ textTransform: "capitalize" }}>{inv.phase}</td>
-                        <td>{inv.submitted_by}</td>
-                        <td>
-                          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                            {inv.intervention_tag_links?.slice(0, 2).map((tl, i) => (
-                              <Badge key={i} variant="default">{tl.intervention_tags.name}</Badge>
-                            ))}
-                            {(inv.intervention_tag_links?.length || 0) > 2 && <Badge variant="default">+{inv.intervention_tag_links!.length - 2}</Badge>}
-                          </div>
-                        </td>
-                        <td>
-                          <button onClick={() => setSelectedDetail(inv)} className="action-btn-text" style={{ color: "#0874aa" }}>
-                            Detail
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+              {(() => {
+                const columns: ColumnDef<any>[] = [
+                  {
+                    key: "created_at",
+                    label: "Tanggal",
+                    sortable: true,
+                    render: (_: any, inv: any) => formatDate(inv.created_at)
+                  },
+                  {
+                    key: "school_name",
+                    label: "Sekolah",
+                    sortable: true,
+                    render: (_: any, inv: any) => (
+                      <span style={{ fontWeight: 600 }}>{inv.schools?.name || "-"}</span>
+                    )
+                  },
+                  {
+                    key: "phase",
+                    label: "Fase",
+                    sortable: true,
+                    render: (_: any, inv: any) => (
+                      <span style={{ textTransform: "capitalize" }}>{inv.phase}</span>
+                    )
+                  },
+                  {
+                    key: "submitted_by",
+                    label: "Submiter",
+                    sortable: true
+                  },
+                  {
+                    key: "tags",
+                    label: "Tag Intervensi",
+                    render: (_: any, inv: any) => (
+                      <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                        {inv.intervention_tag_links?.slice(0, 2).map((tl: any, i: number) => (
+                          <Badge key={i} variant="default">{tl.intervention_tags.name}</Badge>
+                        ))}
+                        {(inv.intervention_tag_links?.length || 0) > 2 && <Badge variant="default">+{inv.intervention_tag_links!.length - 2}</Badge>}
+                      </div>
+                    )
+                  },
+                  {
+                    key: "actions",
+                    label: "Aksi",
+                    render: (_: any, inv: any) => (
+                      <button onClick={() => setSelectedDetail(inv)} className="action-btn-text" style={{ color: "#0874aa" }}>
+                        Detail
+                      </button>
+                    )
+                  }
+                ];
+
+                return <DataTable columns={columns} data={filtered} emptyMessage="Tidak ada catatan intervensi." />;
+              })()}
             </div>
           </div>
         )}
