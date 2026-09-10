@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Button, Badge, useToast, useConfirm, DataTable, ColumnDef } from "@pemantik/ui";
+import { Button, Modal, Badge, useToast, useConfirm, DataTable, ColumnDef, ActionMenu } from "@pemantik/ui";
 import * as XLSX from "xlsx";
 import {
   createStudentAction,
@@ -599,12 +599,15 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
               {
                 key: "actions",
                 label: "Aksi",
+                align: "right" as const,
                 render: (_: any, s: any) => (
-                  <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                    <Button variant="outline" size="sm" onClick={() => handleOpenEdit(s)}>Edit</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleOpenRetake(s)} style={{ color: "#ca8a04", borderColor: "#ca8a04" }}>Request Ujian Ulang</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(s)} style={{ color: "#dc2626" }}>Hapus</Button>
-                  </div>
+                  <ActionMenu 
+                    actions={[
+                      { label: "Edit", onClick: () => handleOpenEdit(s) },
+                      { label: "Request Ujian Ulang", onClick: () => handleOpenRetake(s) },
+                      { label: "Hapus", onClick: () => handleDelete(s), variant: "danger" }
+                    ]} 
+                  />
                 )
               }
             ];

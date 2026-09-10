@@ -686,30 +686,17 @@ export default function CommunityReportDashboard({ schools, packages, communityI
               {
                 key: "actions",
                 label: "Aksi",
-                align: "center" as const,
+                align: "right" as const,
                 render: (_: any, school: any) => (
-                  <button
-                    onClick={() => handleExport(school.id)}
-                    disabled={!selectedPackageId || isExporting || isLoadingData}
-                    style={{
-                      padding: "0.35rem 0.75rem",
-                      borderRadius: "0.375rem",
-                      border: "1px solid #0874aa",
-                      backgroundColor: "transparent",
-                      color: "#0874aa",
-                      fontSize: "0.78rem",
-                      fontWeight: 600,
-                      cursor: !selectedPackageId || isExporting || isLoadingData ? "not-allowed" : "pointer",
-                      opacity: !selectedPackageId || isExporting || isLoadingData ? 0.6 : 1,
-                    }}
-                    title={
-                      !selectedPackageId
-                        ? "Pilih Kategori Ujian di atas terlebih dahulu"
-                        : `Export Data untuk ${school.name}`
-                    }
-                  >
-                    Export Data
-                  </button>
+                  <ActionMenu 
+                    actions={[
+                      { 
+                        label: "Export Data", 
+                        onClick: () => handleExport(school.id), 
+                        disabled: !selectedPackageId || isExporting || isLoadingData 
+                      }
+                    ]} 
+                  />
                 )
               }
             ];

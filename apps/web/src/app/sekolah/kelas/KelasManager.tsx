@@ -2,7 +2,8 @@
 
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Button, Badge, useToast, useConfirm, DataTable, ColumnDef } from "@pemantik/ui";
+import { Button, Modal, DataTable, Badge, ActionMenu, useToast, useConfirm } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import {
   createClassAction,
   updateClassAction,
@@ -235,14 +236,15 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
               {
                 key: "actions",
                 label: "Aksi",
+                align: "right" as const,
                 render: (_: any, cls: any) => (
-                  <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                    <Button variant="outline" size="sm" onClick={() => handleOpenEdit(cls)}>Edit</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleToggleStatus(cls)} style={{ color: cls.is_active ? "#df632f" : "#2d9e5f" }}>
-                      {cls.is_active ? "Nonaktifkan" : "Aktifkan"}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(cls)} style={{ color: "#dc2626" }}>Hapus</Button>
-                  </div>
+                  <ActionMenu 
+                    actions={[
+                      { label: "Edit", onClick: () => handleOpenEdit(cls) },
+                      { label: cls.is_active ? "Nonaktifkan" : "Aktifkan", onClick: () => handleToggleStatus(cls), variant: cls.is_active ? "danger" : "success" },
+                      { label: "Hapus", onClick: () => handleDelete(cls), variant: "danger" }
+                    ]} 
+                  />
                 )
               }
             ];

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, useToast, DataTable, ColumnDef } from "@pemantik/ui";
+import { Button, DataTable, Badge, useToast, ActionMenu, ColumnDef } from "@pemantik/ui";
 
 interface ClassOption {
   id: string;
@@ -111,17 +111,17 @@ export default function KelasManagerGuru({ classes }: Props) {
               {
                 key: "actions",
                 label: "Aksi",
-                align: "center",
+                align: "right" as const,
                 render: (_: any, cls: any) => (
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    style={{ color: "#059669", borderColor: "#34d399", minWidth: "140px" }}
-                    onClick={() => handleDownload(cls.id, cls.name)}
-                    disabled={isExporting === cls.id}
-                  >
-                    {isExporting === cls.id ? "Menyiapkan..." : "Unduh Laporan"}
-                  </Button>
+                  <ActionMenu 
+                    actions={[
+                      { 
+                        label: isExporting === cls.id ? "Menyiapkan..." : "Unduh Laporan", 
+                        onClick: () => handleDownload(cls.id, cls.name), 
+                        disabled: isExporting === cls.id 
+                      }
+                    ]} 
+                  />
                 )
               }
             ];

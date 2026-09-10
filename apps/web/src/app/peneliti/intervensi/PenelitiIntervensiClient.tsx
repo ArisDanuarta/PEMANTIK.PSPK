@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Badge, Button, DataTable, ColumnDef } from "@pemantik/ui";
+import { DataTable, Badge, Button, ActionMenu } from "@pemantik/ui";
+import type { ColumnDef } from "@pemantik/ui";
 import SafeHtml from "@/components/shared/SafeHtml";
 import InterventionGraph from "@/components/shared/InterventionGraph";
 import { InterventionRow } from "@/app/actions/interventions";
@@ -132,10 +133,13 @@ export default function PenelitiIntervensiClient({
                   {
                     key: "actions",
                     label: "Aksi",
+                    align: "right" as const,
                     render: (_: any, inv: any) => (
-                      <button onClick={() => setSelectedDetail(inv)} className="action-btn-text" style={{ color: "#0874aa" }}>
-                        Detail
-                      </button>
+                      <ActionMenu 
+                        actions={[
+                          { label: "Detail", onClick: () => setSelectedDetail(inv) }
+                        ]} 
+                      />
                     )
                   }
                 ];
