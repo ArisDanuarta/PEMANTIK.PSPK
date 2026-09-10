@@ -124,7 +124,7 @@ export default function ReleaseTableClient({ initialReleases }: { initialRelease
             {
               key: "actions",
               label: "Aksi",
-              align: "right" as const,
+              align: "center" as const,
               render: (_v, r) => (
                 <ActionMenu 
                   actions={[

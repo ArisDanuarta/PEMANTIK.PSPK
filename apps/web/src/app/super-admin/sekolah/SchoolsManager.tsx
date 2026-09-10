@@ -408,7 +408,7 @@ export default function SchoolsManager({
               {
                 key: "actions",
                 label: "Aksi",
-                align: "right" as const,
+                align: "center" as const,
                 render: (_v, row) => (
                   <ActionMenu 
                     actions={[

@@ -323,7 +323,7 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
             {
               key: "actions",
               label: "Aksi",
-              align: "right" as const,
+              align: "center" as const,
               render: (_: any, row: any) => (
                 <ActionMenu 
                   actions={[

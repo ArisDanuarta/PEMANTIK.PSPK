@@ -268,7 +268,7 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
               {
                 key: "actions",
                 label: "Aksi",
-                align: "right" as const,
+                align: "center" as const,
                 render: (_: any, t: any) => (
                   <ActionMenu 
                     actions={[

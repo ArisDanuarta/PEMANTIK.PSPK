@@ -185,7 +185,7 @@ export default function AksesUjianClient({ packages, communities, schools, acces
             {
               key: "actions",
               label: "Aksi",
-              align: "right" as const,
+              align: "center" as const,
               render: (_v, log) => (
                 <ActionMenu 
                   actions={[

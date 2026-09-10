@@ -454,7 +454,7 @@ export default function IntervensiSuperAdminClient({
               {
                 key: "actions",
                 label: "Aksi",
-                align: "right" as const,
+                align: "center" as const,
                 render: (_v, item) => (
                   <ActionMenu 
                     actions={[

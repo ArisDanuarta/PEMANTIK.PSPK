@@ -131,7 +131,7 @@ export default function SystemLogViewer({ initialLogs }: { initialLogs: any[] })
           {
             key: "actions",
             label: "Aksi",
-            align: "right" as const,
+            align: "center" as const,
             render: (_v, log) =>
               !log.resolved && (["error", "critical"].includes(log.level) || log.source === "feedback") ? (
                 <ActionMenu 

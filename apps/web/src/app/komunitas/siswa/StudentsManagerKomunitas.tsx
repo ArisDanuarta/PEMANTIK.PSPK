@@ -295,7 +295,7 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
           {
             key: "actions",
             label: "Aksi",
-            align: "right" as const,
+            align: "center" as const,
             render: (_: any, row: any) => (
               <ActionMenu 
                 actions={[

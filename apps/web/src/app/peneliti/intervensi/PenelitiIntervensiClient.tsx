@@ -133,7 +133,7 @@ export default function PenelitiIntervensiClient({
                   {
                     key: "actions",
                     label: "Aksi",
-                    align: "right" as const,
+                    align: "center" as const,
                     render: (_: any, inv: any) => (
                       <ActionMenu 
                         actions={[

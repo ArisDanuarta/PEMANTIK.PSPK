@@ -686,7 +686,7 @@ export default function CommunityReportDashboard({ schools, packages, communityI
               {
                 key: "actions",
                 label: "Aksi",
-                align: "right" as const,
+                align: "center" as const,
                 render: (_: any, school: any) => (
                   <ActionMenu 
                     actions={[

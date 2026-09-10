@@ -64,7 +64,7 @@ export function ActionMenu({ actions }: ActionMenuProps) {
           border: "none",
           cursor: "pointer",
           padding: "0.25rem 0.5rem",
-          display: "flex",
+          display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
           color: "#6b7280",

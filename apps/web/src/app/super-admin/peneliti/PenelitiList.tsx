@@ -166,7 +166,7 @@ export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }
       ) 
     },
     { key: "is_active", label: "Status", render: (val: any) => <Badge variant={val ? "success" : "danger"}>{val ? "Aktif" : "Non-Aktif"}</Badge> },
-    { key: "actions", label: "Aksi", align: "right" as const, render: (_: any, admin: any) => (
+    { key: "actions", label: "Aksi", align: "center" as const, render: (_: any, admin: any) => (
         <ActionMenu 
           actions={[
             { label: "Edit", onClick: () => openEditModal(admin) },

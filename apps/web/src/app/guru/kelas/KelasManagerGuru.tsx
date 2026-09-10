@@ -111,7 +111,7 @@ export default function KelasManagerGuru({ classes }: Props) {
               {
                 key: "actions",
                 label: "Aksi",
-                align: "right" as const,
+                align: "center" as const,
                 render: (_: any, cls: any) => (
                   <ActionMenu 
                     actions={[

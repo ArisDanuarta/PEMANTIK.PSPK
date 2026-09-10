@@ -712,7 +712,7 @@ export default function SchoolDetailKomunitas({
                   {
                     key: "actions",
                     label: "Aksi",
-                    align: "right" as const,
+                    align: "center" as const,
                     render: (_: any, t: any) => (
                       <ActionMenu 
                         actions={[
@@ -870,7 +870,7 @@ export default function SchoolDetailKomunitas({
                   {
                     key: "actions",
                     label: "Aksi",
-                    align: "right" as const,
+                    align: "center" as const,
                     render: (_: any, s: any) => (
                       <ActionMenu 
                         actions={[

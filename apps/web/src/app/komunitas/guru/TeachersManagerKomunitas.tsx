@@ -289,7 +289,7 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
           {
             key: "actions",
             label: "Aksi",
-            align: "right" as const,
+            align: "center" as const,
             render: (_: any, row: any) => (
               <ActionMenu 
                 actions={[

@@ -215,7 +215,7 @@ export default function QuestionTableClient({
             {
               key: "actions",
               label: "Aksi",
-              align: "right" as const,
+              align: "center" as const,
               render: (_: any, q: any) => (
                 <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", flexWrap: "nowrap" }}>
                   <button

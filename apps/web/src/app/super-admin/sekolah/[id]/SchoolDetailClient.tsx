@@ -638,7 +638,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                       </span>
                     )},
                     { key: "is_active", label: "Status", render: (val: any) => <Badge variant={val ? "success" : "danger"}>{val ? "Aktif" : "Nonaktif"}</Badge> },
-                    { key: "actions", label: "Aksi", align: "right" as const, render: (_v: any, t: any) => (
+                    { key: "actions", label: "Aksi", align: "center" as const, render: (_v: any, t: any) => (
                       <ActionMenu 
                         actions={[
                           { label: "Edit", onClick: () => { setEditingTeacher(t); setIsTeacherModalOpen(true); } },
@@ -765,7 +765,7 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                         );
                     }},
                     { key: "is_active", label: "Status", render: (_v: any, s: any) => <Badge variant={s.is_active ? "success" : "danger"}>{s.is_active ? "Aktif" : "Nonaktif"}</Badge> },
-                    { key: "actions", label: "Aksi", align: "right" as const, render: (_v: any, s: any) => (
+                    { key: "actions", label: "Aksi", align: "center" as const, render: (_v: any, s: any) => (
                       <ActionMenu 
                         actions={[
                           { label: "Edit", onClick: () => { setEditingStudent(s); setIsStudentModalOpen(true); } },

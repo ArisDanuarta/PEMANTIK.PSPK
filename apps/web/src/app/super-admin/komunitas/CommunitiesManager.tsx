@@ -374,7 +374,7 @@ export default function CommunitiesManager({
     {
       key: "actions",
       label: "Aksi",
-      align: "right" as const,
+      align: "center" as const,
       render: (_: any, row: Community) => (
         <ActionMenu 
           actions={[

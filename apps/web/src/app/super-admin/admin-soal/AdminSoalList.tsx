@@ -179,7 +179,7 @@ export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] 
     {
       key: "actions",
       label: "Aksi",
-      align: "right" as const,
+      align: "center" as const,
       render: (_: any, admin: any) => (
         <ActionMenu 
           actions={[
