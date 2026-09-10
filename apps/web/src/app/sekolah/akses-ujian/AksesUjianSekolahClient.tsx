@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { Button, Badge, useToast, useConfirm } from "@pemantik/ui";
+import { Button, Badge, useToast, useConfirm, DataTable, ColumnDef } from "@pemantik/ui";
 import { submitPhaseRequestForIndependentSchoolAction } from "@/app/actions/phaseRequests";
 
 interface PackageOption { id: string; name: string; subject_area: string; phase?: string; valid_from?: string; valid_until?: string; }
@@ -414,93 +414,111 @@ export default function AksesUjianSekolahClient({
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-          <table className="pemantik-table" style={{ width: "100%", borderCollapse: "collapse", minWidth: "750px" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #e2e8f0", backgroundColor: "white", textAlign: "left", color: "#475569", fontSize: "0.85rem" }}>
-                <th style={{ padding: "1rem 1.5rem" }}>Nama Fase</th>
-                <th style={{ padding: "1rem 1.5rem" }}>Kategori & Mata Ujian</th>
-                <th style={{ padding: "1rem 1.5rem" }}>Rentang Waktu</th>
-                <th style={{ padding: "1rem 1.5rem" }}>Status & Akses Anak</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Tampilkan dulu pengajuan (phaseRequests) yang belum/sudah direview */}
-              {phaseRequests.map((req) => (
-                <tr key={`req-${req.id}`} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                  <td style={{ padding: "1rem 1.5rem", fontWeight: 700, color: "#0f172a" }}>
-                    {req.phase}
-                    <div style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: 400, marginTop: "0.2rem" }}>
-                      Diajukan: {new Date(req.created_at).toLocaleDateString("id-ID")}
-                    </div>
-                  </td>
-                  <td style={{ padding: "1rem 1.5rem" }}>
-                    <div style={{ fontWeight: 600, color: "#1e293b", fontSize: "0.9rem" }}>
-                      {req.question_categories?.name || "Kategori Terpilih"}
-                    </div>
-                    {req.question_categories?.subject_area && (
-                      <span style={{
-                        display: "inline-block",
-                        marginTop: "0.25rem",
-                        padding: "0.2rem 0.6rem",
-                        borderRadius: "1rem",
-                        fontSize: "0.72rem",
-                        fontWeight: 700,
-                        backgroundColor: `${subjectColor(req.question_categories.subject_area)}15`,
-                        color: subjectColor(req.question_categories.subject_area),
-                        textTransform: "capitalize",
-                      }}>
-                        {req.question_categories.subject_area}
-                      </span>
-                    )}
-                  </td>
-                  <td style={{ padding: "1rem 1.5rem", fontSize: "0.85rem", color: "#475569" }}>
-                    {new Date(req.valid_from).toLocaleDateString("id-ID")} - {new Date(req.valid_until).toLocaleDateString("id-ID")}
-                  </td>
-                  <td style={{ padding: "1rem 1.5rem" }}>
-                    {statusBadge(req.status)}
-                    {req.rejection_reason && req.status === "rejected" && (
-                      <div style={{ fontSize: "0.75rem", color: "#dc2626", marginTop: "0.35rem", fontStyle: "italic" }}>
-                        Alasan: {req.rejection_reason}
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
+            {(() => {
+              const combinedData = [
+                ...phaseRequests.map(req => ({
+                  id: `req-${req.id}`,
+                  type: 'request',
+                  phase: req.phase,
+                  created_at: req.created_at,
+                  category_name: req.question_categories?.name || "Kategori Terpilih",
+                  subject_area: req.question_categories?.subject_area,
+                  valid_from: req.valid_from,
+                  valid_until: req.valid_until,
+                  status: req.status,
+                  rejection_reason: req.rejection_reason
+                })),
+                ...packages
+                  .filter(p => !phaseRequests.some(r => r.phase === p.phase && r.question_categories?.name === p.name))
+                  .map(pkg => ({
+                    id: `pkg-${pkg.id}`,
+                    type: 'package',
+                    phase: pkg.phase || "Asesmen Langsung",
+                    created_at: null,
+                    category_name: pkg.name,
+                    subject_area: pkg.subject_area,
+                    valid_from: pkg.valid_from,
+                    valid_until: pkg.valid_until,
+                    status: 'approved',
+                    rejection_reason: null
+                  }))
+              ];
 
-              {/* Tampilkan juga paket dari assessment_access jika belum tercover di atas */}
-              {packages
-                .filter((p) => !phaseRequests.some((r) => r.phase === p.phase && r.question_categories?.name === p.name))
-                .map((pkg) => (
-                  <tr key={`pkg-${pkg.id}`} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "1rem 1.5rem", fontWeight: 700, color: "#0f172a" }}>
-                      {pkg.phase || "Asesmen Langsung"}
-                    </td>
-                    <td style={{ padding: "1rem 1.5rem" }}>
-                      <div style={{ fontWeight: 600, color: "#1e293b", fontSize: "0.9rem" }}>{pkg.name}</div>
-                      <span style={{
-                        display: "inline-block",
-                        marginTop: "0.25rem",
-                        padding: "0.2rem 0.6rem",
-                        borderRadius: "1rem",
-                        fontSize: "0.72rem",
-                        fontWeight: 700,
-                        backgroundColor: `${subjectColor(pkg.subject_area)}15`,
-                        color: subjectColor(pkg.subject_area),
-                        textTransform: "capitalize",
-                      }}>
-                        {pkg.subject_area}
-                      </span>
-                    </td>
-                    <td style={{ padding: "1rem 1.5rem", fontSize: "0.85rem", color: "#475569" }}>
-                      {pkg.valid_from ? new Date(pkg.valid_from).toLocaleDateString("id-ID") : "-"} - {pkg.valid_until ? new Date(pkg.valid_until).toLocaleDateString("id-ID") : "-"}
-                    </td>
-                    <td style={{ padding: "1rem 1.5rem" }}>
-                      <Badge variant="success">Disetujui / Aktif</Badge>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+              const columns: ColumnDef<any>[] = [
+                {
+                  key: "phase",
+                  label: "Nama Fase",
+                  sortable: true,
+                  render: (_: any, item: any) => (
+                    <>
+                      <div style={{ fontWeight: 700, color: "#0f172a" }}>{item.phase}</div>
+                      {item.created_at && (
+                        <div style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: 400, marginTop: "0.2rem" }}>
+                          Diajukan: {new Date(item.created_at).toLocaleDateString("id-ID")}
+                        </div>
+                      )}
+                    </>
+                  )
+                },
+                {
+                  key: "category_name",
+                  label: "Kategori & Mata Ujian",
+                  sortable: true,
+                  render: (_: any, item: any) => (
+                    <>
+                      <div style={{ fontWeight: 600, color: "#1e293b", fontSize: "0.9rem" }}>
+                        {item.category_name}
+                      </div>
+                      {item.subject_area && (
+                        <span style={{
+                          display: "inline-block",
+                          marginTop: "0.25rem",
+                          padding: "0.2rem 0.6rem",
+                          borderRadius: "1rem",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          backgroundColor: `${subjectColor(item.subject_area)}15`,
+                          color: subjectColor(item.subject_area),
+                          textTransform: "capitalize",
+                        }}>
+                          {item.subject_area}
+                        </span>
+                      )}
+                    </>
+                  )
+                },
+                {
+                  key: "valid_from",
+                  label: "Rentang Waktu",
+                  render: (_: any, item: any) => (
+                    <span style={{ fontSize: "0.85rem", color: "#475569" }}>
+                      {item.valid_from ? new Date(item.valid_from).toLocaleDateString("id-ID") : "-"} - {item.valid_until ? new Date(item.valid_until).toLocaleDateString("id-ID") : "-"}
+                    </span>
+                  )
+                },
+                {
+                  key: "status",
+                  label: "Status & Akses Anak",
+                  sortable: true,
+                  render: (_: any, item: any) => (
+                    <>
+                      {item.type === 'package' ? (
+                        <Badge variant="success">Disetujui / Aktif</Badge>
+                      ) : (
+                        statusBadge(item.status)
+                      )}
+                      {item.rejection_reason && item.status === "rejected" && (
+                        <div style={{ fontSize: "0.75rem", color: "#dc2626", marginTop: "0.35rem", fontStyle: "italic" }}>
+                          Alasan: {item.rejection_reason}
+                        </div>
+                      )}
+                    </>
+                  )
+                }
+              ];
+
+              return <DataTable columns={columns} data={combinedData} />;
+            })()}
           </div>
         )}
       </div>
