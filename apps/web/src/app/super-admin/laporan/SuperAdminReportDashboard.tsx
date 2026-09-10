@@ -432,12 +432,12 @@ export default function SuperAdminReportDashboard({
               ];
               return (
                 <DataTable
+                  className="dt-table-wrap"
                   columns={reportCols}
                   data={filteredData}
                   loading={isLoadingData}
                   emptyMessage="Belum ada data anak yang menyelesaikan ujian."
                   size="sm"
-                  minWidth="1100px"
                   striped
                 />
               );
