@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from "react";
-import { Button, Badge, useToast } from "@pemantik/ui";
+import { Button, Badge, useToast, DataTable, ColumnDef } from "@pemantik/ui";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -621,38 +621,50 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
             </p>
           </div>
         ) : (
-          <table className="pemantik-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #e2e8f0", backgroundColor: "white", textAlign: "left", color: "#475569", fontSize: "0.85rem" }}>
-                <th style={{ padding: "1rem 1.5rem" }}>Rombel / Kelas</th>
-                <th style={{ padding: "1rem 1.5rem" }}>Tahun Ajaran</th>
-                <th style={{ padding: "1rem 1.5rem", textAlign: "center" }}>Anak Mengerjakan</th>
-                <th style={{ padding: "1rem 1.5rem", textAlign: "right" }}>Ekspor Data Mentah</th>
-              </tr>
-            </thead>
-            <tbody>
-              {classCards.map((card) => (
-                <tr key={card.class_id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                  <td style={{ padding: "1rem 1.5rem" }}>
+          <div style={{ overflowX: "auto" }}>
+            {(() => {
+              const columns: ColumnDef<any>[] = [
+                {
+                  key: "class_name",
+                  label: "Rombel / Kelas",
+                  sortable: true,
+                  render: (_: any, card: any) => (
                     <div style={{ fontWeight: 700, color: "#0f172a", fontSize: "0.95rem" }}>
                       Kelas {card.grade} - {card.class_name}
                     </div>
-                  </td>
-                  <td style={{ padding: "1rem 1.5rem", fontSize: "0.88rem", color: "#64748b" }}>
-                    {card.academic_year || "-"}
-                  </td>
-                  <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
+                  )
+                },
+                {
+                  key: "academic_year",
+                  label: "Tahun Ajaran",
+                  sortable: true,
+                  render: (_: any, card: any) => (
+                    <span style={{ fontSize: "0.88rem", color: "#64748b" }}>
+                      {card.academic_year || "-"}
+                    </span>
+                  )
+                },
+                {
+                  key: "student_count",
+                  label: "Anak Mengerjakan",
+                  align: "center",
+                  sortable: true,
+                  render: (_: any, card: any) => (
                     <div style={{ fontSize: "0.85rem", display: "inline-block" }}>
                       <Badge variant={card.student_count > 0 ? "success" : "warning"}>
                         👥 {card.student_count} Anak
                       </Badge>
                     </div>
-                  </td>
-                  <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
+                  )
+                },
+                {
+                  key: "export",
+                  label: "Ekspor Data Mentah",
+                  align: "right",
+                  render: (_: any, card: any) => (
                     <Button
                       onClick={async () => {
                         if (!selectedPackageId) return;
-                        const key = `class-${card.class_id}`;
                         setIsExporting(true);
                         try {
                           const url = new URL(window.location.origin + "/api/export/detailed-results");
@@ -688,11 +700,13 @@ export default function SchoolReportDashboard({ packages, classes, schoolId }: P
                     >
                       📥 Unduh RAW Excel
                     </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  )
+                }
+              ];
+
+              return <DataTable columns={columns} data={classCards} />;
+            })()}
+          </div>
         )}
       </div>
     </div>
