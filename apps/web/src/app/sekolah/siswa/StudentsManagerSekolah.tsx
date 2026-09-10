@@ -8,7 +8,6 @@ import {
   createStudentAction,
   updateStudentAction,
   deleteStudentAction,
-  resetStudentPasswordAction,
   bulkCreateStudentsAction,
   bulkDeleteStudentsAction,
 } from "@/app/actions/students";
@@ -145,23 +144,6 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
       if (res.success) {
         showSuccess("Berhasil", res.message ?? "Anak dihapus.");
         setStudents((prev) => prev.filter((x) => x.id !== s.id));
-      } else {
-        showError("Gagal", res.error ?? "Terjadi kesalahan.");
-      }
-    });
-  };
-
-  const handleResetPassword = async (s: StudentRow) => {
-    const ok = await confirm({
-      title: "Reset PIN Anak",
-      description: `PIN akses "${s.full_name}" akan direset ke default. Lanjutkan?`,
-      confirmLabel: "Ya, Reset",
-    });
-    if (!ok) return;
-    startTransition(async () => {
-      const res = await resetStudentPasswordAction(s.id);
-      if (res.success) {
-        showSuccess("Berhasil", res.message ?? "PIN direset.");
       } else {
         showError("Gagal", res.error ?? "Terjadi kesalahan.");
       }
@@ -620,7 +602,6 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
                 render: (_: any, s: any) => (
                   <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
                     <Button variant="outline" size="sm" onClick={() => handleOpenEdit(s)}>Edit</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleResetPassword(s)}>Reset PIN</Button>
                     <Button variant="outline" size="sm" onClick={() => handleOpenRetake(s)} style={{ color: "#ca8a04", borderColor: "#ca8a04" }}>Request Ujian Ulang</Button>
                     <Button variant="outline" size="sm" onClick={() => handleDelete(s)} style={{ color: "#dc2626" }}>Hapus</Button>
                   </div>
