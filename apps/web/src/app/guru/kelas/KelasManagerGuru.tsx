@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, useToast } from "@pemantik/ui";
+import { Button, useToast, DataTable, ColumnDef } from "@pemantik/ui";
 
 interface ClassOption {
   id: string;
@@ -81,38 +81,53 @@ export default function KelasManagerGuru({ classes }: Props) {
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table className="pemantik-table" style={{ width: "100%", minWidth: "600px" }}>
-              <thead>
-                <tr>
-                  <th>Nama Kelas</th>
-                  <th>Tingkat (Grade)</th>
-                  <th>Tahun Ajaran</th>
-                  <th>Jumlah Anak</th>
-                  <th style={{ textAlign: "center" }}>Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {classes.map((cls) => (
-                  <tr key={cls.id}>
-                    <td style={{ fontWeight: 600, color: "#102e50" }}>{cls.name}</td>
-                    <td>Kelas {cls.grade}</td>
-                    <td>{cls.academic_year}</td>
-                    <td>{cls.student_count} Anak</td>
-                    <td style={{ textAlign: "center" }}>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        style={{ color: "#059669", borderColor: "#34d399", minWidth: "140px" }}
-                        onClick={() => handleDownload(cls.id, cls.name)}
-                        disabled={isExporting === cls.id}
-                      >
-                        {isExporting === cls.id ? "Menyiapkan..." : "Unduh Laporan"}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {(() => {
+            const columns: ColumnDef<any>[] = [
+              {
+                key: "name",
+                label: "Nama Kelas",
+                sortable: true,
+                render: (_: any, cls: any) => (
+                  <span style={{ fontWeight: 600, color: "#102e50" }}>{cls.name}</span>
+                )
+              },
+              {
+                key: "grade",
+                label: "Tingkat (Grade)",
+                sortable: true,
+                render: (_: any, cls: any) => `Kelas ${cls.grade}`
+              },
+              {
+                key: "academic_year",
+                label: "Tahun Ajaran",
+                sortable: true
+              },
+              {
+                key: "student_count",
+                label: "Jumlah Anak",
+                sortable: true,
+                render: (_: any, cls: any) => `${cls.student_count} Anak`
+              },
+              {
+                key: "actions",
+                label: "Aksi",
+                align: "center",
+                render: (_: any, cls: any) => (
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    style={{ color: "#059669", borderColor: "#34d399", minWidth: "140px" }}
+                    onClick={() => handleDownload(cls.id, cls.name)}
+                    disabled={isExporting === cls.id}
+                  >
+                    {isExporting === cls.id ? "Menyiapkan..." : "Unduh Laporan"}
+                  </Button>
+                )
+              }
+            ];
+
+            return <DataTable columns={columns} data={classes} />;
+          })()}
           </div>
         )}
       </div>
