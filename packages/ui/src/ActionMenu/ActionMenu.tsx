@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export interface ActionMenuItem {
   label: string;
@@ -13,30 +14,51 @@ export interface ActionMenuProps {
 
 export function ActionMenu({ actions }: ActionMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [coords, setCoords] = useState({ top: 0, right: 0 });
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
+    function handleClickOutside() {
+      setIsOpen(false);
+    }
+    function handleScroll() {
+      setIsOpen(false);
     }
 
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+      setTimeout(() => {
+        document.addEventListener("mousedown", handleClickOutside);
+        window.addEventListener("scroll", handleScroll, true); 
+        window.addEventListener("resize", handleScroll);
+      }, 0);
     }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleScroll);
+    };
   }, [isOpen]);
+
+  const toggleMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isOpen && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + 4,
+        right: document.documentElement.clientWidth - rect.right,
+      });
+    }
+    setIsOpen(!isOpen);
+  };
 
   if (actions.length === 0) return null;
 
   return (
-    <div ref={menuRef} style={{ position: "relative", display: "inline-block" }}>
+    <>
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsOpen(!isOpen);
-        }}
+        ref={btnRef}
+        onClick={toggleMenu}
         style={{
           background: "transparent",
           border: "none",
@@ -59,13 +81,13 @@ export function ActionMenu({ actions }: ActionMenuProps) {
         </svg>
       </button>
 
-      {isOpen && (
+      {isOpen && typeof document !== "undefined" && createPortal(
         <div
+          onMouseDown={(e) => e.stopPropagation()} 
           style={{
-            position: "absolute",
-            right: 0,
-            top: "100%",
-            marginTop: "0.25rem",
+            position: "fixed",
+            right: coords.right,
+            top: coords.top,
             background: "rgba(255, 255, 255, 0.85)",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
@@ -74,7 +96,7 @@ export function ActionMenu({ actions }: ActionMenuProps) {
             borderRadius: "0.5rem",
             padding: "0.5rem",
             minWidth: "160px",
-            zIndex: 50,
+            zIndex: 99999,
             display: "flex",
             flexDirection: "column",
             gap: "0.25rem",
@@ -122,8 +144,9 @@ export function ActionMenu({ actions }: ActionMenuProps) {
               </button>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
