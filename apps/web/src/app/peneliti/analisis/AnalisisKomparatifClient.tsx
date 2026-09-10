@@ -188,7 +188,12 @@ export default function AnalisisKomparatifClient({
                 }
               ];
 
-              return <DataTable columns={columns} data={levelDistData || []} emptyMessage="Tidak ada data distribusi level" />;
+              const tableData = (levelDistData || []).map((d: any, idx: number) => ({
+                ...d,
+                id: d.community || `row-${idx}`
+              }));
+
+              return <DataTable columns={columns} data={tableData} emptyMessage="Tidak ada data distribusi level" />;
             })()}
           </div>
       </div>
