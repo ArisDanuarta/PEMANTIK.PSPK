@@ -4,7 +4,7 @@ import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { DataTable, Button, Modal, Badge, useToast, useConfirm, SesBadge } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
-import { createStudentAction, bulkCreateStudentsAction, updateStudentAction, deleteStudentAction, resetStudentPasswordAction, bulkDeleteStudentsAction } from "../../actions/students";
+import { createStudentAction, bulkCreateStudentsAction, updateStudentAction, deleteStudentAction, bulkDeleteStudentsAction } from "../../actions/students";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 import Pagination from "@/components/shared/Pagination";
@@ -123,23 +123,6 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
       const result = await deleteStudentAction(row.id);
       if (result.success) success("Berhasil", result.message || "Anak dihapus.");
       else error("Gagal", result.error || "Gagal menghapus anak.");
-    });
-  };
-
-  const handleResetPassword = async (row: any) => {
-    const isConfirmed = await confirm({
-      title: "Reset PIN",
-      description: `Apakah Anda yakin ingin mereset PIN siswa '${row.full_name}' ke default (123456)?`,
-      confirmLabel: "Reset",
-      cancelLabel: "Batal",
-      variant: "warning"
-    });
-    if (!isConfirmed) return;
-    
-    startTransition(async () => {
-      const result = await resetStudentPasswordAction(row.id);
-      if (result.success) success("Berhasil", "PIN siswa berhasil di-reset.");
-      else error("Gagal", result.error || "Terjadi kesalahan.");
     });
   };
 
@@ -316,7 +299,6 @@ export default function StudentsManagerKomunitas({ initialStudents, schools, ses
             render: (_: any, row: any) => (
               <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", flexWrap: "wrap" }}>
                 <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
-                <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset PIN</Button>
                 <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
               </div>
             )

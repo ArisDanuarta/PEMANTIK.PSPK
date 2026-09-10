@@ -4,7 +4,7 @@ import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { DataTable, Button, Modal, Badge, useToast, useConfirm, SesBadge } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
-import { createStudentAction, bulkCreateStudentsAction, updateStudentAction, deleteStudentAction, resetStudentPasswordAction, bulkDeleteStudentsAction } from "../../actions/students";
+import { createStudentAction, bulkCreateStudentsAction, updateStudentAction, deleteStudentAction, bulkDeleteStudentsAction } from "../../actions/students";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import CredentialModal, { Credentials } from "@/components/shared/CredentialModal";
 import SearchableSelect from "@/components/shared/SearchableSelect";
@@ -165,34 +165,6 @@ export default function StudentsManager({
       const result = await deleteStudentAction(row.id);
       if (result.success) success("Berhasil", result.message || "Anak dihapus.");
       else error("Gagal", result.error || "Gagal menghapus anak.");
-    });
-  };
-
-  const handleResetPassword = async (row: any) => {
-    const isConfirmed = await confirm({
-      title: "Reset PIN",
-      description: `Apakah Anda yakin ingin mereset PIN siswa '${row.full_name}' ke default (123456)?`,
-      confirmLabel: "Reset",
-      cancelLabel: "Batal",
-      variant: "warning"
-    });
-    if (!isConfirmed) return;
-    
-    startTransition(async () => {
-      const result = await resetStudentPasswordAction(row.id);
-      if (result.success) {
-        if (result.credentials) {
-          setCredentialModal({
-            isOpen: true,
-            creds: result.credentials,
-            title: "PIN Berhasil Direset"
-          });
-        } else {
-          success("Berhasil", "PIN siswa berhasil di-reset.");
-        }
-      } else {
-        error("Gagal", result.error || "Terjadi kesalahan.");
-      }
     });
   };
 
@@ -387,9 +359,8 @@ export default function StudentsManager({
             key: "actions",
             label: "Aksi",
             render: (_v, row) => (
-              <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", flexWrap: "wrap" }}>
                 <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
-                <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset PIN</Button>
                 <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
               </div>
             ),
