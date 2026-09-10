@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Badge, Table } from "@pemantik/ui";
+import { Badge, DataTable, ColumnDef } from "@pemantik/ui";
 import { QuestionStat } from "./page";
 
 function formatSeconds(seconds: number) {
@@ -31,13 +31,13 @@ export default function PenelitiSoalClient({ initialData }: { initialData: Quest
     return result;
   }, [initialData, filterSubject, sortOrder]);
 
-  const columns = [
-    { key: "question_code", label: "Kode Soal", render: (val: unknown) => <div style={{ fontWeight: 600, color: "#102e50" }}>{val as string}</div> },
-    { key: "question_type", label: "Tipe Soal", render: (val: unknown) => (val as string) ? (val as string).replace('_', ' ') : '-' },
-    { key: "subject_area", label: "Mata Pelajaran", render: (val: unknown) => <span style={{ textTransform: "capitalize" }}>{val as string}</span> },
-    { key: "total_answers", label: "Total Menjawab", render: (val: unknown) => <div style={{ textAlign: "center" }}>{val as number}</div> },
-    { key: "success_rate", label: "Tingkat Benar (Success Rate)", render: (val: unknown) => {
-      const rate = val as number;
+  const columns: ColumnDef<any>[] = [
+    { key: "question_code", label: "Kode Soal", sortable: true, render: (_: any, q: any) => <div style={{ fontWeight: 600, color: "#102e50" }}>{q.question_code}</div> },
+    { key: "question_type", label: "Tipe Soal", sortable: true, render: (_: any, q: any) => q.question_type ? q.question_type.replace('_', ' ') : '-' },
+    { key: "subject_area", label: "Mata Pelajaran", sortable: true, render: (_: any, q: any) => <span style={{ textTransform: "capitalize" }}>{q.subject_area}</span> },
+    { key: "total_answers", label: "Total Menjawab", sortable: true, render: (_: any, q: any) => <div style={{ textAlign: "center" }}>{q.total_answers}</div> },
+    { key: "success_rate", label: "Tingkat Benar (Success Rate)", sortable: true, render: (_: any, q: any) => {
+      const rate = q.success_rate || 0;
       return (
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <div style={{ flex: 1, height: "6px", backgroundColor: "#f3f4f6", borderRadius: "3px", overflow: "hidden" }}>
@@ -47,8 +47,8 @@ export default function PenelitiSoalClient({ initialData }: { initialData: Quest
         </div>
       );
     } },
-    { key: "avg_time", label: "Rata-rata Waktu", render: (val: unknown) => <div style={{ textAlign: "center" }}>{formatSeconds((val as number) || 0)}</div> },
-    { key: "difficulty", label: "Difficulty Index", render: (_: unknown, q: QuestionStat) => {
+    { key: "avg_time", label: "Rata-rata Waktu", sortable: true, render: (_: any, q: any) => <div style={{ textAlign: "center" }}>{formatSeconds(q.avg_time || 0)}</div> },
+    { key: "difficulty", label: "Difficulty Index", render: (_: any, q: any) => {
         const rate = q.success_rate || 0;
         let difficulty = "Sedang";
         let variant = "warning";
@@ -80,9 +80,9 @@ export default function PenelitiSoalClient({ initialData }: { initialData: Quest
           </select>
         </div>
 
-        <Table
+        <DataTable
           columns={columns}
-          data={filteredData}
+          data={filteredData.map((d, i) => ({ ...d, id: d.question_code || `q-${i}` }))}
           emptyMessage="Belum ada data analisis soal."
         />
       </div>
