@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Button, Badge, useToast, useConfirm } from "@pemantik/ui";
+import { Button, Badge, useToast, useConfirm, DataTable, ColumnDef } from "@pemantik/ui";
 import {
   createClassAction,
   updateClassAction,
@@ -173,65 +173,88 @@ export default function KelasManager({ initialClasses, teachers, schoolId }: Kel
       {/* ── Tabel ── */}
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
-          <table className="pemantik-table" style={{ width: "100%", minWidth: "800px" }}>
-          <thead>
-            <tr>
-              <th>Nama Kelas</th>
-              <th>Tingkat</th>
-              <th>Guru Pengampu</th>
-              <th>Jumlah Anak</th>
-              <th>Tahun Ajaran</th>
-              <th>Status</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
-                  <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🏫</div>
-                  {search ? "Tidak ada kelas yang cocok dengan pencarian." : "Belum ada kelas. Klik \"Tambah Kelas\" untuk mulai."}
-                </td>
-              </tr>
-            ) : filtered.map((cls) => {
-              const studentCount = cls.students?.[0]?.count ?? 0;
-              return (
-                <tr key={cls.id}>
-                  <td><div style={{ fontWeight: 600, color: "#102e50" }}>{cls.name}</div></td>
-                  <td>
-                    <span style={{ padding: "0.2rem 0.6rem", backgroundColor: "#f3f4f6", borderRadius: "0.375rem", fontSize: "0.85rem", fontWeight: 600 }}>
-                      Kelas {cls.grade}
-                    </span>
-                  </td>
-                  <td>
-                    {cls.users && cls.users.length > 0 ? (
-                      <div style={{ fontSize: "0.875rem" }}>{cls.users[0].full_name}</div>
-                    ) : (
-                      <span style={{ color: "black", fontSize: "0.8rem", fontStyle: "italic" }}>Belum ditugaskan</span>
-                    )}
-                  </td>
-                  <td>
+          {(() => {
+            const columns: ColumnDef<any>[] = [
+              {
+                key: "name",
+                label: "Nama Kelas",
+                sortable: true,
+                render: (_: any, cls: any) => (
+                  <div style={{ fontWeight: 600, color: "#102e50" }}>{cls.name}</div>
+                )
+              },
+              {
+                key: "grade",
+                label: "Tingkat",
+                sortable: true,
+                render: (_: any, cls: any) => (
+                  <span style={{ padding: "0.2rem 0.6rem", backgroundColor: "#f3f4f6", borderRadius: "0.375rem", fontSize: "0.85rem", fontWeight: 600 }}>
+                    Kelas {cls.grade}
+                  </span>
+                )
+              },
+              {
+                key: "teacher",
+                label: "Guru Pengampu",
+                render: (_: any, cls: any) => (
+                  cls.users && cls.users.length > 0 ? (
+                    <div style={{ fontSize: "0.875rem" }}>{cls.users[0].full_name}</div>
+                  ) : (
+                    <span style={{ color: "black", fontSize: "0.8rem", fontStyle: "italic" }}>Belum ditugaskan</span>
+                  )
+                )
+              },
+              {
+                key: "studentCount",
+                label: "Jumlah Anak",
+                render: (_: any, cls: any) => {
+                  const studentCount = cls.students?.[0]?.count ?? 0;
+                  return (
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       <span style={{ fontSize: "1rem", fontWeight: 700, color: "#102e50" }}>{studentCount}</span>
                       <span style={{ fontSize: "0.75rem", color: "black" }}>anak</span>
                     </div>
-                  </td>
-                  <td><span style={{ fontSize: "0.85rem", color: "#4b5563" }}>{cls.academic_year ?? "-"}</span></td>
-                  <td><Badge variant={cls.is_active ? "success" : "danger"}>{cls.is_active ? "Aktif" : "Nonaktif"}</Badge></td>
-                  <td>
-                    <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                      <Button variant="outline" size="sm" onClick={() => handleOpenEdit(cls)}>Edit</Button>
-                      <Button variant="outline" size="sm" onClick={() => handleToggleStatus(cls)} style={{ color: cls.is_active ? "#df632f" : "#2d9e5f" }}>
-                        {cls.is_active ? "Nonaktifkan" : "Aktifkan"}
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(cls)} style={{ color: "#dc2626" }}>Hapus</Button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  );
+                }
+              },
+              {
+                key: "academic_year",
+                label: "Tahun Ajaran",
+                sortable: true,
+                render: (_: any, cls: any) => (
+                  <span style={{ fontSize: "0.85rem", color: "#4b5563" }}>{cls.academic_year ?? "-"}</span>
+                )
+              },
+              {
+                key: "is_active",
+                label: "Status",
+                render: (_: any, cls: any) => (
+                  <Badge variant={cls.is_active ? "success" : "danger"}>{cls.is_active ? "Aktif" : "Nonaktif"}</Badge>
+                )
+              },
+              {
+                key: "actions",
+                label: "Aksi",
+                render: (_: any, cls: any) => (
+                  <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                    <Button variant="outline" size="sm" onClick={() => handleOpenEdit(cls)}>Edit</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleToggleStatus(cls)} style={{ color: cls.is_active ? "#df632f" : "#2d9e5f" }}>
+                      {cls.is_active ? "Nonaktifkan" : "Aktifkan"}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDelete(cls)} style={{ color: "#dc2626" }}>Hapus</Button>
+                  </div>
+                )
+              }
+            ];
+
+            return (
+              <DataTable
+                columns={columns}
+                data={filtered}
+                emptyMessage={search ? "Tidak ada kelas yang cocok dengan pencarian." : "Belum ada kelas. Klik \"Tambah Kelas\" untuk mulai."}
+              />
+            );
+          })()}
         </div>
         {filtered.length > 0 && (
           <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid #f1f3f5", fontSize: "0.8rem", color: "black" }}>

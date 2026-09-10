@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Button, Badge, useToast, useConfirm } from "@pemantik/ui";
+import { Button, Badge, useToast, useConfirm, DataTable, ColumnDef } from "@pemantik/ui";
 import * as XLSX from "xlsx";
 import {
   createStudentAction,
@@ -532,68 +532,110 @@ export default function StudentsManagerSekolah({ initialStudents, classes, schoo
       {/* ── Tabel ── */}
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
-          <table className="pemantik-table" style={{ width: "100%", minWidth: "900px" }}>
-          <thead>
-            <tr>
-              <th style={{ width: "40px", textAlign: "center" }}>
-                <input 
-                  type="checkbox" 
-                  checked={filtered.length > 0 && selectedStudentIds.length === filtered.length}
-                  onChange={toggleSelectAll}
-                  style={{ cursor: "pointer" }}
-                />
-              </th>
-              <th>Nama Anak</th><th>Akun Akses</th><th>Kelas</th><th>Gender</th><th>SES</th><th>Status</th><th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={7} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
-                <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🧑‍🎓</div>
-                {search || classFilter !== "all" || genderFilter !== "all" ? "Tidak ada anak yang cocok dengan filter." : "Belum ada anak terdaftar."}
-              </td></tr>
-            ) : paginatedStudents.map((s) => (
-              <tr key={s.id} style={{ backgroundColor: selectedStudentIds.includes(s.id) ? "#f8fafc" : "" }}>
-                <td style={{ textAlign: "center" }}>
-                  <input 
+          {(() => {
+            const columns: ColumnDef<any>[] = [
+              {
+                key: "checkbox",
+                label: (
+                  <input
+                    type="checkbox"
+                    checked={filtered.length > 0 && selectedStudentIds.length === filtered.length}
+                    onChange={toggleSelectAll}
+                    style={{ cursor: "pointer" }}
+                  />
+                ) as any,
+                width: "40px",
+                align: "center",
+                render: (_: any, s: any) => (
+                  <input
                     type="checkbox"
                     checked={selectedStudentIds.includes(s.id)}
                     onChange={() => toggleSelectStudent(s.id)}
                     style={{ cursor: "pointer" }}
                   />
-                </td>
-                <td><div style={{ fontWeight: 600, color: "#102e50" }}>{s.full_name}</div></td>
-                <td>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                    <div><span style={{ color: "black" }}>User:</span> <strong>{s.username}</strong></div>
-                    <div><span style={{ color: "black" }}>PIN:</span> <code style={{ color: "#a8281c" }}>123456</code></div>
-                  </div>
-                  {s.nisn && <div style={{ fontSize: "0.78rem", color: "black", marginTop: "0.25rem" }}>NISN: {s.nisn}</div>}
-                </td>
-                <td>
-                  {s.classes ? (
+                ),
+              },
+              {
+                key: "full_name",
+                label: "Nama Anak",
+                sortable: true,
+                render: (_: any, s: any) => (
+                  <div style={{ fontWeight: 600, color: "#102e50" }}>{s.full_name}</div>
+                )
+              },
+              {
+                key: "username",
+                label: "Akun Akses",
+                render: (_: any, s: any) => (
+                  <>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
+                      <div><span style={{ color: "black" }}>User:</span> <strong>{s.username}</strong></div>
+                      <div><span style={{ color: "black" }}>PIN:</span> <code style={{ color: "#a8281c" }}>123456</code></div>
+                    </div>
+                    {s.nisn && <div style={{ fontSize: "0.78rem", color: "black", marginTop: "0.25rem" }}>NISN: {s.nisn}</div>}
+                  </>
+                )
+              },
+              {
+                key: "class_id",
+                label: "Kelas",
+                render: (_: any, s: any) => (
+                  s.classes ? (
                     <span style={{ padding: "0.15rem 0.5rem", backgroundColor: "#eff6ff", color: "#1d4ed8", borderRadius: "0.375rem", fontSize: "0.8rem", fontWeight: 500 }}>
                       Kelas {s.classes.grade} - {s.classes.name}
                     </span>
-                  ) : <span style={{ color: "black", fontSize: "0.8rem" }}>-</span>}
-                </td>
-                <td style={{ fontSize: "0.85rem" }}>{s.gender === "L" ? "Laki-laki" : s.gender === "P" ? "Perempuan" : "-"}</td>
-                <td>
-                  {s.ses_class ? <span style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3f4f6", borderRadius: "0.375rem", fontSize: "0.8rem", fontWeight: 600 }}>SES {s.ses_class}</span> : "-"}
-                </td>
-                <td><Badge variant={s.is_active ? "success" : "danger"}>{s.is_active ? "Aktif" : "Nonaktif"}</Badge></td>
-                <td>
+                  ) : <span style={{ color: "black", fontSize: "0.8rem" }}>-</span>
+                )
+              },
+              {
+                key: "gender",
+                label: "Gender",
+                render: (_: any, s: any) => (
+                  <span style={{ fontSize: "0.85rem" }}>
+                    {s.gender === "L" ? "Laki-laki" : s.gender === "P" ? "Perempuan" : "-"}
+                  </span>
+                )
+              },
+              {
+                key: "ses_class",
+                label: "SES",
+                render: (_: any, s: any) => (
+                  s.ses_class ? (
+                    <span style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3f4f6", borderRadius: "0.375rem", fontSize: "0.8rem", fontWeight: 600 }}>
+                      SES {s.ses_class}
+                    </span>
+                  ) : "-"
+                )
+              },
+              {
+                key: "is_active",
+                label: "Status",
+                render: (_: any, s: any) => (
+                  <Badge variant={s.is_active ? "success" : "danger"}>{s.is_active ? "Aktif" : "Nonaktif"}</Badge>
+                )
+              },
+              {
+                key: "actions",
+                label: "Aksi",
+                render: (_: any, s: any) => (
                   <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
                     <Button variant="outline" size="sm" onClick={() => handleOpenEdit(s)}>Edit</Button>
                     <Button variant="outline" size="sm" onClick={() => handleResetPassword(s)}>Reset PIN</Button>
                     <Button variant="outline" size="sm" onClick={() => handleOpenRetake(s)} style={{ color: "#ca8a04", borderColor: "#ca8a04" }}>Request Ujian Ulang</Button>
                     <Button variant="outline" size="sm" onClick={() => handleDelete(s)} style={{ color: "#dc2626" }}>Hapus</Button>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                )
+              }
+            ];
+
+            return (
+              <DataTable
+                columns={columns}
+                data={paginatedStudents}
+                emptyMessage={search || classFilter !== "all" || genderFilter !== "all" ? "Tidak ada anak yang cocok dengan filter." : "Belum ada anak terdaftar."}
+              />
+            );
+          })()}
         </div>
         <Pagination
           currentPage={currentPage}

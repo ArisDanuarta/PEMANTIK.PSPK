@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Button, Badge, useToast, useConfirm } from "@pemantik/ui";
+import { Button, Badge, useToast, useConfirm, DataTable, ColumnDef } from "@pemantik/ui";
 import * as XLSX from "xlsx";
 import {
   createTeacherAction,
@@ -199,64 +199,92 @@ export default function TeachersManagerSekolah({ initialTeachers, classes, schoo
       {/* ── Tabel ── */}
       <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
-          <table className="pemantik-table" style={{ width: "100%", minWidth: "800px" }}>
-          <thead>
-            <tr>
-              <th>Nama Guru</th><th>Akun Akses</th><th>Kelas Diajar</th>
-              <th>Gender</th><th>Status</th><th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={6} style={{ textAlign: "center", padding: "3rem 1rem", color: "black" }}>
-                <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>👨‍🏫</div>
-                {search ? "Tidak ada guru yang cocok." : "Belum ada guru terdaftar di sekolah ini."}
-              </td></tr>
-            ) : paginatedTeachers.map((t) => (
-              <tr key={t.id}>
-                <td><div style={{ fontWeight: 600, color: "#102e50" }}>{t.full_name}</div></td>
-                <td>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
-                    <div>
-                      <span style={{ color: "black" }}>User:</span>{" "}
-                      <strong 
-                        style={{ cursor: "pointer", textDecoration: "underline", color: "#0874aa" }} 
-                        onClick={() => { navigator.clipboard.writeText(t.username); showSuccess("Tersalin", "Username disalin ke clipboard"); }}
-                        title="Klik untuk menyalin"
-                      >{t.username}</strong>
+          {(() => {
+            const columns: ColumnDef<any>[] = [
+              {
+                key: "full_name",
+                label: "Nama Guru",
+                sortable: true,
+                render: (_: any, t: any) => (
+                  <div style={{ fontWeight: 600, color: "#102e50" }}>{t.full_name}</div>
+                )
+              },
+              {
+                key: "username",
+                label: "Akun Akses",
+                render: (_: any, t: any) => (
+                  <>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", fontSize: "0.85rem" }}>
+                      <div>
+                        <span style={{ color: "black" }}>User:</span>{" "}
+                        <strong 
+                          style={{ cursor: "pointer", textDecoration: "underline", color: "#0874aa" }} 
+                          onClick={() => { navigator.clipboard.writeText(t.username); showSuccess("Tersalin", "Username disalin ke clipboard"); }}
+                          title="Klik untuk menyalin"
+                        >{t.username}</strong>
+                      </div>
+                      <div>
+                        <span style={{ color: "black" }}>Pass:</span>{" "}
+                        <code 
+                          style={{ color: "#a8281c", cursor: "pointer", textDecoration: "underline" }} 
+                          onClick={() => { navigator.clipboard.writeText(t.plain_password || "-"); showSuccess("Tersalin", "Password disalin ke clipboard"); }}
+                          title="Klik untuk menyalin"
+                        >{t.plain_password || "-"}</code>
+                      </div>
                     </div>
-                    <div>
-                      <span style={{ color: "black" }}>Pass:</span>{" "}
-                      <code 
-                        style={{ color: "#a8281c", cursor: "pointer", textDecoration: "underline" }} 
-                        onClick={() => { navigator.clipboard.writeText(t.plain_password || "-"); showSuccess("Tersalin", "Password disalin ke clipboard"); }}
-                        title="Klik untuk menyalin"
-                      >{t.plain_password || "-"}</code>
-                    </div>
-                  </div>
-                  {t.nip && <div style={{ fontSize: "0.78rem", color: "black", marginTop: "0.25rem" }}>NIP: {t.nip}</div>}
-                </td>
-                <td>
-                  {t.classes && t.classes.length > 0 ? (
+                    {t.nip && <div style={{ fontSize: "0.78rem", color: "black", marginTop: "0.25rem" }}>NIP: {t.nip}</div>}
+                  </>
+                )
+              },
+              {
+                key: "class_id",
+                label: "Kelas Diajar",
+                render: (_: any, t: any) => (
+                  t.classes && t.classes.length > 0 ? (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
                       {t.classes.map((c: { name: string; id: string }) => (
                         <span key={c.id} style={{ padding: "0.15rem 0.4rem", backgroundColor: "#eff6ff", color: "#1d4ed8", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 500 }}>{c.name}</span>
                       ))}
                     </div>
-                  ) : <span style={{ color: "black", fontSize: "0.8rem" }}>-</span>}
-                </td>
-                <td style={{ fontSize: "0.85rem" }}>{t.gender === "L" ? "Laki-laki" : t.gender === "P" ? "Perempuan" : "-"}</td>
-                <td><Badge variant={t.is_active ? "success" : "danger"}>{t.is_active ? "Aktif" : "Nonaktif"}</Badge></td>
-                <td>
+                  ) : <span style={{ color: "black", fontSize: "0.8rem" }}>-</span>
+                )
+              },
+              {
+                key: "gender",
+                label: "Gender",
+                render: (_: any, t: any) => (
+                  <span style={{ fontSize: "0.85rem" }}>
+                    {t.gender === "L" ? "Laki-laki" : t.gender === "P" ? "Perempuan" : "-"}
+                  </span>
+                )
+              },
+              {
+                key: "is_active",
+                label: "Status",
+                render: (_: any, t: any) => (
+                  <Badge variant={t.is_active ? "success" : "danger"}>{t.is_active ? "Aktif" : "Nonaktif"}</Badge>
+                )
+              },
+              {
+                key: "actions",
+                label: "Aksi",
+                render: (_: any, t: any) => (
                   <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
                     <Button variant="outline" size="sm" onClick={() => handleOpenEdit(t)}>Edit</Button>
                     <Button variant="outline" size="sm" onClick={() => handleDelete(t)} style={{ color: "#dc2626" }}>Hapus</Button>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                )
+              }
+            ];
+
+            return (
+              <DataTable
+                columns={columns}
+                data={paginatedTeachers}
+                emptyMessage={search ? "Tidak ada guru yang cocok." : "Belum ada guru terdaftar di sekolah ini."}
+              />
+            );
+          })()}
         </div>
         <Pagination
           currentPage={currentPage}
