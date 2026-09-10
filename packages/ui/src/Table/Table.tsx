@@ -119,24 +119,34 @@ function EmptyState({
     <tbody>
       <tr>
         <td colSpan={cols}>
-          <div className="dt-empty">
-            <svg
-              width="48"
-              height="48"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ color: "#ced4da", flexShrink: 0 }}
-            >
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <line x1="3" y1="9" x2="21" y2="9" />
-              <line x1="3" y1="15" x2="21" y2="15" />
-              <line x1="9" y1="3" x2="9" y2="21" />
-            </svg>
-            <span>{message}</span>
+          <div 
+            className="dt-empty" 
+            style={{ 
+              padding: "4rem 1rem", 
+              textAlign: "center", 
+              display: "flex", 
+              flexDirection: "column", 
+              alignItems: "center", 
+              justifyContent: "center", 
+              gap: "1.25rem" 
+            }}
+          >
+            <div style={{ position: "relative", width: "120px", height: "120px" }}>
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                {/* Background soft blob */}
+                <path d="M78.6 69.1C85.5 60.5 89.2 49 84.7 39.8C80.2 30.6 67.5 23.7 55.4 20.3C43.3 16.9 31.8 17 22.8 22.1C13.8 27.2 7.3 37.3 5.3 48.7C3.3 60.1 5.8 72.8 13.9 80.2C22 87.6 35.7 89.7 48.1 87.4C60.5 85.1 71.7 77.7 78.6 69.1Z" fill="#F1F5F9" opacity="0.8" />
+                {/* Document */}
+                <rect x="25" y="20" width="44" height="56" rx="4" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="2" />
+                <path d="M35 34H59" stroke="#E2E8F0" strokeWidth="3" strokeLinecap="round" />
+                <path d="M35 44H59" stroke="#E2E8F0" strokeWidth="3" strokeLinecap="round" />
+                <path d="M35 54H49" stroke="#E2E8F0" strokeWidth="3" strokeLinecap="round" />
+                {/* Magnifying Glass */}
+                <circle cx="64" cy="64" r="14" fill="#EFF6FF" stroke="#3B82F6" strokeWidth="2" />
+                <path d="M74 74L84 84" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" />
+                <circle cx="64" cy="64" r="6" fill="#BFDBFE" opacity="0.4" />
+              </svg>
+            </div>
+            <span style={{ color: "#64748B", fontSize: "0.95rem", fontWeight: 500 }}>{message}</span>
           </div>
         </td>
       </tr>

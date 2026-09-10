@@ -8,6 +8,7 @@ export { Table, DataTable } from "./Table/Table";
 export type { ColumnDef, DataTableProps } from "./Table/Table";
 export { Modal } from "./Modal/Modal";
 export { Badge, SesBadge, StatusBadge } from "./Badge/Badge";
+export { ActionMenu } from "./ActionMenu/ActionMenu";
 
 // ── Global feedback components ───────────────────────────────────────────────
 export { ToastProvider, useToast } from "./toast";
