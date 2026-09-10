@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition, useEffect, useMemo } from "react";
-import { Button, Badge, useToast, useConfirm } from "@pemantik/ui";
+import { Button, Badge, useToast, useConfirm, DataTable, ColumnDef } from "@pemantik/ui";
 
 import Link from "next/link";
 import Pagination from "@/components/shared/Pagination";
@@ -110,89 +110,90 @@ export default function StudentsManagerGuru({ initialStudents, classes, schoolId
           </div>
         </div>
         <div style={{ overflowX: "auto" }}>
-          <table className="pemantik-table" style={{ width: "100%", minWidth: "750px" }}>
-            <thead>
-              <tr>
-                <th>Nama Lengkap</th>
-                <th>Kelas</th>
-                <th>Fase Ujian</th>
-                <th>Progres / Jenis Ujian</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={5} style={{ textAlign: "center", padding: "3rem", color: "#6b7280" }}>
-                    Tidak ada data anak.
-                  </td>
-                </tr>
-              ) : (
-                paginatedStudents.map((s) => (
-                  <tr key={s.id}>
-                    <td>
-                      <div style={{ fontWeight: 600, color: "#1e293b", marginBottom: "0.2rem" }}>{s.full_name}</div>
-                      <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
-                        NISN: {s.nisn || "-"} | {s.gender === "L" ? "Laki-laki" : "Perempuan"}
-                      </div>
-                    </td>
-                    <td>
-                      {s.classes ? (
-                        <Badge variant="info">
-                          Kelas {s.classes.grade} - {s.classes.name}
-                        </Badge>
-                      ) : (
-                        <span style={{ color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic" }}>Tanpa Kelas</span>
-                      )}
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 600, color: "#0f172a", fontSize: "0.85rem" }}>{activePhase}</div>
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                        {s.active_sessions && s.active_sessions.length > 0 ? (
-                          Object.values(
-                            s.active_sessions.reduce((acc: any, sess: any) => {
-                              const subject = sess.question_categories?.subject_area || "unknown";
-                              if (!acc[subject]) {
-                                acc[subject] = {
-                                  subject_area: subject,
-                                  maxLevel: sess.current_level?.level_number || 0,
-                                  maxScore: sess.score || 0,
-                                  status: sess.status,
-                                  attempts: 1
-                                };
-                              } else {
-                                acc[subject].maxLevel = Math.max(acc[subject].maxLevel, sess.current_level?.level_number || 0);
-                                acc[subject].maxScore = Math.max(acc[subject].maxScore, sess.score || 0);
-                                acc[subject].attempts += 1;
-                                if (sess.status === "in_progress") {
-                                  acc[subject].status = "in_progress";
-                                }
-                              }
-                              return acc;
-                            }, {})
-                          ).map((grp: any, idx: number) => (
-                            <div 
-                              key={idx} 
-                              className={`badge ${grp.status === "completed" ? "badge-success" : "badge-warning"}`}
-                              style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-start", padding: "0.3rem 0.5rem" }}
-                            >
-                              <span>{grp.subject_area === 'literasi' ? '📖 Literasi' : grp.subject_area === 'numerasi' ? '🔢 Numerasi' : 'Lainnya'}</span>
-                              <span style={{ fontSize: "0.7rem", marginTop: "0.15rem", opacity: 0.9 }}>
-                                Percobaan: {grp.attempts}x | Level Terakhir: {grp.maxLevel} | Skor Maksimal: {Math.round(grp.maxScore)}
-                              </span>
-                            </div>
-                          ))
-                        ) : (
-                          <span style={{ color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic" }}>Belum mulai ujian</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          {(() => {
+            const columns: ColumnDef<any>[] = [
+              {
+                key: "full_name",
+                label: "Nama Lengkap",
+                sortable: true,
+                render: (_: any, s: any) => (
+                  <>
+                    <div style={{ fontWeight: 600, color: "#1e293b", marginBottom: "0.2rem" }}>{s.full_name}</div>
+                    <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                      NISN: {s.nisn || "-"} | {s.gender === "L" ? "Laki-laki" : "Perempuan"}
+                    </div>
+                  </>
+                )
+              },
+              {
+                key: "class_id",
+                label: "Kelas",
+                render: (_: any, s: any) => (
+                  s.classes ? (
+                    <Badge variant="info">
+                      Kelas {s.classes.grade} - {s.classes.name}
+                    </Badge>
+                  ) : (
+                    <span style={{ color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic" }}>Tanpa Kelas</span>
+                  )
+                )
+              },
+              {
+                key: "phase",
+                label: "Fase Ujian",
+                render: () => (
+                  <div style={{ fontWeight: 600, color: "#0f172a", fontSize: "0.85rem" }}>{activePhase}</div>
+                )
+              },
+              {
+                key: "progress",
+                label: "Progres / Jenis Ujian",
+                render: (_: any, s: any) => (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                    {s.active_sessions && s.active_sessions.length > 0 ? (
+                      Object.values(
+                        s.active_sessions.reduce((acc: any, sess: any) => {
+                          const subject = sess.question_categories?.subject_area || "unknown";
+                          if (!acc[subject]) {
+                            acc[subject] = {
+                              subject_area: subject,
+                              maxLevel: sess.current_level?.level_number || 0,
+                              maxScore: sess.score || 0,
+                              status: sess.status,
+                              attempts: 1
+                            };
+                          } else {
+                            acc[subject].maxLevel = Math.max(acc[subject].maxLevel, sess.current_level?.level_number || 0);
+                            acc[subject].maxScore = Math.max(acc[subject].maxScore, sess.score || 0);
+                            acc[subject].attempts += 1;
+                            if (sess.status === "in_progress") {
+                              acc[subject].status = "in_progress";
+                            }
+                          }
+                          return acc;
+                        }, {})
+                      ).map((grp: any, idx: number) => (
+                        <div 
+                          key={idx} 
+                          className={`badge ${grp.status === "completed" ? "badge-success" : "badge-warning"}`}
+                          style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-start", padding: "0.3rem 0.5rem" }}
+                        >
+                          <span>{grp.subject_area === 'literasi' ? '📖 Literasi' : grp.subject_area === 'numerasi' ? '🔢 Numerasi' : 'Lainnya'}</span>
+                          <span style={{ fontSize: "0.7rem", marginTop: "0.15rem", opacity: 0.9 }}>
+                            Percobaan: {grp.attempts}x | Level Terakhir: {grp.maxLevel} | Skor Maksimal: {Math.round(grp.maxScore)}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <span style={{ color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic" }}>Belum mulai ujian</span>
+                    )}
+                  </div>
+                )
+              }
+            ];
+
+            return <DataTable columns={columns} data={paginatedStudents} emptyMessage="Tidak ada data anak." />;
+          })()}
         </div>
         <Pagination
           currentPage={currentPage}

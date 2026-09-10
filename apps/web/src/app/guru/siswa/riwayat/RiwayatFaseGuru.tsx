@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Badge } from "@pemantik/ui";
+import { Badge, DataTable, ColumnDef } from "@pemantik/ui";
 
 interface StudentRow {
   id: string;
@@ -84,89 +84,88 @@ export default function RiwayatFaseGuru({ students, classes, activePhase }: Prop
 
       {/* ── Data List / Table ── */}
       <div className="card" style={{ overflow: "hidden" }}>
-        <div style={{ overflowX: "auto" }}>
-          <table className="pemantik-table" style={{ width: "100%", minWidth: "750px" }}>
-            <thead>
-              <tr>
-                <th>Nama Lengkap</th>
-                <th>Kelas</th>
-                <th>Riwayat Progres Ujian (Fase)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={3} style={{ textAlign: "center", padding: "3rem", color: "#6b7280" }}>
-                    Tidak ada data histori anak yang cocok dengan filter.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((s) => {
-                  // Filter session berdasarkan pilihan filter fase (atau semua jika "all")
-                  // dan KECUALIKAN fase aktif dari kolom riwayat ini
-                  const historySessions = (s.assessment_sessions || []).filter(
-                    (sess) => (phaseFilter === "all" || sess.phase === phaseFilter) && sess.phase !== activePhase
-                  );
+          <div style={{ overflowX: "auto" }}>
+            {(() => {
+              const finalData = filtered.filter(s => {
+                const historySessions = (s.assessment_sessions || []).filter(
+                  (sess: any) => (phaseFilter === "all" || sess.phase === phaseFilter) && sess.phase !== activePhase
+                );
+                if (phaseFilter === "all" && historySessions.length === 0) {
+                  return false;
+                }
+                return true;
+              });
 
-                  // Group by phase
-                  const groupedSessions: Record<string, any[]> = {};
-                  historySessions.forEach(sess => {
-                    if (!groupedSessions[sess.phase]) groupedSessions[sess.phase] = [];
-                    groupedSessions[sess.phase].push(sess);
-                  });
-
-                  // Jika sedang melihat "semua histori" tapi anak ini ga punya historis fase lalu
-                  if (phaseFilter === "all" && Object.keys(groupedSessions).length === 0) {
-                     return null; // hide row
-                  }
-
-                  return (
-                    <tr key={s.id}>
-                      <td>
-                        <div style={{ fontWeight: 600, color: "#1e293b", marginBottom: "0.2rem" }}>{s.full_name}</div>
-                        <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
-                          NISN: {s.nisn || "-"}
-                        </div>
-                      </td>
-                      <td>
-                        {s.classes ? (
-                          <Badge variant="info">
-                            Kelas {s.classes.grade} - {s.classes.name}
-                          </Badge>
-                        ) : (
-                          <span style={{ color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic" }}>Tanpa Kelas</span>
-                        )}
-                      </td>
-                      <td>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                          {Object.keys(groupedSessions).sort((a,b) => b.localeCompare(a)).map(phaseKey => (
-                            <div key={phaseKey} style={{ background: "#f8fafc", padding: "0.5rem 0.75rem", borderRadius: "0.375rem", border: "1px solid #e2e8f0" }}>
-                              <div style={{ fontWeight: 700, fontSize: "0.8rem", color: "#334155", marginBottom: "0.4rem" }}>{phaseKey}</div>
-                              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                                {groupedSessions[phaseKey].map(sess => (
-                                  <div 
-                                    key={sess.id} 
-                                    className={`badge ${sess.status === "completed" ? "badge-success" : "badge-warning"}`}
-                                    style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-start", padding: "0.2rem 0.5rem" }}
-                                  >
-                                    <span>{sess.question_categories?.subject_area === 'literasi' ? '📖 Literasi' : '🔢 Numerasi'}</span>
-                                    <span style={{ fontSize: "0.7rem", marginTop: "0.15rem", opacity: 0.9 }}>
-                                      Level: {sess.current_level?.level_number || 0}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
+              const columns: ColumnDef<any>[] = [
+                {
+                  key: "full_name",
+                  label: "Nama Lengkap",
+                  sortable: true,
+                  render: (_: any, s: any) => (
+                    <>
+                      <div style={{ fontWeight: 600, color: "#1e293b", marginBottom: "0.2rem" }}>{s.full_name}</div>
+                      <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                        NISN: {s.nisn || "-"}
+                      </div>
+                    </>
                   )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                },
+                {
+                  key: "class_id",
+                  label: "Kelas",
+                  render: (_: any, s: any) => (
+                    s.classes ? (
+                      <Badge variant="info">
+                        Kelas {s.classes.grade} - {s.classes.name}
+                      </Badge>
+                    ) : (
+                      <span style={{ color: "#94a3b8", fontSize: "0.85rem", fontStyle: "italic" }}>Tanpa Kelas</span>
+                    )
+                  )
+                },
+                {
+                  key: "history",
+                  label: "Riwayat Progres Ujian (Fase)",
+                  render: (_: any, s: any) => {
+                    const historySessions = (s.assessment_sessions || []).filter(
+                      (sess: any) => (phaseFilter === "all" || sess.phase === phaseFilter) && sess.phase !== activePhase
+                    );
+                    const groupedSessions: Record<string, any[]> = {};
+                    historySessions.forEach((sess: any) => {
+                      if (!groupedSessions[sess.phase]) groupedSessions[sess.phase] = [];
+                      groupedSessions[sess.phase].push(sess);
+                    });
+
+                    return (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                        {Object.keys(groupedSessions).sort((a,b) => b.localeCompare(a)).map(phaseKey => (
+                          <div key={phaseKey} style={{ background: "#f8fafc", padding: "0.5rem 0.75rem", borderRadius: "0.375rem", border: "1px solid #e2e8f0" }}>
+                            <div style={{ fontWeight: 700, fontSize: "0.8rem", color: "#334155", marginBottom: "0.4rem" }}>{phaseKey}</div>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                              {groupedSessions[phaseKey].map(sess => (
+                                <div 
+                                  key={sess.id} 
+                                  className={`badge ${sess.status === "completed" ? "badge-success" : "badge-warning"}`}
+                                  style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-start", padding: "0.2rem 0.5rem" }}
+                                >
+                                  <span>{sess.question_categories?.subject_area === 'literasi' ? '📖 Literasi' : '🔢 Numerasi'}</span>
+                                  <span style={{ fontSize: "0.7rem", marginTop: "0.15rem", opacity: 0.9 }}>
+                                    Level: {sess.current_level?.level_number || 0}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                }
+              ];
+
+              return <DataTable columns={columns} data={finalData} emptyMessage="Tidak ada data histori anak yang cocok dengan filter." />;
+            })()}
+          </div>
       </div>
     </div>
   );

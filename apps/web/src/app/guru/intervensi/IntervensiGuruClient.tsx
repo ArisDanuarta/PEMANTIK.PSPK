@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Badge, Button } from "@pemantik/ui";
+import { Badge, Button, DataTable, ColumnDef } from "@pemantik/ui";
 import SafeHtml from "@/components/shared/SafeHtml";
 import InterventionForm from "@/components/shared/InterventionForm";
 
@@ -133,21 +133,13 @@ export default function IntervensiGuruClient({
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table className="pemantik-table" style={{ width: "100%", minWidth: "850px" }}>
-              <thead>
-                <tr>
-                  <th>Fase &amp; Pembina</th>
-                  <th>Diagnosa Awal</th>
-                  <th>Upaya Pembinaan</th>
-                  <th>Tag Topik</th>
-                  <th>Tanggal</th>
-                  <th style={{ textAlign: "center" }}>Detail</th>
-                </tr>
-              </thead>
-              <tbody>
-                {initialInterventions.map((item) => (
-                  <tr key={item.id}>
-                    <td>
+            {(() => {
+              const columns: ColumnDef<any>[] = [
+                {
+                  key: "phase",
+                  label: "Fase & Pembina",
+                  render: (_: any, item: any) => (
+                    <>
                       <div style={{ fontWeight: 700, color: "#102e50" }}>{item.phase}</div>
                       <div style={{ fontSize: "0.78rem", color: "#6b7280", marginTop: "0.15rem" }}>
                         Oleh: {(item as any).users?.role === "teacher" 
@@ -156,34 +148,64 @@ export default function IntervensiGuruClient({
                             ? `Komunitas (${item.communities?.name || "Tanpa Nama"})`
                             : "Admin Sekolah"}
                       </div>
-                    </td>
-                    <td style={{ maxWidth: "220px" }}>
+                    </>
+                  )
+                },
+                {
+                  key: "kondisi_awal",
+                  label: "Diagnosa Awal",
+                  render: (_: any, item: any) => (
+                    <div style={{ maxWidth: "220px" }}>
                       <SafeHtml html={item.kondisi_awal || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} />
-                    </td>
-                    <td style={{ maxWidth: "240px" }}>
+                    </div>
+                  )
+                },
+                {
+                  key: "upaya_dilakukan",
+                  label: "Upaya Pembinaan",
+                  render: (_: any, item: any) => (
+                    <div style={{ maxWidth: "240px" }}>
                       <SafeHtml html={item.upaya_dilakukan || ""} style={{ fontSize: "0.85rem", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} />
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
-                        {(item.intervention_tag_links || []).map((lnk: any) => (
-                          <span key={lnk.intervention_tags?.id} style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 600 }}>
-                            #{lnk.intervention_tags?.name}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td style={{ fontSize: "0.82rem", color: "#64748b" }}>
+                    </div>
+                  )
+                },
+                {
+                  key: "tags",
+                  label: "Tag Topik",
+                  render: (_: any, item: any) => (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem", maxWidth: "180px" }}>
+                      {(item.intervention_tag_links || []).map((lnk: any) => (
+                        <span key={lnk.intervention_tags?.id} style={{ padding: "0.15rem 0.5rem", backgroundColor: "#f3e8ff", color: "#6b21a8", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 600 }}>
+                          #{lnk.intervention_tags?.name}
+                        </span>
+                      ))}
+                    </div>
+                  )
+                },
+                {
+                  key: "created_at",
+                  label: "Tanggal",
+                  sortable: true,
+                  render: (_: any, item: any) => (
+                    <span style={{ fontSize: "0.82rem", color: "#64748b" }}>
                       {formatDate(item.created_at)}
-                    </td>
-                    <td style={{ textAlign: "center" }}>
-                      <Button size="sm" variant="outline" onClick={() => setSelectedDetail(item)}>
-                        Detail
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </span>
+                  )
+                },
+                {
+                  key: "actions",
+                  label: "Detail",
+                  align: "center",
+                  render: (_: any, item: any) => (
+                    <Button size="sm" variant="outline" onClick={() => setSelectedDetail(item)}>
+                      Detail
+                    </Button>
+                  )
+                }
+              ];
+
+              return <DataTable columns={columns} data={initialInterventions} />;
+            })()}
           </div>
         )}
       </div>
