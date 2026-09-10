@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { createBrowserClient } from "@pemantik/supabase/client";
-import { Badge, DataTable, useToast } from "@pemantik/ui";
+import { Badge, DataTable, useToast, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import { resolveSystemLog } from "@/app/actions/logs";
 
@@ -131,11 +131,14 @@ export default function SystemLogViewer({ initialLogs }: { initialLogs: any[] })
           {
             key: "actions",
             label: "Aksi",
+            align: "right" as const,
             render: (_v, log) =>
               !log.resolved && (["error", "critical"].includes(log.level) || log.source === "feedback") ? (
-                <button className="btn btn-sm btn-outline" onClick={() => handleResolve(log.id)}>
-                  Tandai Selesai
-                </button>
+                <ActionMenu 
+                  actions={[
+                    { label: "Tandai Selesai", onClick: () => handleResolve(log.id), variant: "success" }
+                  ]} 
+                />
               ) : null,
           },
         ];

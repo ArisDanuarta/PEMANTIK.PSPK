@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition, useEffect } from "react";
-import { DataTable, Button, Modal, Badge } from "@pemantik/ui";
+import { DataTable, Button, Modal, Badge, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import { useToast } from "@pemantik/ui";
 import { useConfirm } from "@pemantik/ui";
@@ -376,24 +376,14 @@ export default function CommunitiesManager({
       label: "Aksi",
       align: "right" as const,
       render: (_: any, row: Community) => (
-        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", flexWrap: "wrap" }}>
-          <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>
-            Edit
-          </Button>
-          <Button
-            variant={row.is_active ? "danger" : "primary"}
-            size="sm"
-            onClick={() => handleToggleActive(row)}
-          >
-            {row.is_active ? "Nonaktifkan" : "Aktifkan"}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>
-            Reset Sandi
-          </Button>
-          <Button variant="danger" size="sm" onClick={() => handleDeleteCommunity(row)}>
-            Hapus
-          </Button>
-        </div>
+        <ActionMenu 
+          actions={[
+            { label: "Edit", onClick: () => handleOpenEditModal(row) },
+            { label: row.is_active ? "Nonaktifkan" : "Aktifkan", onClick: () => handleToggleActive(row), variant: row.is_active ? "danger" : "success" },
+            { label: "Reset Sandi", onClick: () => handleResetPassword(row) },
+            { label: "Hapus", onClick: () => handleDeleteCommunity(row), variant: "danger" }
+          ]} 
+        />
       ),
     },
   ];

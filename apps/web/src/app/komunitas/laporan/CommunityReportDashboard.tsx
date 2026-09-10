@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from "react";
-import { DataTable, Button, Badge, useToast } from "@pemantik/ui";
+import { Button, DataTable, useToast, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import SearchableSelect from "@/components/shared/SearchableSelect";
 

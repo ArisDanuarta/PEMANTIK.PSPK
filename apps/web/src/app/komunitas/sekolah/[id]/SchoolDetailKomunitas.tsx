@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import * as XLSX from "xlsx";
-import { DataTable, Badge, Button, useToast, useConfirm, Modal } from "@pemantik/ui";
+import { DataTable, Badge, Button, useToast, useConfirm, Modal, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import { parseDapodikAction, importDapodikAction } from "../../../actions/schools";
@@ -712,11 +712,14 @@ export default function SchoolDetailKomunitas({
                   {
                     key: "actions",
                     label: "Aksi",
+                    align: "right" as const,
                     render: (_: any, t: any) => (
-                      <div style={{ display: "flex", gap: "0.5rem" }}>
-                        <Button variant="outline" size="sm" onClick={() => { setEditingTeacher(t); setIsTeacherModalOpen(true); }}>Edit</Button>
-                        <Button variant="danger" size="sm" onClick={() => handleDeleteTeacher(t)}>Hapus</Button>
-                      </div>
+                      <ActionMenu 
+                        actions={[
+                          { label: "Edit", onClick: () => { setEditingTeacher(t); setIsTeacherModalOpen(true); } },
+                          { label: "Hapus", onClick: () => handleDeleteTeacher(t), variant: "danger" }
+                        ]} 
+                      />
                     )
                   }
                 ];
@@ -867,11 +870,14 @@ export default function SchoolDetailKomunitas({
                   {
                     key: "actions",
                     label: "Aksi",
+                    align: "right" as const,
                     render: (_: any, s: any) => (
-                      <div style={{ display: "flex", gap: "0.5rem" }}>
-                        <Button variant="outline" size="sm" onClick={() => { setEditingStudent(s); setIsStudentModalOpen(true); }}>Edit</Button>
-                        <Button variant="danger" size="sm" onClick={() => handleDeleteStudent(s)}>Hapus</Button>
-                      </div>
+                      <ActionMenu 
+                        actions={[
+                          { label: "Edit", onClick: () => { setEditingStudent(s); setIsStudentModalOpen(true); } },
+                          { label: "Hapus", onClick: () => handleDeleteStudent(s), variant: "danger" }
+                        ]} 
+                      />
                     )
                   }
                 ];

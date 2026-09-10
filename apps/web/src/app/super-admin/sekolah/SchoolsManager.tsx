@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { DataTable, Badge, Button, useToast, useConfirm } from "@pemantik/ui";
+import { DataTable, Badge, Button, useToast, useConfirm, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import { createSchoolAction, updateSchoolAction, deleteSchoolAction, bulkCreateSchoolsAction, resetSchoolPasswordAction, parseDapodikAction, importDapodikAction, bulkDeleteSchoolsAction } from "../../actions/schools";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
@@ -408,15 +408,16 @@ export default function SchoolsManager({
               {
                 key: "actions",
                 label: "Aksi",
+                align: "right" as const,
                 render: (_v, row) => (
-                  <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                    <a href={`/super-admin/sekolah/${row.id}`} style={{ textDecoration: "none" }}>
-                      <Button variant="outline" size="sm">Detail →</Button>
-                    </a>
-                    <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset Sandi</Button>
-                    <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
-                  </div>
+                  <ActionMenu 
+                    actions={[
+                      { label: "Detail", onClick: () => router.push(`/super-admin/sekolah/${row.id}`) },
+                      { label: "Edit", onClick: () => handleOpenEditModal(row) },
+                      { label: "Reset Sandi", onClick: () => handleResetPassword(row) },
+                      { label: "Hapus", onClick: () => handleDelete(row), variant: "danger" }
+                    ]} 
+                  />
                 ),
               },
             ];

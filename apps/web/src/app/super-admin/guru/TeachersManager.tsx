@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { DataTable, Button, Modal, Badge, useToast, useConfirm } from "@pemantik/ui";
+import { DataTable, Button, Modal, Badge, useToast, useConfirm, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import { createTeacherAction, bulkCreateTeachersAction, updateTeacherAction, deleteTeacherAction, resetTeacherPasswordAction, bulkDeleteTeachersAction } from "../../actions/teachers";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
@@ -366,12 +366,15 @@ export default function TeachersManager({
           {
             key: "actions",
             label: "Aksi",
+            align: "right" as const,
             render: (_v, row) => (
-              <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
-                <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset Sandi</Button>
-                <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
-              </div>
+              <ActionMenu 
+                actions={[
+                  { label: "Edit", onClick: () => handleOpenEditModal(row) },
+                  { label: "Reset Sandi", onClick: () => handleResetPassword(row) },
+                  { label: "Hapus", onClick: () => handleDelete(row), variant: "danger" }
+                ]} 
+              />
             ),
           },
         ];

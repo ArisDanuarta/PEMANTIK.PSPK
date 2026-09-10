@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { DataTable, Button, Badge, useToast } from "@pemantik/ui";
+import { Button, Badge, DataTable, useToast, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
 import { parseDapodikAction, importDapodikAction } from "@/app/actions/schools";
@@ -220,14 +220,13 @@ export default function DapodikKomunitasClient({ schools, communityId, community
               {
                 key: "actions",
                 label: "Aksi",
+                align: "right" as const,
                 render: (_: any, s: any) => (
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsDapodikModalOpen(true)}
-                    style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem", color: "#0369a1", borderColor: "#7dd3fc" }}
-                  >
-                    Sync Dapodik
-                  </Button>
+                  <ActionMenu 
+                    actions={[
+                      { label: "Sync Dapodik", onClick: () => setIsDapodikModalOpen(true) }
+                    ]} 
+                  />
                 )
               }
             ];

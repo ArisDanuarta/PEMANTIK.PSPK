@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { DataTable, Badge, Button, useToast, useConfirm } from "@pemantik/ui";
+import { DataTable, Button, Modal, Badge, useToast, useConfirm, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import { createTeacherAction, updateTeacherAction, deleteTeacherAction, resetTeacherPasswordAction, bulkCreateTeachersAction, bulkDeleteTeachersAction } from "../../actions/teachers";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
@@ -291,11 +291,13 @@ export default function TeachersManagerKomunitas({ initialTeachers, schools, cla
             label: "Aksi",
             align: "right" as const,
             render: (_: any, row: any) => (
-              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
-                <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
-                <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset Sandi</Button>
-                <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
-              </div>
+              <ActionMenu 
+                actions={[
+                  { label: "Edit", onClick: () => handleOpenEditModal(row) },
+                  { label: "Reset Sandi", onClick: () => handleResetPassword(row) },
+                  { label: "Hapus", onClick: () => handleDelete(row), variant: "danger" }
+                ]} 
+              />
             )
           }
         ];

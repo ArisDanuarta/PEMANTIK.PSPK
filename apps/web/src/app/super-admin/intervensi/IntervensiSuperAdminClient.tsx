@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition, useRef, useEffect } from "react";
-import { Badge, Button, DataTable, useToast } from "@pemantik/ui";
+import { Badge, Button, DataTable, useToast, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import SafeHtml from "@/components/shared/SafeHtml";
 import InterventionGraph from "@/components/shared/InterventionGraph";
@@ -454,9 +454,13 @@ export default function IntervensiSuperAdminClient({
               {
                 key: "actions",
                 label: "Aksi",
-                align: "center" as const,
+                align: "right" as const,
                 render: (_v, item) => (
-                  <Button size="sm" variant="outline" onClick={() => setSelectedDetail(item)}>Detail</Button>
+                  <ActionMenu 
+                    actions={[
+                      { label: "Detail", onClick: () => setSelectedDetail(item) }
+                    ]} 
+                  />
                 ),
               },
             ];

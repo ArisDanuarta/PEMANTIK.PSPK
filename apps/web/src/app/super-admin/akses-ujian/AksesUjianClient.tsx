@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { Button, Badge, DataTable, useConfirm, useToast } from "@pemantik/ui";
+import { Button, Badge, DataTable, useConfirm, useToast, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import AssignPackageModal from "@/components/shared/AssignPackageModal";
 import { assignAssessmentPackage, updateAssessmentAccessAction, deleteAssessmentAccessAction } from "../../actions/assessment";
@@ -185,11 +185,14 @@ export default function AksesUjianClient({ packages, communities, schools, acces
             {
               key: "actions",
               label: "Aksi",
+              align: "right" as const,
               render: (_v, log) => (
-                <div style={{ display: "flex", gap: "0.4rem" }}>
-                  <Button variant="outline" size="sm" onClick={() => setEditingLog(log)}>Edit</Button>
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(log)}>Hapus</Button>
-                </div>
+                <ActionMenu 
+                  actions={[
+                    { label: "Edit", onClick: () => setEditingLog(log) },
+                    { label: "Hapus", onClick: () => handleDelete(log), variant: "danger" }
+                  ]} 
+                />
               ),
             },
           ];

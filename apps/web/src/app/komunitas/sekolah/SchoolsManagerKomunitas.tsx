@@ -4,7 +4,7 @@ import React, { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
-import { DataTable, Badge, Button, useToast, useConfirm } from "@pemantik/ui";
+import { DataTable, Badge, Button, useToast, useConfirm, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import { createSchoolAction, updateSchoolAction, deleteSchoolAction, bulkCreateSchoolsAction, resetSchoolPasswordAction, bulkDeleteSchoolsAction } from "../../actions/schools";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
@@ -325,14 +325,14 @@ export default function SchoolsManagerKomunitas({ initialSchools, communityId, c
               label: "Aksi",
               align: "right" as const,
               render: (_: any, row: any) => (
-                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
-                  <a href={`/komunitas/sekolah/${row.id}`} style={{ textDecoration: "none" }}>
-                    <Button variant="secondary" size="sm">Detail →</Button>
-                  </a>
-                  <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
-                  <Button variant="outline" size="sm" onClick={() => handleResetPassword(row)}>Reset Sandi</Button>
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
-                </div>
+                <ActionMenu 
+                  actions={[
+                    { label: "Detail", onClick: () => window.location.href = `/komunitas/sekolah/${row.id}` },
+                    { label: "Edit", onClick: () => handleOpenEditModal(row) },
+                    { label: "Reset Sandi", onClick: () => handleResetPassword(row) },
+                    { label: "Hapus", onClick: () => handleDelete(row), variant: "danger" }
+                  ]} 
+                />
               )
             }
           ];

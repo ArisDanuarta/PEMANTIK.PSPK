@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, DataTable, useToast, Modal } from "@pemantik/ui";
+import { Button, DataTable, useToast, Modal, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import { useRouter } from "next/navigation";
 import { updateRelease, deleteRelease } from "@/app/actions/releases";
@@ -126,12 +126,12 @@ export default function ReleaseTableClient({ initialReleases }: { initialRelease
               label: "Aksi",
               align: "right" as const,
               render: (_v, r) => (
-                <div style={{ display: "flex", gap: "0.4rem", justifyContent: "flex-end" }}>
-                  <button className="btn btn-outline btn-sm" onClick={() => openEditModal(r)} disabled={loadingId === r.id}>Edit</button>
-                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(r.id, r.version_name)} disabled={loadingId === r.id}>
-                    {loadingId === r.id ? "..." : "Hapus"}
-                  </button>
-                </div>
+                <ActionMenu 
+                  actions={[
+                    { label: "Edit", onClick: () => openEditModal(r), disabled: loadingId === r.id },
+                    { label: loadingId === r.id ? "..." : "Hapus", onClick: () => handleDelete(r.id, r.version_name), disabled: loadingId === r.id, variant: "danger" }
+                  ]} 
+                />
               ),
             },
           ];

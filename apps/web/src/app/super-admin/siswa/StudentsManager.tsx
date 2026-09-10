@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { DataTable, Button, Modal, Badge, useToast, useConfirm, SesBadge } from "@pemantik/ui";
+import { DataTable, Button, Modal, Badge, useToast, useConfirm, SesBadge, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import { createStudentAction, bulkCreateStudentsAction, updateStudentAction, deleteStudentAction, bulkDeleteStudentsAction } from "../../actions/students";
 import BulkUploadModal from "@/components/shared/BulkUploadModal";
@@ -358,11 +358,14 @@ export default function StudentsManager({
           {
             key: "actions",
             label: "Aksi",
+            align: "right" as const,
             render: (_v, row) => (
-              <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", flexWrap: "wrap" }}>
-                <Button variant="outline" size="sm" onClick={() => handleOpenEditModal(row)}>Edit</Button>
-                <Button variant="danger" size="sm" onClick={() => handleDelete(row)}>Hapus</Button>
-              </div>
+              <ActionMenu 
+                actions={[
+                  { label: "Edit", onClick: () => handleOpenEditModal(row) },
+                  { label: "Hapus", onClick: () => handleDelete(row), variant: "danger" }
+                ]} 
+              />
             ),
           },
         ];

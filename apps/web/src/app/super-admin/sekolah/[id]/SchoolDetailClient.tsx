@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { Badge, Button, useToast, useConfirm, Modal, DataTable } from "@pemantik/ui";
+import { Badge, Button, useToast, useConfirm, Modal, DataTable, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import * as XLSX from "xlsx";
 import { parseDapodikAction, importDapodikAction } from "../../../actions/schools";
@@ -639,10 +639,12 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                     )},
                     { key: "is_active", label: "Status", render: (val: any) => <Badge variant={val ? "success" : "danger"}>{val ? "Aktif" : "Nonaktif"}</Badge> },
                     { key: "actions", label: "Aksi", align: "right" as const, render: (_v: any, t: any) => (
-                      <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                        <Button variant="outline" size="sm" onClick={() => { setEditingTeacher(t); setIsTeacherModalOpen(true); }}>Edit</Button>
-                        <Button variant="danger" size="sm" onClick={() => handleDeleteTeacher(t)}>Hapus</Button>
-                      </div>
+                      <ActionMenu 
+                        actions={[
+                          { label: "Edit", onClick: () => { setEditingTeacher(t); setIsTeacherModalOpen(true); } },
+                          { label: "Hapus", onClick: () => handleDeleteTeacher(t), variant: "danger" }
+                        ]} 
+                      />
                     )}
                   ];
                   return (
@@ -764,10 +766,12 @@ export default function SchoolDetailClient({ school, teachers, students, classes
                     }},
                     { key: "is_active", label: "Status", render: (_v: any, s: any) => <Badge variant={s.is_active ? "success" : "danger"}>{s.is_active ? "Aktif" : "Nonaktif"}</Badge> },
                     { key: "actions", label: "Aksi", align: "right" as const, render: (_v: any, s: any) => (
-                      <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                        <Button variant="outline" size="sm" onClick={() => { setEditingStudent(s); setIsStudentModalOpen(true); }}>Edit</Button>
-                        <Button variant="danger" size="sm" onClick={() => handleDeleteStudent(s)}>Hapus</Button>
-                      </div>
+                      <ActionMenu 
+                        actions={[
+                          { label: "Edit", onClick: () => { setEditingStudent(s); setIsStudentModalOpen(true); } },
+                          { label: "Hapus", onClick: () => handleDeleteStudent(s), variant: "danger" }
+                        ]} 
+                      />
                     )}
                   ];
                   return (

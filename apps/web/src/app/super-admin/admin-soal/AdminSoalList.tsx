@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { DataTable, Button, Modal, Badge, useToast, useConfirm } from "@pemantik/ui";
+import { DataTable, Button, Modal, Badge, useToast, useConfirm, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import {
   createQuestionAdminAction,
@@ -181,17 +181,13 @@ export default function AdminSoalList({ initialAdmins }: { initialAdmins: any[] 
       label: "Aksi",
       align: "right" as const,
       render: (_: any, admin: any) => (
-        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", flexWrap: "wrap" }}>
-          <Button variant="outline" size="sm" onClick={() => openEditModal(admin)}>
-            Edit
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleResetPassword(admin.id)}>
-            Reset Sandi
-          </Button>
-          <Button variant="danger" size="sm" onClick={() => handleDelete(admin.id)}>
-            Hapus
-          </Button>
-        </div>
+        <ActionMenu 
+          actions={[
+            { label: "Edit", onClick: () => openEditModal(admin) },
+            { label: "Reset Sandi", onClick: () => handleResetPassword(admin.id) },
+            { label: "Hapus", onClick: () => handleDelete(admin.id), variant: "danger" }
+          ]} 
+        />
       )
     }
   ];

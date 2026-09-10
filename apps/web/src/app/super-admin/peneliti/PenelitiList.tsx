@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { DataTable, Button, Modal, Badge, useToast, useConfirm } from "@pemantik/ui";
+import { DataTable, Button, Modal, Badge, useToast, useConfirm, ActionMenu } from "@pemantik/ui";
 import type { ColumnDef } from "@pemantik/ui";
 import {
   createPenelitiAdminAction,
@@ -167,11 +167,13 @@ export default function PenelitiList({ initialAdmins }: { initialAdmins: any[] }
     },
     { key: "is_active", label: "Status", render: (val: any) => <Badge variant={val ? "success" : "danger"}>{val ? "Aktif" : "Non-Aktif"}</Badge> },
     { key: "actions", label: "Aksi", align: "right" as const, render: (_: any, admin: any) => (
-        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-          <button onClick={() => openEditModal(admin)} className="action-btn-text" title="Edit">Edit</button>
-          <button onClick={() => handleResetPassword(admin.id)} className="action-btn-text" style={{ color: "#f59e0b" }} title="Reset Password">Reset</button>
-          <button onClick={() => handleDelete(admin.id)} className="action-btn-text" style={{ color: "#dc2626" }} title="Hapus">Hapus</button>
-        </div>
+        <ActionMenu 
+          actions={[
+            { label: "Edit", onClick: () => openEditModal(admin) },
+            { label: "Reset Password", onClick: () => handleResetPassword(admin.id) },
+            { label: "Hapus", onClick: () => handleDelete(admin.id), variant: "danger" }
+          ]} 
+        />
       )
     }
   ];
