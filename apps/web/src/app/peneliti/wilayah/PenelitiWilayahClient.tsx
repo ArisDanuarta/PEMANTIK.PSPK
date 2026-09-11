@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { HierarchicalNode } from "./page";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, RadialBarChart, RadialBar
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, RadialBarChart, RadialBar, PolarAngleAxis
 } from 'recharts';
 
 interface PenelitiWilayahClientProps {
@@ -120,7 +120,7 @@ export default function PenelitiWilayahClient({ hierarchicalData }: PenelitiWila
                 domain={[0, 100]} 
                 angleAxisId={0} 
                 tick={{ fill: '#64748b', fontSize: '0.875rem', fontWeight: 700 }}
-                ticks={[0, 20, 40, 60, 80, 100]}
+                tickCount={6}
                 tickFormatter={(val) => `${val}%`}
               />
               <RadialBar
