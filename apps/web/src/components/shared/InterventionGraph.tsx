@@ -526,7 +526,7 @@ function DrilldownView({
         .attr("x1", CX).attr("y1", CY).attr("x2", n.x).attr("y2", n.y)
         .attr("stroke", "#000000").attr("stroke-width", 1).attr("stroke-dasharray", "4,5")
         .attr("data-link-for", n.id)
-        .style("opacity", 0).transition().delay(200).duration(400).style("opacity", 0.28);
+        .style("opacity", 0).transition().delay(200).duration(400).style("opacity", 1);
     });
     // Animasi "energi berjalan" — hanya untuk garis hub (jumlahnya sedikit)
     animateFlow(hubLines.selectAll<SVGLineElement, unknown>("line"));
@@ -734,7 +734,7 @@ export default function InterventionGraph() {
         .attr("stroke-dasharray", "5,5").attr("stroke-dashoffset", 0)
         .style("opacity", 0)
         .attr("data-endpoint-a", cl.tagIdA).attr("data-endpoint-b", cl.tagIdB)
-        .transition().delay(250).duration(400).style("opacity", 0.45);
+        .transition().delay(250).duration(400).style("opacity", 1);
     });
     animateFlow(linkG.selectAll<SVGLineElement, unknown>("line"));
 
@@ -1103,7 +1103,7 @@ export function KnowledgeGraphFullView({
       })
       .attr("stroke-width", (e: GraphEdge) => posById.get(e.target)?.role === "tag" ? 1 : 1.5)
       .attr("stroke-dasharray", (e: GraphEdge) => posById.get(e.target)?.role === "tag" ? "4,4" : "0")
-      .attr("stroke-opacity", 0.32)
+      .attr("stroke-opacity", (e: GraphEdge) => posById.get(e.target)?.role === "tag" ? 1 : 0.32)
       .attr("data-source", (e: GraphEdge) => e.source)
       .attr("data-target", (e: GraphEdge) => e.target)
       .style("opacity", 0);
