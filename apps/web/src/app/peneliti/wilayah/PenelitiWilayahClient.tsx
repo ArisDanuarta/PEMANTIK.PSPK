@@ -105,7 +105,7 @@ export default function PenelitiWilayahClient({ hierarchicalData }: PenelitiWila
               cx="50%" 
               cy="50%" 
               innerRadius="30%" 
-              outerRadius="100%" 
+              outerRadius="80%" 
               barSize={24} 
               data={[
                 { name: "Rata-Rata Nilai", percentage: currentNode.avgScore, fill: getColor(currentNode.avgScore) },
