@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { HierarchicalNode } from "./page";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, RadialBarChart, RadialBar
 } from 'recharts';
 
 interface PenelitiWilayahClientProps {
@@ -71,11 +71,71 @@ export default function PenelitiWilayahClient({ hierarchicalData }: PenelitiWila
         ))}
       </div>
 
-      {/* ── Metric Cards ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem" }}>
-        <MetricCard title="Total Sekolah" value={currentNode.schoolCount} color="#8b5cf6" bg="rgba(139, 92, 246, 0.1)" />
-        <MetricCard title="Total Siswa" value={currentNode.studentCount} color="#3b82f6" bg="rgba(59, 130, 246, 0.1)" />
-        <MetricCard title="Rata-Rata Nilai" value={currentNode.avgScore.toFixed(1)} color={getColor(currentNode.avgScore)} bg="rgba(16, 185, 129, 0.1)" />
+      {/* ── Data Visualization: Ringkasan Wilayah (Radial Bar Chart) ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "2rem", background: "white", borderRadius: "24px", boxShadow: "0 4px 20px rgba(0,0,0,0.03)", padding: "2.5rem", alignItems: "center" }}>
+        <div>
+          <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", marginBottom: "0.5rem" }}>Ringkasan Wilayah</h2>
+          <p style={{ color: "#64748b", marginBottom: "2.5rem", lineHeight: 1.6 }}>
+            Statistik agregat untuk wilayah <strong>{currentNode.name}</strong>. Persentase dihitung terhadap total skala nasional.
+          </p>
+          
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            {[
+              { name: "Total Sekolah", value: currentNode.schoolCount.toLocaleString('id-ID'), percentage: (currentNode.schoolCount / Math.max(1, hierarchicalData.schoolCount)) * 100, fill: "#8b5cf6" },
+              { name: "Total Siswa", value: currentNode.studentCount.toLocaleString('id-ID'), percentage: (currentNode.studentCount / Math.max(1, hierarchicalData.studentCount)) * 100, fill: "#3b82f6" },
+              { name: "Rata-Rata Nilai", value: currentNode.avgScore.toFixed(1), percentage: currentNode.avgScore, fill: getColor(currentNode.avgScore) }
+            ].map((d) => (
+              <div key={d.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "1rem", borderBottom: "1px solid #f1f5f9" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: d.fill }}></div>
+                  <span style={{ color: "#475569", fontWeight: 600, fontSize: "1.05rem" }}>{d.name}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem" }}>
+                  <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a" }}>{d.value}</span>
+                  <span style={{ fontSize: "0.875rem", color: d.fill, fontWeight: 700 }}>({d.percentage.toFixed(1)}%)</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ height: "360px", position: "relative" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <RadialBarChart 
+              cx="50%" 
+              cy="50%" 
+              innerRadius="30%" 
+              outerRadius="100%" 
+              barSize={24} 
+              data={[
+                { name: "Rata-Rata Nilai", percentage: currentNode.avgScore, fill: getColor(currentNode.avgScore) },
+                { name: "Total Siswa", percentage: (currentNode.studentCount / Math.max(1, hierarchicalData.studentCount)) * 100, fill: "#3b82f6" },
+                { name: "Total Sekolah", percentage: (currentNode.schoolCount / Math.max(1, hierarchicalData.schoolCount)) * 100, fill: "#8b5cf6" }
+              ]}
+              startAngle={90} 
+              endAngle={-180}
+            >
+              <PolarAngleAxis 
+                type="number" 
+                domain={[0, 100]} 
+                angleAxisId={0} 
+                tick={{ fill: '#64748b', fontSize: '0.875rem', fontWeight: 700 }}
+                ticks={[0, 20, 40, 60, 80, 100]}
+                tickFormatter={(val) => `${val}%`}
+              />
+              <RadialBar
+                background={{ fill: '#f1f5f9' }}
+                dataKey="percentage"
+                cornerRadius={12}
+              />
+              <Tooltip 
+                cursor={{ fill: 'transparent' }}
+                contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
+                formatter={(value: any) => [`${Number(value).toFixed(1)}%`, 'Persentase']}
+              />
+            </RadialBarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* ── Data Visualization ── */}
@@ -198,36 +258,6 @@ export default function PenelitiWilayahClient({ hierarchicalData }: PenelitiWila
         </div>
       )}
 
-    </div>
-  );
-}
-
-function MetricCard({ title, value, color, bg }: { title: string, value: number | string, color: string, bg: string }) {
-  return (
-    <div style={{ background: "white", padding: "1.5rem", borderRadius: "20px", boxShadow: "0 2px 10px rgba(0,0,0,0.02)", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-      <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-        {title}
-      </span>
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-        <div style={{ background: bg, color: color, padding: "0.75rem", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            {title.includes("Siswa") ? (
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-            ) : title.includes("Sekolah") ? (
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            ) : (
-              <path d="M12 20V10" />
-            )}
-            {title.includes("Siswa") && <circle cx="9" cy="7" r="4" />}
-            {title.includes("Sekolah") && <polyline points="9 22 9 12 15 12 15 22" />}
-            {title.includes("Nilai") && <path d="M18 20V4" />}
-            {title.includes("Nilai") && <path d="M6 20v-4" />}
-          </svg>
-        </div>
-        <span style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0f172a" }}>
-          {typeof value === "number" ? value.toLocaleString('id-ID') : value}
-        </span>
-      </div>
     </div>
   );
 }
