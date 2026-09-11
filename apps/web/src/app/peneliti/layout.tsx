@@ -17,6 +17,7 @@ const penelitiNav: NavSection[] = [
       { label: "Analisis Komparatif", href: "/peneliti/analisis", icon: "activity" },
       { label: "Analisis Soal & Level", href: "/peneliti/soal", icon: "question" },
       { label: "Analisis SES & Sosial", href: "/peneliti/ses", icon: "users" },
+      { label: "Analisis Wilayah", href: "/peneliti/wilayah", icon: "folder" },
     ],
   },
   {
