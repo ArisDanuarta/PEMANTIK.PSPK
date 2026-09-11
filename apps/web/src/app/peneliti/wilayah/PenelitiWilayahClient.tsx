@@ -51,7 +51,7 @@ export default function PenelitiWilayahClient({ hierarchicalData }: PenelitiWila
       {/* ── Breadcrumb Navigation ── */}
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", background: "white", padding: "1rem 1.5rem", borderRadius: "16px", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
         {path.map((node, i) => (
-          <React.Fragment key={node.name}>
+          <React.Fragment key={`${node.name}-${i}`}>
             <button 
               onClick={() => handleGoBack(i)}
               style={{ 
