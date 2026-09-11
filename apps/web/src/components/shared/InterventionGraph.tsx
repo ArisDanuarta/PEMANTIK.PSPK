@@ -736,8 +736,7 @@ export default function InterventionGraph() {
         .attr("stroke", "#000000").attr("stroke-width", Math.min(1 + cl.sharedCount * 0.8, 5))
         .attr("stroke-dasharray", "5,5").attr("stroke-dashoffset", 0)
         .style("opacity", 0)
-        .attr("data-endpoint-a", cl.tagIdA).attr("data-endpoint-b", cl.tagIdB)
-        .transition().delay(250).duration(400).style("opacity", 1);
+        .attr("data-endpoint-a", cl.tagIdA).attr("data-endpoint-b", cl.tagIdB);
     });
     animateFlow(linkG.selectAll<SVGLineElement, unknown>("line"));
 
@@ -786,18 +785,18 @@ export default function InterventionGraph() {
       countUp(countTxt as any, d.count, " laporan");
     });
 
-    // Hover: scale-up blob + highlight cross-link yang menyentuhnya
+    // Hover: scale-up blob + memunculkan garis cross-link
     clusterG
       .on("mouseenter", function (e, d: TagCluster) {
         if (transitioning) return;
         d3.select(this).select(".scaleWrap").transition().duration(160).attr("transform", "scale(1.06)");
         linkG.selectAll(`line[data-endpoint-a="${d.tagId}"], line[data-endpoint-b="${d.tagId}"]`)
-          .transition().duration(160).style("opacity", 0.9);
+          .transition().duration(160).style("opacity", 1);
       })
       .on("mouseleave", function (e, d: TagCluster) {
         d3.select(this).select(".scaleWrap").transition().duration(160).attr("transform", "scale(1)");
         linkG.selectAll(`line[data-endpoint-a="${d.tagId}"], line[data-endpoint-b="${d.tagId}"]`)
-          .transition().duration(160).style("opacity", 0.45);
+          .transition().duration(160).style("opacity", 0);
       })
       .on("click", function (e, d: any) { if ((e as any).defaultPrevented) return; handleSelectTag(d, this as SVGGElement); });
 
