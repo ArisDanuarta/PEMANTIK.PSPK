@@ -191,11 +191,14 @@ type Pt = [number, number];
 /** Sebaran titik merata di dalam piringan radius maxR (pola bunga matahari). */
 function phyllotaxis(n: number, maxR: number): Pt[] {
   if (n <= 0) return [];
-  return Array.from({ length: n }, (_, i) => {
+  const pts = Array.from({ length: n }, (_, i) => {
     const r = maxR * Math.sqrt((i + 0.5) / n);
     const a = i * GOLDEN_ANGLE;
     return [Math.cos(a) * r, Math.sin(a) * r] as Pt;
   });
+  const cx = pts.reduce((sum, p) => sum + p[0], 0) / n;
+  const cy = pts.reduce((sum, p) => sum + p[1], 0) / n;
+  return pts.map(p => [p[0] - cx, p[1] - cy] as Pt);
 }
 
 function cross2(o: Pt, a: Pt, b: Pt) { return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]); }
