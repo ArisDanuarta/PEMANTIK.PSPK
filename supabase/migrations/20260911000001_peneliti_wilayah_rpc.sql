@@ -16,7 +16,8 @@ BEGIN
     SELECT 
       school_id,
       COUNT(id) AS teacher_count
-    FROM teachers
+    FROM users
+    WHERE role = 'teacher'
     GROUP BY school_id
   ),
   school_stats AS (
